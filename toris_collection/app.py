@@ -49,10 +49,25 @@ def _cached_arrival_probability(bird_id, planted_tuple, biome_id, month):
 @st.cache_data(show_spinner=False, max_entries=20, ttl=3600)
 def _cached_network_layout(planted_tuple, biome_id, month, residents_tuple):
     """ネットワーク図の構築とレイアウト計算をまとめてキャッシュ。
+    軽量版: 食物経路がない孤立した鳥は除外する(ノード数を10〜20程度に抑える)。
     return: dict (nodes, edges, pos, hub) JSONシリアライズ可能な形
     """
     from engine import network_stats
-    G, temp = build_network(list(planted_tuple), biome_id, month)
+    G_full, temp = build_network(list(planted_tuple), biome_id, month)
+
+    # サブグラフ: 植物・昆虫は全部残し、鳥は「食物経路がある」または「滞在中」のみ残す
+    nodes_to_keep = set()
+    for n, data in G_full.nodes(data=True):
+        kind = data.get("kind")
+        if kind in ("plant", "insect"):
+            nodes_to_keep.add(n)
+        elif kind == "bird":
+            # 食物経路がある(in_degree > 0)、または現在滞在中の鳥のみ残す
+            if G_full.in_degree(n) > 0 or n in residents_tuple:
+                nodes_to_keep.add(n)
+    G = G_full.subgraph(nodes_to_keep).copy()
+
+    # サブグラフでレイアウト計算(ノード数が大幅に減るため高速)
     pos = force_directed_layout(G, width=1200, height=900)
     stats = network_stats(G)
 
@@ -1833,7 +1848,7 @@ with tab_network:
     st.markdown(
         "あなたの土地で今、活きている**種のつながり**を可視化します。"
         "**中心にあるほどハブ種**(多くの種とつながる重要な種)です。"
-        "まだ来ていない鳥も、食物網に載っていれば表示されます。"
+        "植物・昆虫・食物経路がある鳥のみ表示しています。"
     )
 
     # ネットワーク図用のキャッシュ済みデータを取得
