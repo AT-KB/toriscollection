@@ -46,6 +46,43 @@ def _cached_arrival_probability(bird_id, planted_tuple, biome_id, month):
     }
 
 
+@st.cache_data(show_spinner=False, max_entries=20, ttl=3600)
+def _cached_network_layout(planted_tuple, biome_id, month, residents_tuple):
+    """ネットワーク図の構築とレイアウト計算をまとめてキャッシュ。
+    return: dict (nodes, edges, pos, hub) JSONシリアライズ可能な形
+    """
+    from engine import network_stats
+    G, temp = build_network(list(planted_tuple), biome_id, month)
+    pos = force_directed_layout(G, width=1200, height=900)
+    stats = network_stats(G)
+
+    # NetworkX グラフをシリアライズ可能な dict に変換
+    nodes = []
+    for n, data in G.nodes(data=True):
+        nodes.append({
+            "id": n,
+            "kind": data.get("kind"),
+            "label": data.get("label"),
+            "color": data.get("color"),
+            "in_degree": G.in_degree(n),
+            "out_degree": G.out_degree(n),
+            "is_resident": n in residents_tuple,
+        })
+    edges = []
+    for u, v, data in G.edges(data=True):
+        edges.append({
+            "src": u, "tgt": v,
+            "weight": data.get("weight", 0.5),
+        })
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "pos": {k: list(v) for k, v in pos.items()},
+        "stats": stats,
+        "temp": temp,
+    }
+
+
 # 植えてから効果が出るまでの時間 - 廃止(0時間=即効果)
 # 当面は本数制限(BIOMES.max_plants)のみで植えすぎを防ぐ方針
 PLANT_MATURATION_HOURS = 0
@@ -80,6 +117,28 @@ except Exception:
     XC_AVAILABLE = False
 
 
+# 音源バイトをセッション越しメモリキャッシュ
+# Streamlit Cloud のプロセス再起動でも、最初のテスターが取得すれば
+# それ以降の全リクエストが共有する
+@st.cache_data(show_spinner=False, max_entries=50, ttl=3600)
+def _cached_audio_bytes(scientific_name: str):
+    """鳥の鳴き声を bytes で返す。一度ダウンロードしたらメモリキャッシュ。
+    Returns: (bytes, citation_dict) または (None, None)
+    """
+    if not XC_AVAILABLE:
+        return None, None
+    try:
+        path = download_audio(scientific_name)
+        if not (path and path.exists()):
+            return None, None
+        with open(path, "rb") as f:
+            data = f.read()
+        cit = get_citation(scientific_name)
+        return data, cit
+    except Exception:
+        return None, None
+
+
 def render_bird_audio(b_id: str, bird: dict):
     """
     鳥の鳴き声を再生するUIコンポーネント。
@@ -103,19 +162,12 @@ def render_bird_audio(b_id: str, bird: dict):
 
     if st.session_state.get(key):
         with st.spinner(f"{bird['name']}の鳴き声を取得中..."):
-            try:
-                path = download_audio(sci)
-            except Exception as e:
-                path = None
-                st.caption(f"取得失敗: {e}")
+            audio_bytes, cit = _cached_audio_bytes(sci)
 
-        if path and path.exists():
+        if audio_bytes:
             try:
-                with open(path, "rb") as f:
-                    audio_bytes = f.read()
                 # ループ再生で軽量化(短い音源を繰り返す)
                 st.audio(audio_bytes, format="audio/mp3", loop=True)
-                cit = get_citation(sci)
                 if cit:
                     st.caption(
                         f"出典: xeno-canto [XC{cit['xc_id']}]({cit['url']}) "
@@ -326,7 +378,7 @@ def render_chorus_button(resident_ids):
     if not resident_ids:
         return
 
-    # 各鳥の音源を base64 で集める
+    # 各鳥の音源を base64 で集める(キャッシュ版を使うので2回目以降は速い)
     with st.spinner("..."):
         audio_items = []
         for b_id in resident_ids:
@@ -334,14 +386,10 @@ def render_chorus_button(resident_ids):
             sci = bird.get("scientific")
             if not sci:
                 continue
-            try:
-                path = download_audio(sci)
-            except Exception:
-                path = None
-            if path and path.exists():
+            audio_bytes, _ = _cached_audio_bytes(sci)
+            if audio_bytes:
                 try:
-                    with open(path, "rb") as f:
-                        data = base64.b64encode(f.read()).decode("ascii")
+                    data = base64.b64encode(audio_bytes).decode("ascii")
                     audio_items.append((bird["name"], data))
                 except Exception:
                     pass
@@ -1097,7 +1145,7 @@ with tab_plant:
             icon="🌾"
         )
 
-    st.info("🧪 「シミュ」タブで、各鳥について各植物の効果を確認できます。")
+    st.info("🧪 確率変化(鳥×植物)は「シミュ」タブで確認できます。")
 
     cols = st.columns(3)
     for i, (pid, plant) in enumerate(available.items()):
@@ -1112,7 +1160,6 @@ with tab_plant:
                 tid = st.session_state.current_tester_id
                 _sheets_safe(sc.add_planting, tid, pid)
                 sc.log_access(tid, "plant", "plant_added", pid)
-                # planted_at_map にも追加
                 st.session_state.planted_at_map[pid] = datetime.now().isoformat(
                     timespec="seconds"
                 )
@@ -1628,15 +1675,13 @@ with tab_mementos:
         c = mem.memento_category(mid)
         by_cat_owned[c] = by_cat_owned.get(c, 0) + 1
 
-    # サマリ表示(各カテゴリの達成率を横並びで)
+    # サマリ表示: 現行3カテゴリのみ表示(seed/nutは旧データ用に内部処理は残す)
     cat_meta = [
-        ("feather", "🪶 羽根",   "#9a8a6a"),
-        ("seed",    "🌱 種子",   "#7a9a4a"),
-        ("twig",    "🌿 小枝",   "#8a6a4a"),
-        ("nut",     "🌰 木の実", "#8a5a3a"),
-        ("plume",   "✨ 羽冠",   "#c8a830"),
+        ("twig",    "🌿 小枝",  "#8a6a4a"),
+        ("feather", "🪶 羽根",  "#9a8a6a"),
+        ("plume",   "✨ 羽冠",  "#c8a830"),
     ]
-    cols = st.columns(5)
+    cols = st.columns(len(cat_meta))
     for i, (cat_id, cat_label, cat_color) in enumerate(cat_meta):
         owned = by_cat_owned.get(cat_id, 0)
         total = by_cat_total.get(cat_id, 0)
@@ -1791,16 +1836,34 @@ with tab_network:
         "まだ来ていない鳥も、食物網に載っていれば表示されます。"
     )
 
-    G_net, temp_net = build_network(
-        st.session_state.planted, st.session_state.biome, st.session_state.month
+    # ネットワーク図用のキャッシュ済みデータを取得
+    _planted_tuple = tuple(sorted(st.session_state.planted))
+    _residents_tuple = tuple(sorted(st.session_state.residents))
+    _net_data = _cached_network_layout(
+        _planted_tuple, st.session_state.biome,
+        st.session_state.month, _residents_tuple
     )
+
+    # キャッシュ結果から NetworkX グラフを再構築 (既存ロジック互換)
+    import networkx as nx
+    G_net = nx.DiGraph()
+    for nd in _net_data["nodes"]:
+        G_net.add_node(
+            nd["id"],
+            kind=nd["kind"], label=nd["label"], color=nd["color"]
+        )
+    for ed in _net_data["edges"]:
+        G_net.add_edge(ed["src"], ed["tgt"], weight=ed["weight"])
+    pos = {k: tuple(v) for k, v in _net_data["pos"].items()}
+    temp_net = _net_data["temp"]
 
     if G_net.number_of_nodes() == 0:
         st.info("まだネットワークがありません。植物を植えてみましょう。")
     else:
         W, H = 1200, 900
-        pos = force_directed_layout(G_net, width=W, height=H)
-        # 実際のノード座標範囲を測り、ラベル余裕を加えた viewBox を作る
+        # pos は既にキャッシュから取得済み
+
+        # ノードの実座標範囲を測る
         if pos:
             xs = [p[0] for p in pos.values()]
             ys = [p[1] for p in pos.values()]
@@ -1808,12 +1871,17 @@ with tab_network:
             min_y, max_y = min(ys), max(ys)
         else:
             min_x, max_x, min_y, max_y = 0, W, 0, H
-        # ラベルとノード半径分の余裕(左右に120px, 上下に80px)
-        PAD_X, PAD_Y = 120, 80
+
+        # ラベル分のpadding(左右に150px、上下に60px)
+        PAD_X, PAD_Y = 150, 60
         VB_X = min_x - PAD_X
         VB_Y = min_y - PAD_Y
         VB_W = (max_x - min_x) + PAD_X * 2
         VB_H = (max_y - min_y) + PAD_Y * 2
+
+        # iframe表示幅 (1100px) と viewBox の縦横比から、必要な iframe 高さを算出
+        DISPLAY_WIDTH = 1100
+        component_height = int(DISPLAY_WIDTH * VB_H / VB_W) + 20
 
         n_plants = sum(1 for n in G_net.nodes if G_net.nodes[n].get("kind") == "plant")
         n_insects = sum(1 for n in G_net.nodes if G_net.nodes[n].get("kind") == "insect")
@@ -1824,19 +1892,7 @@ with tab_network:
         n_birds_total = sum(1 for n in G_net.nodes if G_net.nodes[n].get("kind") == "bird")
 
         # === ネットワーク複雑性のインジケーター ===
-        stats = network_stats(G_net)
-        # 複雑性レベルの段階(エッジ数で判定)
-        ne = stats["n_edges"]
-        if ne == 0:
-            level = "種を呼ぶ準備中"; level_color = "#aaa"
-        elif ne < 5:
-            level = "シンプル"; level_color = "#88a858"
-        elif ne < 15:
-            level = "賑やかになってきた"; level_color = "#5a8a5a"
-        elif ne < 30:
-            level = "豊かな食物網"; level_color = "#3a7a4a"
-        else:
-            level = "複雑な生態系"; level_color = "#1a5a3a"
+        stats = _net_data["stats"]
 
         cols = st.columns(4)
         with cols[0]:
@@ -1852,21 +1908,11 @@ with tab_network:
         with cols[3]:
             st.metric("🔗 相互作用", f"{stats['n_edges']}本")
 
-        # 複雑性ラベル + ハブ種
-        st.markdown(
-            f"<div style='padding:10px 16px; margin:8px 0 14px 0; "
-            f"background:{level_color}22; border-left:4px solid {level_color}; "
-            f"border-radius:6px;'>"
-            f"<b style='color:{level_color};'>食物網の状態: {level}</b>"
-            f"</div>",
-            unsafe_allow_html=True
-        )
-        if stats["hub"]:
+        if stats["hub"] and stats["n_edges"] > 0:
             n_id, n_kind, n_label, n_deg = stats["hub"]
             kind_label = {"plant": "植物", "insect": "昆虫", "bird": "鳥"}.get(n_kind, "")
             st.caption(
-                f"💡 今のハブ種: **{n_label}** ({kind_label}, {n_deg}本のつながり) — "
-                f"このネットワークで最も多くの種とつながっている、生態系の要。"
+                f"💡 今のハブ種: **{n_label}** ({kind_label}, {n_deg}本のつながり)"
             )
 
         # 凡例
@@ -1989,16 +2035,23 @@ with tab_network:
         svg.append("</svg>")
         svg_string = "".join(svg)
 
-        # インタラクティブHTML: マウスオーバーで関連エッジをハイライト
-        interactive_html = f"""
-        <div style="width:100%;">
-        {svg_string}
+        # components.html で固定高さの iframe に埋め込み、SVG はその中で
+        # max-height で収まるようにする。これで確実に画面内に収まる。
+        import streamlit.components.v1 as components
+
+        wrapped_html = f"""
+        <div style="width:100%; height:100%; display:flex; align-items:flex-start; justify-content:center;">
+            <div style="width:100%; max-width:1100px;">
+                {svg_string}
+            </div>
         </div>
+        <style>
+            svg {{ max-width:100%; height:auto; display:block; }}
+        </style>
         <script>
         (function() {{
             const nodes = document.querySelectorAll('.node');
             const edges = document.querySelectorAll('.edge');
-
             function highlight(nodeId) {{
                 edges.forEach(e => {{
                     const related = (e.dataset.src === nodeId || e.dataset.tgt === nodeId);
@@ -2011,15 +2064,12 @@ with tab_network:
                     }}
                 }});
                 nodes.forEach(n => {{
-                    if (n.dataset.node !== nodeId) {{
-                        n.style.opacity = '0.35';
-                    }}
+                    if (n.dataset.node !== nodeId) n.style.opacity = '0.35';
                 }});
             }}
             function resetAll() {{
                 edges.forEach(e => {{
                     e.setAttribute('stroke', '#c8d8c8');
-                    const w = e.getAttribute('stroke-width');
                     e.setAttribute('stroke-width', '1');
                     e.setAttribute('stroke-opacity', '0.5');
                 }});
@@ -2032,22 +2082,11 @@ with tab_network:
         }})();
         </script>
         """
-
-        import streamlit.components.v1 as components
-        # SVG width:100% で表示する。コンポーネントの内部高さは
-        # 想定描画幅(800px相当)を viewBox のアスペクト比で割って算出
-        aspect_ratio = VB_W / VB_H
-        # 想定描画幅800〜1100px、ブラウザ幅 1280-1920 を見越して中央値で計算
-        ASSUMED_WIDTH = 1000
-        component_height = int(ASSUMED_WIDTH / aspect_ratio) + 20
-        # 最低高さの保証
-        component_height = max(component_height, 500)
-        component_height = min(component_height, 900)
-        components.html(interactive_html, height=component_height, scrolling=False)
+        # 縦横比に基づいた高さ(viewBoxとiframeを一致させる)
+        components.html(wrapped_html, height=component_height, scrolling=False)
 
         st.caption(
-            "💡 **ノードにカーソルを合わせると、その種に関係する食物網がハイライト**されます。"
-            "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫。"
+            "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫"
         )
 
 
