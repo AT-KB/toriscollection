@@ -478,25 +478,51 @@ def render_chorus_button(resident_ids):
     n = len(audio_items)
 
     # 各鳥のスポット配置を組み立てる(60秒の周期内)
-    # スポットを長め(8-15秒)・回数多め(3-5回)にして、自然な重なりを作る
+    # クロスフェードで切れ目なしハーモニー:
+    #   1. ベースシーケンス: 鳥たちが順番に鳴いて、フェードを重ねてシームレスに繋ぐ
+    #   2. 副パート: 鳥が複数いる場合、ベース以外の鳥がランダムに合いの手を入れる
     rng = random.Random(sum(hash(b) for b in resident_ids) % 10000)
     PERIOD_MS = 60000  # 60秒の周期
-    FADE_IN_MS = 1500   # フェードイン 1.5秒
-    FADE_OUT_MS = 2000  # フェードアウト 2秒
+    FADE_MS = 2500     # フェードイン/アウト時間(クロスフェード重なり時間でもある)
+    MAIN_MS = 6000     # メイン音量で鳴る時間
+    SPOT_MS = FADE_MS + MAIN_MS + FADE_MS  # 1スポットの長さ = 11秒
 
-    spots_per_bird = []  # [[(start_ms, duration_ms), ...], ...]
-    for i in range(n):
-        # 鳥ごとのスポット数: 3-5回
-        num_spots = rng.randint(3, 5)
-        # 開始時刻は完全ランダムに分散(スロット制限を緩めて重なりやすく)
-        spots = []
-        for s in range(num_spots):
-            start = rng.randint(0, PERIOD_MS - 10000)
-            duration = rng.randint(8000, 15000)  # 8-15秒
-            spots.append((start, duration))
-        # 開始順にソート(視認性のため)
+    # ステップ間隔: 次のスポットは前のスポットのフェードアウト中に始まる
+    # ベースシーケンス全体で 60秒を埋めるよう調整
+    STEP_MS = SPOT_MS - FADE_MS  # 8.5秒ごとに次のスポットが開始(2.5秒の重なり)
+    num_steps = int(PERIOD_MS // STEP_MS) + 1  # 周期内に収まる回数
+
+    # ベースシーケンス: ランダムな鳥を選んで順番に並べる
+    base_sequence = []
+    last_bird = -1
+    for step in range(num_steps):
+        # 直前と違う鳥を選ぶ
+        candidates = [i for i in range(n) if i != last_bird]
+        bird_idx = rng.choice(candidates) if candidates else 0
+        start = step * STEP_MS
+        if start >= PERIOD_MS:
+            break
+        base_sequence.append((bird_idx, start, SPOT_MS))
+        last_bird = bird_idx
+
+    # 副パート: 鳥が2羽以上の場合、ベース以外の鳥をランダムに足す
+    # 「合いの手」感覚で 4-8秒の短いスポットを2-3個
+    extra_spots = []
+    if n >= 2:
+        num_extras = rng.randint(2, 3)
+        for _ in range(num_extras):
+            bird_idx = rng.randint(0, n - 1)
+            start = rng.randint(0, max(0, PERIOD_MS - 8000))
+            duration = rng.randint(4000, 8000)
+            extra_spots.append((bird_idx, start, duration))
+
+    # 鳥ごとにスポットをまとめる
+    spots_per_bird = [[] for _ in range(n)]
+    for bird_idx, start, dur in base_sequence + extra_spots:
+        spots_per_bird[bird_idx].append((start, dur))
+    # 開始順にソート
+    for spots in spots_per_bird:
         spots.sort(key=lambda x: x[0])
-        spots_per_bird.append(spots)
 
     # 全鳥の最大同時鳴き数を抑えるための調整は不要(60秒に分散しているため自然)
 
@@ -559,36 +585,48 @@ def render_chorus_button(resident_ids):
             const a = getAudio(i);
             if (!a || muted) return;
             try {{
-                // 音源のランダムな位置から再生(0〜長さの 60% から開始)
+                // 短い音源でも途切れないようループ属性を有効化
+                a.loop = true;
+
+                // 音源の冒頭5%以降〜30%以前から開始(無音/ノイズ区間を避け、毎回違うフレーズ)
                 const totalDur = a.duration || 10;
-                const startPos = Math.random() * Math.max(0.5, totalDur * 0.6);
-                a.currentTime = startPos;
+                const startPos = Math.max(0.3, totalDur * (0.05 + Math.random() * 0.25));
+                a.currentTime = Math.min(startPos, Math.max(0.3, totalDur - 3));
                 a.volume = 0;  // 音量0から始めてフェードイン
                 a.play().catch(function(e) {{}});
 
-                // フェードイン: 0 → TARGET_VOLUME を 1.5秒かけて(60ステップ、25ms間隔)
-                const fadeInSteps = 60;
-                const fadeInInterval = 1500 / fadeInSteps;  // 25ms
+                // フェードイン: 0 → TARGET_VOLUME を 2.5秒かけて(なめらかに)
+                const FADE_IN_MS = 2500;
+                const fadeInSteps = 80;
+                const fadeInInterval = FADE_IN_MS / fadeInSteps;
                 let fadeInStep = 0;
                 const fadeInId = setInterval(function() {{
                     fadeInStep++;
-                    a.volume = TARGET_VOLUME * (fadeInStep / fadeInSteps);
+                    // ease-in-out カーブで自然に
+                    const t = fadeInStep / fadeInSteps;
+                    const eased = t * t * (3 - 2 * t);  // smoothstep
+                    a.volume = TARGET_VOLUME * eased;
                     if (fadeInStep >= fadeInSteps) {{
                         a.volume = TARGET_VOLUME;
                         clearInterval(fadeInId);
                     }}
                 }}, fadeInInterval);
 
-                // フェードアウト: duration の最後 2秒をかけて 0 へ
-                const fadeOutStart = Math.max(0, durationMs - 2000);
+                // フェードアウト: duration の最後 2.5秒をかけて 0 へ
+                const FADE_OUT_MS = 2500;
+                const fadeOutStart = Math.max(FADE_IN_MS, durationMs - FADE_OUT_MS);
                 setTimeout(function() {{
+                    // フェードインがまだ走っていたら止める(safety)
+                    clearInterval(fadeInId);
                     const fadeOutSteps = 80;
-                    const fadeOutInterval = 2000 / fadeOutSteps;  // 25ms
+                    const fadeOutInterval = FADE_OUT_MS / fadeOutSteps;
                     let fadeOutStep = 0;
                     const startVol = a.volume;
                     const fadeOutId = setInterval(function() {{
                         fadeOutStep++;
-                        a.volume = startVol * (1 - fadeOutStep / fadeOutSteps);
+                        const t = fadeOutStep / fadeOutSteps;
+                        const eased = 1 - (t * t * (3 - 2 * t));  // 逆smoothstep
+                        a.volume = startVol * eased;
                         if (fadeOutStep >= fadeOutSteps) {{
                             a.volume = 0;
                             a.pause();
