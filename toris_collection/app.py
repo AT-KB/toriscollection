@@ -27,7 +27,7 @@ import base64
 # sprites/birds/{bird_id}.png を読み込み、なければ None を返す。
 # 図鑑・フィールド・落とし物の各所でドット絵があれば使用、なければEmojiにフォールバック。
 # ============================================================
-SPRITES_DIR = Path(__file__).parent / "sprites" / "birds"
+SPRITES_DIR = Path(__file__).parent / "designbird"
 
 
 @st.cache_data(show_spinner=False, max_entries=100)
@@ -384,28 +384,39 @@ def render_field_view(planted_ids, resident_ids, month, temperature):
         placed.append((bx, by))
 
         color = bird.get("color", "#6a8ac8")
-        # 鳥の絵: 楕円(体)と小さい円(頭)、ライン(くちばし)
+        # スプライト(ドット絵)があれば優先表示、なければ既存の楕円描画
+        sprite_url = _get_bird_sprite_data_url(b_id)
         svg.append(f'<g>')
-        # 体
-        svg.append(
-            f'<ellipse cx="{bx:.0f}" cy="{by:.0f}" rx="14" ry="10" '
-            f'fill="{color}" stroke="#fff" stroke-width="2"/>'
-        )
-        # 頭
-        svg.append(
-            f'<circle cx="{bx + 11:.0f}" cy="{by - 6:.0f}" r="7" '
-            f'fill="{color}" stroke="#fff" stroke-width="1.5"/>'
-        )
-        # くちばし
-        svg.append(
-            f'<polygon points="{bx + 17:.0f},{by - 6:.0f} '
-            f'{bx + 23:.0f},{by - 5:.0f} {bx + 17:.0f},{by - 4:.0f}" '
-            f'fill="#e8a040"/>'
-        )
-        # 目
-        svg.append(
-            f'<circle cx="{bx + 13:.0f}" cy="{by - 7:.0f}" r="1.5" fill="#222"/>'
-        )
+        if sprite_url:
+            # ドット絵を 48x48 で表示(中央を bx, by に)
+            svg.append(
+                f'<image href="{sprite_url}" '
+                f'x="{bx - 24:.0f}" y="{by - 24:.0f}" '
+                f'width="48" height="48" '
+                f'style="image-rendering:pixelated;"/>'
+            )
+        else:
+            # 鳥の絵: 楕円(体)と小さい円(頭)、ライン(くちばし)
+            # 体
+            svg.append(
+                f'<ellipse cx="{bx:.0f}" cy="{by:.0f}" rx="14" ry="10" '
+                f'fill="{color}" stroke="#fff" stroke-width="2"/>'
+            )
+            # 頭
+            svg.append(
+                f'<circle cx="{bx + 11:.0f}" cy="{by - 6:.0f}" r="7" '
+                f'fill="{color}" stroke="#fff" stroke-width="1.5"/>'
+            )
+            # くちばし
+            svg.append(
+                f'<polygon points="{bx + 17:.0f},{by - 6:.0f} '
+                f'{bx + 23:.0f},{by - 5:.0f} {bx + 17:.0f},{by - 4:.0f}" '
+                f'fill="#e8a040"/>'
+            )
+            # 目
+            svg.append(
+                f'<circle cx="{bx + 13:.0f}" cy="{by - 7:.0f}" r="1.5" fill="#222"/>'
+            )
         # 名前ラベル
         svg.append(
             f'<text x="{bx:.0f}" y="{by + 24:.0f}" text-anchor="middle" '
