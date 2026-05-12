@@ -16,7 +16,7 @@ BIOMES = {
         "temp_mean": 14,
         "precip_mean": 1500,
         "hemisphere": "north",
-        "max_plants": 8,
+        "max_plants": 4,
         "description": "四季がはっきりした温帯モンスーン。里山と二次林が広がり、植物・昆虫・鳥の多様性が高い。",
     },
     "sydney": {
@@ -25,7 +25,7 @@ BIOMES = {
         "temp_mean": 18,
         "precip_mean": 1200,
         "hemisphere": "south",
-        "max_plants": 6,
+        "max_plants": 4,
         "description": "南半球の温帯海洋性。ユーカリ林が広がり、独自進化したオーストラリア固有の鳥が多い。",
     },
     "charlotte": {
@@ -34,7 +34,7 @@ BIOMES = {
         "temp_mean": 16,
         "precip_mean": 1100,
         "hemisphere": "north",
-        "max_plants": 6,
+        "max_plants": 4,
         "description": "北米東部の温帯湿潤林。落葉広葉樹とマツが混じり、鮮やかな色彩の鳥が多い。",
     },
 }
