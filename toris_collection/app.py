@@ -442,9 +442,13 @@ def render_field_view(planted_ids, resident_ids, month, temperature):
 
 def render_chorus_button(resident_ids):
     """
-    ハーモニー: 滞在中の鳥の鳴き声を、ミュート状態で自動再生する。
-    ユーザーが「♪ 音を出す」を押すとフェードインで聞こえはじめる。
-    ホームを開いている間ずっと低音量で鳴き続ける(鳥たちの生活を覗く感覚)。
+    ハーモニー: 滞在中の鳥の鳴き声を、自然な合唱として再生する。
+
+    設計:
+      - 60秒のタイムラインに各鳥をランダムに2〜4回スポット配置
+      - 各スポットでは音源の一部だけを再生(currentTime で位置調整、3-6秒間)
+      - 音量は全鳥均等(特定の鳥が目立たないように)
+      - 60秒ごとに新しいパターンでループ
     """
     import base64
     import random
@@ -471,30 +475,45 @@ def render_chorus_button(resident_ids):
     if not audio_items:
         return
 
-    # 各音源にランダムな遅延と音量比をつけて、自然なハーモニーを作る
-    rng = random.Random(sum(hash(b) for b in resident_ids) % 10000)
     n = len(audio_items)
-    delays = [rng.uniform(0, 4000) for _ in audio_items]
-    rel_volumes = [rng.uniform(0.5, 1.0) for _ in audio_items]
 
+    # 各鳥のスポット配置を組み立てる(60秒の周期内)
+    # 鳥ごとに 2〜4回鳴く。スポットの開始時刻は周期内でランダムに分散。
+    rng = random.Random(sum(hash(b) for b in resident_ids) % 10000)
+    PERIOD_MS = 60000  # 60秒の周期
+
+    spots_per_bird = []  # [[(start_ms, duration_ms), ...], ...]
+    for i in range(n):
+        # 鳥ごとのスポット数: 2-4回(レアな鳥ほど少なく、普通の鳥は多めに鳴く)
+        num_spots = rng.randint(2, 4)
+        # スポット開始時刻: 周期を等間隔のスロットに分けて、各スロット内でランダム配置
+        slot_size = PERIOD_MS / num_spots
+        spots = []
+        for s in range(num_spots):
+            # スロット s の中で、最後3秒は被らないようにオフセット
+            start = int(s * slot_size + rng.uniform(0, slot_size * 0.7))
+            duration = rng.randint(3000, 6000)  # 3-6秒鳴く
+            spots.append((start, duration))
+        spots_per_bird.append(spots)
+
+    # 全鳥の最大同時鳴き数を抑えるための調整は不要(60秒に分散しているため自然)
+
+    bird_names_str = "、".join(name for name, _ in audio_items)
     audio_tags = []
     for i, (name, b64) in enumerate(audio_items):
+        # loop は使わず、play/pause を JS で制御
         audio_tags.append(
-            f'<audio id="chorus_audio_{i}" preload="auto" loop muted '
-            f'data-rel-vol="{rel_volumes[i]:.2f}">'
+            f'<audio id="chorus_audio_{i}" preload="auto" muted '
+            f'data-name="{name}">'
             f'<source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
         )
 
-    delay_starts = []
-    for i, d in enumerate(delays):
-        delay_starts.append(
-            f"setTimeout(function() {{"
-            f"var a = document.getElementById('chorus_audio_{i}');"
-            f"if (a) {{ a.play().catch(function(e){{}}); }}"
-            f"}}, {d:.0f});"
-        )
-
-    bird_names_str = "、".join(name for name, _ in audio_items)
+    # JS 側に渡す JSON データ
+    import json
+    schedule_json = json.dumps({
+        "period": PERIOD_MS,
+        "spots": spots_per_bird,  # [[(start, dur), ...], ...]
+    })
 
     html = f"""
     <div style="background:linear-gradient(180deg,#f7faf2 0%,#eef4e6 100%);
@@ -517,48 +536,105 @@ def render_chorus_button(resident_ids):
             </div>
         </div>
         <div style="margin-top:8px; font-size:0.78em; color:#888;">
-            音量はスマホ・PC本体のボリュームで調整してください。
+            60秒の周期で各鳥が交代に鳴きあいます。音量はスマホ・PC本体のボリュームで。
         </div>
     </div>
     {''.join(audio_tags)}
     <script>
     (function() {{
-        // ハーモニー音源を低音量・ミュートで自動再生開始
-        {" ".join(delay_starts)}
+        const schedule = {schedule_json};
+        const n = {n};
+        const TARGET_VOLUME = 0.4;  // 全鳥均等の音量
+        let muted = true;
+        let cycleStartTime = Date.now();
+        let activeTimers = [];
 
-        var btn = document.getElementById('chorus_toggle');
-        var muted = true;
-        var n = {n};
+        function getAudio(i) {{
+            return document.getElementById('chorus_audio_' + i);
+        }}
+
+        function playOneSpot(i, durationMs) {{
+            const a = getAudio(i);
+            if (!a || muted) return;
+            try {{
+                // 音源のランダムな位置から再生(0〜長さの 60% から開始)
+                const totalDur = a.duration || 10;
+                const startPos = Math.random() * Math.max(0.5, totalDur * 0.6);
+                a.currentTime = startPos;
+                a.volume = TARGET_VOLUME;
+                a.play().catch(function(e) {{}});
+
+                // duration 経過後にフェードアウトして停止
+                setTimeout(function() {{
+                    let v = TARGET_VOLUME;
+                    const fadeStep = TARGET_VOLUME / 10;
+                    const fadeId = setInterval(function() {{
+                        v -= fadeStep;
+                        if (v <= 0) {{
+                            a.volume = 0;
+                            a.pause();
+                            clearInterval(fadeId);
+                        }} else {{
+                            a.volume = v;
+                        }}
+                    }}, 50);
+                }}, durationMs);
+            }} catch (e) {{}}
+        }}
+
+        function scheduleCycle() {{
+            // 既存のタイマーをクリア
+            activeTimers.forEach(function(t) {{ clearTimeout(t); }});
+            activeTimers = [];
+
+            // 各鳥のスポットをスケジュール
+            for (let i = 0; i < n; i++) {{
+                const spots = schedule.spots[i];
+                for (let s = 0; s < spots.length; s++) {{
+                    const startMs = spots[s][0];
+                    const durationMs = spots[s][1];
+                    const tid = setTimeout(function() {{
+                        playOneSpot(i, durationMs);
+                    }}, startMs);
+                    activeTimers.push(tid);
+                }}
+            }}
+
+            // 周期の最後に再スケジュール
+            const cycleTid = setTimeout(scheduleCycle, schedule.period);
+            activeTimers.push(cycleTid);
+        }}
 
         function setMuted(state) {{
             muted = state;
-            for (var i = 0; i < n; i++) {{
-                var a = document.getElementById('chorus_audio_' + i);
-                if (!a) continue;
-                a.muted = state;
-                if (!state) {{
-                    // フェードイン: 0 → 0.4 * relVol
-                    var rel = parseFloat(a.dataset.relVol || 0.7);
-                    var target = 0.4 * rel;
-                    a.volume = 0;
-                    var step = target / 30;
-                    var v = 0;
-                    var fadeId = setInterval(function() {{
-                        v += step;
-                        if (v >= target) {{ a.volume = target; clearInterval(fadeId); }}
-                        else {{ a.volume = v; }}
-                    }}, 50);
-                }}
-            }}
+            const btn = document.getElementById('chorus_toggle');
             if (state) {{
+                // ミュート: 全停止
+                for (let i = 0; i < n; i++) {{
+                    const a = getAudio(i);
+                    if (a) {{
+                        a.pause();
+                        a.muted = true;
+                    }}
+                }}
+                activeTimers.forEach(function(t) {{ clearTimeout(t); }});
+                activeTimers = [];
                 btn.textContent = '🔇 音を出す';
                 btn.style.background = '#cfd9b8';
             }} else {{
+                // 再生開始
+                for (let i = 0; i < n; i++) {{
+                    const a = getAudio(i);
+                    if (a) a.muted = false;
+                }}
+                cycleStartTime = Date.now();
+                scheduleCycle();
                 btn.textContent = '🔊 音を消す';
                 btn.style.background = '#a8c890';
             }}
         }}
 
+        const btn = document.getElementById('chorus_toggle');
         btn.addEventListener('click', function() {{
             setMuted(!muted);
         }});
