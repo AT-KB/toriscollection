@@ -179,6 +179,44 @@ def remove_all_plantings(tester_id):
         sheet.batch_update(updates)
 
 
+def reset_tester_data(tester_id):
+    """指定テスターのデータを全シートから物理削除する。
+    field_state, plantings, bird_visits, collection, mementos, bird_notes,
+    access_logs を対象。testers シートは残す(IDの存在は維持)。
+
+    Returns: 削除した行数の dict。
+    """
+    targets = [
+        "field_state", "plantings", "bird_visits",
+        "collection", "mementos", "bird_notes", "access_logs",
+    ]
+    result = {}
+    for sheet_name in targets:
+        try:
+            sheet = _ws(sheet_name)
+            rows = sheet.get_all_values()
+            if len(rows) < 2:
+                result[sheet_name] = 0
+                continue
+            # 削除対象の行番号を後ろから収集(削除しても番号がズレないように)
+            to_delete = []
+            for i, row in enumerate(rows[1:], start=2):
+                # tester_id は通常 2列目(index 1)、field_state や bird_notes では 1列目
+                if sheet_name in ("field_state", "bird_notes", "collection"):
+                    tester_col = 0
+                else:
+                    tester_col = 1
+                if len(row) > tester_col and row[tester_col] == tester_id:
+                    to_delete.append(i)
+            # 後ろから削除
+            for row_num in reversed(to_delete):
+                sheet.delete_rows(row_num)
+            result[sheet_name] = len(to_delete)
+        except Exception as e:
+            result[sheet_name] = f"error: {e}"
+    return result
+
+
 # ====== bird_visits ======
 def add_visit(tester_id, bird_id, visit_type, reason_text="",
               related_plant_id="", related_insect_id="",
