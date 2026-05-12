@@ -945,6 +945,46 @@ with st.sidebar:
                               f"new_mementos={len(new_mementos)}")
                 st.rerun()
 
+        st.markdown("---")
+        st.caption("⚠️ **データリセット**(取り消せません)")
+        # 二段階確認: チェックボックス → ボタン押下
+        confirm_reset = st.checkbox(
+            "本当にすべてのデータを削除する",
+            key="reset_confirm",
+            help="このテスターIDの植物・図鑑・落とし物・訪問記録すべてが削除されます",
+        )
+        if st.button("🗑️ このテスターのデータを全削除",
+                     disabled=not confirm_reset,
+                     use_container_width=True):
+            tid = st.session_state.current_tester_id
+            try:
+                with st.spinner("削除中..."):
+                    result = sc.reset_tester_data(tid)
+                # session_state もクリア
+                for key in ["planted", "planted_at_map", "residents",
+                            "discovered", "mementos", "mementos_set",
+                            "absence_events", "bird_visited_biomes",
+                            "last_arrivals_info", "recent_new_mementos"]:
+                    if key in st.session_state:
+                        if isinstance(st.session_state[key], list):
+                            st.session_state[key] = []
+                        elif isinstance(st.session_state[key], set):
+                            st.session_state[key] = set()
+                        elif isinstance(st.session_state[key], dict):
+                            st.session_state[key] = {}
+                        else:
+                            st.session_state[key] = None
+                # 削除した行数を表示
+                detail = ", ".join(
+                    f"{k}: {v}" for k, v in result.items()
+                    if isinstance(v, int) and v > 0
+                )
+                st.success(f"削除完了: {detail or 'なし'}")
+                sc.log_access(tid, "test", "data_reset", detail)
+                st.rerun()
+            except Exception as e:
+                st.error(f"削除失敗: {e}")
+
 
 # ============= Tabs =============
 tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = st.tabs(
