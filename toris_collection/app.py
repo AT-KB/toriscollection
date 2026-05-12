@@ -478,22 +478,24 @@ def render_chorus_button(resident_ids):
     n = len(audio_items)
 
     # 各鳥のスポット配置を組み立てる(60秒の周期内)
-    # 鳥ごとに 2〜4回鳴く。スポットの開始時刻は周期内でランダムに分散。
+    # スポットを長め(8-15秒)・回数多め(3-5回)にして、自然な重なりを作る
     rng = random.Random(sum(hash(b) for b in resident_ids) % 10000)
     PERIOD_MS = 60000  # 60秒の周期
+    FADE_IN_MS = 1500   # フェードイン 1.5秒
+    FADE_OUT_MS = 2000  # フェードアウト 2秒
 
     spots_per_bird = []  # [[(start_ms, duration_ms), ...], ...]
     for i in range(n):
-        # 鳥ごとのスポット数: 2-4回(レアな鳥ほど少なく、普通の鳥は多めに鳴く)
-        num_spots = rng.randint(2, 4)
-        # スポット開始時刻: 周期を等間隔のスロットに分けて、各スロット内でランダム配置
-        slot_size = PERIOD_MS / num_spots
+        # 鳥ごとのスポット数: 3-5回
+        num_spots = rng.randint(3, 5)
+        # 開始時刻は完全ランダムに分散(スロット制限を緩めて重なりやすく)
         spots = []
         for s in range(num_spots):
-            # スロット s の中で、最後3秒は被らないようにオフセット
-            start = int(s * slot_size + rng.uniform(0, slot_size * 0.7))
-            duration = rng.randint(3000, 6000)  # 3-6秒鳴く
+            start = rng.randint(0, PERIOD_MS - 10000)
+            duration = rng.randint(8000, 15000)  # 8-15秒
             spots.append((start, duration))
+        # 開始順にソート(視認性のため)
+        spots.sort(key=lambda x: x[0])
         spots_per_bird.append(spots)
 
     # 全鳥の最大同時鳴き数を抑えるための調整は不要(60秒に分散しているため自然)
@@ -561,24 +563,39 @@ def render_chorus_button(resident_ids):
                 const totalDur = a.duration || 10;
                 const startPos = Math.random() * Math.max(0.5, totalDur * 0.6);
                 a.currentTime = startPos;
-                a.volume = TARGET_VOLUME;
+                a.volume = 0;  // 音量0から始めてフェードイン
                 a.play().catch(function(e) {{}});
 
-                // duration 経過後にフェードアウトして停止
+                // フェードイン: 0 → TARGET_VOLUME を 1.5秒かけて(60ステップ、25ms間隔)
+                const fadeInSteps = 60;
+                const fadeInInterval = 1500 / fadeInSteps;  // 25ms
+                let fadeInStep = 0;
+                const fadeInId = setInterval(function() {{
+                    fadeInStep++;
+                    a.volume = TARGET_VOLUME * (fadeInStep / fadeInSteps);
+                    if (fadeInStep >= fadeInSteps) {{
+                        a.volume = TARGET_VOLUME;
+                        clearInterval(fadeInId);
+                    }}
+                }}, fadeInInterval);
+
+                // フェードアウト: duration の最後 2秒をかけて 0 へ
+                const fadeOutStart = Math.max(0, durationMs - 2000);
                 setTimeout(function() {{
-                    let v = TARGET_VOLUME;
-                    const fadeStep = TARGET_VOLUME / 10;
-                    const fadeId = setInterval(function() {{
-                        v -= fadeStep;
-                        if (v <= 0) {{
+                    const fadeOutSteps = 80;
+                    const fadeOutInterval = 2000 / fadeOutSteps;  // 25ms
+                    let fadeOutStep = 0;
+                    const startVol = a.volume;
+                    const fadeOutId = setInterval(function() {{
+                        fadeOutStep++;
+                        a.volume = startVol * (1 - fadeOutStep / fadeOutSteps);
+                        if (fadeOutStep >= fadeOutSteps) {{
                             a.volume = 0;
                             a.pause();
-                            clearInterval(fadeId);
-                        }} else {{
-                            a.volume = v;
+                            clearInterval(fadeOutId);
                         }}
-                    }}, 50);
-                }}, durationMs);
+                    }}, fadeOutInterval);
+                }}, fadeOutStart);
             }} catch (e) {{}}
         }}
 
