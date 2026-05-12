@@ -18,6 +18,54 @@ from engine import (
 )
 import absence_loop
 import mementos as mem
+from pathlib import Path
+import base64
+
+
+# ============================================================
+# Sprite 管理(ドット絵対応)
+# sprites/birds/{bird_id}.png を読み込み、なければ None を返す。
+# 図鑑・フィールド・落とし物の各所でドット絵があれば使用、なければEmojiにフォールバック。
+# ============================================================
+SPRITES_DIR = Path(__file__).parent / "sprites" / "birds"
+
+
+@st.cache_data(show_spinner=False, max_entries=100)
+def _get_bird_sprite_data_url(bird_id: str) -> str | None:
+    """鳥のドット絵スプライトを data: URL として返す。
+    sprites/birds/{bird_id}.png がなければ None を返す。
+
+    Returns:
+        str: "data:image/png;base64,..." 形式の URL
+        None: スプライトファイルが存在しない場合
+    """
+    path = SPRITES_DIR / f"{bird_id}.png"
+    if not path.exists():
+        return None
+    try:
+        with open(path, "rb") as f:
+            data = base64.b64encode(f.read()).decode("ascii")
+        return f"data:image/png;base64,{data}"
+    except Exception:
+        return None
+
+
+def render_bird_sprite_html(bird_id: str, size_px: int = 64,
+                            fallback_emoji: str = "🐦") -> str:
+    """鳥のスプライトを HTML img タグまたは Emoji として返す。
+    ドット絵があれば pixelated レンダリングで表示、なければ Emoji にフォールバック。
+    """
+    sprite_url = _get_bird_sprite_data_url(bird_id)
+    if sprite_url:
+        return (
+            f'<img src="{sprite_url}" width="{size_px}" height="{size_px}" '
+            f'style="image-rendering:pixelated; image-rendering:crisp-edges; '
+            f'vertical-align:middle;" alt="{bird_id}" />'
+        )
+    return (
+        f'<span style="font-size:{int(size_px * 0.8)}px; line-height:1; '
+        f'vertical-align:middle;">{fallback_emoji}</span>'
+    )
 
 
 def _migrate_biome(biome_id):
@@ -1528,11 +1576,25 @@ with tab_birds:
             expanded=False,
         ):
             if discovered:
-                # 名前 + 学名 + 英名
-                en = bird.get("english", "")
-                en_str = f" / {en}" if en else ""
+                # スプライト(ドット絵)を表示。ファイルがなければ Emoji。
+                sprite_html = render_bird_sprite_html(
+                    b_id, size_px=128, fallback_emoji="🐦"
+                )
+                bird_color = bird.get("color", "#888")
                 st.markdown(
-                    f"**{bird['name']}** _{bird['scientific']}_{en_str}"
+                    f"<div style='display:flex; align-items:center; gap:16px; "
+                    f"padding:14px; margin-bottom:8px; "
+                    f"background:linear-gradient(135deg, {bird_color}11, {bird_color}22); "
+                    f"border-radius:10px; border-left:4px solid {bird_color};'>"
+                    f"<div style='flex-shrink:0;'>{sprite_html}</div>"
+                    f"<div style='flex-grow:1;'>"
+                    f"<div style='font-size:1.4em; font-weight:600; color:#2a3a2a;'>"
+                    f"{bird['name']}</div>"
+                    f"<div style='color:#666; font-style:italic;'>"
+                    f"{bird['scientific']}"
+                    f"{' / ' + bird.get('english', '') if bird.get('english') else ''}"
+                    f"</div></div></div>",
+                    unsafe_allow_html=True,
                 )
                 st.write(bird["description"])
 
