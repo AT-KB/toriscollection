@@ -20,6 +20,7 @@ import absence_loop
 import mementos as mem
 from pathlib import Path
 import base64
+from ritual import render_ritual  # 儀式UI(距離メカニクス・第一段階)
 
 
 # ============================================================
@@ -1185,6 +1186,17 @@ tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = s
 
 # ---------- Tab: Home ----------
 with tab_home:
+    # ===== 儀式UI(距離メカニクス・第一段階・骨格)=====
+    # 滞在中の鳥がいる時だけ、ホームタブの最上部に儀式エリアを表示する
+    # ステップ2では音もタイマーもまだ動かない。ボタンとリストの確認のみ
+    if st.session_state.get("residents"):
+        render_ritual(
+            resident_ids=list(st.session_state.residents),
+            biome_id=st.session_state.biome,
+            birds_data=BIRDS,
+        )
+        st.markdown("---")
+
     # 不在中の出来事(ログイン直後に生成されたイベントがあれば表示)
     _abs_events = st.session_state.get("absence_events") or []
     _new_mems = st.session_state.get("recent_new_mementos") or []
@@ -1740,18 +1752,18 @@ with tab_birds:
                 )
                 st.write(bird["description"])
 
-                # 外部リンク: 名前で Google / Wikipedia を検索
+                # 外部リンク: 名前で Google画像検索 / Wikipedia を開く
                 import urllib.parse as _urlparse
                 _q_jp = _urlparse.quote(bird['name'])
                 _q_sci = _urlparse.quote(bird['scientific'])
                 _links_html = (
                     f"<div style='margin:6px 0 14px 0;'>"
-                    f"<a href='https://www.google.com/search?q={_q_jp}+{_q_sci}' "
+                    f"<a href='https://www.google.com/search?tbm=isch&q={_q_jp}+{_q_sci}' "
                     f"target='_blank' rel='noopener' "
                     f"style='display:inline-block; margin-right:8px; padding:4px 10px; "
                     f"background:#f0f4ec; border-radius:12px; "
                     f"text-decoration:none; color:#3a5a3a; font-size:0.85em;'>"
-                    f"🔍 Google で検索</a>"
+                    f"🖼️ 実物の画像を見る</a>"
                     f"<a href='https://en.wikipedia.org/wiki/Special:Search?search={_q_sci}' "
                     f"target='_blank' rel='noopener' "
                     f"style='display:inline-block; margin-right:8px; padding:4px 10px; "
