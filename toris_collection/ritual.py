@@ -1,50 +1,46 @@
 """
-ritual.py - 距離メカニクスの儀式UI(第一段階・骨格版)
+ritual.py - 鳥たちのコーラス UI (ステップ3: 音を鳴らす)
 
-役割:
-  - ホームタブの最上部に「儀式エリア」を表示する
-  - 第一段階の最小版: 「♪ 耳を澄ます」ボタンと、今いる鳥の名前リストのみ
-  - 音もタイマーも距離遷移もまだ実装しない(ステップ3以降)
-
-使い方:
-  from ritual import render_ritual
-  render_ritual(resident_ids, biome_id)
-
-仕様書:
-  - DISTANCE_MECHANIC_SPEC.md(音中心版)
-  - RITUAL_IMPLEMENTATION_PLAN.md
-
-最終更新: 2026-05-20 (ステップ2: 骨格作成)
+ステップ3の変更点:
+  - ボタンを押すと1羽分の鳴き声が実際に鳴る
+  - base64埋め込みなのでブラウザのautoplay制限をボタンクリックで突破
+  - 表示名を「♪ 鳥たちのコーラス」に統一(ステップ2の「今、ここにいる鳥たち」を廃止)
+  - デバッグ用ステータスボックスを削除
+  - 距離遷移・複数同時再生はステップ4以降
 """
 from __future__ import annotations
-import json
+import base64
 import streamlit as st
 import streamlit.components.v1 as components
+import xc_client
 
 
-# 儀式コンポーネントの高さ(px)。骨格段階では小さく、ステップ4以降で広げる
-_COMPONENT_HEIGHT = 200
+_COMPONENT_HEIGHT = 130
+
+
+@st.cache_data(show_spinner=False)
+def _get_audio_b64(scientific_name: str) -> str | None:
+    """鳴き声mp3をbase64文字列で返す。ダウンロード済みならキャッシュから即返す。"""
+    path = xc_client.download_audio(scientific_name)
+    if path and path.exists():
+        return base64.b64encode(path.read_bytes()).decode("ascii")
+    return None
 
 
 def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     """
-    儀式UIをホームタブに描画する。
+    鳥たちのコーラスUIをホームタブに描画する。
 
-    Args:
-        resident_ids: 今、ここにいる鳥のID集合(set または list)
-        biome_id: 現在のバイオームID(例: "kyoto")
-        birds_data: BIRDS辞書(各鳥のname, color等の参照用)
-
-    動作:
-        - 「♪ 耳を澄ます」ボタンと鳥の名前リストを表示
-        - ボタンを押してもまだ何も起きない(ステップ2では骨格のみ)
+    ステップ3: ボタンを押すと滞在鳥の中で最初に音源が取れた1羽の鳴き声を再生する。
+    音源がない場合(xeno-canto無効 or ダウンロード失敗)はそのまま return し、
+    既存のハーモニーボタンに委ねる。
     """
     if not resident_ids:
-        # 滞在鳥がいない場合は儀式エリアを描画しない
-        # (ステップ4以降で「今は静かです」のような表示を検討)
         return
 
-    # 鳥データをJSに渡すために整形(ステップ3以降で使う想定だが、今は名前のみ)
+    if not xc_client.is_enabled():
+        return
+
     rite_birds = []
     for bid in resident_ids:
         bird = birds_data.get(bid, {})
@@ -53,21 +49,31 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             "name": bird.get("name", bid),
             "color": bird.get("color", "#888"),
             "wariness": bird.get("wariness", 0.5),
+            "scientific": bird.get("scientific", ""),
         })
 
-    # JSON文字列にしてHTMLに埋め込む。
-    # json.dumps(ensure_ascii=False) で日本語をそのまま埋め込み可能
-    rite_birds_json = json.dumps(rite_birds, ensure_ascii=False)
-
-    # 鳥の名前を表示用に結合(骨格段階の確認用)
+    n = len(rite_birds)
     names_text = "、".join(b["name"] for b in rite_birds)
 
-    # ============================================================
-    # HTMLコンポーネント
-    # 骨格段階: ボタン1つ + 名前リスト + ステップ確認用のステータス表示
-    # ============================================================
+    # 1羽分の音源を取得(キャッシュ済みなら即座に返る)
+    audio_b64 = None
+    with st.spinner(""):
+        for b in rite_birds:
+            sci = b.get("scientific", "")
+            if sci:
+                audio_b64 = _get_audio_b64(sci)
+                if audio_b64:
+                    break
+
+    # 音源がなければ旧ハーモニーに委ねる
+    if audio_b64 is None:
+        return
+
     html = f"""
-    <div id="rite_container" style="
+    <audio id="rite_audio" preload="auto" style="display:none">
+        <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
+    </audio>
+    <div style="
         background: linear-gradient(180deg, #f7faf2 0%, #eef4e6 100%);
         padding: 16px 20px;
         border-radius: 12px;
@@ -76,7 +82,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     ">
         <div style="display: flex; align-items: center; gap: 14px;">
-            <button id="rite_start_btn" style="
+            <button id="rite_btn" style="
                 background: #cfd9b8;
                 color: #3a5a3a;
                 border: none;
@@ -89,44 +95,45 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             ">♪ 耳を澄ます</button>
             <div style="flex-grow: 1;">
                 <div style="color: #5a7a5a; font-size: 0.95em; font-weight: 500;">
-                    今、ここにいる鳥たち({len(rite_birds)}羽)
+                    ♪ 鳥たちのコーラス ({n}羽)
                 </div>
                 <div style="color: #888; font-size: 0.82em; margin-top: 3px;">
                     {names_text}
                 </div>
             </div>
         </div>
-        <div id="rite_status" style="
-            margin-top: 10px;
-            padding: 8px 12px;
-            background: #fff;
-            border-radius: 6px;
-            font-size: 0.78em;
-            color: #888;
-            font-family: monospace;
-        ">
-            ステータス: 待機中(ボタンが押されていません)
-        </div>
     </div>
     <script>
     (function() {{
-        // ステップ2: 骨格のみ。ボタン押下を検知してステータス表示を変えるだけ
-        const RITE_BIRDS = {rite_birds_json};
-        const btn = document.getElementById('rite_start_btn');
-        const status = document.getElementById('rite_status');
-        let started = false;
+        const btn   = document.getElementById('rite_btn');
+        const audio = document.getElementById('rite_audio');
+        let playing = false;
 
         btn.addEventListener('click', function() {{
-            if (started) return;  // 二重起動防止
-            started = true;
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'default';
-            status.textContent = 'ステータス: 開始済み(ステップ2では音は鳴りません。' +
-                                 RITE_BIRDS.length + '羽のデータを受け取りました)';
-            status.style.color = '#3a8a3a';
-            // ステップ3以降: ここで AudioContext を作成、音を再生開始
-            console.log('Rite started. Birds:', RITE_BIRDS);
+            if (playing) {{
+                audio.pause();
+                audio.currentTime = 0;
+                btn.textContent    = '♪ 耳を澄ます';
+                btn.style.background = '#cfd9b8';
+                playing = false;
+            }} else {{
+                // ユーザー操作直後なのでブラウザのautoplay制限を突破できる
+                audio.play()
+                    .then(function() {{
+                        btn.textContent      = '■ 停止';
+                        btn.style.background = '#b8c8a0';
+                        playing = true;
+                    }})
+                    .catch(function(e) {{
+                        console.error('play() failed:', e);
+                    }});
+            }}
+        }});
+
+        audio.addEventListener('ended', function() {{
+            btn.textContent      = '♪ 耳を澄ます';
+            btn.style.background = '#cfd9b8';
+            playing = false;
         }});
     }})();
     </script>
