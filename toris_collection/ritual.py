@@ -9,7 +9,7 @@ ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
 
 このファイルで使っている技術:
   - Web Audio API(音量・フィルター・エコーの距離変化)
-  - st.iframe(srcdoc=...) — components.v1.html は2026-06-01削除予定のため移行済み
+  - st.iframe(html, ...) — components.v1.html は2026-06-01削除予定のため移行済み
   - lazy loading(音源取得は「耳を澄ます」ボタン押下後にのみ実行、ホームタブを即時表示)
   - top window クエリパラメータで観察記録を Python に渡す
 
@@ -384,4 +384,4 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     </script>
     """
 
-    st.iframe(srcdoc=html, height=_COMPONENT_HEIGHT)
+    st.iframe(html, height=_COMPONENT_HEIGHT)
