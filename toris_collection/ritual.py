@@ -213,12 +213,19 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             margin-top: 10px; min-height: 18px;
             color: #5a7a5a; font-size: 0.82em;
         "></div>
+        <div id="rite_gone" style="
+            min-height: 16px; margin-top: 4px;
+            color: #a08060; font-size: 0.80em;
+            opacity: 0; transition: opacity 0.5s ease;
+        "></div>
     </div>
     <script>
     (function() {{
         const BIRDS = {birds_json};
-        const btn   = document.getElementById('rite_btn');
-        const metEl = document.getElementById('rite_met');
+        const btn    = document.getElementById('rite_btn');
+        const metEl  = document.getElementById('rite_met');
+        const goneEl = document.getElementById('rite_gone');
+        let goneTimer = null;
 
         const D = {{
             far:  {{ gain: 0.05, freq: 450,  wet: 0.45 }},
@@ -296,6 +303,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             ramp(nd.wet.gain, p.wet);
             nd.dist = dist;
             applyVisual(i, dist);
+            if (dist === 'gone') markGone(i);
         }}
 
         function markMet(i) {{
@@ -303,6 +311,15 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             met.add(i);
             metEl.textContent = '🪶 出会えた鳥: ' +
                 [...met].map(j => BIRDS[j].name).join('、');
+        }}
+
+        function markGone(i) {{
+            goneEl.textContent = '🕊 ' + BIRDS[i].name + ' が飛び立ってしまった…';
+            goneEl.style.opacity = '1';
+            if (goneTimer) clearTimeout(goneTimer);
+            goneTimer = setTimeout(function() {{
+                goneEl.style.opacity = '0';
+            }}, 3000);
         }}
 
         function step() {{
