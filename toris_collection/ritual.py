@@ -1,30 +1,39 @@
 """
-ritual.py - 鳥たちのコーラス UI (ステップ4: 複数鳥 + 距離による音響変化)
+ritual.py - 鳥たちのコーラス UI (ステップ5a: スプライト表示 + 距離による視覚変化)
 
-ステップ4の中身:
-  - 滞在鳥のうち最大4羽を同時再生(各鳥が個別の Audio + Filter + Gain + Delay)
-  - 全鳥は「遠く」から始まる(小音量・こもった音・エコー強め)
-  - 4秒ごとに各鳥の距離状態を確率的に遷移(遠→中→近、たまに不在)
-  - 距離が変わると音量・ローパス・エコー量を2.5秒かけて滑らかに変化
-  - iframe内をタップ/スクロールすると数秒「警戒モード」になり、鳥が遠ざかりやすい
-  - さらに確率的な「突然の驚き」で自然に警戒を体験できる
-  - 近距離まで来た鳥は「出会えた鳥」として控えめに表示(記録の保存はステップ5)
+これまでの積み上げ:
+  - ステップ3: 「♪ 耳を澄ます」で音を鳴らす(自動再生制限の突破)
+  - ステップ4: 最大4羽を同時再生し、距離で音量・ローパス・エコーを変化
+  - ステップ4b: 並列ロード・より鮮明なフェード・ランダム警戒
+
+ステップ5aの中身(今回):
+  - 各鳥のドット絵スプライト(designbird/<id>.png)を「情景」に表示
+  - 距離状態に応じてスプライトの大きさ・透明度・前後位置を滑らかに変える
+      遠 = 小さく薄く奥 / 中 = 中くらい / 近 = 大きくはっきり手前 / 不在 = 消える
+  - 音(主)と視覚(副)を同じ距離状態で同期させる(仕様§3-4)
+  - 近距離まで来た鳥は「出会えた鳥」として控えめに表示
+
+まだやらないこと(ステップ5b):
+  - 観察記録の Sheets 保存(localStorage→Python 経路は単独で検証する)
 
 設計原則(仕様§3-3):
-  - 距離レベルの数値・メーター・進捗バーは出さない(情報を秘める)。変化は「音」で伝える。
+  - 距離レベルの数値・メーター・進捗バーは出さない。変化は音と絵で伝える。
   - 「逃げた」は罰ではなく自然現象。安全モードは作らない。
 """
 from __future__ import annotations
 import json
 import base64
 import concurrent.futures
+from pathlib import Path
+
 import streamlit as st
 import streamlit.components.v1 as components
 import xc_client
 
 
-_COMPONENT_HEIGHT = 175
+_COMPONENT_HEIGHT = 330
 _MAX_BIRDS = 4  # 同時再生する最大羽数
+_SPRITE_DIR = Path(__file__).parent / "designbird"
 
 
 @st.cache_data(show_spinner=False)
@@ -33,6 +42,18 @@ def _get_audio_b64(scientific_name: str) -> str | None:
     path = xc_client.download_audio(scientific_name)
     if path and path.exists():
         return base64.b64encode(path.read_bytes()).decode("ascii")
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def _get_sprite_b64(bird_id: str) -> str | None:
+    """ドット絵スプライト(png)をbase64で返す。なければ None(色丸で代替)。"""
+    p = _SPRITE_DIR / f"{bird_id}.png"
+    if p.exists():
+        try:
+            return base64.b64encode(p.read_bytes()).decode("ascii")
+        except Exception:
+            return None
     return None
 
 
@@ -76,6 +97,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                         "color": bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
                         "b64": b64,
+                        "sprite": _get_sprite_b64(bid),
                     })
 
     if not birds:
@@ -96,8 +118,40 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for i, b in enumerate(birds)
     )
 
+    # 情景に並べる鳥スプライト(横方向に等間隔で配置)。
+    # 各鳥は wrapper(距離=大きさ・透明度・前後)+ 内側img(ふわふわ上下のbob)の二層構造。
+    sprite_divs = []
+    for i, b in enumerate(birds):
+        left_pct = (i + 0.5) / n * 100.0
+        if b["sprite"]:
+            inner = (
+                f'<img src="data:image/png;base64,{b["sprite"]}" '
+                f'style="width:60px;height:60px;image-rendering:pixelated;'
+                f'animation:rite_bob {3.0 + i * 0.4:.1f}s ease-in-out infinite;">'
+            )
+        else:
+            inner = (
+                f'<div style="width:46px;height:46px;border-radius:50%;'
+                f'background:{b["color"]};'
+                f'animation:rite_bob {3.0 + i * 0.4:.1f}s ease-in-out infinite;"></div>'
+            )
+        sprite_divs.append(
+            f'<div class="rite_bird" id="rite_bird_{i}" '
+            f'style="position:absolute;left:{left_pct:.1f}%;top:8%;'
+            f'transform:translate(-50%,0) scale(0.5);opacity:0.35;'
+            f'transition:top 2.5s ease,transform 2.5s ease,opacity 2.5s ease;">'
+            f'{inner}</div>'
+        )
+    scene_html = "".join(sprite_divs)
+
     html = f"""
     {audio_tags}
+    <style>
+      @keyframes rite_bob {{
+        0%, 100% {{ margin-top: 0px; }}
+        50%      {{ margin-top: -4px; }}
+      }}
+    </style>
     <div style="
         background: linear-gradient(180deg, #f7faf2 0%, #eef4e6 100%);
         padding: 16px 20px; border-radius: 12px; border-left: 4px solid #7ba87b;
@@ -119,6 +173,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 </div>
             </div>
         </div>
+        <div id="rite_scene" style="
+            position: relative; height: 150px; margin-top: 12px;
+            background: linear-gradient(180deg, #e8f0dd 0%, #d6e4c8 100%);
+            border-radius: 8px; overflow: hidden;
+        ">{scene_html}</div>
         <div id="rite_met" style="
             margin-top: 10px; min-height: 18px;
             color: #5a7a5a; font-size: 0.82em;
@@ -137,14 +196,26 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             near: {{ gain: 1.00, freq: 12000, wet: 0.02 }},
             gone: {{ gain: 0.0,  freq: 400,  wet: 0.0  }}
         }};
-        const RAMP     = 2.5;    // 距離変化にかける秒数(長めにして変化を体感しやすく)
+        // 距離ごとの見た目(scale=大きさ, opacity=濃さ, top=縦位置%。下ほど手前)
+        const V = {{
+            far:  {{ scale: 0.5,  opacity: 0.35, top: 8  }},
+            mid:  {{ scale: 0.8,  opacity: 0.7,  top: 32 }},
+            near: {{ scale: 1.15, opacity: 1.0,  top: 54 }},
+            gone: {{ scale: 0.4,  opacity: 0.0,  top: 4  }}
+        }};
+        const RAMP     = 2.5;    // 距離変化にかける秒数
         const STEP_MS  = 4000;   // 状態遷移チェック間隔(ms)
         const WARY_MS  = 5000;   // 警戒モード持続時間(ms)
         const SPOOK_P  = 0.18;   // 各ステップで「突然の驚き」が起きる確率
 
         let ctx = null, running = false, timer = null, waryUntil = 0;
         const nodes = [];
+        const sprites = [];
         const met = new Set();
+
+        for (let i = 0; i < BIRDS.length; i++) {{
+            sprites.push(document.getElementById('rite_bird_' + i));
+        }}
 
         function buildNode(i) {{
             const audioEl = document.getElementById('rite_audio_' + i);
@@ -167,12 +238,23 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             param.linearRampToValueAtTime(target, t + RAMP);
         }}
 
-        function applyDist(nd, dist) {{
+        function applyVisual(i, dist) {{
+            const sp = sprites[i];
+            if (!sp) return;
+            const v = V[dist];
+            sp.style.top = v.top + '%';
+            sp.style.opacity = v.opacity;
+            sp.style.transform = 'translate(-50%,0) scale(' + v.scale + ')';
+            sp.style.zIndex = Math.round(v.top);  // 手前の鳥を前面に
+        }}
+
+        function applyDist(nd, i, dist) {{
             const p = D[dist];
             ramp(nd.gain.gain, p.gain);
             ramp(nd.filter.frequency, p.freq);
             ramp(nd.wet.gain, p.wet);
             nd.dist = dist;
+            applyVisual(i, dist);
         }}
 
         function markMet(i) {{
@@ -194,20 +276,20 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 const w = BIRDS[i].wariness, r = Math.random();
                 if (wary) {{
                     // 警戒モード: 遠ざかる/消える
-                    if      (nd.dist === 'far'  && r < 0.30) applyDist(nd, 'gone');
-                    else if (nd.dist === 'mid'  && r < 0.45) applyDist(nd, 'far');
-                    else if (nd.dist === 'near' && r < 0.55) applyDist(nd, 'mid');
+                    if      (nd.dist === 'far'  && r < 0.30) applyDist(nd, i, 'gone');
+                    else if (nd.dist === 'mid'  && r < 0.45) applyDist(nd, i, 'far');
+                    else if (nd.dist === 'near' && r < 0.55) applyDist(nd, i, 'mid');
                 }} else {{
                     if (nd.dist === 'far') {{
-                        if      (r < 0.22) applyDist(nd, 'mid');
-                        else if (r < 0.27) applyDist(nd, 'gone');
+                        if      (r < 0.22) applyDist(nd, i, 'mid');
+                        else if (r < 0.27) applyDist(nd, i, 'gone');
                     }} else if (nd.dist === 'mid') {{
                         const pNear = 0.18 * (1 - w * 0.8);
-                        if      (r < pNear)          {{ applyDist(nd, 'near'); markMet(i); }}
-                        else if (r < pNear + 0.04)   applyDist(nd, 'gone');
+                        if      (r < pNear)        {{ applyDist(nd, i, 'near'); markMet(i); }}
+                        else if (r < pNear + 0.04) applyDist(nd, i, 'gone');
                     }} else if (nd.dist === 'near') {{
-                        if      (r < 0.10) applyDist(nd, 'mid');
-                        else if (r < 0.12) applyDist(nd, 'gone');
+                        if      (r < 0.10) applyDist(nd, i, 'mid');
+                        else if (r < 0.12) applyDist(nd, i, 'gone');
                     }}
                 }}
             }}
@@ -227,7 +309,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             for (let i = 0; i < BIRDS.length; i++) {{
                 const nd = buildNode(i);
                 nodes.push(nd);
-                applyDist(nd, 'far');
+                applyDist(nd, i, 'far');
             }}
             playAll();
             startRunning();
