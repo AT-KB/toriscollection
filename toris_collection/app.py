@@ -700,8 +700,7 @@ def render_chorus_button(resident_ids):
     </script>
     """
 
-    import streamlit.components.v1 as components
-    components.html(html, height=120)
+    st.iframe(srcdoc=html, height=120)
 
 
 st.set_page_config(page_title="#Toris Collection#", page_icon="🐦", layout="wide")
@@ -2389,10 +2388,6 @@ with tab_network:
         svg.append("</svg>")
         svg_string = "".join(svg)
 
-        # components.html で固定高さの iframe に埋め込み、SVG はその中で
-        # max-height で収まるようにする。これで確実に画面内に収まる。
-        import streamlit.components.v1 as components
-
         wrapped_html = f"""
         <div style="width:100%; height:100%; display:flex; align-items:flex-start; justify-content:center;">
             <div style="width:100%; max-width:1100px;">
@@ -2437,7 +2432,7 @@ with tab_network:
         </script>
         """
         # 縦横比に基づいた高さ(viewBoxとiframeを一致させる)
-        components.html(wrapped_html, height=component_height, scrolling=False)
+        st.iframe(srcdoc=wrapped_html, height=component_height)
 
         st.caption(
             "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫"
