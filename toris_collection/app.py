@@ -700,7 +700,7 @@ def render_chorus_button(resident_ids):
     </script>
     """
 
-    st.iframe(srcdoc=html, height=120)
+    st.iframe(html, height=120)
 
 
 st.set_page_config(page_title="#Toris Collection#", page_icon="🐦", layout="wide")
@@ -2432,7 +2432,7 @@ with tab_network:
         </script>
         """
         # 縦横比に基づいた高さ(viewBoxとiframeを一致させる)
-        st.iframe(srcdoc=wrapped_html, height=component_height)
+        st.iframe(wrapped_html, height=component_height)
 
         st.caption(
             "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫"

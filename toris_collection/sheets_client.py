@@ -27,6 +27,7 @@ SCOPES = [
 # ====== 認証(プロセス内キャッシュ) ======
 _client_cache = None
 _spreadsheet_cache = None
+_worksheet_cache = {}
 
 
 def _load_credentials():
@@ -56,7 +57,16 @@ def get_spreadsheet():
 
 
 def _ws(name):
-    return get_spreadsheet().worksheet(name)
+    # ワークシートのハンドルをプロセス内キャッシュする。gspread の
+    # .worksheet() は毎回 fetch_sheet_metadata() で API を1往復するため、
+    # ログイン時の連続読み込み(7回前後)で無駄な往復が積み上がっていた。
+    # データ読み出し(get_all_records 等)は常に最新を取得するので、
+    # ハンドルの使い回しは安全。
+    ws = _worksheet_cache.get(name)
+    if ws is None:
+        ws = get_spreadsheet().worksheet(name)
+        _worksheet_cache[name] = ws
+    return ws
 
 
 def now_iso():
