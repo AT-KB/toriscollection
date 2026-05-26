@@ -4,9 +4,10 @@ ritual.py - 鳥たちのコーラス UI (ステップ4: 複数鳥 + 距離によ
 ステップ4の中身:
   - 滞在鳥のうち最大4羽を同時再生(各鳥が個別の Audio + Filter + Gain + Delay)
   - 全鳥は「遠く」から始まる(小音量・こもった音・エコー強め)
-  - 5秒ごとに各鳥の距離状態を確率的に遷移(遠→中→近、たまに不在)
-  - 距離が変わると音量・ローパス・エコー量を1.5秒かけて滑らかに変化
+  - 4秒ごとに各鳥の距離状態を確率的に遷移(遠→中→近、たまに不在)
+  - 距離が変わると音量・ローパス・エコー量を2.5秒かけて滑らかに変化
   - iframe内をタップ/スクロールすると数秒「警戒モード」になり、鳥が遠ざかりやすい
+  - さらに確率的な「突然の驚き」で自然に警戒を体験できる
   - 近距離まで来た鳥は「出会えた鳥」として控えめに表示(記録の保存はステップ5)
 
 設計原則(仕様§3-3):
@@ -16,6 +17,7 @@ ritual.py - 鳥たちのコーラス UI (ステップ4: 複数鳥 + 距離によ
 from __future__ import annotations
 import json
 import base64
+import concurrent.futures
 import streamlit as st
 import streamlit.components.v1 as components
 import xc_client
@@ -34,6 +36,15 @@ def _get_audio_b64(scientific_name: str) -> str | None:
     return None
 
 
+def _fetch_bird_audio(args: tuple) -> tuple:
+    """(bid, bird_dict) → (bid, b64_or_None)  並列実行用"""
+    bid, bird = args
+    sci = bird.get("scientific", "")
+    if not sci:
+        return bid, None
+    return bid, _get_audio_b64(sci)
+
+
 def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     """
     鳥たちのコーラスUI(距離メカニクス)をホームタブに描画する。
@@ -44,33 +55,38 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     if not xc_client.is_enabled():
         return
 
-    # 音源が取れた鳥を最大 _MAX_BIRDS 羽集める
+    # 音源を並列フェッチ(最大 _MAX_BIRDS 羽分)
+    candidates = [
+        (bid, birds_data[bid])
+        for bid in resident_ids
+        if bid in birds_data and birds_data[bid].get("scientific")
+    ][:_MAX_BIRDS * 2]  # 余裕を持って候補を多めに取る
+
     birds = []
     with st.spinner(""):
-        for bid in resident_ids:
-            if len(birds) >= _MAX_BIRDS:
-                break
-            bird = birds_data.get(bid, {})
-            sci = bird.get("scientific", "")
-            if not sci:
-                continue
-            b64 = _get_audio_b64(sci)
-            if not b64:
-                continue
-            birds.append({
-                "id": bid,
-                "name": bird.get("name", bid),
-                "color": bird.get("color", "#888"),
-                "wariness": float(bird.get("wariness", 0.5)),
-                "b64": b64,
-            })
+        with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_BIRDS) as ex:
+            futures = {ex.submit(_fetch_bird_audio, c): c[0] for c in candidates}
+            for future in concurrent.futures.as_completed(futures):
+                bid, b64 = future.result()
+                if b64 and len(birds) < _MAX_BIRDS:
+                    bird = birds_data[bid]
+                    birds.append({
+                        "id": bid,
+                        "name": bird.get("name", bid),
+                        "color": bird.get("color", "#888"),
+                        "wariness": float(bird.get("wariness", 0.5)),
+                        "b64": b64,
+                    })
 
     if not birds:
         return
 
+    # 元の順序(resident_ids の並び)を維持する
+    id_order = {bid: i for i, bid in enumerate(resident_ids)}
+    birds.sort(key=lambda b: id_order.get(b["id"], 999))
+
     n = len(birds)
     names_text = "、".join(b["name"] for b in birds)
-    # JSには音源以外のメタ情報だけ渡す(b64はaudioタグに埋め込み済み)
     birds_meta = [{"name": b["name"], "wariness": b["wariness"]} for b in birds]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
 
@@ -116,29 +132,29 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
         // 距離ごとの音響パラメータ(gain=音量, freq=ローパス遮断, wet=エコー量)
         const D = {{
-            far:  {{ gain: 0.10, freq: 600,  wet: 0.35 }},
-            mid:  {{ gain: 0.45, freq: 2500, wet: 0.15 }},
-            near: {{ gain: 0.95, freq: 9000, wet: 0.05 }},
+            far:  {{ gain: 0.05, freq: 450,  wet: 0.45 }},
+            mid:  {{ gain: 0.45, freq: 2200, wet: 0.15 }},
+            near: {{ gain: 1.00, freq: 12000, wet: 0.02 }},
             gone: {{ gain: 0.0,  freq: 400,  wet: 0.0  }}
         }};
-        const RAMP = 1.5;   // 距離変化にかける秒数
-        const WARY_MS = 4000;
+        const RAMP     = 2.5;    // 距離変化にかける秒数(長めにして変化を体感しやすく)
+        const STEP_MS  = 4000;   // 状態遷移チェック間隔(ms)
+        const WARY_MS  = 5000;   // 警戒モード持続時間(ms)
+        const SPOOK_P  = 0.18;   // 各ステップで「突然の驚き」が起きる確率
 
         let ctx = null, running = false, timer = null, waryUntil = 0;
-        const nodes = [];        // 各鳥のノード一式
-        const met = new Set();   // 近距離まで来た(出会えた)鳥
+        const nodes = [];
+        const met = new Set();
 
         function buildNode(i) {{
             const audioEl = document.getElementById('rite_audio_' + i);
             const src    = ctx.createMediaElementSource(audioEl);
             const filter = ctx.createBiquadFilter();  filter.type = 'lowpass';
             const gain   = ctx.createGain();
-            const delay  = ctx.createDelay(1.0);      delay.delayTime.value = 0.25;
-            const fb     = ctx.createGain();          fb.gain.value = 0.30;
+            const delay  = ctx.createDelay(1.0);      delay.delayTime.value = 0.28;
+            const fb     = ctx.createGain();          fb.gain.value = 0.32;
             const wet    = ctx.createGain();
-            // dry: src -> filter -> gain -> out
             src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
-            // wet(echo): gain -> delay -> wet -> out, delay -> fb -> delay
             gain.connect(delay); delay.connect(fb); fb.connect(delay);
             delay.connect(wet);  wet.connect(ctx.destination);
             return {{ audioEl, filter, gain, wet, dist: 'far' }};
@@ -167,6 +183,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function step() {{
+            // 突然の驚き: ランダムで一時的に警戒モードへ(ユーザー操作なしでも体験できる)
+            if (Math.random() < SPOOK_P) {{
+                waryUntil = Math.max(waryUntil, Date.now() + 2500);
+            }}
             const wary = Date.now() < waryUntil;
             for (let i = 0; i < nodes.length; i++) {{
                 const nd = nodes[i];
@@ -174,19 +194,19 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 const w = BIRDS[i].wariness, r = Math.random();
                 if (wary) {{
                     // 警戒モード: 遠ざかる/消える
-                    if (nd.dist === 'far'  && r < 0.30) applyDist(nd, 'gone');
-                    else if (nd.dist === 'mid'  && r < 0.40) applyDist(nd, 'gone');
-                    else if (nd.dist === 'near' && r < 0.50) applyDist(nd, 'mid');
+                    if      (nd.dist === 'far'  && r < 0.30) applyDist(nd, 'gone');
+                    else if (nd.dist === 'mid'  && r < 0.45) applyDist(nd, 'far');
+                    else if (nd.dist === 'near' && r < 0.55) applyDist(nd, 'mid');
                 }} else {{
                     if (nd.dist === 'far') {{
-                        if (r < 0.20) applyDist(nd, 'mid');
-                        else if (r < 0.25) applyDist(nd, 'gone');
+                        if      (r < 0.22) applyDist(nd, 'mid');
+                        else if (r < 0.27) applyDist(nd, 'gone');
                     }} else if (nd.dist === 'mid') {{
-                        const pNear = 0.15 * (1 - w * 0.8);
-                        if (r < pNear) {{ applyDist(nd, 'near'); markMet(i); }}
-                        else if (r < pNear + 0.03) applyDist(nd, 'gone');
+                        const pNear = 0.18 * (1 - w * 0.8);
+                        if      (r < pNear)          {{ applyDist(nd, 'near'); markMet(i); }}
+                        else if (r < pNear + 0.04)   applyDist(nd, 'gone');
                     }} else if (nd.dist === 'near') {{
-                        if (r < 0.10) applyDist(nd, 'mid');
+                        if      (r < 0.10) applyDist(nd, 'mid');
                         else if (r < 0.12) applyDist(nd, 'gone');
                     }}
                 }}
@@ -196,7 +216,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function playAll() {{ nodes.forEach(nd => nd.audioEl.play().catch(()=>{{}})); }}
 
         function startRunning() {{
-            timer = setInterval(step, 5000);
+            timer = setInterval(step, STEP_MS);
             running = true;
             btn.textContent = '■ 終わる';
             btn.style.background = '#b8c8a0';
@@ -229,10 +249,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             else {{ start(); }}
         }});
 
-        // iframe内のユーザー操作 → 警戒モード(数秒)
+        // iframe内のユーザー操作 → 警戒モード(ボタン自体のクリックは除外)
         ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(ev =>
-            document.addEventListener(ev, function() {{
-                if (running) waryUntil = Date.now() + WARY_MS;
+            document.addEventListener(ev, function(e) {{
+                if (running && e.target !== btn) waryUntil = Date.now() + WARY_MS;
             }}, {{ passive: true }})
         );
     }})();
