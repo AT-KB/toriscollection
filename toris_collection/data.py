@@ -540,6 +540,33 @@ BIRDS = {
 
 
 # ==========================================
+# 警戒度 wariness(0=近づきやすい 〜 1=警戒心が強い)
+# 距離メカニクス(鳥たちのコーラス)で「中→近」の接近確率に使う。
+# 生態(身近さ・生息環境)に基づく設計値。あとからチューニング可能。
+# ==========================================
+_WARINESS = {
+    # 京都
+    "shijukara": 0.30, "suzume": 0.20, "mejiro": 0.40, "hiyodori": 0.35,
+    "uguisu": 0.70, "kogera": 0.50, "yamagara": 0.30, "kibitaki": 0.65,
+    "tsubame": 0.40, "kawasemi": 0.70, "ikaru": 0.55, "kawarahiwa": 0.45,
+    "enaga": 0.50, "kakesu": 0.60,
+    # シドニー
+    "rainbow_lorikeet": 0.30, "kookaburra": 0.35, "australian_magpie": 0.35,
+    "sulphur_crested_cockatoo": 0.40, "eastern_yellow_robin": 0.55,
+    "superb_fairywren": 0.50, "noisy_miner": 0.30, "galah": 0.40,
+    "willie_wagtail": 0.35, "satin_bowerbird": 0.70,
+    # シャーロット
+    "northern_cardinal": 0.35, "blue_jay": 0.35, "eastern_bluebird": 0.45,
+    "american_robin": 0.30, "carolina_wren": 0.45, "pileated_woodpecker": 0.80,
+    "ruby_throated_hummingbird": 0.60, "mourning_dove": 0.35,
+    "tufted_titmouse": 0.40, "american_goldfinch": 0.45, "downy_woodpecker": 0.45,
+}
+for _bid, _w in _WARINESS.items():
+    if _bid in BIRDS:
+        BIRDS[_bid]["wariness"] = _w
+
+
+# ==========================================
 # 季節モデル(月→気温オフセット、北半球基準)
 # 南半球バイオームでは engine.current_temperature が6ヶ月反転して適用する
 # ==========================================
