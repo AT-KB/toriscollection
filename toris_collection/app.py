@@ -700,8 +700,7 @@ def render_chorus_button(resident_ids):
     </script>
     """
 
-    import streamlit.components.v1 as components
-    components.html(html, height=120)
+    st.iframe(srcdoc=html, height=120)
 
 
 st.set_page_config(page_title="#Toris Collection#", page_icon="🐦", layout="wide")
@@ -831,6 +830,12 @@ def load_state_from_sheets(tester_id):
         st.session_state.discovered = sc.load_collection_set(tester_id)
     except Exception:
         st.session_state.discovered = set()
+
+    # 近距離観察記録(儀式で近くまで来た鳥)。{bird_id: {count, first, last}}
+    try:
+        st.session_state.observed = observation_log.load_observation_counts(tester_id)
+    except Exception:
+        st.session_state.observed = {}
 
     # 月は現実時間に同期する(ターン進行を廃止したため)
     now = datetime.now()
@@ -1004,6 +1009,13 @@ def _handle_ritual_observation():
                 pass
     if saved:
         st.session_state["ritual_flash"] = [BIRDS[b].get("name", b) for b in saved]
+        # セッション状態にも即時反映(リロード待ちなしで図鑑へ反映)
+        _observed = st.session_state.setdefault("observed", {})
+        _discovered = st.session_state.setdefault("discovered", set())
+        for bid in saved:
+            rec = _observed.setdefault(bid, {"count": 0, "first": "", "last": ""})
+            rec["count"] += 1
+            _discovered.add(bid)  # 近くで観察できた鳥は当然「来た鳥」でもある
     # パラメータを消す(リロードで再保存しないように)。これ自体が再実行を誘発する。
     st.query_params.clear()
 
@@ -1743,8 +1755,12 @@ with tab_birds:
     # 地域ヘッダの注入用に、各鳥が属するバイオームを把握
     current_header_biome = None
 
+    _observed_map = st.session_state.get("observed", {})
     for b_id, bird in sorted_birds:
-        discovered = b_id in st.session_state.discovered
+        observed = b_id in _observed_map  # 儀式で近くまで来た=詳細解放
+        # 近くで観察できた鳥は当然「来た鳥」でもある
+        discovered = (b_id in st.session_state.discovered) or observed
+        obs_count = _observed_map.get(b_id, {}).get("count", 0)
         if filter_mode == "発見済みのみ" and not discovered: continue
         if filter_mode == "未発見のみ" and discovered: continue
 
@@ -1761,13 +1777,14 @@ with tab_birds:
                     unsafe_allow_html=True
                 )
 
+        _icon = "🪶" if observed else ("🐦" if discovered else "❓")
         with st.expander(
-            f"{'🐦' if discovered else '❓'} "
+            f"{_icon} "
             f"{bird['name'] if discovered else '???'} "
             f"(レア度 {'★' * (1 + int(bird['rarity'] * 5))})",
             expanded=False,
         ):
-            if discovered:
+            if observed:
                 # スプライト(ドット絵)を表示。ファイルがなければ Emoji。
                 sprite_html = render_bird_sprite_html(
                     b_id, size_px=128, fallback_emoji="🐦"
@@ -1788,6 +1805,8 @@ with tab_birds:
                     f"</div></div></div>",
                     unsafe_allow_html=True,
                 )
+                if obs_count:
+                    st.caption(f"🪶 近くで観察できた回数: {obs_count}回")
                 st.write(bird["description"])
 
                 # 外部リンク: 名前で Google画像検索 / Wikipedia を開く
@@ -1959,6 +1978,31 @@ with tab_birds:
                             f"これまで出会った土地:</span>{loc_chips}</div>",
                             unsafe_allow_html=True
                         )
+            elif discovered:
+                # 来た鳥(名前は分かるが、まだ近くで観察できていない=詳細は伏せる)
+                sprite_html = render_bird_sprite_html(
+                    b_id, size_px=96, fallback_emoji="🐦"
+                )
+                bird_color = bird.get("color", "#888")
+                st.markdown(
+                    f"<div style='display:flex; align-items:center; gap:16px; "
+                    f"padding:14px; margin-bottom:8px; "
+                    f"background:linear-gradient(135deg, {bird_color}11, {bird_color}22); "
+                    f"border-radius:10px; border-left:4px solid {bird_color};'>"
+                    f"<div style='flex-shrink:0; opacity:0.85;'>{sprite_html}</div>"
+                    f"<div style='flex-grow:1;'>"
+                    f"<div style='font-size:1.3em; font-weight:600; color:#2a3a2a;'>"
+                    f"{bird['name']}</div>"
+                    f"<div style='color:#888; font-size:0.85em; margin-top:2px;'>"
+                    f"あなたの土地に来たことがあります</div>"
+                    f"</div></div>",
+                    unsafe_allow_html=True,
+                )
+                st.info(
+                    "🔭 まだ遠くから気配を感じただけ。"
+                    "「♪ 耳を澄ます」で近くまで来てくれたら、"
+                    "この鳥の詳しい生態が解放されます。"
+                )
             else:
                 st.write("???")
                 st.caption("環境を整えて、出会えるのを待ちましょう。")
@@ -2344,10 +2388,6 @@ with tab_network:
         svg.append("</svg>")
         svg_string = "".join(svg)
 
-        # components.html で固定高さの iframe に埋め込み、SVG はその中で
-        # max-height で収まるようにする。これで確実に画面内に収まる。
-        import streamlit.components.v1 as components
-
         wrapped_html = f"""
         <div style="width:100%; height:100%; display:flex; align-items:flex-start; justify-content:center;">
             <div style="width:100%; max-width:1100px;">
@@ -2392,7 +2432,7 @@ with tab_network:
         </script>
         """
         # 縦横比に基づいた高さ(viewBoxとiframeを一致させる)
-        components.html(wrapped_html, height=component_height, scrolling=False)
+        st.iframe(srcdoc=wrapped_html, height=component_height)
 
         st.caption(
             "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫"
