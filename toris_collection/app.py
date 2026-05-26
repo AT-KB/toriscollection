@@ -20,7 +20,8 @@ import absence_loop
 import mementos as mem
 from pathlib import Path
 import base64
-from ritual import render_ritual  # 儀式UI(距離メカニクス・第一段階)
+from ritual import render_ritual  # 儀式UI(距離メカニクス)
+import observation_log  # 儀式での近距離観察記録の保存
 
 
 # ============================================================
@@ -979,6 +980,36 @@ def _sheets_safe(fn, *args, **kwargs):
 init_state()
 
 
+def _handle_ritual_observation():
+    """儀式UIが top window のクエリパラメータ ?ritual_obs=id1,id2 を付けて
+    リロードしてきたら、近距離観察を Sheets に保存してパラメータを消す。
+
+    JS(iframe)→ top.location のクエリ → ここ、という JS→Python の片道経路。
+    保存後はパラメータを消し(=再実行)、リロード時の二重保存を防ぐ。
+    """
+    raw = st.query_params.get("ritual_obs")
+    if not raw:
+        return
+    tester_id = st.session_state.get("current_tester_id")
+    biome_id = st.session_state.get("biome", "")
+    bird_ids = [b for b in raw.split(",") if b and b in BIRDS]
+    saved = []
+    if tester_id:
+        for bid in bird_ids:
+            try:
+                observation_log.record_observation(tester_id, bid, biome_id)
+                saved.append(bid)
+            except Exception:
+                pass
+    if saved:
+        st.session_state["ritual_flash"] = [BIRDS[b].get("name", b) for b in saved]
+    # パラメータを消す(リロードで再保存しないように)。これ自体が再実行を誘発する。
+    st.query_params.clear()
+
+
+_handle_ritual_observation()
+
+
 # ============= Header =============
 st.markdown("# 🐦 #Toris Collection#")
 st.markdown(
@@ -1186,9 +1217,15 @@ tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = s
 
 # ---------- Tab: Home ----------
 with tab_home:
-    # ===== 儀式UI(距離メカニクス・第一段階・骨格)=====
+    # 儀式終了時に保存された近距離観察を、控えめに一度だけ知らせる
+    _flash = st.session_state.pop("ritual_flash", None)
+    if _flash:
+        st.success(
+            "🪶 今朝、" + "、".join(_flash) + " が近くまで来てくれました。図鑑に記録しました。"
+        )
+
+    # ===== 儀式UI(距離メカニクス)=====
     # 滞在中の鳥がいる時だけ、ホームタブの最上部に儀式エリアを表示する
-    # ステップ2では音もタイマーもまだ動かない。ボタンとリストの確認のみ
     if st.session_state.get("residents"):
         render_ritual(
             resident_ids=list(st.session_state.residents),

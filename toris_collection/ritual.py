@@ -6,15 +6,18 @@ ritual.py - 鳥たちのコーラス UI (ステップ5a: スプライト表示 +
   - ステップ4: 最大4羽を同時再生し、距離で音量・ローパス・エコーを変化
   - ステップ4b: 並列ロード・より鮮明なフェード・ランダム警戒
 
-ステップ5aの中身(今回):
+ステップ5aの中身:
   - 各鳥のドット絵スプライト(designbird/<id>.png)を「情景」に表示
   - 距離状態に応じてスプライトの大きさ・透明度・前後位置を滑らかに変える
       遠 = 小さく薄く奥 / 中 = 中くらい / 近 = 大きくはっきり手前 / 不在 = 消える
   - 音(主)と視覚(副)を同じ距離状態で同期させる(仕様§3-4)
   - 近距離まで来た鳥は「出会えた鳥」として控えめに表示
 
-まだやらないこと(ステップ5b):
-  - 観察記録の Sheets 保存(localStorage→Python 経路は単独で検証する)
+ステップ5bの中身(今回):
+  - 儀式終了時(「終わる」/他タブへ移動)に、近距離まで来た鳥を観察記録として保存
+  - JS→Python は top window のクエリパラメータ ?ritual_obs=id1,id2 で渡す
+    (components.html は値を返せないため。srcdoc iframe は親と同一オリジン)
+  - app.py がパラメータを読んで observations シートに保存し、図鑑に蓄積する
 
 設計原則(仕様§3-3):
   - 距離レベルの数値・メーター・進捗バーは出さない。変化は音と絵で伝える。
@@ -109,7 +112,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
     n = len(birds)
     names_text = "、".join(b["name"] for b in birds)
-    birds_meta = [{"name": b["name"], "wariness": b["wariness"]} for b in birds]
+    birds_meta = [
+        {"id": b["id"], "name": b["name"], "wariness": b["wariness"]}
+        for b in birds
+    ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
 
     audio_tags = "".join(
@@ -209,9 +215,23 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const SPOOK_P  = 0.18;   // 各ステップで「突然の驚き」が起きる確率
 
         let ctx = null, running = false, timer = null, waryUntil = 0;
+        let saved = false;       // 観察記録を二重送信しないためのフラグ
         const nodes = [];
         const sprites = [];
-        const met = new Set();
+        const met = new Set();   // 近距離まで来た(=観察できた)鳥のindex
+
+        // 儀式終了時に、出会えた鳥を top window のクエリパラメータで Python に渡す。
+        // top.location を書き換えるとアプリ全体がリロードされ、app.py が保存する。
+        function saveObservations() {{
+            if (saved || met.size === 0) return;
+            saved = true;
+            const ids = [...met].map(j => BIRDS[j].id).join(',');
+            try {{
+                const url = new URL(window.top.location.href);
+                url.searchParams.set('ritual_obs', ids);
+                window.top.location.href = url.toString();
+            }} catch (e) {{ /* クロスオリジン等で失敗したら静かに諦める */ }}
+        }}
 
         for (let i = 0; i < BIRDS.length; i++) {{
             sprites.push(document.getElementById('rite_bird_' + i));
@@ -323,7 +343,13 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             running = false;
             btn.textContent = '♪ 耳を澄ます';
             btn.style.background = '#cfd9b8';
+            saveObservations();
         }}
+
+        // 他タブ/他アプリへ移った時も儀式終了とみなして記録する(仕様§4-5)
+        document.addEventListener('visibilitychange', function() {{
+            if (document.hidden && running) saveObservations();
+        }});
 
         btn.addEventListener('click', function() {{
             if (running) {{ stop(); }}
