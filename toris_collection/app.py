@@ -20,6 +20,7 @@ import absence_loop
 import mementos as mem
 from pathlib import Path
 import base64
+import xc_client  # Python 3.14 並行インポートバグ対策: ritual.py より先にロード
 from ritual import render_ritual  # 儀式UI(距離メカニクス)
 import observation_log  # 儀式での近距離観察記録の保存
 

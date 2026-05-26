@@ -1,23 +1,17 @@
 """
-ritual.py - 鳥たちのコーラス UI (ステップ5a: スプライト表示 + 距離による視覚変化)
+ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
 
 これまでの積み上げ:
   - ステップ3: 「♪ 耳を澄ます」で音を鳴らす(自動再生制限の突破)
   - ステップ4: 最大4羽を同時再生し、距離で音量・ローパス・エコーを変化
-  - ステップ4b: 並列ロード・より鮮明なフェード・ランダム警戒
+  - ステップ5a: 各鳥のドット絵スプライトを距離に応じて表示
+  - ステップ5b: 儀式終了時に近距離観察を Sheets に保存
 
-ステップ5aの中身:
-  - 各鳥のドット絵スプライト(designbird/<id>.png)を「情景」に表示
-  - 距離状態に応じてスプライトの大きさ・透明度・前後位置を滑らかに変える
-      遠 = 小さく薄く奥 / 中 = 中くらい / 近 = 大きくはっきり手前 / 不在 = 消える
-  - 音(主)と視覚(副)を同じ距離状態で同期させる(仕様§3-4)
-  - 近距離まで来た鳥は「出会えた鳥」として控えめに表示
-
-ステップ5bの中身(今回):
-  - 儀式終了時(「終わる」/他タブへ移動)に、近距離まで来た鳥を観察記録として保存
-  - JS→Python は top window のクエリパラメータ ?ritual_obs=id1,id2 で渡す
-    (components.html は値を返せないため。srcdoc iframe は親と同一オリジン)
-  - app.py がパラメータを読んで observations シートに保存し、図鑑に蓄積する
+このファイルで使っている技術:
+  - Web Audio API(音量・フィルター・エコーの距離変化)
+  - st.iframe(srcdoc=...) — components.v1.html は2026-06-01削除予定のため移行済み
+  - lazy loading(音源取得は「耳を澄ます」ボタン押下後にのみ実行、ホームタブを即時表示)
+  - top window クエリパラメータで観察記録を Python に渡す
 
 設計原則(仕様§3-3):
   - 距離レベルの数値・メーター・進捗バーは出さない。変化は音と絵で伝える。
@@ -30,12 +24,17 @@ import concurrent.futures
 from pathlib import Path
 
 import streamlit as st
-import streamlit.components.v1 as components
-import xc_client
+
+try:
+    import xc_client
+except (KeyError, AttributeError):
+    # Python 3.14 の並行インポートバグへの保険(他セッションが同時 import した時の KeyError)
+    import importlib
+    xc_client = importlib.import_module("xc_client")
 
 
 _COMPONENT_HEIGHT = 330
-_MAX_BIRDS = 4  # 同時再生する最大羽数
+_MAX_BIRDS = 4
 _SPRITE_DIR = Path(__file__).parent / "designbird"
 
 
@@ -72,22 +71,49 @@ def _fetch_bird_audio(args: tuple) -> tuple:
 def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     """
     鳥たちのコーラスUI(距離メカニクス)をホームタブに描画する。
-    音源が1羽も取れない場合は return し、既存のハーモニーボタンに委ねる。
+
+    ロード戦略(遅延読み込み):
+      - 初回: 軽量な招待ボタンだけ表示(xeno-canto アクセスなし → ホームタブ即時表示)
+      - ボタン押下後のみ音源を取得してフル儀式UIを描画
+      - 2回目以降: @st.cache_data でキャッシュ済み → 即時表示
     """
     if not resident_ids:
         return
     if not xc_client.is_enabled():
         return
 
-    # 音源を並列フェッチ(最大 _MAX_BIRDS 羽分)
+    # ── フェーズ1: 招待ボタン(音源未取得・軽量) ────────────────────────────────
+    if not st.session_state.get("ritual_ready"):
+        n = min(len(resident_ids), _MAX_BIRDS)
+        names = "、".join(
+            birds_data[bid].get("name", bid)
+            for bid in resident_ids[:n]
+            if bid in birds_data
+        )
+        st.markdown(
+            f"""<div style="background:linear-gradient(180deg,#f7faf2,#eef4e6);
+            padding:14px 20px;border-radius:12px;border-left:4px solid #7ba87b;
+            margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+            <div style="color:#5a7a5a;font-size:0.95em;font-weight:500;">
+                ♪ 鳥たちのコーラス ({n}羽)</div>
+            <div style="color:#888;font-size:0.82em;margin-top:3px;">{names}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+        if st.button("♪ 耳を澄ます", key="ritual_init_btn"):
+            st.session_state.ritual_ready = True
+            st.rerun()
+        return
+
+    # ── フェーズ2: 音源取得(初回のみネットワーク、以後キャッシュ) ──────────────
     candidates = [
         (bid, birds_data[bid])
         for bid in resident_ids
         if bid in birds_data and birds_data[bid].get("scientific")
-    ][:_MAX_BIRDS * 2]  # 余裕を持って候補を多めに取る
+    ][:_MAX_BIRDS * 2]
 
     birds = []
-    with st.spinner(""):
+    with st.spinner("鳥の声を呼び込んでいます…"):
         with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_BIRDS) as ex:
             futures = {ex.submit(_fetch_bird_audio, c): c[0] for c in candidates}
             for future in concurrent.futures.as_completed(futures):
@@ -95,15 +121,16 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 if b64 and len(birds) < _MAX_BIRDS:
                     bird = birds_data[bid]
                     birds.append({
-                        "id": bid,
-                        "name": bird.get("name", bid),
-                        "color": bird.get("color", "#888"),
+                        "id":       bid,
+                        "name":     bird.get("name", bid),
+                        "color":    bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
-                        "b64": b64,
-                        "sprite": _get_sprite_b64(bid),
+                        "b64":      b64,
+                        "sprite":   _get_sprite_b64(bid),
                     })
 
     if not birds:
+        st.session_state.ritual_ready = False
         return
 
     # 元の順序(resident_ids の並び)を維持する
@@ -124,8 +151,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for i, b in enumerate(birds)
     )
 
-    # 情景に並べる鳥スプライト(横方向に等間隔で配置)。
-    # 各鳥は wrapper(距離=大きさ・透明度・前後)+ 内側img(ふわふわ上下のbob)の二層構造。
     sprite_divs = []
     for i, b in enumerate(birds):
         left_pct = (i + 0.5) / n * 100.0
@@ -195,33 +220,33 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const btn   = document.getElementById('rite_btn');
         const metEl = document.getElementById('rite_met');
 
-        // 距離ごとの音響パラメータ(gain=音量, freq=ローパス遮断, wet=エコー量)
         const D = {{
             far:  {{ gain: 0.05, freq: 450,  wet: 0.45 }},
             mid:  {{ gain: 0.45, freq: 2200, wet: 0.15 }},
             near: {{ gain: 1.00, freq: 12000, wet: 0.02 }},
             gone: {{ gain: 0.0,  freq: 400,  wet: 0.0  }}
         }};
-        // 距離ごとの見た目(scale=大きさ, opacity=濃さ, top=縦位置%。下ほど手前)
         const V = {{
             far:  {{ scale: 0.5,  opacity: 0.35, top: 8  }},
             mid:  {{ scale: 0.8,  opacity: 0.7,  top: 32 }},
             near: {{ scale: 1.15, opacity: 1.0,  top: 54 }},
             gone: {{ scale: 0.4,  opacity: 0.0,  top: 4  }}
         }};
-        const RAMP     = 2.5;    // 距離変化にかける秒数
-        const STEP_MS  = 4000;   // 状態遷移チェック間隔(ms)
-        const WARY_MS  = 5000;   // 警戒モード持続時間(ms)
-        const SPOOK_P  = 0.18;   // 各ステップで「突然の驚き」が起きる確率
+        const RAMP    = 2.5;
+        const STEP_MS = 4000;
+        const WARY_MS = 5000;
+        const SPOOK_P = 0.18;
 
         let ctx = null, running = false, timer = null, waryUntil = 0;
-        let saved = false;       // 観察記録を二重送信しないためのフラグ
+        let saved = false;
         const nodes = [];
         const sprites = [];
-        const met = new Set();   // 近距離まで来た(=観察できた)鳥のindex
+        const met = new Set();
 
-        // 儀式終了時に、出会えた鳥を top window のクエリパラメータで Python に渡す。
-        // top.location を書き換えるとアプリ全体がリロードされ、app.py が保存する。
+        for (let i = 0; i < BIRDS.length; i++) {{
+            sprites.push(document.getElementById('rite_bird_' + i));
+        }}
+
         function saveObservations() {{
             if (saved || met.size === 0) return;
             saved = true;
@@ -230,20 +255,16 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 const url = new URL(window.top.location.href);
                 url.searchParams.set('ritual_obs', ids);
                 window.top.location.href = url.toString();
-            }} catch (e) {{ /* クロスオリジン等で失敗したら静かに諦める */ }}
-        }}
-
-        for (let i = 0; i < BIRDS.length; i++) {{
-            sprites.push(document.getElementById('rite_bird_' + i));
+            }} catch (e) {{}}
         }}
 
         function buildNode(i) {{
             const audioEl = document.getElementById('rite_audio_' + i);
             const src    = ctx.createMediaElementSource(audioEl);
-            const filter = ctx.createBiquadFilter();  filter.type = 'lowpass';
+            const filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
             const gain   = ctx.createGain();
-            const delay  = ctx.createDelay(1.0);      delay.delayTime.value = 0.28;
-            const fb     = ctx.createGain();          fb.gain.value = 0.32;
+            const delay  = ctx.createDelay(1.0);    delay.delayTime.value = 0.28;
+            const fb     = ctx.createGain();         fb.gain.value = 0.32;
             const wet    = ctx.createGain();
             src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
             gain.connect(delay); delay.connect(fb); fb.connect(delay);
@@ -265,7 +286,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             sp.style.top = v.top + '%';
             sp.style.opacity = v.opacity;
             sp.style.transform = 'translate(-50%,0) scale(' + v.scale + ')';
-            sp.style.zIndex = Math.round(v.top);  // 手前の鳥を前面に
+            sp.style.zIndex = Math.round(v.top);
         }}
 
         function applyDist(nd, i, dist) {{
@@ -285,7 +306,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function step() {{
-            // 突然の驚き: ランダムで一時的に警戒モードへ(ユーザー操作なしでも体験できる)
             if (Math.random() < SPOOK_P) {{
                 waryUntil = Math.max(waryUntil, Date.now() + 2500);
             }}
@@ -295,7 +315,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 if (nd.dist === 'gone') continue;
                 const w = BIRDS[i].wariness, r = Math.random();
                 if (wary) {{
-                    // 警戒モード: 遠ざかる/消える
                     if      (nd.dist === 'far'  && r < 0.30) applyDist(nd, i, 'gone');
                     else if (nd.dist === 'mid'  && r < 0.45) applyDist(nd, i, 'far');
                     else if (nd.dist === 'near' && r < 0.55) applyDist(nd, i, 'mid');
@@ -346,7 +365,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             saveObservations();
         }}
 
-        // 他タブ/他アプリへ移った時も儀式終了とみなして記録する(仕様§4-5)
         document.addEventListener('visibilitychange', function() {{
             if (document.hidden && running) saveObservations();
         }});
@@ -357,7 +375,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             else {{ start(); }}
         }});
 
-        // iframe内のユーザー操作 → 警戒モード(ボタン自体のクリックは除外)
         ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(ev =>
             document.addEventListener(ev, function(e) {{
                 if (running && e.target !== btn) waryUntil = Date.now() + WARY_MS;
@@ -367,4 +384,4 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     </script>
     """
 
-    components.html(html, height=_COMPONENT_HEIGHT)
+    st.iframe(srcdoc=html, height=_COMPONENT_HEIGHT)
