@@ -188,7 +188,7 @@ def reset_tester_data(tester_id):
     """
     targets = [
         "field_state", "plantings", "bird_visits",
-        "collection", "mementos", "bird_notes", "access_logs",
+        "collection", "mementos", "bird_notes", "observations", "access_logs",
     ]
     result = {}
     for sheet_name in targets:
@@ -202,7 +202,8 @@ def reset_tester_data(tester_id):
             to_delete = []
             for i, row in enumerate(rows[1:], start=2):
                 # tester_id は通常 2列目(index 1)、field_state や bird_notes では 1列目
-                if sheet_name in ("field_state", "bird_notes", "collection"):
+                if sheet_name in ("field_state", "bird_notes", "collection",
+                                  "observations"):
                     tester_col = 0
                 else:
                     tester_col = 1
@@ -427,6 +428,47 @@ def update_memento_note(tester_id, memento_row_id, note_text):
             sheet.update(values=[[note_text]], range_name=f"H{i}")
             return True
     return False
+
+
+# ====== observations (儀式での近距離観察記録) ======
+def _ensure_observations_sheet():
+    """observations シートが存在しなければ作成する。"""
+    ss = get_spreadsheet()
+    try:
+        return ss.worksheet("observations")
+    except Exception:
+        ws = ss.add_worksheet(title="observations", rows=2000, cols=4)
+        ws.append_row(["tester_id", "bird_id", "biome", "observed_at"])
+        return ws
+
+
+def add_observation(tester_id, bird_id, biome=""):
+    """近距離まで来た鳥を1行追加する(append-only)。"""
+    sheet = _ensure_observations_sheet()
+    sheet.append_row([tester_id, bird_id, biome, now_iso()])
+
+
+def load_observation_counts(tester_id):
+    """{bird_id: {"count": int, "first": iso, "last": iso}} を返す。"""
+    sheet = _ensure_observations_sheet()
+    rows = sheet.get_all_records()
+    out = {}
+    for r in rows:
+        if str(r.get("tester_id", "")) != tester_id:
+            continue
+        bid = r.get("bird_id", "")
+        if not bid:
+            continue
+        ts = r.get("observed_at", "")
+        if bid not in out:
+            out[bid] = {"count": 0, "first": ts, "last": ts}
+        out[bid]["count"] += 1
+        if ts:
+            if not out[bid]["first"] or ts < out[bid]["first"]:
+                out[bid]["first"] = ts
+            if not out[bid]["last"] or ts > out[bid]["last"]:
+                out[bid]["last"] = ts
+    return out
 
 
 # ====== access_logs ======
