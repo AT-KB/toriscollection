@@ -183,10 +183,23 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         )
     branch_html = "".join(branch_parts)
 
+    # 左右の木の幹: 枝が生えている大木を暗示。z-index:5 で枝の手前に出るが、
+    # 鳥スプライトは z-index がより大きく(top% 由来)、幹の前に来る。
+    trunk_html = (
+        '<div style="position:absolute;top:-5%;left:-1%;width:10%;height:110%;'
+        'z-index:5;pointer-events:none;'
+        'background:linear-gradient(to right,'
+        '#2e1a06 0%,#4a2e10 45%,#6a4020 72%,rgba(90,55,20,0) 100%);"></div>'
+        '<div style="position:absolute;top:-5%;right:-1%;width:10%;height:110%;'
+        'z-index:5;pointer-events:none;'
+        'background:linear-gradient(to left,'
+        '#2e1a06 0%,#4a2e10 45%,#6a4020 72%,rgba(90,55,20,0) 100%);"></div>'
+    )
+
     # スプライト: 最初は b4(奥)の枝にとまった状態
     sprite_divs = []
     for i, b in enumerate(birds):
-        lp = 24.0 + (i + 0.5) / n * 52.0  # b4 のレーン: 24%〜76%
+        lp = 26.0 + (i + 0.5) / n * 48.0  # b4 のレーン: 26%〜74%(幹を避ける)
         if b["sprite"]:
             inner = (
                 f'<img src="data:image/png;base64,{b["sprite"]}" '
@@ -208,7 +221,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             f'opacity 0.75s ease;">'
             f'{inner}</div>'
         )
-    scene_html = branch_html + "".join(sprite_divs)
+    scene_html = trunk_html + branch_html + "".join(sprite_divs)
 
     html = f"""
     {audio_tags}
@@ -277,9 +290,9 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             b2: {{ top: 52, scale: 0.90, opacity: 0.85 }},
             b1: {{ top: 71, scale: 1.18, opacity: 1.00 }}
         }};
-        // 各枝のレーン幅 [left%, right%]
+        // 各枝のレーン幅 [left%, right%] — 左右の幹(0〜9%)を避けた範囲
         const LANE = {{
-            b4: [24, 76], b3: [16, 84], b2: [9, 91], b1: [1.5, 98.5]
+            b4: [26, 74], b3: [20, 80], b2: [15, 85], b1: [13, 87]
         }};
         // 枝間の隣接関係
         const NEXT = {{ b4: 'b3', b3: 'b2', b2: 'b1' }};
