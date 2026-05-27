@@ -984,6 +984,9 @@ with tab_home:
             resident_ids=list(st.session_state.residents),
             biome_id=st.session_state.biome,
             birds_data=BIRDS,
+            planted_ids=st.session_state.planted,
+            plants_data=PLANTS,
+            insects_data=INSECTS,
         )
         st.markdown("---")
 

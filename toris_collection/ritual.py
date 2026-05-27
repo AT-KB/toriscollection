@@ -7,8 +7,11 @@ ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
   - ステップ5a: 各鳥のドット絵スプライトを距離に応じて表示
   - ステップ5b: 儀式終了時に近距離観察を Sheets に保存
   - 改善第一弾: 近距離を驚くほどクリアに(gain増+コンプレッサー+エコー0)、
-    遠近の対比を強化。鳥は「消える」のではなく庭内移動(段階A)/庭の外へ飛び去る
-    (段階B)として表現。
+    遠近の対比を強化。
+  - 改善第二弾: 鳥は食物網でつながりの強い「木」にとまった状態から始まる。
+    接近は一方向(far→mid→near、後退なし)。距離と警戒度に応じた確率で
+    「飛び去る(gone)」のみが退場経路。横揺れ演出を廃止し、木から手前へ
+    まっすぐ降りてくる自然な動きに。
 
 このファイルで使っている技術:
   - Web Audio API(音量・フィルター・エコーの距離変化)
@@ -36,7 +39,7 @@ except (KeyError, AttributeError):
     xc_client = importlib.import_module("xc_client")
 
 
-_COMPONENT_HEIGHT = 330
+_COMPONENT_HEIGHT = 352
 _MAX_BIRDS = 4
 _SPRITE_DIR = Path(__file__).parent / "designbird"
 
@@ -71,7 +74,57 @@ def _fetch_bird_audio(args: tuple) -> tuple:
     return bid, _get_audio_b64(sci)
 
 
-def render_ritual(resident_ids, biome_id: str, birds_data: dict):
+def _perch_for_bird(bird, planted_ids, plants_data, insects_data):
+    """鳥が最初にとまる「木」を食物網のつながりから選ぶ。
+
+    優先順位(つながりが強いほど優先):
+      1. 鳥が直接食べる植物で、いま植えてあるもの
+      2. 鳥の獲物(昆虫)が食べる植物で、いま植えてあるもの
+      3. 鳥が直接食べる植物(未植栽でも)
+      4. 鳥の獲物が食べる植物(未植栽でも)
+      5. どれも無ければ汎用の木 🌳
+
+    Returns: (icon_emoji, plant_name)
+    """
+    planted = set(planted_ids or [])
+    plants_data = plants_data or {}
+    insects_data = insects_data or {}
+
+    def _pick(pid):
+        pl = plants_data.get(pid)
+        if pl:
+            return pl.get("icon", "🌳"), pl.get("name", "")
+        return None
+
+    # 1) 直接食 × 植栽済み
+    for pid in bird.get("eats_plants", []):
+        if pid in planted:
+            r = _pick(pid)
+            if r:
+                return r
+    # 2) 間接食(獲物が食べる) × 植栽済み
+    for ins in bird.get("eats_insects", []):
+        for pid in insects_data.get(ins, {}).get("eats_plants", []):
+            if pid in planted:
+                r = _pick(pid)
+                if r:
+                    return r
+    # 3) 直接食(未植栽でも)
+    for pid in bird.get("eats_plants", []):
+        r = _pick(pid)
+        if r:
+            return r
+    # 4) 間接食(未植栽でも)
+    for ins in bird.get("eats_insects", []):
+        for pid in insects_data.get(ins, {}).get("eats_plants", []):
+            r = _pick(pid)
+            if r:
+                return r
+    return "🌳", ""
+
+
+def render_ritual(resident_ids, biome_id: str, birds_data: dict,
+                  planted_ids=None, plants_data=None, insects_data=None):
     """
     鳥たちのコーラスUI(距離メカニクス)をホームタブに描画する。
 
@@ -123,13 +176,18 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 bid, b64 = future.result()
                 if b64 and len(birds) < _MAX_BIRDS:
                     bird = birds_data[bid]
+                    perch_icon, perch_name = _perch_for_bird(
+                        bird, planted_ids, plants_data, insects_data
+                    )
                     birds.append({
-                        "id":       bid,
-                        "name":     bird.get("name", bid),
-                        "color":    bird.get("color", "#888"),
-                        "wariness": float(bird.get("wariness", 0.5)),
-                        "b64":      b64,
-                        "sprite":   _get_sprite_b64(bid),
+                        "id":         bid,
+                        "name":       bird.get("name", bid),
+                        "color":      bird.get("color", "#888"),
+                        "wariness":   float(bird.get("wariness", 0.5)),
+                        "b64":        b64,
+                        "sprite":     _get_sprite_b64(bid),
+                        "perch_icon": perch_icon,
+                        "perch_name": perch_name,
                     })
 
     if not birds:
@@ -154,6 +212,20 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for i, b in enumerate(birds)
     )
 
+    # 止まり木: 各鳥のレーン上部に、つながりの強い植物アイコンを描く。
+    # 鳥はこの木にとまった状態(far)から始まり、手前へ降りてくる。
+    tree_divs = []
+    for i, b in enumerate(birds):
+        left_pct = (i + 0.5) / n * 100.0
+        tree_divs.append(
+            f'<div class="rite_tree" '
+            f'style="position:absolute;left:{left_pct:.1f}%;top:2px;'
+            f'transform:translateX(-50%);font-size:42px;line-height:1;'
+            f'opacity:0.9;z-index:0;pointer-events:none;'
+            f'filter:drop-shadow(0 2px 2px rgba(60,80,50,0.18));">'
+            f'{b["perch_icon"]}</div>'
+        )
+
     sprite_divs = []
     for i, b in enumerate(birds):
         left_pct = (i + 0.5) / n * 100.0
@@ -171,12 +243,12 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             )
         sprite_divs.append(
             f'<div class="rite_bird" id="rite_bird_{i}" '
-            f'style="position:absolute;left:{left_pct:.1f}%;top:8%;'
-            f'transform:translate(-50%,0) scale(0.5);opacity:0.35;'
+            f'style="position:absolute;left:{left_pct:.1f}%;top:12%;'
+            f'transform:translate(-50%,0) scale(0.5);opacity:0.45;z-index:4;'
             f'transition:top 1.5s ease,left 1.5s ease,transform 1.5s ease,opacity 1.5s ease;">'
             f'{inner}</div>'
         )
-    scene_html = "".join(sprite_divs)
+    scene_html = "".join(tree_divs) + "".join(sprite_divs)
 
     html = f"""
     {audio_tags}
@@ -208,8 +280,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             </div>
         </div>
         <div id="rite_scene" style="
-            position: relative; height: 150px; margin-top: 12px;
-            background: linear-gradient(180deg, #e8f0dd 0%, #d6e4c8 100%);
+            position: relative; height: 172px; margin-top: 12px;
+            background: linear-gradient(180deg, #eaf2e0 0%, #d6e4c8 100%);
             border-radius: 8px; overflow: hidden;
         ">{scene_html}</div>
         <div id="rite_met" style="
@@ -237,26 +309,27 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             gone: {{ gain: 0.0,  freq: 400,   wet: 0.0  }}
         }};
         const V = {{
-            far:  {{ scale: 0.5,  opacity: 0.35, top: 8  }},
-            mid:  {{ scale: 0.8,  opacity: 0.7,  top: 32 }},
-            near: {{ scale: 1.15, opacity: 1.0,  top: 54 }},
+            far:  {{ scale: 0.5,  opacity: 0.45, top: 12 }},
+            mid:  {{ scale: 0.85, opacity: 0.8,  top: 40 }},
+            near: {{ scale: 1.2,  opacity: 1.0,  top: 62 }},
             gone: {{ scale: 0.4,  opacity: 0.0,  top: 4  }}
         }};
         const RAMP    = 1.6;
         const STEP_MS = 4000;
         const WARY_MS = 5000;
         const SPOOK_P = 0.18;
+        // 接近は一方向。各ステップで「近づく確率」と「飛び去る確率」だけを判定する。
+        const ADV  = {{ far: 0.34, mid: 0.24 }};   // 一段近づく基礎確率(警戒度で減衰)
+        const FLEE = {{ far: 0.05, mid: 0.09, near: 0.02 }}; // 飛び去る基礎確率(距離依存)
 
         let ctx = null, master = null, running = false, timer = null, waryUntil = 0;
         let saved = false;
         const nodes = [];
         const sprites = [];
-        const baseLeft = [];
         const met = new Set();
 
         for (let i = 0; i < BIRDS.length; i++) {{
             sprites.push(document.getElementById('rite_bird_' + i));
-            baseLeft.push((i + 0.5) / BIRDS.length * 100);
         }}
 
         function saveObservations() {{
@@ -309,43 +382,32 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             sp.style.zIndex = Math.round(v.top);
         }}
 
-        // 段階A: 庭の中での移動。近距離↔中距離↔遠距離。画面からは消えない。
-        // 同じレーン付近(基準±7%)へ水平に飛び移り、新しい距離の大きさ・位置に着地。
-        function relocate(i, dist) {{
-            const sp = sprites[i];
-            if (!sp) return;
-            const nl = Math.max(8, Math.min(92, baseLeft[i] + (Math.random() * 14 - 7)));
-            sp.style.transition =
-                'top 1.5s ease, left 1.5s ease, transform 1.5s ease, opacity 1.5s ease';
-            sp.style.left = nl.toFixed(1) + '%';
-            applyVisual(i, dist);
-        }}
-
-        // 段階B: 庭からの退場。翼を広げて画面上端の外へ飛び去る軌跡。
+        // 退場: 翼を広げ、画面上端の外へ斜めに飛び去る軌跡(後退ではなく一度きりの離脱)。
         function flyAwayUp(i) {{
             const sp = sprites[i];
             if (!sp) return;
+            const cur = parseFloat(sp.style.left) || 50;
+            const drift = Math.max(0, Math.min(100, cur + (Math.random() * 24 - 12)));
             sp.style.transition =
                 'top 1.6s ease-in, left 1.6s ease-in, transform 1.6s ease-in, opacity 1.6s ease-in';
             sp.style.zIndex = 99;
+            sp.style.left = drift.toFixed(1) + '%';
             sp.style.top = '-35%';
             sp.style.transform = 'translate(-50%,0) scale(0.3) scaleX(1.25)';
             sp.style.opacity = '0';
         }}
 
-        function applyDist(nd, i, dist, animate) {{
+        function applyDist(nd, i, dist) {{
             const p = D[dist];
             rampLin(nd.gain.gain, p.gain);
             rampExp(nd.filter.frequency, p.freq);
             rampLin(nd.wet.gain, p.wet);
-            const prev = nd.dist;
             nd.dist = dist;
             if (dist === 'gone') {{
                 flyAwayUp(i);
                 markGone(i);
-            }} else if (animate !== false && prev && prev !== dist) {{
-                relocate(i, dist);
             }} else {{
+                // 一方向の接近: 木から手前へまっすぐ降りて大きくなる(横揺れなし)。
                 applyVisual(i, dist);
             }}
         }}
@@ -367,31 +429,27 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function step() {{
+            // 自然なスプーク: たまに警戒が高まる。後退はせず「飛び去りやすさ」だけが上がる。
             if (Math.random() < SPOOK_P) {{
                 waryUntil = Math.max(waryUntil, Date.now() + 2500);
             }}
-            const wary = Date.now() < waryUntil;
+            const waryMult = Date.now() < waryUntil ? 3.0 : 1.0;
             for (let i = 0; i < nodes.length; i++) {{
                 const nd = nodes[i];
                 if (nd.dist === 'gone') continue;
-                const w = BIRDS[i].wariness, r = Math.random();
-                if (wary) {{
-                    if      (nd.dist === 'far'  && r < 0.30) applyDist(nd, i, 'gone');
-                    else if (nd.dist === 'mid'  && r < 0.45) applyDist(nd, i, 'far');
-                    else if (nd.dist === 'near' && r < 0.55) applyDist(nd, i, 'mid');
-                }} else {{
-                    if (nd.dist === 'far') {{
-                        if      (r < 0.22) applyDist(nd, i, 'mid');
-                        else if (r < 0.27) applyDist(nd, i, 'gone');
-                    }} else if (nd.dist === 'mid') {{
-                        const pNear = 0.18 * (1 - w * 0.8);
-                        if      (r < pNear)        {{ applyDist(nd, i, 'near'); markMet(i); }}
-                        else if (r < pNear + 0.04) applyDist(nd, i, 'gone');
-                    }} else if (nd.dist === 'near') {{
-                        if      (r < 0.10) applyDist(nd, i, 'mid');
-                        else if (r < 0.12) applyDist(nd, i, 'gone');
+                const w = BIRDS[i].wariness;
+                // 1) 飛び去り判定: 距離(近いほど落ち着く)と警戒度に応じた確率。
+                const pFlee = FLEE[nd.dist] * (1 + w * 1.4) * waryMult;
+                if (Math.random() < pFlee) {{ applyDist(nd, i, 'gone'); continue; }}
+                // 2) 接近判定: 一方向のみ。警戒度が高い鳥ほど近づきにくい。
+                if (nd.dist === 'far') {{
+                    if (Math.random() < ADV.far * (1 - w * 0.6)) applyDist(nd, i, 'mid');
+                }} else if (nd.dist === 'mid') {{
+                    if (Math.random() < ADV.mid * (1 - w * 0.7)) {{
+                        applyDist(nd, i, 'near'); markMet(i);
                     }}
                 }}
+                // near は観察済みとして留まる(退場は飛び去りのみ)。
             }}
         }}
 
@@ -417,7 +475,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             for (let i = 0; i < BIRDS.length; i++) {{
                 const nd = buildNode(i);
                 nodes.push(nd);
-                applyDist(nd, i, 'far', false);
+                applyDist(nd, i, 'far');
             }}
             playAll();
             startRunning();
