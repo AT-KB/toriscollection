@@ -1150,12 +1150,7 @@ with tab_home:
                     f"{reason_html}"
                     f"</div>", unsafe_allow_html=True
                 )
-                # 鳴き声: 儀式で近くまで来た鳥のみ解放
-                _obs_map_home = st.session_state.get("observed", {})
-                if b_id in _obs_map_home:
-                    render_bird_audio(b_id, bird)
-                else:
-                    st.caption("🔒 儀式で近くまで来てくれると、鳴き声を聴けます")
+                render_bird_audio(b_id, bird)
 
 
 # ---------- Tab: Plant ----------
@@ -1719,11 +1714,15 @@ with tab_birds:
                             unsafe_allow_html=True
                         )
             elif discovered:
-                # 来た鳥(名前は分かるが、まだ近くで観察できていない=詳細は伏せる)
+                # 来た鳥(名前・学名・外部リンクは解放、詳細生態は伏せる)
+                import urllib.parse as _urlparse
+                _q_jp2 = _urlparse.quote(bird['name'])
+                _q_sci2 = _urlparse.quote(bird['scientific'])
                 sprite_html = render_bird_sprite_html(
                     b_id, size_px=96, fallback_emoji="🐦"
                 )
                 bird_color = bird.get("color", "#888")
+                en_str = f" / {bird['english']}" if bird.get("english") else ""
                 st.markdown(
                     f"<div style='display:flex; align-items:center; gap:16px; "
                     f"padding:14px; margin-bottom:8px; "
@@ -1733,16 +1732,31 @@ with tab_birds:
                     f"<div style='flex-grow:1;'>"
                     f"<div style='font-size:1.3em; font-weight:600; color:#2a3a2a;'>"
                     f"{bird['name']}</div>"
-                    f"<div style='color:#888; font-size:0.85em; margin-top:2px;'>"
+                    f"<div style='color:#888; font-style:italic; font-size:0.88em;'>"
+                    f"{bird['scientific']}{en_str}</div>"
+                    f"<div style='color:#888; font-size:0.83em; margin-top:4px;'>"
                     f"あなたの土地に来たことがあります</div>"
                     f"</div></div>",
                     unsafe_allow_html=True,
                 )
-                st.info(
-                    "🔭 まだ遠くから気配を感じただけ。"
-                    "「♪ 耳を澄ます」で近くまで来てくれたら、"
-                    "この鳥の詳しい生態が解放されます。"
+                st.markdown(
+                    f"<div style='margin:4px 0 12px 0;'>"
+                    f"<a href='https://www.google.com/search?tbm=isch&q={_q_jp2}+{_q_sci2}' "
+                    f"target='_blank' rel='noopener' "
+                    f"style='display:inline-block; margin-right:8px; padding:4px 10px; "
+                    f"background:#f0f4ec; border-radius:12px; "
+                    f"text-decoration:none; color:#3a5a3a; font-size:0.85em;'>"
+                    f"🖼️ 画像を見る</a>"
+                    f"<a href='https://en.wikipedia.org/wiki/Special:Search?search={_q_sci2}' "
+                    f"target='_blank' rel='noopener' "
+                    f"style='display:inline-block; padding:4px 10px; "
+                    f"background:#f0f4ec; border-radius:12px; "
+                    f"text-decoration:none; color:#3a5a3a; font-size:0.85em;'>"
+                    f"📖 Wikipedia(英)</a>"
+                    f"</div>",
+                    unsafe_allow_html=True,
                 )
+                st.info("🔭 まだ遠くから気配を感じただけ。近くまで来てくれたら、詳しい生態が記録されます。")
             else:
                 st.write("???")
                 st.caption("環境を整えて、出会えるのを待ちましょう。")
