@@ -984,6 +984,9 @@ with tab_home:
             resident_ids=list(st.session_state.residents),
             biome_id=st.session_state.biome,
             birds_data=BIRDS,
+            planted_ids=st.session_state.planted,
+            plants_data=PLANTS,
+            insects_data=INSECTS,
         )
         st.markdown("---")
 
@@ -1150,8 +1153,12 @@ with tab_home:
                     f"{reason_html}"
                     f"</div>", unsafe_allow_html=True
                 )
-                # 鳴き声の再生
-                render_bird_audio(b_id, bird)
+                # 鳴き声: 儀式で近くまで来た鳥のみ解放
+                _obs_map_home = st.session_state.get("observed", {})
+                if b_id in _obs_map_home:
+                    render_bird_audio(b_id, bird)
+                else:
+                    st.caption("🔒 儀式で近くまで来てくれると、鳴き声を聴けます")
 
 
 # ---------- Tab: Plant ----------
@@ -1541,6 +1548,8 @@ with tab_birds:
                 )
                 if obs_count:
                     st.caption(f"🪶 近くで観察できた回数: {obs_count}回")
+                # 観察済みの鳥の鳴き声を図鑑で聴ける(儀式で近づいた報酬)
+                render_bird_audio(b_id, bird)
                 st.write(bird["description"])
 
                 # 外部リンク: 名前で Google画像検索 / Wikipedia を開く
