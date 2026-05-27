@@ -6,6 +6,9 @@ ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
   - ステップ4: 最大4羽を同時再生し、距離で音量・ローパス・エコーを変化
   - ステップ5a: 各鳥のドット絵スプライトを距離に応じて表示
   - ステップ5b: 儀式終了時に近距離観察を Sheets に保存
+  - 改善第一弾: 近距離を驚くほどクリアに(gain増+コンプレッサー+エコー0)、
+    遠近の対比を強化。鳥は「消える」のではなく庭内移動(段階A)/庭の外へ飛び去る
+    (段階B)として表現。
 
 このファイルで使っている技術:
   - Web Audio API(音量・フィルター・エコーの距離変化)
@@ -170,7 +173,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             f'<div class="rite_bird" id="rite_bird_{i}" '
             f'style="position:absolute;left:{left_pct:.1f}%;top:8%;'
             f'transform:translate(-50%,0) scale(0.5);opacity:0.35;'
-            f'transition:top 2.5s ease,transform 2.5s ease,opacity 2.5s ease;">'
+            f'transition:top 1.5s ease,left 1.5s ease,transform 1.5s ease,opacity 1.5s ease;">'
             f'{inner}</div>'
         )
     scene_html = "".join(sprite_divs)
@@ -228,10 +231,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         let goneTimer = null;
 
         const D = {{
-            far:  {{ gain: 0.05, freq: 450,  wet: 0.45 }},
-            mid:  {{ gain: 0.45, freq: 2200, wet: 0.15 }},
-            near: {{ gain: 1.00, freq: 12000, wet: 0.02 }},
-            gone: {{ gain: 0.0,  freq: 400,  wet: 0.0  }}
+            far:  {{ gain: 0.38, freq: 1800,  wet: 0.35 }},
+            mid:  {{ gain: 0.80, freq: 5000,  wet: 0.12 }},
+            near: {{ gain: 1.40, freq: 12000, wet: 0.00 }},
+            gone: {{ gain: 0.0,  freq: 400,   wet: 0.0  }}
         }};
         const V = {{
             far:  {{ scale: 0.5,  opacity: 0.35, top: 8  }},
@@ -239,19 +242,21 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             near: {{ scale: 1.15, opacity: 1.0,  top: 54 }},
             gone: {{ scale: 0.4,  opacity: 0.0,  top: 4  }}
         }};
-        const RAMP    = 2.5;
+        const RAMP    = 1.6;
         const STEP_MS = 4000;
         const WARY_MS = 5000;
         const SPOOK_P = 0.18;
 
-        let ctx = null, running = false, timer = null, waryUntil = 0;
+        let ctx = null, master = null, running = false, timer = null, waryUntil = 0;
         let saved = false;
         const nodes = [];
         const sprites = [];
+        const baseLeft = [];
         const met = new Set();
 
         for (let i = 0; i < BIRDS.length; i++) {{
             sprites.push(document.getElementById('rite_bird_' + i));
+            baseLeft.push((i + 0.5) / BIRDS.length * 100);
         }}
 
         function saveObservations() {{
@@ -273,17 +278,25 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             const delay  = ctx.createDelay(1.0);    delay.delayTime.value = 0.28;
             const fb     = ctx.createGain();         fb.gain.value = 0.32;
             const wet    = ctx.createGain();
-            src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+            src.connect(filter); filter.connect(gain); gain.connect(master);
             gain.connect(delay); delay.connect(fb); fb.connect(delay);
-            delay.connect(wet);  wet.connect(ctx.destination);
+            delay.connect(wet);  wet.connect(master);
             return {{ audioEl, filter, gain, wet, dist: 'far' }};
         }}
 
-        function ramp(param, target) {{
+        function rampLin(param, target) {{
             const t = ctx.currentTime;
             param.cancelScheduledValues(t);
             param.setValueAtTime(param.value, t);
             param.linearRampToValueAtTime(target, t + RAMP);
+        }}
+
+        // 周波数は対数知覚なので指数カーブの方が自然に「近づく」感じになる
+        function rampExp(param, target) {{
+            const t = ctx.currentTime;
+            param.cancelScheduledValues(t);
+            param.setValueAtTime(Math.max(param.value, 1), t);
+            param.exponentialRampToValueAtTime(Math.max(target, 1), t + RAMP);
         }}
 
         function applyVisual(i, dist) {{
@@ -296,14 +309,45 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             sp.style.zIndex = Math.round(v.top);
         }}
 
-        function applyDist(nd, i, dist) {{
-            const p = D[dist];
-            ramp(nd.gain.gain, p.gain);
-            ramp(nd.filter.frequency, p.freq);
-            ramp(nd.wet.gain, p.wet);
-            nd.dist = dist;
+        // 段階A: 庭の中での移動。近距離↔中距離↔遠距離。画面からは消えない。
+        // 同じレーン付近(基準±7%)へ水平に飛び移り、新しい距離の大きさ・位置に着地。
+        function relocate(i, dist) {{
+            const sp = sprites[i];
+            if (!sp) return;
+            const nl = Math.max(8, Math.min(92, baseLeft[i] + (Math.random() * 14 - 7)));
+            sp.style.transition =
+                'top 1.5s ease, left 1.5s ease, transform 1.5s ease, opacity 1.5s ease';
+            sp.style.left = nl.toFixed(1) + '%';
             applyVisual(i, dist);
-            if (dist === 'gone') markGone(i);
+        }}
+
+        // 段階B: 庭からの退場。翼を広げて画面上端の外へ飛び去る軌跡。
+        function flyAwayUp(i) {{
+            const sp = sprites[i];
+            if (!sp) return;
+            sp.style.transition =
+                'top 1.6s ease-in, left 1.6s ease-in, transform 1.6s ease-in, opacity 1.6s ease-in';
+            sp.style.zIndex = 99;
+            sp.style.top = '-35%';
+            sp.style.transform = 'translate(-50%,0) scale(0.3) scaleX(1.25)';
+            sp.style.opacity = '0';
+        }}
+
+        function applyDist(nd, i, dist, animate) {{
+            const p = D[dist];
+            rampLin(nd.gain.gain, p.gain);
+            rampExp(nd.filter.frequency, p.freq);
+            rampLin(nd.wet.gain, p.wet);
+            const prev = nd.dist;
+            nd.dist = dist;
+            if (dist === 'gone') {{
+                flyAwayUp(i);
+                markGone(i);
+            }} else if (animate !== false && prev && prev !== dist) {{
+                relocate(i, dist);
+            }} else {{
+                applyVisual(i, dist);
+            }}
         }}
 
         function markMet(i) {{
@@ -314,7 +358,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function markGone(i) {{
-            goneEl.textContent = '🕊 ' + BIRDS[i].name + ' が飛び立ってしまった…';
+            goneEl.textContent = '🕊 ' + BIRDS[i].name + ' は庭の向こうへ去った';
             goneEl.style.opacity = '1';
             if (goneTimer) clearTimeout(goneTimer);
             goneTimer = setTimeout(function() {{
@@ -362,10 +406,18 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
         function start() {{
             ctx = new (window.AudioContext || window.webkitAudioContext)();
+            // マスターにコンプレッサー: 近距離 gain>1.0 でもクリップせず音量感を安定
+            master = ctx.createDynamicsCompressor();
+            master.threshold.value = -10;
+            master.knee.value = 10;
+            master.ratio.value = 4;
+            master.attack.value = 0.003;
+            master.release.value = 0.25;
+            master.connect(ctx.destination);
             for (let i = 0; i < BIRDS.length; i++) {{
                 const nd = buildNode(i);
                 nodes.push(nd);
-                applyDist(nd, i, 'far');
+                applyDist(nd, i, 'far', false);
             }}
             playAll();
             startRunning();
