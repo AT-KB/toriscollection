@@ -155,51 +155,47 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for i, b in enumerate(birds)
     )
 
-    # 枝レイアウト: b4=奥(上・小) 〜 b1=手前(下・大)
-    # (top%, width%, stroke_w, color, opacity, with_twig)
+    # 木のレイアウト: 各枝の両端に幹を立て、遠近で太さ・高さ・幅・位置を変える。
+    # b4=奥(細い幹・狭い間隔・上) 〜 b1=手前(太い幹・広い間隔・下)
+    # (branch_top%, half_width%, trunk_w_px, branch_h_px, opacity, z)
     _BRANCH_SPECS = [
-        (14, 52,  3, "#9B7050", 0.45, False),  # b4: 奥
-        (33, 67,  5, "#7a5030", 0.62, False),  # b3
-        (52, 82,  7, "#5e3c16", 0.80, True),   # b2
-        (71, 97, 10, "#4a2c06", 0.95, True),   # b1: 手前
+        (18, 20, 10,  4, 0.55, 10),  # b4: 奥
+        (36, 27, 15,  6, 0.70, 20),  # b3
+        (55, 35, 21,  9, 0.86, 30),  # b2
+        (73, 43, 29, 13, 1.00, 40),  # b1: 手前
     ]
-    branch_parts = []
-    for bnum_idx, (tp, wp, sw, col, op, with_twig) in enumerate(_BRANCH_SPECS):
-        lp = (100 - wp) / 2
-        twig = (
-            f'<path d="M148,14 Q163,7 178,4" stroke="{col}" '
-            f'stroke-width="{max(1, sw // 2)}" fill="none" stroke-linecap="round"/>'
-            if with_twig else ""
-        )
-        branch_parts.append(
-            f'<div style="position:absolute;top:{tp}%;left:{lp:.1f}%;width:{wp}%;'
-            f'opacity:{op};z-index:1;pointer-events:none;">'
-            f'<svg viewBox="0 0 200 28" preserveAspectRatio="none" '
-            f'style="width:100%;height:16px;display:block;overflow:visible;">'
-            f'<path d="M2,18 Q55,11 100,15 Q148,19 198,13" '
-            f'stroke="{col}" stroke-width="{sw}" fill="none" stroke-linecap="round"/>'
-            f'{twig}'
-            f'</svg></div>'
-        )
-    branch_html = "".join(branch_parts)
-
-    # 左右の木の幹: 枝が生えている大木を暗示。z-index:5 で枝の手前に出るが、
-    # 鳥スプライトは z-index がより大きく(top% 由来)、幹の前に来る。
-    trunk_html = (
-        '<div style="position:absolute;top:-5%;left:-1%;width:10%;height:110%;'
-        'z-index:5;pointer-events:none;'
-        'background:linear-gradient(to right,'
-        '#2e1a06 0%,#4a2e10 45%,#6a4020 72%,rgba(90,55,20,0) 100%);"></div>'
-        '<div style="position:absolute;top:-5%;right:-1%;width:10%;height:110%;'
-        'z-index:5;pointer-events:none;'
-        'background:linear-gradient(to left,'
-        '#2e1a06 0%,#4a2e10 45%,#6a4020 72%,rgba(90,55,20,0) 100%);"></div>'
+    _TRUNK_GRAD = (
+        "linear-gradient(to right,"
+        "#2a190a 0%,#553818 30%,#84623a 52%,#4d341a 74%,#241509 100%)"
     )
+    scene_parts = []
+    for (tp, half, tw, bh, op, z) in _BRANCH_SPECS:
+        lx = 50 - half           # 左の幹の中心 %
+        rx = 50 + half           # 右の幹の中心 %
+        th = 116 - tp            # 幹の高さ %(画面下端より下まで=地面に根づく)
+        bw = 2 * half            # 枝の横幅 %
+        rad = max(2, tw // 3)
+        # 枝(2本の幹をつなぐ横木)
+        scene_parts.append(
+            f'<div style="position:absolute;top:{tp}%;left:{lx:.1f}%;width:{bw:.1f}%;'
+            f'height:{bh}px;background:linear-gradient(180deg,#70502c,#3a2410);'
+            f'border-radius:{bh}px;opacity:{op};z-index:{z};pointer-events:none;'
+            f'box-shadow:0 1px 2px rgba(35,22,8,0.3);"></div>'
+        )
+        # 左右の幹(地面まで伸びる)
+        for cx in (lx, rx):
+            scene_parts.append(
+                f'<div style="position:absolute;top:{tp}%;left:{cx:.1f}%;width:{tw}px;'
+                f'height:{th}%;transform:translateX(-50%);background:{_TRUNK_GRAD};'
+                f'border-radius:{rad}px {rad}px 0 0;opacity:{op};z-index:{z};'
+                f'pointer-events:none;box-shadow:inset 0 0 5px rgba(18,10,3,0.45);"></div>'
+            )
+    branch_html = "".join(scene_parts)
 
-    # スプライト: 最初は b4(奥)の枝にとまった状態
+    # スプライト: 最初は b4(奥)の枝にとまった状態(幹の内側 33%〜67%)
     sprite_divs = []
     for i, b in enumerate(birds):
-        lp = 26.0 + (i + 0.5) / n * 48.0  # b4 のレーン: 26%〜74%(幹を避ける)
+        lp = 33.0 + (i + 0.5) / n * 34.0
         if b["sprite"]:
             inner = (
                 f'<img src="data:image/png;base64,{b["sprite"]}" '
@@ -214,14 +210,14 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             )
         sprite_divs.append(
             f'<div class="rite_bird" id="rite_bird_{i}" '
-            f'style="position:absolute;left:{lp:.1f}%;top:14%;'
-            f'transform:translate(-50%,0) scale(0.52);opacity:0.45;z-index:4;'
+            f'style="position:absolute;left:{lp:.1f}%;top:12%;'
+            f'transform:translate(-50%,0) scale(0.52);opacity:0.55;z-index:12;'
             f'transition:top 0.75s cubic-bezier(.36,.07,.19,.97),'
             f'left 0.75s ease,transform 0.75s cubic-bezier(.36,.07,.19,.97),'
             f'opacity 0.75s ease;">'
             f'{inner}</div>'
         )
-    scene_html = trunk_html + branch_html + "".join(sprite_divs)
+    scene_html = branch_html + "".join(sprite_divs)
 
     html = f"""
     {audio_tags}
@@ -283,16 +279,16 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             b1:   {{ gain: 1.40, freq: 12000, wet: 0.00 }},
             gone: {{ gain: 0.00, freq: 400,  wet: 0.00 }}
         }};
-        // 視覚パラメータ(top% = シーン上端からの位置)
+        // 視覚パラメータ(top% = 枝の高さ。z は手前の幹より前/奥の幹より後ろに来るよう設定)
         const BR = {{
-            b4: {{ top: 14, scale: 0.52, opacity: 0.45 }},
-            b3: {{ top: 33, scale: 0.70, opacity: 0.68 }},
-            b2: {{ top: 52, scale: 0.90, opacity: 0.85 }},
-            b1: {{ top: 71, scale: 1.18, opacity: 1.00 }}
+            b4: {{ top: 12, scale: 0.52, opacity: 0.55, z: 12 }},
+            b3: {{ top: 30, scale: 0.70, opacity: 0.72, z: 22 }},
+            b2: {{ top: 48, scale: 0.92, opacity: 0.88, z: 32 }},
+            b1: {{ top: 65, scale: 1.18, opacity: 1.00, z: 42 }}
         }};
-        // 各枝のレーン幅 [left%, right%] — 左右の幹(0〜9%)を避けた範囲
+        // 各枝のレーン幅 [left%, right%] — 各枝の両端の幹の内側
         const LANE = {{
-            b4: [26, 74], b3: [20, 80], b2: [15, 85], b1: [13, 87]
+            b4: [33, 67], b3: [26, 74], b2: [19, 81], b1: [12, 88]
         }};
         // 枝間の隣接関係
         const NEXT = {{ b4: 'b3', b3: 'b2', b2: 'b1' }};
@@ -309,6 +305,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const n = BIRDS.length;
 
         let ctx = null, master = null, running = false, timer = null, waryUntil = 0;
+        let rafId = null;
         let saved = false;
         const nodes    = [];
         const sprites  = [];
@@ -336,15 +333,26 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function buildNode(i) {{
             const audioEl = document.getElementById('rite_audio_' + i);
             const src    = ctx.createMediaElementSource(audioEl);
+            // ハイパス: 風・ハンドリングノイズなど低域のゴーッという音を除去
+            const hp     = ctx.createBiquadFilter(); hp.type = 'highpass';
+            hp.frequency.value = 520; hp.Q.value = 0.7;
+            // ローパス: 距離でこもり具合を変える(D[branch].freq)
             const filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
+            // ノイズゲート用ゲイン: 鳴き声の合間のサーッというヒスを絞る
+            const gate   = ctx.createGain(); gate.gain.value = 1.0;
             const gain   = ctx.createGain();
             const delay  = ctx.createDelay(1.0); delay.delayTime.value = 0.28;
-            const fb     = ctx.createGain(); fb.gain.value = 0.32;
+            const fb     = ctx.createGain(); fb.gain.value = 0.30;
             const wet    = ctx.createGain();
-            src.connect(filter); filter.connect(gain); gain.connect(master);
+            // レベル監視用アナライザ(出力には接続しない)
+            const ana    = ctx.createAnalyser(); ana.fftSize = 512;
+            src.connect(hp); hp.connect(filter);
+            filter.connect(ana);
+            filter.connect(gate); gate.connect(gain); gain.connect(master);
             gain.connect(delay); delay.connect(fb); fb.connect(delay);
             delay.connect(wet); wet.connect(master);
-            return {{ audioEl, filter, gain, wet, branch: 'b4' }};
+            return {{ audioEl, filter, gain, wet, gate, ana,
+                      buf: new Float32Array(ana.fftSize), branch: 'b4' }};
         }}
 
         function rampLin(param, target) {{
@@ -375,7 +383,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             sp.style.top       = v.top + '%';
             sp.style.transform = 'translate(-50%,0) scale(' + v.scale + ')';
             sp.style.opacity   = v.opacity;
-            sp.style.zIndex    = Math.round(v.top);
+            sp.style.zIndex    = v.z;
         }}
 
         // 飛び去り: 斜めに画面外へ(どの枝からでも)
@@ -454,11 +462,32 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
         function playAll() {{ nodes.forEach(nd => nd.audioEl.play().catch(()=>{{}})); }}
 
+        // ノイズゲート: 各音源の音量を監視し、鳴き声の合間(静かな区間)は
+        // ゲインを絞って背景のサーッというヒスを目立たなくする(癒し向け)。
+        const GATE_THRESH = 0.020;   // この RMS 未満を「ほぼ無音=ノイズ」とみなす
+        const GATE_FLOOR  = 0.12;    // 絞り切らず薄く残す(自然さのため)
+        function gateTick() {{
+            if (!running || !ctx) return;
+            const t = ctx.currentTime;
+            for (let i = 0; i < nodes.length; i++) {{
+                const nd = nodes[i];
+                if (nd.branch === 'gone') continue;
+                nd.ana.getFloatTimeDomainData(nd.buf);
+                let sum = 0;
+                for (let k = 0; k < nd.buf.length; k++) sum += nd.buf[k] * nd.buf[k];
+                const rms = Math.sqrt(sum / nd.buf.length);
+                nd.gate.gain.setTargetAtTime(rms < GATE_THRESH ? GATE_FLOOR : 1.0, t, 0.06);
+            }}
+            rafId = requestAnimationFrame(gateTick);
+        }}
+
         function startRunning() {{
             timer = setInterval(step, STEP_MS);
             running = true;
             btn.textContent = '■ 終わる';
             btn.style.background = '#b8c8a0';
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(gateTick);
         }}
 
         function start() {{
@@ -486,6 +515,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function stop() {{
             if (timer) clearInterval(timer);
             timer = null;
+            if (rafId) {{ cancelAnimationFrame(rafId); rafId = null; }}
             nodes.forEach(nd => {{ try {{ nd.audioEl.pause(); }} catch(e) {{}} }});
             if (ctx) ctx.suspend();
             running = false;
