@@ -8,10 +8,9 @@ ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
   - ステップ5b: 儀式終了時に近距離観察を Sheets に保存
   - 改善第一弾: 近距離を驚くほどクリアに(gain増+コンプレッサー+エコー0)、
     遠近の対比を強化。
-  - 改善第二弾: 鳥は食物網でつながりの強い「木」にとまった状態から始まる。
-    接近は一方向(far→mid→near、後退なし)。距離と警戒度に応じた確率で
-    「飛び去る(gone)」のみが退場経路。横揺れ演出を廃止し、木から手前へ
-    まっすぐ降りてくる自然な動きに。
+  - 改善第二弾: 奥から手前に4本の枝(SVG)が並び、鳥が枝を行き来する。
+    手前の枝(b1)に来た瞬間に観察記録。飛び立ちはどの枝からでも起こりうる。
+    隣の枝への往復ホップで「ぴょんぴょん」感を表現。
 
 このファイルで使っている技術:
   - Web Audio API(音量・フィルター・エコーの距離変化)
@@ -34,12 +33,12 @@ import streamlit as st
 try:
     import xc_client
 except (KeyError, AttributeError):
-    # Python 3.14 の並行インポートバグへの保険(他セッションが同時 import した時の KeyError)
+    # Python 3.14 の並行インポートバグへの保険
     import importlib
     xc_client = importlib.import_module("xc_client")
 
 
-_COMPONENT_HEIGHT = 352
+_COMPONENT_HEIGHT = 390
 _MAX_BIRDS = 4
 _SPRITE_DIR = Path(__file__).parent / "designbird"
 
@@ -74,59 +73,9 @@ def _fetch_bird_audio(args: tuple) -> tuple:
     return bid, _get_audio_b64(sci)
 
 
-def _perch_for_bird(bird, planted_ids, plants_data, insects_data):
-    """鳥が最初にとまる「木」を食物網のつながりから選ぶ。
-
-    優先順位(つながりが強いほど優先):
-      1. 鳥が直接食べる植物で、いま植えてあるもの
-      2. 鳥の獲物(昆虫)が食べる植物で、いま植えてあるもの
-      3. 鳥が直接食べる植物(未植栽でも)
-      4. 鳥の獲物が食べる植物(未植栽でも)
-      5. どれも無ければ汎用の木 🌳
-
-    Returns: (icon_emoji, plant_name)
+def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     """
-    planted = set(planted_ids or [])
-    plants_data = plants_data or {}
-    insects_data = insects_data or {}
-
-    def _pick(pid):
-        pl = plants_data.get(pid)
-        if pl:
-            return pl.get("icon", "🌳"), pl.get("name", "")
-        return None
-
-    # 1) 直接食 × 植栽済み
-    for pid in bird.get("eats_plants", []):
-        if pid in planted:
-            r = _pick(pid)
-            if r:
-                return r
-    # 2) 間接食(獲物が食べる) × 植栽済み
-    for ins in bird.get("eats_insects", []):
-        for pid in insects_data.get(ins, {}).get("eats_plants", []):
-            if pid in planted:
-                r = _pick(pid)
-                if r:
-                    return r
-    # 3) 直接食(未植栽でも)
-    for pid in bird.get("eats_plants", []):
-        r = _pick(pid)
-        if r:
-            return r
-    # 4) 間接食(未植栽でも)
-    for ins in bird.get("eats_insects", []):
-        for pid in insects_data.get(ins, {}).get("eats_plants", []):
-            r = _pick(pid)
-            if r:
-                return r
-    return "🌳", ""
-
-
-def render_ritual(resident_ids, biome_id: str, birds_data: dict,
-                  planted_ids=None, plants_data=None, insects_data=None):
-    """
-    鳥たちのコーラスUI(距離メカニクス)をホームタブに描画する。
+    鳥たちのコーラスUI(4本枝・ホップメカニクス)をホームタブに描画する。
 
     ロード戦略(遅延読み込み):
       - 初回: 軽量な招待ボタンだけ表示(xeno-canto アクセスなし → ホームタブ即時表示)
@@ -176,25 +125,19 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
                 bid, b64 = future.result()
                 if b64 and len(birds) < _MAX_BIRDS:
                     bird = birds_data[bid]
-                    perch_icon, perch_name = _perch_for_bird(
-                        bird, planted_ids, plants_data, insects_data
-                    )
                     birds.append({
-                        "id":         bid,
-                        "name":       bird.get("name", bid),
-                        "color":      bird.get("color", "#888"),
-                        "wariness":   float(bird.get("wariness", 0.5)),
-                        "b64":        b64,
-                        "sprite":     _get_sprite_b64(bid),
-                        "perch_icon": perch_icon,
-                        "perch_name": perch_name,
+                        "id":       bid,
+                        "name":     bird.get("name", bid),
+                        "color":    bird.get("color", "#888"),
+                        "wariness": float(bird.get("wariness", 0.5)),
+                        "b64":      b64,
+                        "sprite":   _get_sprite_b64(bid),
                     })
 
     if not birds:
         st.session_state.ritual_ready = False
         return
 
-    # 元の順序(resident_ids の並び)を維持する
     id_order = {bid: i for i, bid in enumerate(resident_ids)}
     birds.sort(key=lambda b: id_order.get(b["id"], 999))
 
@@ -212,23 +155,38 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
         for i, b in enumerate(birds)
     )
 
-    # 止まり木: 各鳥のレーン上部に、つながりの強い植物アイコンを描く。
-    # 鳥はこの木にとまった状態(far)から始まり、手前へ降りてくる。
-    tree_divs = []
-    for i, b in enumerate(birds):
-        left_pct = (i + 0.5) / n * 100.0
-        tree_divs.append(
-            f'<div class="rite_tree" '
-            f'style="position:absolute;left:{left_pct:.1f}%;top:2px;'
-            f'transform:translateX(-50%);font-size:42px;line-height:1;'
-            f'opacity:0.9;z-index:0;pointer-events:none;'
-            f'filter:drop-shadow(0 2px 2px rgba(60,80,50,0.18));">'
-            f'{b["perch_icon"]}</div>'
+    # 枝レイアウト: b4=奥(上・小) 〜 b1=手前(下・大)
+    # (top%, width%, stroke_w, color, opacity, with_twig)
+    _BRANCH_SPECS = [
+        (14, 52,  3, "#9B7050", 0.45, False),  # b4: 奥
+        (33, 67,  5, "#7a5030", 0.62, False),  # b3
+        (52, 82,  7, "#5e3c16", 0.80, True),   # b2
+        (71, 97, 10, "#4a2c06", 0.95, True),   # b1: 手前
+    ]
+    branch_parts = []
+    for bnum_idx, (tp, wp, sw, col, op, with_twig) in enumerate(_BRANCH_SPECS):
+        lp = (100 - wp) / 2
+        twig = (
+            f'<path d="M148,14 Q163,7 178,4" stroke="{col}" '
+            f'stroke-width="{max(1, sw // 2)}" fill="none" stroke-linecap="round"/>'
+            if with_twig else ""
         )
+        branch_parts.append(
+            f'<div style="position:absolute;top:{tp}%;left:{lp:.1f}%;width:{wp}%;'
+            f'opacity:{op};z-index:1;pointer-events:none;">'
+            f'<svg viewBox="0 0 200 28" preserveAspectRatio="none" '
+            f'style="width:100%;height:16px;display:block;overflow:visible;">'
+            f'<path d="M2,18 Q55,11 100,15 Q148,19 198,13" '
+            f'stroke="{col}" stroke-width="{sw}" fill="none" stroke-linecap="round"/>'
+            f'{twig}'
+            f'</svg></div>'
+        )
+    branch_html = "".join(branch_parts)
 
+    # スプライト: 最初は b4(奥)の枝にとまった状態
     sprite_divs = []
     for i, b in enumerate(birds):
-        left_pct = (i + 0.5) / n * 100.0
+        lp = 24.0 + (i + 0.5) / n * 52.0  # b4 のレーン: 24%〜76%
         if b["sprite"]:
             inner = (
                 f'<img src="data:image/png;base64,{b["sprite"]}" '
@@ -243,19 +201,21 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
             )
         sprite_divs.append(
             f'<div class="rite_bird" id="rite_bird_{i}" '
-            f'style="position:absolute;left:{left_pct:.1f}%;top:12%;'
-            f'transform:translate(-50%,0) scale(0.5);opacity:0.45;z-index:4;'
-            f'transition:top 1.5s ease,left 1.5s ease,transform 1.5s ease,opacity 1.5s ease;">'
+            f'style="position:absolute;left:{lp:.1f}%;top:14%;'
+            f'transform:translate(-50%,0) scale(0.52);opacity:0.45;z-index:4;'
+            f'transition:top 0.75s cubic-bezier(.36,.07,.19,.97),'
+            f'left 0.75s ease,transform 0.75s cubic-bezier(.36,.07,.19,.97),'
+            f'opacity 0.75s ease;">'
             f'{inner}</div>'
         )
-    scene_html = "".join(tree_divs) + "".join(sprite_divs)
+    scene_html = branch_html + "".join(sprite_divs)
 
     html = f"""
     {audio_tags}
     <style>
       @keyframes rite_bob {{
         0%, 100% {{ margin-top: 0px; }}
-        50%      {{ margin-top: -4px; }}
+        50%      {{ margin-top: -5px; }}
       }}
     </style>
     <div style="
@@ -280,8 +240,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
             </div>
         </div>
         <div id="rite_scene" style="
-            position: relative; height: 172px; margin-top: 12px;
-            background: linear-gradient(180deg, #eaf2e0 0%, #d6e4c8 100%);
+            position: relative; height: 195px; margin-top: 12px;
+            background: linear-gradient(180deg, #c4dab8 0%, #d4e8c0 55%, #c0dca8 100%);
             border-radius: 8px; overflow: hidden;
         ">{scene_html}</div>
         <div id="rite_met" style="
@@ -302,34 +262,51 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
         const goneEl = document.getElementById('rite_gone');
         let goneTimer = null;
 
+        // 音響パラメータ: b1=手前(クリア) ～ b4=奥(くもった)
         const D = {{
-            far:  {{ gain: 0.38, freq: 1800,  wet: 0.35 }},
-            mid:  {{ gain: 0.80, freq: 5000,  wet: 0.12 }},
-            near: {{ gain: 1.40, freq: 12000, wet: 0.00 }},
-            gone: {{ gain: 0.0,  freq: 400,   wet: 0.0  }}
+            b4:   {{ gain: 0.22, freq: 1200, wet: 0.50 }},
+            b3:   {{ gain: 0.50, freq: 3500, wet: 0.28 }},
+            b2:   {{ gain: 0.88, freq: 7000, wet: 0.12 }},
+            b1:   {{ gain: 1.40, freq: 12000, wet: 0.00 }},
+            gone: {{ gain: 0.00, freq: 400,  wet: 0.00 }}
         }};
-        const V = {{
-            far:  {{ scale: 0.5,  opacity: 0.45, top: 12 }},
-            mid:  {{ scale: 0.85, opacity: 0.8,  top: 40 }},
-            near: {{ scale: 1.2,  opacity: 1.0,  top: 62 }},
-            gone: {{ scale: 0.4,  opacity: 0.0,  top: 4  }}
+        // 視覚パラメータ(top% = シーン上端からの位置)
+        const BR = {{
+            b4: {{ top: 14, scale: 0.52, opacity: 0.45 }},
+            b3: {{ top: 33, scale: 0.70, opacity: 0.68 }},
+            b2: {{ top: 52, scale: 0.90, opacity: 0.85 }},
+            b1: {{ top: 71, scale: 1.18, opacity: 1.00 }}
         }};
-        const RAMP    = 1.6;
-        const STEP_MS = 4000;
+        // 各枝のレーン幅 [left%, right%]
+        const LANE = {{
+            b4: [24, 76], b3: [16, 84], b2: [9, 91], b1: [1.5, 98.5]
+        }};
+        // 枝間の隣接関係
+        const NEXT = {{ b4: 'b3', b3: 'b2', b2: 'b1' }};
+        const PREV = {{ b3: 'b4', b2: 'b3', b1: 'b2' }};
+        // 各枝でのホップ確率(基準値、wariness で調整)
+        const ADV  = {{ b4: 0.32, b3: 0.26, b2: 0.20 }};   // 手前方向(b1へ)
+        const BACK = {{ b3: 0.12, b2: 0.14, b1: 0.10 }};    // 奥方向(b4へ)
+        const FLEE = {{ b4: 0.06, b3: 0.05, b2: 0.04, b1: 0.03 }}; // 飛び去り
+
+        const RAMP    = 1.4;
+        const STEP_MS = 3800;
         const WARY_MS = 5000;
-        const SPOOK_P = 0.18;
-        // 接近は一方向。各ステップで「近づく確率」と「飛び去る確率」だけを判定する。
-        const ADV  = {{ far: 0.34, mid: 0.24 }};   // 一段近づく基礎確率(警戒度で減衰)
-        const FLEE = {{ far: 0.05, mid: 0.09, near: 0.02 }}; // 飛び去る基礎確率(距離依存)
+        const SPOOK_P = 0.16;
+        const n = BIRDS.length;
 
         let ctx = null, master = null, running = false, timer = null, waryUntil = 0;
         let saved = false;
-        const nodes = [];
-        const sprites = [];
+        const nodes    = [];
+        const sprites  = [];
+        const birdLeft = [];   // 各鳥の現在の left%
         const met = new Set();
 
-        for (let i = 0; i < BIRDS.length; i++) {{
+        // 初期 left% を b4 レーン内に均等配置
+        for (let i = 0; i < n; i++) {{
             sprites.push(document.getElementById('rite_bird_' + i));
+            const [lmin, lmax] = LANE.b4;
+            birdLeft.push(lmin + (i + 0.5) / n * (lmax - lmin));
         }}
 
         function saveObservations() {{
@@ -340,7 +317,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
                 const url = new URL(window.top.location.href);
                 url.searchParams.set('ritual_obs', ids);
                 window.top.location.href = url.toString();
-            }} catch (e) {{}}
+            }} catch(e) {{}}
         }}
 
         function buildNode(i) {{
@@ -348,13 +325,13 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
             const src    = ctx.createMediaElementSource(audioEl);
             const filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
             const gain   = ctx.createGain();
-            const delay  = ctx.createDelay(1.0);    delay.delayTime.value = 0.28;
-            const fb     = ctx.createGain();         fb.gain.value = 0.32;
+            const delay  = ctx.createDelay(1.0); delay.delayTime.value = 0.28;
+            const fb     = ctx.createGain(); fb.gain.value = 0.32;
             const wet    = ctx.createGain();
             src.connect(filter); filter.connect(gain); gain.connect(master);
             gain.connect(delay); delay.connect(fb); fb.connect(delay);
-            delay.connect(wet);  wet.connect(master);
-            return {{ audioEl, filter, gain, wet, dist: 'far' }};
+            delay.connect(wet); wet.connect(master);
+            return {{ audioEl, filter, gain, wet, branch: 'b4' }};
         }}
 
         function rampLin(param, target) {{
@@ -363,8 +340,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
             param.setValueAtTime(param.value, t);
             param.linearRampToValueAtTime(target, t + RAMP);
         }}
-
-        // 周波数は対数知覚なので指数カーブの方が自然に「近づく」感じになる
         function rampExp(param, target) {{
             const t = ctx.currentTime;
             param.cancelScheduledValues(t);
@@ -372,84 +347,95 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
             param.exponentialRampToValueAtTime(Math.max(target, 1), t + RAMP);
         }}
 
-        function applyVisual(i, dist) {{
-            const sp = sprites[i];
-            if (!sp) return;
-            const v = V[dist];
-            sp.style.top = v.top + '%';
-            sp.style.opacity = v.opacity;
-            sp.style.transform = 'translate(-50%,0) scale(' + v.scale + ')';
-            sp.style.zIndex = Math.round(v.top);
+        // ホップ先のレーン内でランダムな left% を返す
+        function hopLeft(branch, i) {{
+            const [lmin, lmax] = LANE[branch];
+            const base = lmin + (i + 0.3 + Math.random() * 0.4) / n * (lmax - lmin);
+            return Math.max(lmin + 2, Math.min(lmax - 2, base + (Math.random() * 12 - 6)));
         }}
 
-        // 退場: 翼を広げ、画面上端の外へ斜めに飛び去る軌跡(後退ではなく一度きりの離脱)。
+        function applyVisual(i, branch) {{
+            const sp = sprites[i];
+            if (!sp) return;
+            const v = BR[branch];
+            sp.style.left      = birdLeft[i].toFixed(1) + '%';
+            sp.style.top       = v.top + '%';
+            sp.style.transform = 'translate(-50%,0) scale(' + v.scale + ')';
+            sp.style.opacity   = v.opacity;
+            sp.style.zIndex    = Math.round(v.top);
+        }}
+
+        // 飛び去り: 斜めに画面外へ(どの枝からでも)
         function flyAwayUp(i) {{
             const sp = sprites[i];
             if (!sp) return;
-            const cur = parseFloat(sp.style.left) || 50;
-            const drift = Math.max(0, Math.min(100, cur + (Math.random() * 24 - 12)));
+            const drift = Math.max(5, Math.min(95, birdLeft[i] + (Math.random() * 24 - 12)));
             sp.style.transition =
-                'top 1.6s ease-in, left 1.6s ease-in, transform 1.6s ease-in, opacity 1.6s ease-in';
-            sp.style.zIndex = 99;
-            sp.style.left = drift.toFixed(1) + '%';
-            sp.style.top = '-35%';
-            sp.style.transform = 'translate(-50%,0) scale(0.3) scaleX(1.25)';
-            sp.style.opacity = '0';
+                'top 1.5s ease-in, left 1.5s ease-in, transform 1.5s ease-in, opacity 1.5s ease-in';
+            sp.style.zIndex    = 99;
+            sp.style.left      = drift.toFixed(1) + '%';
+            sp.style.top       = '-35%';
+            sp.style.transform = 'translate(-50%,0) scale(0.28) scaleX(1.3)';
+            sp.style.opacity   = '0';
         }}
 
-        function applyDist(nd, i, dist) {{
-            const p = D[dist];
-            rampLin(nd.gain.gain, p.gain);
-            rampExp(nd.filter.frequency, p.freq);
-            rampLin(nd.wet.gain, p.wet);
-            nd.dist = dist;
-            if (dist === 'gone') {{
-                flyAwayUp(i);
-                markGone(i);
-            }} else {{
-                // 一方向の接近: 木から手前へまっすぐ降りて大きくなる(横揺れなし)。
-                applyVisual(i, dist);
+        // 枝を移動(音響+視覚を同時更新)
+        function moveBird(nd, i, branch) {{
+            nd.branch = branch;
+            rampLin(nd.gain.gain,      D[branch].gain);
+            rampExp(nd.filter.frequency, D[branch].freq);
+            rampLin(nd.wet.gain,       D[branch].wet);
+            if (branch === 'gone') {{ flyAwayUp(i); markGone(i); return; }}
+            // 新しい枝でのランダムな着地位置
+            birdLeft[i] = hopLeft(branch, i);
+            const sp = sprites[i];
+            if (sp) {{
+                sp.style.transition =
+                    'top 0.75s cubic-bezier(.36,.07,.19,.97),' +
+                    'left 0.75s ease,' +
+                    'transform 0.75s cubic-bezier(.36,.07,.19,.97),' +
+                    'opacity 0.75s ease';
+                applyVisual(i, branch);
             }}
         }}
 
         function markMet(i) {{
             if (met.has(i)) return;
             met.add(i);
-            metEl.textContent = '🪶 出会えた鳥: ' +
-                [...met].map(j => BIRDS[j].name).join('、');
+            metEl.textContent = '🪶 出会えた鳥: ' + [...met].map(j => BIRDS[j].name).join('、');
         }}
 
         function markGone(i) {{
             goneEl.textContent = '🕊 ' + BIRDS[i].name + ' は庭の向こうへ去った';
             goneEl.style.opacity = '1';
             if (goneTimer) clearTimeout(goneTimer);
-            goneTimer = setTimeout(function() {{
-                goneEl.style.opacity = '0';
-            }}, 3000);
+            goneTimer = setTimeout(function() {{ goneEl.style.opacity = '0'; }}, 3000);
         }}
 
         function step() {{
-            // 自然なスプーク: たまに警戒が高まる。後退はせず「飛び去りやすさ」だけが上がる。
-            if (Math.random() < SPOOK_P) {{
-                waryUntil = Math.max(waryUntil, Date.now() + 2500);
-            }}
-            const waryMult = Date.now() < waryUntil ? 3.0 : 1.0;
+            // 自然なスプーク: 警戒時は飛び去り確率が上がる(後退はしない)
+            if (Math.random() < SPOOK_P) waryUntil = Math.max(waryUntil, Date.now() + 2500);
+            const waryMult = Date.now() < waryUntil ? 2.5 : 1.0;
             for (let i = 0; i < nodes.length; i++) {{
                 const nd = nodes[i];
-                if (nd.dist === 'gone') continue;
+                if (nd.branch === 'gone') continue;
                 const w = BIRDS[i].wariness;
-                // 1) 飛び去り判定: 距離(近いほど落ち着く)と警戒度に応じた確率。
-                const pFlee = FLEE[nd.dist] * (1 + w * 1.4) * waryMult;
-                if (Math.random() < pFlee) {{ applyDist(nd, i, 'gone'); continue; }}
-                // 2) 接近判定: 一方向のみ。警戒度が高い鳥ほど近づきにくい。
-                if (nd.dist === 'far') {{
-                    if (Math.random() < ADV.far * (1 - w * 0.6)) applyDist(nd, i, 'mid');
-                }} else if (nd.dist === 'mid') {{
-                    if (Math.random() < ADV.mid * (1 - w * 0.7)) {{
-                        applyDist(nd, i, 'near'); markMet(i);
-                    }}
+                // 1) 飛び去り: 距離と警戒度に応じた確率
+                const pFlee = (FLEE[nd.branch] || 0.05) * (1 + w * 1.2) * waryMult;
+                if (Math.random() < pFlee) {{ moveBird(nd, i, 'gone'); continue; }}
+                // 2) 枝間ホップ: 手前へ or 奥へ(ぴょんぴょん)
+                const nextB = NEXT[nd.branch];
+                const prevB = PREV[nd.branch];
+                const pAdv  = nextB ? (ADV[nd.branch]  || 0) * (1 - w * 0.5) : 0;
+                const pBack = prevB ? (BACK[nd.branch] || 0) : 0;
+                const r = Math.random();
+                if (nextB && r < pAdv) {{
+                    moveBird(nd, i, nextB);
+                    if (nextB === 'b1') markMet(i);  // 手前に来た瞬間に観察記録
+                }} else if (prevB && r < pAdv + pBack) {{
+                    moveBird(nd, i, prevB);
                 }}
-                // near は観察済みとして留まる(退場は飛び去りのみ)。
+                // else: 同じ枝で bob アニメーションのみ
             }}
         }}
 
@@ -464,18 +450,21 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict,
 
         function start() {{
             ctx = new (window.AudioContext || window.webkitAudioContext)();
-            // マスターにコンプレッサー: 近距離 gain>1.0 でもクリップせず音量感を安定
             master = ctx.createDynamicsCompressor();
             master.threshold.value = -10;
-            master.knee.value = 10;
-            master.ratio.value = 4;
-            master.attack.value = 0.003;
-            master.release.value = 0.25;
+            master.knee.value      = 10;
+            master.ratio.value     = 4;
+            master.attack.value    = 0.003;
+            master.release.value   = 0.25;
             master.connect(ctx.destination);
-            for (let i = 0; i < BIRDS.length; i++) {{
+            for (let i = 0; i < n; i++) {{
                 const nd = buildNode(i);
                 nodes.push(nd);
-                applyDist(nd, i, 'far');
+                // b4 の初期値を直接セット(ランプ不要)
+                nd.gain.gain.value       = D.b4.gain;
+                nd.filter.frequency.value = D.b4.freq;
+                nd.wet.gain.value        = D.b4.wet;
+                applyVisual(i, 'b4');
             }}
             playAll();
             startRunning();
