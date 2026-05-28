@@ -155,40 +155,64 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for i, b in enumerate(birds)
     )
 
-    # 木のレイアウト: 各枝の両端に幹を立て、遠近で太さ・高さ・幅・位置を変える。
-    # b4=奥(細い幹・狭い間隔・上) 〜 b1=手前(太い幹・広い間隔・下)
-    # (branch_top%, half_width%, trunk_w_px, branch_h_px, opacity, z)
-    _BRANCH_SPECS = [
-        (18, 20, 10,  4, 0.55, 10),  # b4: 奥
-        (36, 27, 15,  6, 0.70, 20),  # b3
-        (55, 35, 21,  9, 0.86, 30),  # b2
-        (73, 43, 29, 13, 1.00, 40),  # b1: 手前
+    # 木のレイアウト:
+    #   幹が地面から生えていて、その幹から水平枝(鳥が止まる場所)が出ている構造。
+    #   幹の上には丸い葉の塊(キャノピー)。奥→手前で遠近感を付ける。
+    # (branch_top%, half_width%, trunk_w_px, branch_h_px, canopy_dia_px, opacity, z)
+    _TREE_SPECS = [
+        (22, 20, 11,  4,  54, 0.55, 10),  # b4: 奥
+        (37, 27, 16,  6,  74, 0.70, 20),  # b3
+        (54, 35, 22,  9,  98, 0.86, 30),  # b2
+        (70, 43, 30, 13, 126, 1.00, 40),  # b1: 手前
     ]
     _TRUNK_GRAD = (
         "linear-gradient(to right,"
-        "#2a190a 0%,#553818 30%,#84623a 52%,#4d341a 74%,#241509 100%)"
+        "#3d1f08 0%,#6b3a18 22%,#915a30 48%,#5a2e10 76%,#2a1205 100%)"
     )
+    _CANOPY_GRAD = (
+        "radial-gradient(ellipse at 38% 32%,"
+        "#a8e060 0%,#62b828 38%,#2d8010 72%,#1a5006 100%)"
+    )
+    _SCENE_H = 195  # scene の実 px 高さ(CSS overflow:hidden で隠れる部分込み)
     scene_parts = []
-    for (tp, half, tw, bh, op, z) in _BRANCH_SPECS:
-        lx = 50 - half           # 左の幹の中心 %
-        rx = 50 + half           # 右の幹の中心 %
-        th = 116 - tp            # 幹の高さ %(画面下端より下まで=地面に根づく)
-        bw = 2 * half            # 枝の横幅 %
+    for (tp, half, tw, bh, cd, op, z) in _TREE_SPECS:
+        lx = 50 - half       # 左の幹の中心 %
+        rx = 50 + half       # 右の幹の中心 %
+        th = 116 - tp        # 幹の高さ %(地面まで)
+        bw = 2 * half        # 水平枝の幅 %
         rad = max(2, tw // 3)
-        # 枝(2本の幹をつなぐ横木)
+        tp_px = tp / 100 * _SCENE_H
+        # キャノピーの天頂: 枝バーより cd*0.75px 上(上端より外にはみ出してもOK)
+        ctop_px = tp_px - cd * 0.82
+        ctop_pct = ctop_px / _SCENE_H * 100
+        half_cd = cd // 2
+
+        # ① キャノピー(z = branch-1 で枝の奥に重なる)
+        for cx in (lx, rx):
+            scene_parts.append(
+                f'<div style="position:absolute;top:{ctop_pct:.1f}%;'
+                f'left:calc({cx:.1f}% - {half_cd}px);'
+                f'width:{cd}px;height:{cd}px;'
+                f'background:{_CANOPY_GRAD};border-radius:50%;'
+                f'opacity:{op:.2f};z-index:{z - 1};pointer-events:none;'
+                f'box-shadow:inset -4px -6px 12px rgba(0,50,0,0.32),'
+                f'0 3px 6px rgba(0,40,0,0.15);"></div>'
+            )
+        # ② 水平枝バー(鳥が止まる場所)
         scene_parts.append(
             f'<div style="position:absolute;top:{tp}%;left:{lx:.1f}%;width:{bw:.1f}%;'
-            f'height:{bh}px;background:linear-gradient(180deg,#70502c,#3a2410);'
-            f'border-radius:{bh}px;opacity:{op};z-index:{z};pointer-events:none;'
-            f'box-shadow:0 1px 2px rgba(35,22,8,0.3);"></div>'
+            f'height:{bh}px;background:linear-gradient(180deg,#7a5830,#3a2410);'
+            f'border-radius:{bh}px;opacity:{op:.2f};z-index:{z};pointer-events:none;'
+            f'box-shadow:0 2px 4px rgba(35,22,8,0.35);"></div>'
         )
-        # 左右の幹(地面まで伸びる)
+        # ③ 左右の幹(地面まで、キャノピーの上から出て枝バーを貫く)
         for cx in (lx, rx):
             scene_parts.append(
                 f'<div style="position:absolute;top:{tp}%;left:{cx:.1f}%;width:{tw}px;'
                 f'height:{th}%;transform:translateX(-50%);background:{_TRUNK_GRAD};'
-                f'border-radius:{rad}px {rad}px 0 0;opacity:{op};z-index:{z};'
-                f'pointer-events:none;box-shadow:inset 0 0 5px rgba(18,10,3,0.45);"></div>'
+                f'border-radius:{rad}px {rad}px 2px 2px;opacity:{op:.2f};z-index:{z};'
+                f'pointer-events:none;box-shadow:inset 0 0 7px rgba(15,8,2,0.55),'
+                f'2px 0 6px rgba(10,5,0,0.2);"></div>'
             )
     branch_html = "".join(scene_parts)
 
@@ -291,7 +315,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         </div>
         <div id="rite_scene" style="
             position: relative; height: 195px; margin-top: 12px;
-            background: linear-gradient(180deg, #c4dab8 0%, #d4e8c0 55%, #c0dca8 100%);
+            background: linear-gradient(180deg, #b8d8f4 0%, #d8eec0 52%, #82c04a 100%);
             border-radius: 8px; overflow: hidden;
         ">{scene_html}</div>
         <div id="rite_met" style="
