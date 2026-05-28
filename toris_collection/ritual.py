@@ -134,9 +134,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             padding:14px 20px;border-radius:12px;border-left:4px solid #7ba87b;
             margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
             <div style="color:#5a7a5a;font-size:0.95em;font-weight:500;">
-                ♪ 鳥たちの気配 ({n}羽)</div>
-            <div style="color:#888;font-size:0.82em;margin-top:3px;">
-                耳を澄ますと、どこかで鳴いている…</div>
+                ♪ 鳥たちのコーラス ({n}羽)</div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -178,9 +176,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     birds.sort(key=lambda b: id_order.get(b["id"], 999))
 
     n = len(birds)
-    names_text = f"{n}羽の気配がします"
     birds_meta = [
-        {"id": b["id"], "hint": b["hint"], "wariness": b["wariness"]}
+        {"id": b["id"], "name": b["name"], "hint": b["hint"], "wariness": b["wariness"]}
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
@@ -343,9 +340,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             <div style="flex-grow: 1;">
                 <div style="color: #5a7a5a; font-size: 0.95em; font-weight: 500;">
                     ♪ 鳥たちのコーラス ({n}羽)
-                </div>
-                <div style="color: #888; font-size: 0.82em; margin-top: 3px;">
-                    {names_text}
                 </div>
             </div>
         </div>
@@ -564,7 +558,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function markMet(i) {{
             if (met.has(i)) return;
             met.add(i);
-            metEl.textContent = '🪶 ' + met.size + '羽の鳥を観察しました — 図鑑に記録されます';
+            metEl.textContent = '🪶 出会えた鳥: ' + [...met].map(j => BIRDS[j].name).join('、');
         }}
 
         function markGone(i) {{
