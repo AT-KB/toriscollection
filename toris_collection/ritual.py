@@ -29,6 +29,7 @@ import concurrent.futures
 from pathlib import Path
 
 import streamlit as st
+from data import PLANTS as _PLANTS
 
 try:
     import xc_client
@@ -64,6 +65,44 @@ def _get_sprite_b64(bird_id: str) -> str | None:
     return None
 
 
+def _hex_to_color_label(hex_color: str) -> str:
+    """HEX → 日本語色ラベル(例: '#3a7ac8' → '青い')"""
+    h = hex_color.lstrip("#")
+    try:
+        r, g, b = int(h[0:2], 16) / 255, int(h[2:4], 16) / 255, int(h[4:6], 16) / 255
+    except Exception:
+        return "小さな"
+    mx, mn = max(r, g, b), min(r, g, b)
+    lum = (mx + mn) / 2
+    if mx - mn < 0.12:                  # 無彩色
+        return "白い" if lum > 0.72 else ("灰色の" if lum > 0.42 else "黒い")
+    hue = 0.0
+    if mx == r:   hue = ((g - b) / (mx - mn)) % 6
+    elif mx == g: hue = (b - r) / (mx - mn) + 2
+    else:         hue = (r - g) / (mx - mn) + 4
+    hue *= 60
+    if lum < 0.22:          return "黒い"
+    if hue < 22 or hue >= 338: return "赤い"
+    if hue < 42:            return "橙色の"
+    if hue < 72:            return "黄色い"
+    if hue < 162:           return "緑の"
+    if hue < 202:           return "青緑の"
+    if hue < 252:           return "青い"
+    if hue < 292:           return "紫の"
+    return "ピンクの"
+
+
+def _bird_hint(bird_id: str, bird: dict, biome_id: str) -> str:
+    """「サクラにとまっていた赤い鳥」形式のヒント文を生成(bird_id で決定的に固定)。"""
+    col = _hex_to_color_label(bird.get("color", "#888"))
+    plants = [p for p in bird.get("eats_plants", []) if p in _PLANTS]
+    if plants:
+        idx = hash(bird_id + biome_id) % len(plants)
+        plant_name = _PLANTS[plants[idx]]["name"]
+        return f"{plant_name}にとまっていた{col}鳥"
+    return f"{col}鳥"
+
+
 def _fetch_bird_audio(args: tuple) -> tuple:
     """(bid, bird_dict) → (bid, b64_or_None)  並列実行用"""
     bid, bird = args
@@ -90,18 +129,14 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     # ── フェーズ1: 招待ボタン(音源未取得・軽量) ────────────────────────────────
     if not st.session_state.get("ritual_ready"):
         n = min(len(resident_ids), _MAX_BIRDS)
-        names = "、".join(
-            birds_data[bid].get("name", bid)
-            for bid in resident_ids[:n]
-            if bid in birds_data
-        )
         st.markdown(
             f"""<div style="background:linear-gradient(180deg,#f7faf2,#eef4e6);
             padding:14px 20px;border-radius:12px;border-left:4px solid #7ba87b;
             margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
             <div style="color:#5a7a5a;font-size:0.95em;font-weight:500;">
-                ♪ 鳥たちのコーラス ({n}羽)</div>
-            <div style="color:#888;font-size:0.82em;margin-top:3px;">{names}</div>
+                ♪ 鳥たちの気配 ({n}羽)</div>
+            <div style="color:#888;font-size:0.82em;margin-top:3px;">
+                耳を澄ますと、どこかで鳴いている…</div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -128,6 +163,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                     birds.append({
                         "id":       bid,
                         "name":     bird.get("name", bid),
+                        "hint":     _bird_hint(bid, bird, biome_id),
                         "color":    bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
                         "b64":      b64,
@@ -142,9 +178,9 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     birds.sort(key=lambda b: id_order.get(b["id"], 999))
 
     n = len(birds)
-    names_text = "、".join(b["name"] for b in birds)
+    names_text = f"{n}羽の気配がします"
     birds_meta = [
-        {"id": b["id"], "name": b["name"], "wariness": b["wariness"]}
+        {"id": b["id"], "hint": b["hint"], "wariness": b["wariness"]}
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
@@ -528,11 +564,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function markMet(i) {{
             if (met.has(i)) return;
             met.add(i);
-            metEl.textContent = '🪶 出会えた鳥: ' + [...met].map(j => BIRDS[j].name).join('、');
+            metEl.textContent = '🪶 ' + met.size + '羽の鳥を観察しました — 図鑑に記録されます';
         }}
 
         function markGone(i) {{
-            goneEl.textContent = '🕊 ' + BIRDS[i].name + ' は庭の向こうへ去った';
+            goneEl.textContent = '🕊 ' + BIRDS[i].hint + ' は庭の向こうへ去った';
             goneEl.style.opacity = '1';
             if (goneTimer) clearTimeout(goneTimer);
             goneTimer = setTimeout(function() {{ goneEl.style.opacity = '0'; }}, 3000);
