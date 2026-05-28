@@ -196,17 +196,21 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     sprite_divs = []
     for i, b in enumerate(birds):
         lp = 33.0 + (i + 0.5) / n * 34.0
+        bob = 3.0 + i * 0.4
+        idle = 8.5 + i * 1.3
+        anim = (
+            f'animation:rite_bob {bob:.1f}s ease-in-out infinite,'
+            f'rite_idle {idle:.1f}s ease-in-out infinite -{i * 0.7:.1f}s;'
+        )
         if b["sprite"]:
             inner = (
                 f'<img src="data:image/png;base64,{b["sprite"]}" '
-                f'style="width:60px;height:60px;image-rendering:pixelated;'
-                f'animation:rite_bob {3.0 + i * 0.4:.1f}s ease-in-out infinite;">'
+                f'style="width:60px;height:60px;image-rendering:pixelated;{anim}">'
             )
         else:
             inner = (
                 f'<div style="width:46px;height:46px;border-radius:50%;'
-                f'background:{b["color"]};'
-                f'animation:rite_bob {3.0 + i * 0.4:.1f}s ease-in-out infinite;"></div>'
+                f'background:{b["color"]};{anim}"></div>'
             )
         sprite_divs.append(
             f'<div class="rite_bird" id="rite_bird_{i}" '
@@ -217,7 +221,25 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             f'opacity 0.75s ease;">'
             f'{inner}</div>'
         )
-    scene_html = branch_html + "".join(sprite_divs)
+    # 雲: 木より奥(z=2)をゆっくり横切る。負のdelayで初期位置を散らす。
+    # (top%, width_px, height_px, dur_s, delay_s, opacity)
+    _CLOUDS = [
+        (8,  64, 20, 38, 4,  0.72),
+        (18, 92, 26, 54, 24, 0.55),
+        (5,  46, 15, 31, 14, 0.62),
+    ]
+    cloud_parts = []
+    for (tp, w, h, dur, delay, op) in _CLOUDS:
+        cloud_parts.append(
+            f'<div style="position:absolute;top:{tp}%;left:0;width:{w}px;height:{h}px;'
+            f'background:rgba(255,255,255,{op});border-radius:{h}px;filter:blur(2px);'
+            f'z-index:2;pointer-events:none;'
+            f'box-shadow:{w * 0.28:.0f}px {h * 0.18:.0f}px 0 -2px rgba(255,255,255,{op}),'
+            f'{w * 0.55:.0f}px -{h * 0.10:.0f}px 0 -4px rgba(255,255,255,{op});'
+            f'animation:rite_cloud {dur}s linear infinite;animation-delay:-{delay}s;"></div>'
+        )
+    cloud_html = "".join(cloud_parts)
+    scene_html = cloud_html + branch_html + "".join(sprite_divs)
 
     html = f"""
     {audio_tags}
@@ -226,6 +248,25 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         0%, 100% {{ margin-top: 0px; }}
         50%      {{ margin-top: -5px; }}
       }}
+      /* 待機モーション: 時々首をかしげ、時々羽繕い(膨らむ)。大半は静止。 */
+      @keyframes rite_idle {{
+        0%   {{ transform: rotate(0deg)  scale(1, 1); }}
+        46%  {{ transform: rotate(0deg)  scale(1, 1); }}
+        50%  {{ transform: rotate(7deg)  scale(1, 1); }}
+        57%  {{ transform: rotate(7deg)  scale(1, 1); }}
+        62%  {{ transform: rotate(0deg)  scale(1, 1); }}
+        72%  {{ transform: rotate(0deg)  scale(1, 1); }}
+        75%  {{ transform: rotate(0deg)  scale(1.14, 0.9); }}
+        79%  {{ transform: rotate(0deg)  scale(1.14, 0.9); }}
+        83%  {{ transform: rotate(0deg)  scale(1, 1); }}
+        100% {{ transform: rotate(0deg)  scale(1, 1); }}
+      }}
+      /* 雲が画面を横切る(GPU加速の translateX、再描画なし) */
+      @keyframes rite_cloud {{
+        from {{ transform: translateX(-170px); }}
+        to   {{ transform: translateX(calc(100vw + 90px)); }}
+      }}
+      .rite_bird > * {{ transform-origin: 50% 90%; }}
     </style>
     <div style="
         background: linear-gradient(180deg, #f7faf2 0%, #eef4e6 100%);
@@ -307,6 +348,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         let ctx = null, master = null, running = false, timer = null, waryUntil = 0;
         let rafId = null;
         let saved = false;
+        let ambient = null;
         const nodes    = [];
         const sprites  = [];
         const birdLeft = [];   // 各鳥の現在の left%
@@ -353,6 +395,45 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             delay.connect(wet); wet.connect(master);
             return {{ audioEl, filter, gain, wet, gate, ana,
                       buf: new Float32Array(ana.fftSize), branch: 'b4' }};
+        }}
+
+        // 環境音BGM: ノイズから「風」と「空気のざわめき」の2層を合成し、
+        // 鳴き声の下にうっすら敷く。音源ファイル不要・軽量。
+        function makeNoiseBuffer(brown) {{
+            const dur = 4, len = ctx.sampleRate * dur;
+            const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            let last = 0;
+            for (let i = 0; i < len; i++) {{
+                const white = Math.random() * 2 - 1;
+                if (brown) {{ last = (last + 0.02 * white) / 1.02; data[i] = last * 3.2; }}
+                else {{ data[i] = white; }}
+            }}
+            return buffer;
+        }}
+        function buildAmbient() {{
+            // 層1: 低い風(ブラウンノイズ→ローパス、ゆっくり唸る)
+            const wind = ctx.createBufferSource();
+            wind.buffer = makeNoiseBuffer(true); wind.loop = true;
+            const wlp = ctx.createBiquadFilter(); wlp.type = 'lowpass';
+            wlp.frequency.value = 420; wlp.Q.value = 0.3;
+            const wgain = ctx.createGain(); wgain.gain.value = 0.0;
+            wind.connect(wlp); wlp.connect(wgain); wgain.connect(master);
+            const lfo = ctx.createOscillator(); lfo.frequency.value = 0.06;
+            const lfoG = ctx.createGain(); lfoG.gain.value = 200;
+            lfo.connect(lfoG); lfoG.connect(wlp.frequency);
+            // 層2: 高い空気のざわめき(バンドパス、ごく薄く)
+            const air = ctx.createBufferSource();
+            air.buffer = makeNoiseBuffer(false); air.loop = true;
+            const abp = ctx.createBiquadFilter(); abp.type = 'bandpass';
+            abp.frequency.value = 2600; abp.Q.value = 0.6;
+            const again = ctx.createGain(); again.gain.value = 0.0;
+            air.connect(abp); abp.connect(again); again.connect(master);
+            wind.start(); air.start(); lfo.start();
+            const t = ctx.currentTime;
+            wgain.gain.setTargetAtTime(0.075, t, 2.5);   // 控えめにフェードイン
+            again.gain.setTargetAtTime(0.012, t, 2.5);
+            return {{ wind, air, lfo, wgain, again }};
         }}
 
         function rampLin(param, target) {{
@@ -499,6 +580,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             master.attack.value    = 0.003;
             master.release.value   = 0.25;
             master.connect(ctx.destination);
+            ambient = buildAmbient();
             for (let i = 0; i < n; i++) {{
                 const nd = buildNode(i);
                 nodes.push(nd);
