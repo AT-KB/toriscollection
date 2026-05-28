@@ -29,6 +29,7 @@ import concurrent.futures
 from pathlib import Path
 
 import streamlit as st
+from data import PLANTS as _PLANTS
 
 try:
     import xc_client
@@ -64,6 +65,44 @@ def _get_sprite_b64(bird_id: str) -> str | None:
     return None
 
 
+def _hex_to_color_label(hex_color: str) -> str:
+    """HEX → 日本語色ラベル(例: '#3a7ac8' → '青い')"""
+    h = hex_color.lstrip("#")
+    try:
+        r, g, b = int(h[0:2], 16) / 255, int(h[2:4], 16) / 255, int(h[4:6], 16) / 255
+    except Exception:
+        return "小さな"
+    mx, mn = max(r, g, b), min(r, g, b)
+    lum = (mx + mn) / 2
+    if mx - mn < 0.12:                  # 無彩色
+        return "白い" if lum > 0.72 else ("灰色の" if lum > 0.42 else "黒い")
+    hue = 0.0
+    if mx == r:   hue = ((g - b) / (mx - mn)) % 6
+    elif mx == g: hue = (b - r) / (mx - mn) + 2
+    else:         hue = (r - g) / (mx - mn) + 4
+    hue *= 60
+    if lum < 0.22:          return "黒い"
+    if hue < 22 or hue >= 338: return "赤い"
+    if hue < 42:            return "橙色の"
+    if hue < 72:            return "黄色い"
+    if hue < 162:           return "緑の"
+    if hue < 202:           return "青緑の"
+    if hue < 252:           return "青い"
+    if hue < 292:           return "紫の"
+    return "ピンクの"
+
+
+def _bird_hint(bird_id: str, bird: dict, biome_id: str) -> str:
+    """「サクラにとまっていた赤い鳥」形式のヒント文を生成(bird_id で決定的に固定)。"""
+    col = _hex_to_color_label(bird.get("color", "#888"))
+    plants = [p for p in bird.get("eats_plants", []) if p in _PLANTS]
+    if plants:
+        idx = hash(bird_id + biome_id) % len(plants)
+        plant_name = _PLANTS[plants[idx]]["name"]
+        return f"{plant_name}にとまっていた{col}鳥"
+    return f"{col}鳥"
+
+
 def _fetch_bird_audio(args: tuple) -> tuple:
     """(bid, bird_dict) → (bid, b64_or_None)  並列実行用"""
     bid, bird = args
@@ -90,18 +129,12 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     # ── フェーズ1: 招待ボタン(音源未取得・軽量) ────────────────────────────────
     if not st.session_state.get("ritual_ready"):
         n = min(len(resident_ids), _MAX_BIRDS)
-        names = "、".join(
-            birds_data[bid].get("name", bid)
-            for bid in resident_ids[:n]
-            if bid in birds_data
-        )
         st.markdown(
             f"""<div style="background:linear-gradient(180deg,#f7faf2,#eef4e6);
             padding:14px 20px;border-radius:12px;border-left:4px solid #7ba87b;
             margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
             <div style="color:#5a7a5a;font-size:0.95em;font-weight:500;">
                 ♪ 鳥たちのコーラス ({n}羽)</div>
-            <div style="color:#888;font-size:0.82em;margin-top:3px;">{names}</div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -128,6 +161,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                     birds.append({
                         "id":       bid,
                         "name":     bird.get("name", bid),
+                        "hint":     _bird_hint(bid, bird, biome_id),
                         "color":    bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
                         "b64":      b64,
@@ -142,9 +176,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     birds.sort(key=lambda b: id_order.get(b["id"], 999))
 
     n = len(birds)
-    names_text = "、".join(b["name"] for b in birds)
     birds_meta = [
-        {"id": b["id"], "name": b["name"], "wariness": b["wariness"]}
+        {"id": b["id"], "name": b["name"], "hint": b["hint"], "wariness": b["wariness"]}
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
@@ -155,40 +188,64 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for i, b in enumerate(birds)
     )
 
-    # 木のレイアウト: 各枝の両端に幹を立て、遠近で太さ・高さ・幅・位置を変える。
-    # b4=奥(細い幹・狭い間隔・上) 〜 b1=手前(太い幹・広い間隔・下)
-    # (branch_top%, half_width%, trunk_w_px, branch_h_px, opacity, z)
-    _BRANCH_SPECS = [
-        (18, 20, 10,  4, 0.55, 10),  # b4: 奥
-        (36, 27, 15,  6, 0.70, 20),  # b3
-        (55, 35, 21,  9, 0.86, 30),  # b2
-        (73, 43, 29, 13, 1.00, 40),  # b1: 手前
+    # 木のレイアウト:
+    #   幹が地面から生えていて、その幹から水平枝(鳥が止まる場所)が出ている構造。
+    #   幹の上には丸い葉の塊(キャノピー)。奥→手前で遠近感を付ける。
+    # (branch_top%, half_width%, trunk_w_px, branch_h_px, canopy_dia_px, opacity, z)
+    _TREE_SPECS = [
+        (22, 20, 11,  4,  54, 0.55, 10),  # b4: 奥
+        (37, 27, 16,  6,  74, 0.70, 20),  # b3
+        (54, 35, 22,  9,  98, 0.86, 30),  # b2
+        (70, 43, 30, 13, 126, 1.00, 40),  # b1: 手前
     ]
     _TRUNK_GRAD = (
         "linear-gradient(to right,"
-        "#2a190a 0%,#553818 30%,#84623a 52%,#4d341a 74%,#241509 100%)"
+        "#3d1f08 0%,#6b3a18 22%,#915a30 48%,#5a2e10 76%,#2a1205 100%)"
     )
+    _CANOPY_GRAD = (
+        "radial-gradient(ellipse at 38% 32%,"
+        "#a8e060 0%,#62b828 38%,#2d8010 72%,#1a5006 100%)"
+    )
+    _SCENE_H = 195  # scene の実 px 高さ(CSS overflow:hidden で隠れる部分込み)
     scene_parts = []
-    for (tp, half, tw, bh, op, z) in _BRANCH_SPECS:
-        lx = 50 - half           # 左の幹の中心 %
-        rx = 50 + half           # 右の幹の中心 %
-        th = 116 - tp            # 幹の高さ %(画面下端より下まで=地面に根づく)
-        bw = 2 * half            # 枝の横幅 %
+    for (tp, half, tw, bh, cd, op, z) in _TREE_SPECS:
+        lx = 50 - half       # 左の幹の中心 %
+        rx = 50 + half       # 右の幹の中心 %
+        th = 116 - tp        # 幹の高さ %(地面まで)
+        bw = 2 * half        # 水平枝の幅 %
         rad = max(2, tw // 3)
-        # 枝(2本の幹をつなぐ横木)
+        tp_px = tp / 100 * _SCENE_H
+        # キャノピーの天頂: 枝バーより cd*0.75px 上(上端より外にはみ出してもOK)
+        ctop_px = tp_px - cd * 0.82
+        ctop_pct = ctop_px / _SCENE_H * 100
+        half_cd = cd // 2
+
+        # ① キャノピー(z = branch-1 で枝の奥に重なる)
+        for cx in (lx, rx):
+            scene_parts.append(
+                f'<div style="position:absolute;top:{ctop_pct:.1f}%;'
+                f'left:calc({cx:.1f}% - {half_cd}px);'
+                f'width:{cd}px;height:{cd}px;'
+                f'background:{_CANOPY_GRAD};border-radius:50%;'
+                f'opacity:{op:.2f};z-index:{z - 1};pointer-events:none;'
+                f'box-shadow:inset -4px -6px 12px rgba(0,50,0,0.32),'
+                f'0 3px 6px rgba(0,40,0,0.15);"></div>'
+            )
+        # ② 水平枝バー(鳥が止まる場所)
         scene_parts.append(
             f'<div style="position:absolute;top:{tp}%;left:{lx:.1f}%;width:{bw:.1f}%;'
-            f'height:{bh}px;background:linear-gradient(180deg,#70502c,#3a2410);'
-            f'border-radius:{bh}px;opacity:{op};z-index:{z};pointer-events:none;'
-            f'box-shadow:0 1px 2px rgba(35,22,8,0.3);"></div>'
+            f'height:{bh}px;background:linear-gradient(180deg,#7a5830,#3a2410);'
+            f'border-radius:{bh}px;opacity:{op:.2f};z-index:{z};pointer-events:none;'
+            f'box-shadow:0 2px 4px rgba(35,22,8,0.35);"></div>'
         )
-        # 左右の幹(地面まで伸びる)
+        # ③ 左右の幹(地面まで、キャノピーの上から出て枝バーを貫く)
         for cx in (lx, rx):
             scene_parts.append(
                 f'<div style="position:absolute;top:{tp}%;left:{cx:.1f}%;width:{tw}px;'
                 f'height:{th}%;transform:translateX(-50%);background:{_TRUNK_GRAD};'
-                f'border-radius:{rad}px {rad}px 0 0;opacity:{op};z-index:{z};'
-                f'pointer-events:none;box-shadow:inset 0 0 5px rgba(18,10,3,0.45);"></div>'
+                f'border-radius:{rad}px {rad}px 2px 2px;opacity:{op:.2f};z-index:{z};'
+                f'pointer-events:none;box-shadow:inset 0 0 7px rgba(15,8,2,0.55),'
+                f'2px 0 6px rgba(10,5,0,0.2);"></div>'
             )
     branch_html = "".join(scene_parts)
 
@@ -284,14 +341,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 <div style="color: #5a7a5a; font-size: 0.95em; font-weight: 500;">
                     ♪ 鳥たちのコーラス ({n}羽)
                 </div>
-                <div style="color: #888; font-size: 0.82em; margin-top: 3px;">
-                    {names_text}
-                </div>
             </div>
         </div>
         <div id="rite_scene" style="
             position: relative; height: 195px; margin-top: 12px;
-            background: linear-gradient(180deg, #c4dab8 0%, #d4e8c0 55%, #c0dca8 100%);
+            background: linear-gradient(180deg, #b8d8f4 0%, #d8eec0 52%, #82c04a 100%);
             border-radius: 8px; overflow: hidden;
         ">{scene_html}</div>
         <div id="rite_met" style="
@@ -508,7 +562,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function markGone(i) {{
-            goneEl.textContent = '🕊 ' + BIRDS[i].name + ' は庭の向こうへ去った';
+            goneEl.textContent = '🕊 ' + BIRDS[i].hint + ' は庭の向こうへ去った';
             goneEl.style.opacity = '1';
             if (goneTimer) clearTimeout(goneTimer);
             goneTimer = setTimeout(function() {{ goneEl.style.opacity = '0'; }}, 3000);
