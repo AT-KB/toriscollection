@@ -193,11 +193,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     #   幹の上には丸い葉の塊(キャノピー)。奥→手前で遠近感を付ける。
     # (branch_top%, half_width%, trunk_w_px, branch_h_px, canopy_dia_px, opacity, z)
     _TREE_SPECS = [
-        (22, 20, 11,  4,  54, 0.55, 10),  # b4: 奥
-        (37, 27, 16,  6,  74, 0.70, 20),  # b3
+        (37, 27, 16,  6,  74, 0.70, 20),  # b3: 奥
         (54, 35, 22,  9,  98, 0.86, 30),  # b2
         (70, 43, 30, 13, 126, 1.00, 40),  # b1: 手前
     ]
+    _GAP_HALF = 5.0  # 枝中央の切れ目: 50% を中心に左右 _GAP_HALF% を空ける
     _TRUNK_GRAD = (
         "linear-gradient(to right,"
         "#3d1f08 0%,#6b3a18 22%,#915a30 48%,#5a2e10 76%,#2a1205 100%)"
@@ -231,12 +231,22 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 f'box-shadow:inset -4px -6px 12px rgba(0,50,0,0.32),'
                 f'0 3px 6px rgba(0,40,0,0.15);"></div>'
             )
-        # ② 水平枝バー(鳥が止まる場所)
-        scene_parts.append(
-            f'<div style="position:absolute;top:{tp}%;left:{lx:.1f}%;width:{bw:.1f}%;'
+        # ② 水平枝バー(中央に切れ目を入れて左右の木を分離)
+        # 左枝: lx〜(50-_GAP_HALF)、右枝: (50+_GAP_HALF)〜rx
+        bar_style = (
             f'height:{bh}px;background:linear-gradient(180deg,#7a5830,#3a2410);'
             f'border-radius:{bh}px;opacity:{op:.2f};z-index:{z};pointer-events:none;'
-            f'box-shadow:0 2px 4px rgba(35,22,8,0.35);"></div>'
+            f'box-shadow:0 2px 4px rgba(35,22,8,0.35);'
+        )
+        left_w = (50 - _GAP_HALF) - lx
+        right_w = rx - (50 + _GAP_HALF)
+        scene_parts.append(
+            f'<div style="position:absolute;top:{tp}%;left:{lx:.1f}%;'
+            f'width:{left_w:.1f}%;{bar_style}"></div>'
+        )
+        scene_parts.append(
+            f'<div style="position:absolute;top:{tp}%;left:{50 + _GAP_HALF:.1f}%;'
+            f'width:{right_w:.1f}%;{bar_style}"></div>'
         )
         # ③ 左右の幹(地面まで、キャノピーの上から出て枝バーを貫く)
         for cx in (lx, rx):
@@ -249,10 +259,20 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             )
     branch_html = "".join(scene_parts)
 
-    # スプライト: 最初は b4(奥)の枝にとまった状態(幹の内側 33%〜67%)
+    # スプライト: 最初は b3(新たな最奥)にとまった状態。
+    # b3 のレーン [26, 74] から中央のギャップ [45, 55] を除いた範囲に等間隔配置。
     sprite_divs = []
+    _SPAWN_LMIN, _SPAWN_LMAX = 26.0, 74.0
+    _SPAWN_MID = (_SPAWN_LMIN + _SPAWN_LMAX) / 2
+    _SPAWN_LEFT_W = (_SPAWN_MID - _GAP_HALF) - _SPAWN_LMIN
+    _SPAWN_RIGHT_W = _SPAWN_LMAX - (_SPAWN_MID + _GAP_HALF)
+    _SPAWN_COMBINED = _SPAWN_LEFT_W + _SPAWN_RIGHT_W
     for i, b in enumerate(birds):
-        lp = 33.0 + (i + 0.5) / n * 34.0
+        v = (i + 0.5) / n * _SPAWN_COMBINED
+        if v < _SPAWN_LEFT_W:
+            lp = _SPAWN_LMIN + v
+        else:
+            lp = _SPAWN_MID + _GAP_HALF + (v - _SPAWN_LEFT_W)
         bob = 3.0 + i * 0.4
         idle = 8.5 + i * 1.3
         anim = (
@@ -271,8 +291,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             )
         sprite_divs.append(
             f'<div class="rite_bird" id="rite_bird_{i}" '
-            f'style="position:absolute;left:{lp:.1f}%;top:-1%;'
-            f'transform:translate(-50%,0) scale(0.52);opacity:0.55;z-index:12;'
+            f'style="position:absolute;left:{lp:.1f}%;top:11%;'
+            f'transform:translate(-50%,0) scale(0.70);opacity:0.72;z-index:22;'
             f'transition:top 0.75s cubic-bezier(.36,.07,.19,.97),'
             f'left 0.75s ease,transform 0.75s cubic-bezier(.36,.07,.19,.97),'
             f'opacity 0.75s ease;">'
@@ -366,34 +386,33 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const goneEl = document.getElementById('rite_gone');
         let goneTimer = null;
 
-        // 音響パラメータ: b1=手前(クリア) ～ b4=奥(くもった)
+        // 音響パラメータ: b1=手前(クリア) ～ b3=奥(くもった)
         const D = {{
-            b4:   {{ gain: 0.22, freq: 1200, wet: 0.50 }},
-            b3:   {{ gain: 0.50, freq: 3500, wet: 0.28 }},
-            b2:   {{ gain: 0.88, freq: 7000, wet: 0.12 }},
+            b3:   {{ gain: 0.40, freq: 2800, wet: 0.36 }},
+            b2:   {{ gain: 0.85, freq: 7000, wet: 0.14 }},
             b1:   {{ gain: 1.40, freq: 12000, wet: 0.00 }},
             gone: {{ gain: 0.00, freq: 400,  wet: 0.00 }}
         }};
-        // 視覚パラメータ: 鳥の足が枝バー(22/37/54/70%)の上に乗る top% を逆算。
+        // 視覚パラメータ: 鳥の足が枝バー(37/54/70%)の上に乗る top% を逆算。
         // 60px×scale のスプライトをセンター原点で縮小するため、
         //   feet_pct = top + 15.38 * (scale + 1) となる。
         const BR = {{
-            b4: {{ top: -1,   scale: 0.52, opacity: 0.55, z: 12 }},
             b3: {{ top: 11,   scale: 0.70, opacity: 0.72, z: 22 }},
             b2: {{ top: 24,   scale: 0.92, opacity: 0.88, z: 32 }},
             b1: {{ top: 36,   scale: 1.18, opacity: 1.00, z: 42 }}
         }};
         // 各枝のレーン幅 [left%, right%] — 各枝の両端の幹の内側
         const LANE = {{
-            b4: [33, 67], b3: [26, 74], b2: [19, 81], b1: [12, 88]
+            b3: [26, 74], b2: [19, 81], b1: [12, 88]
         }};
+        const GAP_HALF = 5;   // 枝中央の切れ目: 50±GAP_HALF% は避ける
         // 枝間の隣接関係
-        const NEXT = {{ b4: 'b3', b3: 'b2', b2: 'b1' }};
-        const PREV = {{ b3: 'b4', b2: 'b3', b1: 'b2' }};
+        const NEXT = {{ b3: 'b2', b2: 'b1' }};
+        const PREV = {{ b2: 'b3', b1: 'b2' }};
         // 各枝でのホップ確率(基準値、wariness で調整)
-        const ADV  = {{ b4: 0.32, b3: 0.26, b2: 0.20 }};   // 手前方向(b1へ)
-        const BACK = {{ b3: 0.12, b2: 0.14, b1: 0.10 }};    // 奥方向(b4へ)
-        const FLEE = {{ b4: 0.06, b3: 0.05, b2: 0.04, b1: 0.03 }}; // 飛び去り
+        const ADV  = {{ b3: 0.32, b2: 0.24 }};         // 手前方向(b1へ)
+        const BACK = {{ b2: 0.10, b1: 0.10 }};         // 奥方向(b3へ)
+        const FLEE = {{ b3: 0.05, b2: 0.04, b1: 0.03 }}; // 飛び去り
 
         const RAMP    = 1.4;
         const STEP_MS = 3800;
@@ -410,11 +429,15 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const birdLeft = [];   // 各鳥の現在の left%
         const met = new Set();
 
-        // 初期 left% を b4 レーン内に均等配置
+        // 初期 left% を b3(最奥)レーン内に等間隔配置(中央のギャップは避ける)
         for (let i = 0; i < n; i++) {{
             sprites.push(document.getElementById('rite_bird_' + i));
-            const [lmin, lmax] = LANE.b4;
-            birdLeft.push(lmin + (i + 0.5) / n * (lmax - lmin));
+            const [lmin, lmax] = LANE.b3;
+            const mid = (lmin + lmax) / 2;
+            const leftW = (mid - GAP_HALF) - lmin;
+            const rightW = lmax - (mid + GAP_HALF);
+            const v = (i + 0.5) / n * (leftW + rightW);
+            birdLeft.push(v < leftW ? lmin + v : mid + GAP_HALF + (v - leftW));
         }}
 
         function saveObservations() {{
@@ -450,7 +473,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             gain.connect(delay); delay.connect(fb); fb.connect(delay);
             delay.connect(wet); wet.connect(master);
             return {{ audioEl, filter, gain, wet, gate, ana,
-                      buf: new Float32Array(ana.fftSize), branch: 'b4' }};
+                      buf: new Float32Array(ana.fftSize), branch: 'b3' }};
         }}
 
         // 環境音BGM: ノイズから「風」と「空気のざわめき」の2層を合成し、
@@ -505,11 +528,16 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             param.exponentialRampToValueAtTime(Math.max(target, 1), t + RAMP);
         }}
 
-        // ホップ先のレーン内でランダムな left% を返す
+        // ホップ先のレーン内でランダムな left% を返す(中央のギャップは避ける)
         function hopLeft(branch, i) {{
             const [lmin, lmax] = LANE[branch];
-            const base = lmin + (i + 0.3 + Math.random() * 0.4) / n * (lmax - lmin);
-            return Math.max(lmin + 2, Math.min(lmax - 2, base + (Math.random() * 12 - 6)));
+            const mid = (lmin + lmax) / 2;
+            // 元の left に近い側に着地しやすく
+            const preferLeft = birdLeft[i] !== undefined ? birdLeft[i] < mid : (i % 2 === 0);
+            const useLeft = Math.random() < (preferLeft ? 0.65 : 0.35);
+            const sideMin = useLeft ? lmin + 2 : mid + GAP_HALF + 1;
+            const sideMax = useLeft ? mid - GAP_HALF - 1 : lmax - 2;
+            return sideMin + Math.random() * (sideMax - sideMin);
         }}
 
         function applyVisual(i, branch) {{
@@ -640,11 +668,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             for (let i = 0; i < n; i++) {{
                 const nd = buildNode(i);
                 nodes.push(nd);
-                // b4 の初期値を直接セット(ランプ不要)
-                nd.gain.gain.value       = D.b4.gain;
-                nd.filter.frequency.value = D.b4.freq;
-                nd.wet.gain.value        = D.b4.wet;
-                applyVisual(i, 'b4');
+                // b3 の初期値を直接セット(ランプ不要)
+                nd.gain.gain.value       = D.b3.gain;
+                nd.filter.frequency.value = D.b3.freq;
+                nd.wet.gain.value        = D.b3.wet;
+                applyVisual(i, 'b3');
             }}
             playAll();
             startRunning();
