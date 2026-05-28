@@ -271,7 +271,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             )
         sprite_divs.append(
             f'<div class="rite_bird" id="rite_bird_{i}" '
-            f'style="position:absolute;left:{lp:.1f}%;top:12%;'
+            f'style="position:absolute;left:{lp:.1f}%;top:-1%;'
             f'transform:translate(-50%,0) scale(0.52);opacity:0.55;z-index:12;'
             f'transition:top 0.75s cubic-bezier(.36,.07,.19,.97),'
             f'left 0.75s ease,transform 0.75s cubic-bezier(.36,.07,.19,.97),'
@@ -374,12 +374,14 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             b1:   {{ gain: 1.40, freq: 12000, wet: 0.00 }},
             gone: {{ gain: 0.00, freq: 400,  wet: 0.00 }}
         }};
-        // 視覚パラメータ(top% = 枝の高さ。z は手前の幹より前/奥の幹より後ろに来るよう設定)
+        // 視覚パラメータ: 鳥の足が枝バー(22/37/54/70%)の上に乗る top% を逆算。
+        // 60px×scale のスプライトをセンター原点で縮小するため、
+        //   feet_pct = top + 15.38 * (scale + 1) となる。
         const BR = {{
-            b4: {{ top: 12, scale: 0.52, opacity: 0.55, z: 12 }},
-            b3: {{ top: 30, scale: 0.70, opacity: 0.72, z: 22 }},
-            b2: {{ top: 48, scale: 0.92, opacity: 0.88, z: 32 }},
-            b1: {{ top: 65, scale: 1.18, opacity: 1.00, z: 42 }}
+            b4: {{ top: -1,   scale: 0.52, opacity: 0.55, z: 12 }},
+            b3: {{ top: 11,   scale: 0.70, opacity: 0.72, z: 22 }},
+            b2: {{ top: 24,   scale: 0.92, opacity: 0.88, z: 32 }},
+            b1: {{ top: 36,   scale: 1.18, opacity: 1.00, z: 42 }}
         }};
         // 各枝のレーン幅 [left%, right%] — 各枝の両端の幹の内側
         const LANE = {{
@@ -565,7 +567,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             goneEl.textContent = '🕊 ' + BIRDS[i].hint + ' は庭の向こうへ去った';
             goneEl.style.opacity = '1';
             if (goneTimer) clearTimeout(goneTimer);
-            goneTimer = setTimeout(function() {{ goneEl.style.opacity = '0'; }}, 3000);
+            goneTimer = setTimeout(function() {{ goneEl.style.opacity = '0'; }}, 7000);
         }}
 
         function step() {{
