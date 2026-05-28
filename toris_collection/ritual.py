@@ -343,6 +343,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         from {{ transform: translateX(-170px); }}
         to   {{ transform: translateX(calc(100vw + 90px)); }}
       }}
+      /* 出会い行のフェードイン */
+      @keyframes rite_met_in {{
+        from {{ opacity: 0; transform: translateY(5px); }}
+        to   {{ opacity: 1; transform: translateY(0); }}
+      }}
       .rite_bird > * {{ transform-origin: 50% 90%; }}
     </style>
     <div style="
@@ -369,8 +374,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             border-radius: 8px; overflow: hidden;
         ">{scene_html}</div>
         <div id="rite_met" style="
-            margin-top: 10px; min-height: 18px;
-            color: #5a7a5a; font-size: 0.82em;
+            margin-top: 10px; min-height: 20px; max-height: 72px; overflow-y: auto;
+            color: #3a6a3a; font-size: 0.84em; line-height: 1.5;
         "></div>
         <div id="rite_gone" style="
             min-height: 16px; margin-top: 4px;
@@ -386,11 +391,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const goneEl = document.getElementById('rite_gone');
         let goneTimer = null;
 
-        // 音響パラメータ: b1=手前(クリア) ～ b3=奥(くもった)
+        // 音響パラメータ: 距離差を控えめに(グラデーションを弱く)
         const D = {{
-            b3:   {{ gain: 0.40, freq: 2800, wet: 0.36 }},
-            b2:   {{ gain: 0.85, freq: 7000, wet: 0.14 }},
-            b1:   {{ gain: 1.40, freq: 12000, wet: 0.00 }},
+            b3:   {{ gain: 0.58, freq: 4200, wet: 0.20 }},
+            b2:   {{ gain: 0.90, freq: 8000, wet: 0.09 }},
+            b1:   {{ gain: 1.25, freq: 12000, wet: 0.01 }},
             gone: {{ gain: 0.00, freq: 400,  wet: 0.00 }}
         }};
         // 視覚パラメータ: 鳥の足が枝バー(37/54/70%)の上に乗る top% を逆算。
@@ -410,9 +415,9 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const NEXT = {{ b3: 'b2', b2: 'b1' }};
         const PREV = {{ b2: 'b3', b1: 'b2' }};
         // 各枝でのホップ確率(基準値、wariness で調整)
-        const ADV  = {{ b3: 0.32, b2: 0.24 }};         // 手前方向(b1へ)
-        const BACK = {{ b2: 0.10, b1: 0.10 }};         // 奥方向(b3へ)
-        const FLEE = {{ b3: 0.05, b2: 0.04, b1: 0.03 }}; // 飛び去り
+        const ADV  = {{ b3: 0.26, b2: 0.20 }};           // 手前方向(やや慎重に)
+        const BACK = {{ b2: 0.12, b1: 0.12 }};          // 奥方向
+        const FLEE = {{ b3: 0.07, b2: 0.06, b1: 0.09 }}; // b1は落ち着かず逃げやすい
 
         const RAMP    = 1.4;
         const STEP_MS = 3800;
@@ -427,11 +432,13 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const nodes    = [];
         const sprites  = [];
         const birdLeft = [];   // 各鳥の現在の left%
+        const b1Dwell  = [];   // b1 連続滞在ステップ数(2以上で観察成立)
         const met = new Set();
 
         // 初期 left% を b3(最奥)レーン内に等間隔配置(中央のギャップは避ける)
         for (let i = 0; i < n; i++) {{
             sprites.push(document.getElementById('rite_bird_' + i));
+            b1Dwell.push(0);
             const [lmin, lmax] = LANE.b3;
             const mid = (lmin + lmax) / 2;
             const leftW = (mid - GAP_HALF) - lmin;
@@ -588,7 +595,22 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function markMet(i) {{
             if (met.has(i)) return;
             met.add(i);
-            metEl.textContent = '🪶 出会えた鳥: ' + [...met].map(j => BIRDS[j].name).join('、');
+            // テキスト: hint + 名前、フェードインして残す
+            const line = document.createElement('div');
+            line.style.cssText = 'animation:rite_met_in 0.5s ease-out;';
+            line.textContent = '🪶 ' + BIRDS[i].hint + '、' + BIRDS[i].name + ' に出会えた！';
+            metEl.appendChild(line);
+            // 鳥スプライトをキラッと光らせる
+            const sp = sprites[i];
+            if (sp) {{
+                sp.style.transition = 'filter 0.12s ease-out';
+                sp.style.filter = 'brightness(2.6) drop-shadow(0 0 10px #fff8a0)';
+                setTimeout(function() {{
+                    sp.style.transition = 'filter 0.7s ease-out';
+                    sp.style.filter = 'brightness(1)';
+                    setTimeout(function() {{ sp.style.filter = ''; sp.style.transition = ''; }}, 750);
+                }}, 130);
+            }}
         }}
 
         function markGone(i) {{
@@ -606,22 +628,26 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 const nd = nodes[i];
                 if (nd.branch === 'gone') continue;
                 const w = BIRDS[i].wariness;
-                // 1) 飛び去り: 距離と警戒度に応じた確率
-                const pFlee = (FLEE[nd.branch] || 0.05) * (1 + w * 1.2) * waryMult;
-                if (Math.random() < pFlee) {{ moveBird(nd, i, 'gone'); continue; }}
-                // 2) 枝間ホップ: 手前へ or 奥へ(ぴょんぴょん)
+                // 1) 飛び去り
+                const pFlee = (FLEE[nd.branch] || 0.06) * (1 + w * 1.2) * waryMult;
+                if (Math.random() < pFlee) {{ b1Dwell[i] = 0; moveBird(nd, i, 'gone'); continue; }}
+                // 2) 枝間ホップ
                 const nextB = NEXT[nd.branch];
                 const prevB = PREV[nd.branch];
                 const pAdv  = nextB ? (ADV[nd.branch]  || 0) * (1 - w * 0.5) : 0;
                 const pBack = prevB ? (BACK[nd.branch] || 0) : 0;
                 const r = Math.random();
                 if (nextB && r < pAdv) {{
+                    b1Dwell[i] = 0;
                     moveBird(nd, i, nextB);
-                    if (nextB === 'b1') markMet(i);  // 手前に来た瞬間に観察記録
                 }} else if (prevB && r < pAdv + pBack) {{
+                    b1Dwell[i] = 0;
                     moveBird(nd, i, prevB);
+                }} else if (nd.branch === 'b1') {{
+                    // b1 に留まり続けた回数をカウント。2ステップで観察成立(約8秒)
+                    b1Dwell[i]++;
+                    if (b1Dwell[i] >= 2) markMet(i);
                 }}
-                // else: 同じ枝で bob アニメーションのみ
             }}
         }}
 
