@@ -493,3 +493,40 @@ def log_access(tester_id, screen, action, details=""):
         ])
     except Exception:
         pass
+
+
+def load_visit_calendar(tester_id):
+    """access_logs から、このテスターが訪れた日ごとの記録を集計して返す。
+
+    Returns: {"YYYY-MM-DD": {"count": int, "biomes": [biome_id, ...],
+                             "first_ts": iso, "last_ts": iso}}
+      count   … その日の login enter 回数(複数回開いた回数)
+      biomes  … その日に滞在していた土地(details に記録されていれば。順序維持・重複なし)
+    失敗時は空 dict。
+    """
+    try:
+        rows = _ws("access_logs").get_all_records()
+    except Exception:
+        return {}
+    out = {}
+    for r in rows:
+        if str(r.get("tester_id", "")) != tester_id:
+            continue
+        if (r.get("screen") or "") != "login" or (r.get("action") or "") != "enter":
+            continue
+        ts = str(r.get("timestamp", "")).strip()
+        if not ts or "T" not in ts:
+            continue
+        day = ts.split("T", 1)[0]
+        biome = (str(r.get("details", "")) or "").strip()
+        slot = out.setdefault(
+            day, {"count": 0, "biomes": [], "first_ts": ts, "last_ts": ts}
+        )
+        slot["count"] += 1
+        if biome and biome not in slot["biomes"]:
+            slot["biomes"].append(biome)
+        if ts < slot["first_ts"]:
+            slot["first_ts"] = ts
+        if ts > slot["last_ts"]:
+            slot["last_ts"] = ts
+    return out
