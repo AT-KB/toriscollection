@@ -429,6 +429,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         let rafId = null;
         let saved = false;
         let ambient = null;
+        let reverb = null;        // 共有リバーブバス(ConvolverNode)
         const nodes    = [];
         const sprites  = [];
         const birdLeft = [];   // 各鳥の現在の left%
@@ -469,18 +470,42 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             // ノイズゲート用ゲイン: 鳴き声の合間のサーッというヒスを絞る
             const gate   = ctx.createGain(); gate.gain.value = 1.0;
             const gain   = ctx.createGain();
-            const delay  = ctx.createDelay(1.0); delay.delayTime.value = 0.28;
-            const fb     = ctx.createGain(); fb.gain.value = 0.30;
+            // ステレオ定位: 鳥の左右位置(birdLeft%)を音の左右に反映
+            const panner = ctx.createStereoPanner(); panner.pan.value = 0;
+            // リバーブ送り: 遠い枝ほど多く送り、森の奥行きを表現(旧echo置換)
             const wet    = ctx.createGain();
             // レベル監視用アナライザ(出力には接続しない)
             const ana    = ctx.createAnalyser(); ana.fftSize = 512;
             src.connect(hp); hp.connect(filter);
             filter.connect(ana);
-            filter.connect(gate); gate.connect(gain); gain.connect(master);
-            gain.connect(delay); delay.connect(fb); fb.connect(delay);
-            delay.connect(wet); wet.connect(master);
-            return {{ audioEl, filter, gain, wet, gate, ana,
+            filter.connect(gate); gate.connect(gain);
+            // ドライ: パンを通してマスターへ
+            gain.connect(panner); panner.connect(master);
+            // ウェット: 共有リバーブバスへ(拡散音なのでパン前=モノで送る)
+            gain.connect(wet); wet.connect(reverb);
+            return {{ audioEl, filter, gain, wet, gate, ana, panner,
                       buf: new Float32Array(ana.fftSize), branch: 'b3' }};
+        }}
+
+        // 森の残響をブラウザ内で合成: 減衰ノイズに初期反射を混ぜたインパルス応答。
+        // 短め(1.6秒)・控えめにして、鳴き声を濁らせず奥行きだけ足す。
+        function makeReverbIR() {{
+            const dur = 1.6, len = Math.floor(ctx.sampleRate * dur);
+            const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+            for (let ch = 0; ch < 2; ch++) {{
+                const d = ir.getChannelData(ch);
+                for (let k = 0; k < len; k++) {{
+                    // 指数減衰する乱反射(後半ほど静かに)
+                    const decay = Math.pow(1 - k / len, 2.6);
+                    d[k] = (Math.random() * 2 - 1) * decay;
+                }}
+                // 葉や枝による初期反射を数発足す(森らしい粒立ち)
+                [0.013, 0.029, 0.051, 0.078].forEach(function(tt, idx) {{
+                    const p = Math.floor(tt * ctx.sampleRate);
+                    if (p < len) d[p] += (0.5 - idx * 0.1) * (ch === 0 ? 1 : 0.8);
+                }});
+            }}
+            return ir;
         }}
 
         // 環境音BGM: ノイズから「風」と「空気のざわめき」の2層を合成し、
@@ -572,6 +597,12 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             sp.style.opacity   = '0';
         }}
 
+        // birdLeft%(0〜100, 中央50) → ステレオパン(-0.8〜0.8、端は控えめに)
+        function panFor(left) {{
+            const p = (left - 50) / 50 * 0.8;
+            return Math.max(-0.85, Math.min(0.85, p));
+        }}
+
         // 枝を移動(音響+視覚を同時更新)
         function moveBird(nd, i, branch) {{
             nd.branch = branch;
@@ -581,6 +612,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             if (branch === 'gone') {{ flyAwayUp(i); markGone(i); return; }}
             // 新しい枝でのランダムな着地位置
             birdLeft[i] = hopLeft(branch, i);
+            // ステレオ定位を新しい位置へなめらかに移動
+            if (nd.panner) nd.panner.pan.setTargetAtTime(panFor(birdLeft[i]), ctx.currentTime, 0.25);
             const sp = sprites[i];
             if (sp) {{
                 sp.style.transition =
@@ -690,6 +723,12 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             master.attack.value    = 0.003;
             master.release.value   = 0.25;
             master.connect(ctx.destination);
+            // 共有リバーブバス(全鳥が送る → 1つのConvolverで処理して軽量)
+            reverb = ctx.createConvolver();
+            reverb.buffer = makeReverbIR();
+            const reverbReturn = ctx.createGain();
+            reverbReturn.gain.value = 0.9;
+            reverb.connect(reverbReturn); reverbReturn.connect(master);
             ambient = buildAmbient();
             for (let i = 0; i < n; i++) {{
                 const nd = buildNode(i);
@@ -698,6 +737,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 nd.gain.gain.value       = D.b3.gain;
                 nd.filter.frequency.value = D.b3.freq;
                 nd.wet.gain.value        = D.b3.wet;
+                nd.panner.pan.value      = panFor(birdLeft[i]);
                 applyVisual(i, 'b3');
             }}
             playAll();
