@@ -503,7 +503,9 @@ def render_login_screen():
     if st.button("▶ 開始", type="primary", use_container_width=True):
         st.session_state.current_tester_id = selected
         load_state_from_sheets(selected)
-        sc.log_access(selected, "login", "enter")
+        # details に現在の土地を残す → あしあとカレンダーで日ごとの土地を色分け
+        sc.log_access(selected, "login", "enter",
+                      st.session_state.get("biome", ""))
         st.rerun()
 
     st.stop()
@@ -961,9 +963,147 @@ with st.sidebar:
                 st.error(f"削除失敗: {e}")
 
 
+# ============= あしあと(訪問カレンダー) =============
+# 土地ごとの色。カレンダーのドットを土地で色づける。
+_BIOME_COLORS = {
+    "kyoto":     "#7ba87b",  # 緑
+    "sydney":    "#5a9bd4",  # 青
+    "charlotte": "#d98a4a",  # 橙
+}
+_BIOME_DEFAULT_COLOR = "#9aa88a"
+_WEEKDAY_JP = ["月", "火", "水", "木", "金", "土", "日"]
+
+
+def _blend_with_white(hex_color, ratio):
+    """hex_color を白と ratio(0=白, 1=原色)で混ぜた hex を返す。訪問回数で濃淡を出す用。"""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    r = round(255 + (r - 255) * ratio)
+    g = round(255 + (g - 255) * ratio)
+    b = round(255 + (b - 255) * ratio)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def render_visit_calendar(tester_id):
+    """あしあと: 訪れた日が静かに色づくカレンダー。連続強制なし・罰なし。"""
+    import calendar as _cal
+
+    st.markdown("### 📅 あしあと")
+    st.caption("鳥を見に来た日が、静かに色づきます。続けても、間が空いても、ただの記録です。")
+
+    try:
+        visits = sc.load_visit_calendar(tester_id)
+    except Exception as e:
+        st.info(f"あしあとを読み込めませんでした: {e}")
+        return
+
+    if not visits:
+        st.info("まだ あしあと がありません。また鳥に会いに来てください。")
+        return
+
+    # サマリ
+    days = sorted(visits.keys())
+    total_days = len(days)
+    biome_day_count = {}
+    for d, info in visits.items():
+        for bid in info.get("biomes", []):
+            biome_day_count[bid] = biome_day_count.get(bid, 0) + 1
+
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        st.metric("これまで訪れた日", f"{total_days} 日")
+    with c2:
+        if biome_day_count:
+            parts = []
+            for bid, cnt in sorted(biome_day_count.items(), key=lambda x: -x[1]):
+                nm = BIOMES.get(bid, {}).get("name", bid)
+                parts.append(f"{nm} {cnt}日")
+            st.markdown(
+                "<div style='margin-top:8px;color:#5a7a5a;font-size:0.9em;'>"
+                "土地ごと: " + " / ".join(parts) + "</div>",
+                unsafe_allow_html=True,
+            )
+
+    # 凡例
+    legend = "　".join(
+        f"<span style='color:{c};font-size:1.1em;'>●</span> "
+        f"{BIOMES.get(b, {}).get('name', b)}"
+        for b, c in _BIOME_COLORS.items()
+    )
+    st.markdown(
+        f"<div style='margin:6px 0 14px;font-size:0.82em;color:#888;'>{legend}</div>",
+        unsafe_allow_html=True,
+    )
+
+    # 表示する月の範囲: 最初の訪問月 〜 今月(最大12ヶ月、新しい月を上に)
+    first_day = days[0]
+    fy, fm = int(first_day[:4]), int(first_day[5:7])
+    now = datetime.now()
+    months = []
+    y, m = now.year, now.month
+    while (y > fy) or (y == fy and m >= fm):
+        months.append((y, m))
+        m -= 1
+        if m == 0:
+            m = 12
+            y -= 1
+        if len(months) >= 12:
+            break
+
+    for (yy, mm) in months:
+        st.markdown(
+            f"<div style='margin-top:10px;font-weight:600;color:#4a6a4a;'>"
+            f"{yy}年 {mm}月</div>",
+            unsafe_allow_html=True,
+        )
+        # 曜日ヘッダ + 日付グリッド(月曜始まり)
+        cells = (
+            "<div style='display:grid;grid-template-columns:repeat(7,1fr);"
+            "gap:4px;max-width:340px;'>"
+        )
+        for wd in _WEEKDAY_JP:
+            cells += (
+                f"<div style='text-align:center;font-size:0.72em;color:#aaa;'>{wd}</div>"
+            )
+        weeks = _cal.Calendar(firstweekday=0).monthdayscalendar(yy, mm)
+        for week in weeks:
+            for dayn in week:
+                if dayn == 0:
+                    cells += "<div></div>"
+                    continue
+                key = f"{yy:04d}-{mm:02d}-{dayn:02d}"
+                info = visits.get(key)
+                if info:
+                    biomes = info.get("biomes", [])
+                    color = _BIOME_COLORS.get(
+                        biomes[0] if biomes else "", _BIOME_DEFAULT_COLOR
+                    )
+                    cnt = info.get("count", 1)
+                    ratio = min(1.0, 0.55 + 0.15 * cnt)  # 回数が多い日ほど濃く
+                    bg = _blend_with_white(color, ratio)
+                    title = f"{key} ・ {cnt}回"
+                    if biomes:
+                        title += " ・ " + "、".join(
+                            BIOMES.get(b, {}).get("name", b) for b in biomes
+                        )
+                    cells += (
+                        f"<div title='{title}' style='text-align:center;"
+                        f"padding:5px 0;border-radius:6px;background:{bg};"
+                        f"color:#33442f;font-size:0.78em;font-weight:600;'>{dayn}</div>"
+                    )
+                else:
+                    cells += (
+                        f"<div style='text-align:center;padding:5px 0;"
+                        f"border-radius:6px;background:#f0f2ec;color:#c8ccc2;"
+                        f"font-size:0.78em;'>{dayn}</div>"
+                    )
+        cells += "</div>"
+        st.markdown(cells, unsafe_allow_html=True)
+
+
 # ============= Tabs =============
-tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = st.tabs(
-    ["🏞️ 今の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
+tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
+    ["🏞️ 今の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物", "📅 あしあと",
      "🕸️ ネットワーク", "❓ 使い方"]
 )
 
@@ -1932,6 +2072,15 @@ with tab_mementos:
                     f"</div>",
                     unsafe_allow_html=True
                 )
+
+
+# ---------- Tab: あしあと(訪問カレンダー) ----------
+with tab_steps:
+    _tid_steps = st.session_state.get("current_tester_id")
+    if _tid_steps:
+        render_visit_calendar(_tid_steps)
+    else:
+        st.info("テスターを選択すると、あしあとが表示されます。")
 
 
 # ---------- Tab: Network (力学モデル) ----------
