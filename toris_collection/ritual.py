@@ -417,10 +417,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         // 各枝でのホップ確率(基準値、wariness で調整)
         const ADV  = {{ b3: 0.26, b2: 0.20 }};           // 手前方向(やや慎重に)
         const BACK = {{ b2: 0.12, b1: 0.12 }};          // 奥方向
-        const FLEE = {{ b3: 0.07, b2: 0.06, b1: 0.09 }}; // b1は落ち着かず逃げやすい
+        const FLEE = {{ b3: 0.03, b2: 0.025, b1: 0.045 }}; // 逃げにくく、ゆっくり滞在
 
         const RAMP    = 1.4;
-        const STEP_MS = 3800;
+        const STEP_MS = 6000;   // 3800→6000: ゆっくり枝に留まる
         const WARY_MS = 5000;
         const SPOOK_P = 0.16;
         const n = BIRDS.length;
