@@ -114,6 +114,82 @@ def get_audio_url(scientific_name: str) -> Optional[str]:
     return None
 
 
+def get_audio_urls(scientific_name: str, max_n: int = 3) -> list[tuple[str, str]]:
+    """同一種の異なる録音を最大 max_n 件、(url, 鳴き方) のタプルで返す。
+    鳴き方は "song"(さえずり) / "call"(地鳴き)。品質はA優先で交互に混ぜる。
+    「1羽がいろんな鳴き方をする」のバリエーション用。
+    """
+    if not is_enabled():
+        return []
+
+    def _collect(sound_type: str) -> list[str]:
+        urls = []
+        for q in ["A", "B"]:
+            for r in search_recordings(scientific_name, quality=q,
+                                       sound_type=sound_type):
+                url = r.get("file")
+                if url and url.startswith(("http://", "https://")):
+                    urls.append(url)
+            if len(urls) >= max_n:
+                break
+        return urls
+
+    songs = _collect("song")
+    calls = _collect("call")
+    out: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    # song → call → song → call … の順で重複なく混ぜる
+    for s, c in zip(songs, calls):
+        for url, t in ((s, "song"), (c, "call")):
+            if url not in seen:
+                seen.add(url)
+                out.append((url, t))
+    for url, t in ([(u, "song") for u in songs] + [(u, "call") for u in calls]):
+        if url not in seen:
+            seen.add(url)
+            out.append((url, t))
+    return out[:max_n]
+
+
+def download_audio_variants(scientific_name: str,
+                            max_n: int = 3) -> list[tuple[Path, str]]:
+    """同一種の録音を最大 max_n 件ダウンロードし (Path, 鳴き方) のリストを返す。
+    1件目は download_audio() と同じキャッシュファイルを共有する。
+    """
+    if not is_enabled():
+        return []
+    safe_name = _safe_filename(scientific_name)
+    urls = get_audio_urls(scientific_name, max_n=max_n)
+
+    paths: list[tuple[Path, str]] = []
+    first = download_audio(scientific_name)
+    if first:
+        # 既存キャッシュの1件目: 取得順は song 優先なので先頭のラベルを流用
+        first_type = urls[0][1] if urls else "song"
+        paths.append((first, first_type))
+    if max_n <= 1:
+        return paths
+
+    for i, (url, sound_type) in enumerate(urls[1:], start=1):
+        vp = AUDIO_DIR / f"{safe_name}_v{i}.mp3"
+        if vp.exists() and vp.stat().st_size > 1000:
+            paths.append((vp, sound_type))
+            continue
+        try:
+            req = urllib.request.Request(
+                url, headers={"User-Agent": "TorisCollection/0.1"})
+            with urllib.request.urlopen(req, timeout=60) as response:
+                content = response.read()
+            with vp.open("wb") as f:
+                f.write(content)
+            paths.append((vp, sound_type))
+        except Exception as e:
+            print(f"[xeno-canto] バリエーションDL失敗 {scientific_name} v{i}: {e}")
+        if len(paths) >= max_n:
+            break
+    return paths
+
+
 def download_audio(scientific_name: str) -> Optional[Path]:
     if not is_enabled():
         return None

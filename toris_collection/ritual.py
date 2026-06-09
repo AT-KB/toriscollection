@@ -103,13 +103,35 @@ def _bird_hint(bird_id: str, bird: dict, biome_id: str) -> str:
     return f"{col}鳥"
 
 
+@st.cache_data(show_spinner=False)
+def _get_audio_b64_variants(scientific_name: str,
+                            max_n: int = 3) -> list[tuple[str, str]]:
+    """同一種の複数録音を (base64, 鳴き方) のリストで返す。
+    鳴き方は "song"(さえずり) / "call"(地鳴き)。
+    iframe のHTML肥大を防ぐため、1種あたりの合計サイズに上限を設ける(軽さ優先)。
+    """
+    paths = xc_client.download_audio_variants(scientific_name, max_n=max_n)
+    out: list[tuple[str, str]] = []
+    total = 0
+    _BUDGET = 2_000_000  # base64文字数(≒1.5MBバイナリ)/種
+    for p, sound_type in paths:
+        if not (p and p.exists()):
+            continue
+        b64 = base64.b64encode(p.read_bytes()).decode("ascii")
+        if out and total + len(b64) > _BUDGET:
+            continue  # 1件目は必ず入れる、以降は予算内のもののみ追加
+        out.append((b64, sound_type))
+        total += len(b64)
+    return out
+
+
 def _fetch_bird_audio(args: tuple) -> tuple:
-    """(bid, bird_dict) → (bid, b64_or_None)  並列実行用"""
+    """(bid, bird_dict) → (bid, b64リスト or None)  並列実行用"""
     bid, bird = args
     sci = bird.get("scientific", "")
     if not sci:
         return bid, None
-    return bid, _get_audio_b64(sci)
+    return bid, _get_audio_b64_variants(sci) or None
 
 
 def render_ritual(resident_ids, biome_id: str, birds_data: dict):
@@ -155,8 +177,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_BIRDS) as ex:
             futures = {ex.submit(_fetch_bird_audio, c): c[0] for c in candidates}
             for future in concurrent.futures.as_completed(futures):
-                bid, b64 = future.result()
-                if b64 and len(birds) < _MAX_BIRDS:
+                bid, b64s = future.result()
+                if b64s and len(birds) < _MAX_BIRDS:
                     bird = birds_data[bid]
                     birds.append({
                         "id":       bid,
@@ -164,7 +186,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                         "hint":     _bird_hint(bid, bird, biome_id),
                         "color":    bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
-                        "b64":      b64,
+                        "b64s":     b64s,
                         "sprite":   _get_sprite_b64(bid),
                     })
 
@@ -177,15 +199,20 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
     n = len(birds)
     birds_meta = [
-        {"id": b["id"], "name": b["name"], "hint": b["hint"], "wariness": b["wariness"]}
+        {"id": b["id"], "name": b["name"], "hint": b["hint"],
+         "wariness": b["wariness"], "nv": len(b["b64s"]),
+         "vt": [t for _, t in b["b64s"]]}   # 各バリエーションの鳴き方(song/call)
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
 
+    # 鳴き声バリエーション: 1羽につき複数の録音(さえずり/地鳴き)を埋め込む。
+    # id は rite_audio_{鳥index}_{バリエーションindex}
     audio_tags = "".join(
-        f'<audio id="rite_audio_{i}" preload="auto" loop style="display:none">'
-        f'<source src="data:audio/mp3;base64,{b["b64"]}" type="audio/mp3"></audio>'
+        f'<audio id="rite_audio_{i}_{v}" preload="auto" loop style="display:none">'
+        f'<source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
         for i, b in enumerate(birds)
+        for v, (b64, _t) in enumerate(b["b64s"])
     )
 
     # 木のレイアウト:
@@ -417,10 +444,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         // 各枝でのホップ確率(基準値、wariness で調整)
         const ADV  = {{ b3: 0.26, b2: 0.20 }};           // 手前方向(やや慎重に)
         const BACK = {{ b2: 0.12, b1: 0.12 }};          // 奥方向
-        const FLEE = {{ b3: 0.07, b2: 0.06, b1: 0.09 }}; // b1は落ち着かず逃げやすい
+        const FLEE = {{ b3: 0.03, b2: 0.025, b1: 0.045 }}; // 逃げにくく、ゆっくり滞在
 
         const RAMP    = 1.4;
-        const STEP_MS = 3800;
+        const STEP_MS = 6000;   // 3800→6000: ゆっくり枝に留まる
         const WARY_MS = 5000;
         const SPOOK_P = 0.16;
         const n = BIRDS.length;
@@ -459,32 +486,114 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             }} catch(e) {{}}
         }}
 
+        // ── 3D音響(HRTF) ─────────────────────────────────────
+        // 鳥の左右(x)と枝の奥行き(z)を頭部伝達関数で定位する。
+        // 距離減衰は既存の D[branch].gain に任せるため rolloff は 0。
+        // 構築に失敗する古い環境では左右だけの StereoPanner にフォールバック。
+        function makePanner() {{
+            try {{
+                const p = new PannerNode(ctx, {{
+                    panningModel: 'HRTF', distanceModel: 'linear',
+                    refDistance: 1, maxDistance: 30, rolloffFactor: 0
+                }});
+                return {{ node: p, hrtf: true }};
+            }} catch (e) {{
+                return {{ node: ctx.createStereoPanner(), hrtf: false }};
+            }}
+        }}
+        const DEPTH_Z = {{ b3: -7, b2: -3.5, b1: -1.2 }};
+        function setPan(nd, left, branch, t) {{
+            const x = (left - 50) / 50 * 4;
+            if (nd.pan.hrtf) {{
+                const z = DEPTH_Z[branch] !== undefined ? DEPTH_Z[branch] : -5;
+                try {{
+                    nd.pan.node.positionX.setTargetAtTime(x, t, 0.25);
+                    nd.pan.node.positionZ.setTargetAtTime(z, t, 0.25);
+                }} catch (e) {{
+                    try {{ nd.pan.node.setPosition(x, 0, z); }} catch (e2) {{}}
+                }}
+            }} else {{
+                const p = Math.max(-0.85, Math.min(0.85, x / 4 * 0.8));
+                nd.pan.node.pan.setTargetAtTime(p, t, 0.25);
+            }}
+        }}
+        // 飛び去り: 音が頭上を抜けて遠ざかる
+        function panGone(nd) {{
+            if (!nd.pan.hrtf) return;
+            const t = ctx.currentTime;
+            try {{
+                nd.pan.node.positionY.setTargetAtTime(7, t, 0.6);
+                nd.pan.node.positionZ.setTargetAtTime(-16, t, 0.6);
+            }} catch (e) {{}}
+        }}
+
+        // ── 鳴き方の時間帯連動 ─────────────────────────────────
+        // 朝(4-10時)はさえずり中心の「朝のコーラス」、夕方〜夜は地鳴きが増える。
+        function preferredType() {{
+            const h = new Date().getHours();
+            if (h >= 4 && h < 10)  return 'song';
+            if (h >= 16 || h < 4)  return 'call';
+            return null;  // 昼はどちらでも
+        }}
+        function pickVariant(i, exclude) {{
+            const vt = BIRDS[i].vt || [];
+            const pref = preferredType();
+            const pool = [];
+            for (let v = 0; v < vt.length; v++) {{
+                if (v === exclude) continue;
+                const w = (pref && vt[v] === pref) ? 3 : 1;  // 好みは重み3倍
+                for (let k = 0; k < w; k++) pool.push(v);
+            }}
+            if (!pool.length) return exclude >= 0 ? exclude : 0;
+            return pool[Math.floor(Math.random() * pool.length)];
+        }}
+
         function buildNode(i) {{
-            const audioEl = document.getElementById('rite_audio_' + i);
-            const src    = ctx.createMediaElementSource(audioEl);
+            // 鳴き声バリエーション: 同じ鳥の複数録音を同一チェーンにつなぎ、
+            // 再生するのは常に1本(els[cur])。切り替えで鳴き方が変わる。
+            const els = [];
+            const nv = BIRDS[i].nv || 1;
             // ハイパス: 風・ハンドリングノイズなど低域のゴーッという音を除去
             const hp     = ctx.createBiquadFilter(); hp.type = 'highpass';
             hp.frequency.value = 520; hp.Q.value = 0.7;
+            for (let v = 0; v < nv; v++) {{
+                const el = document.getElementById('rite_audio_' + i + '_' + v);
+                if (!el) continue;
+                els.push(el);
+                ctx.createMediaElementSource(el).connect(hp);
+            }}
             // ローパス: 距離でこもり具合を変える(D[branch].freq)
             const filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
             // ノイズゲート用ゲイン: 鳴き声の合間のサーッというヒスを絞る
             const gate   = ctx.createGain(); gate.gain.value = 1.0;
             const gain   = ctx.createGain();
-            // ステレオ定位: 鳥の左右位置(birdLeft%)を音の左右に反映
-            const panner = ctx.createStereoPanner(); panner.pan.value = 0;
-            // リバーブ送り: 遠い枝ほど多く送り、森の奥行きを表現(旧echo置換)
+            // 3D定位(HRTF、フォールバックでStereoPanner)
+            const pan    = makePanner();
+            // リバーブ送り: 遠い枝ほど多く送り、森の奥行きを表現
             const wet    = ctx.createGain();
             // レベル監視用アナライザ(出力には接続しない)
             const ana    = ctx.createAnalyser(); ana.fftSize = 512;
-            src.connect(hp); hp.connect(filter);
+            hp.connect(filter);
             filter.connect(ana);
             filter.connect(gate); gate.connect(gain);
-            // ドライ: パンを通してマスターへ
-            gain.connect(panner); panner.connect(master);
-            // ウェット: 共有リバーブバスへ(拡散音なのでパン前=モノで送る)
+            // ドライ: 3D定位を通してマスターへ
+            gain.connect(pan.node); pan.node.connect(master);
+            // ウェット: 共有リバーブバスへ(拡散音なので定位前=モノで送る)
             gain.connect(wet); wet.connect(reverb);
-            return {{ audioEl, filter, gain, wet, gate, ana, panner,
+            // 初期の鳴き方も時間帯の好みで選ぶ
+            const cur = els.length > 1 ? pickVariant(i, -1) : 0;
+            return {{ els, cur, filter, gain, wet, gate, ana, pan,
                       buf: new Float32Array(ana.fftSize), branch: 'b3' }};
+        }}
+
+        // 鳴き方を別の録音に切り替える(さえずり⇄地鳴き、時間帯の好み付き)
+        function switchCall(nd, i) {{
+            if (nd.els.length < 2) return;
+            const next = pickVariant(i, nd.cur);
+            if (next === nd.cur) return;
+            try {{ nd.els[nd.cur].pause(); }} catch(e) {{}}
+            nd.cur = next;
+            try {{ nd.els[next].play().catch(()=>{{}}); }} catch(e) {{}}
         }}
 
         // 森の残響をブラウザ内で合成: 減衰ノイズに初期反射を混ぜたインパルス応答。
@@ -597,23 +706,17 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             sp.style.opacity   = '0';
         }}
 
-        // birdLeft%(0〜100, 中央50) → ステレオパン(-0.8〜0.8、端は控えめに)
-        function panFor(left) {{
-            const p = (left - 50) / 50 * 0.8;
-            return Math.max(-0.85, Math.min(0.85, p));
-        }}
-
         // 枝を移動(音響+視覚を同時更新)
         function moveBird(nd, i, branch) {{
             nd.branch = branch;
             rampLin(nd.gain.gain,      D[branch].gain);
             rampExp(nd.filter.frequency, D[branch].freq);
             rampLin(nd.wet.gain,       D[branch].wet);
-            if (branch === 'gone') {{ flyAwayUp(i); markGone(i); return; }}
+            if (branch === 'gone') {{ panGone(nd); flyAwayUp(i); markGone(i); return; }}
             // 新しい枝でのランダムな着地位置
             birdLeft[i] = hopLeft(branch, i);
-            // ステレオ定位を新しい位置へなめらかに移動
-            if (nd.panner) nd.panner.pan.setTargetAtTime(panFor(birdLeft[i]), ctx.currentTime, 0.25);
+            // 3D定位を新しい位置(左右+奥行き)へなめらかに移動
+            setPan(nd, birdLeft[i], branch, ctx.currentTime);
             const sp = sprites[i];
             if (sp) {{
                 sp.style.transition =
@@ -681,10 +784,17 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                     b1Dwell[i]++;
                     if (b1Dwell[i] >= 2) markMet(i);
                 }}
+                // 3) ときどき鳴き方を変える(さえずり⇄地鳴き)
+                if (Math.random() < 0.18) switchCall(nd, i);
             }}
         }}
 
-        function playAll() {{ nodes.forEach(nd => nd.audioEl.play().catch(()=>{{}})); }}
+        function playAll() {{
+            nodes.forEach(nd => {{
+                const el = nd.els[nd.cur];
+                if (el) el.play().catch(()=>{{}});
+            }});
+        }}
 
         // ノイズゲート: 各音源の音量を監視し、鳴き声の合間(静かな区間)は
         // ゲインを絞って背景のサーッというヒスを目立たなくする(癒し向け)。
@@ -737,7 +847,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 nd.gain.gain.value       = D.b3.gain;
                 nd.filter.frequency.value = D.b3.freq;
                 nd.wet.gain.value        = D.b3.wet;
-                nd.panner.pan.value      = panFor(birdLeft[i]);
+                setPan(nd, birdLeft[i], 'b3', ctx.currentTime);
                 applyVisual(i, 'b3');
             }}
             playAll();
@@ -748,7 +858,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             if (timer) clearInterval(timer);
             timer = null;
             if (rafId) {{ cancelAnimationFrame(rafId); rafId = null; }}
-            nodes.forEach(nd => {{ try {{ nd.audioEl.pause(); }} catch(e) {{}} }});
+            nodes.forEach(nd => nd.els.forEach(el => {{ try {{ el.pause(); }} catch(e) {{}} }}));
             if (ctx) ctx.suspend();
             running = false;
             btn.textContent = '♪ 耳を澄ます';
