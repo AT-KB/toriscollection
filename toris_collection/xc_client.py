@@ -114,6 +114,76 @@ def get_audio_url(scientific_name: str) -> Optional[str]:
     return None
 
 
+def get_audio_urls(scientific_name: str, max_n: int = 3) -> list[str]:
+    """同一種の異なる録音URLを最大 max_n 件返す。
+    さえずり(song)と地鳴き(call)を交互に混ぜ、品質はA優先。
+    「1羽がいろんな鳴き方をする」のバリエーション用。
+    """
+    if not is_enabled():
+        return []
+
+    def _collect(sound_type: str) -> list[str]:
+        urls = []
+        for q in ["A", "B"]:
+            for r in search_recordings(scientific_name, quality=q,
+                                       sound_type=sound_type):
+                url = r.get("file")
+                if url and url.startswith(("http://", "https://")):
+                    urls.append(url)
+            if len(urls) >= max_n:
+                break
+        return urls
+
+    songs = _collect("song")
+    calls = _collect("call")
+    out: list[str] = []
+    # song → call → song → call … の順で重複なく混ぜる
+    for pair in zip(songs, calls):
+        for url in pair:
+            if url not in out:
+                out.append(url)
+    for url in songs + calls:
+        if url not in out:
+            out.append(url)
+    return out[:max_n]
+
+
+def download_audio_variants(scientific_name: str, max_n: int = 3) -> list[Path]:
+    """同一種の録音を最大 max_n 件ダウンロードして Path のリストを返す。
+    1件目は download_audio() と同じキャッシュファイルを共有する。
+    """
+    if not is_enabled():
+        return []
+    safe_name = _safe_filename(scientific_name)
+
+    paths: list[Path] = []
+    first = download_audio(scientific_name)
+    if first:
+        paths.append(first)
+    if max_n <= 1:
+        return paths
+
+    urls = get_audio_urls(scientific_name, max_n=max_n)
+    for i, url in enumerate(urls[1:], start=1):
+        vp = AUDIO_DIR / f"{safe_name}_v{i}.mp3"
+        if vp.exists() and vp.stat().st_size > 1000:
+            paths.append(vp)
+            continue
+        try:
+            req = urllib.request.Request(
+                url, headers={"User-Agent": "TorisCollection/0.1"})
+            with urllib.request.urlopen(req, timeout=60) as response:
+                content = response.read()
+            with vp.open("wb") as f:
+                f.write(content)
+            paths.append(vp)
+        except Exception as e:
+            print(f"[xeno-canto] バリエーションDL失敗 {scientific_name} v{i}: {e}")
+        if len(paths) >= max_n:
+            break
+    return paths
+
+
 def download_audio(scientific_name: str) -> Optional[Path]:
     if not is_enabled():
         return None

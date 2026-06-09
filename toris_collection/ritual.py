@@ -103,13 +103,33 @@ def _bird_hint(bird_id: str, bird: dict, biome_id: str) -> str:
     return f"{col}鳥"
 
 
+@st.cache_data(show_spinner=False)
+def _get_audio_b64_variants(scientific_name: str, max_n: int = 3) -> list[str]:
+    """同一種の複数録音(さえずり/地鳴きミックス)をbase64リストで返す。
+    iframe のHTML肥大を防ぐため、1種あたりの合計サイズに上限を設ける。
+    """
+    paths = xc_client.download_audio_variants(scientific_name, max_n=max_n)
+    out: list[str] = []
+    total = 0
+    _BUDGET = 2_800_000  # base64文字数(≒2.1MBバイナリ)/種
+    for p in paths:
+        if not (p and p.exists()):
+            continue
+        b64 = base64.b64encode(p.read_bytes()).decode("ascii")
+        if out and total + len(b64) > _BUDGET:
+            break  # 1件目は必ず入れる、以降は予算内のみ
+        out.append(b64)
+        total += len(b64)
+    return out
+
+
 def _fetch_bird_audio(args: tuple) -> tuple:
-    """(bid, bird_dict) → (bid, b64_or_None)  並列実行用"""
+    """(bid, bird_dict) → (bid, b64リスト or None)  並列実行用"""
     bid, bird = args
     sci = bird.get("scientific", "")
     if not sci:
         return bid, None
-    return bid, _get_audio_b64(sci)
+    return bid, _get_audio_b64_variants(sci) or None
 
 
 def render_ritual(resident_ids, biome_id: str, birds_data: dict):
@@ -155,8 +175,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_BIRDS) as ex:
             futures = {ex.submit(_fetch_bird_audio, c): c[0] for c in candidates}
             for future in concurrent.futures.as_completed(futures):
-                bid, b64 = future.result()
-                if b64 and len(birds) < _MAX_BIRDS:
+                bid, b64s = future.result()
+                if b64s and len(birds) < _MAX_BIRDS:
                     bird = birds_data[bid]
                     birds.append({
                         "id":       bid,
@@ -164,7 +184,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                         "hint":     _bird_hint(bid, bird, biome_id),
                         "color":    bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
-                        "b64":      b64,
+                        "b64s":     b64s,
                         "sprite":   _get_sprite_b64(bid),
                     })
 
@@ -177,15 +197,19 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
     n = len(birds)
     birds_meta = [
-        {"id": b["id"], "name": b["name"], "hint": b["hint"], "wariness": b["wariness"]}
+        {"id": b["id"], "name": b["name"], "hint": b["hint"],
+         "wariness": b["wariness"], "nv": len(b["b64s"])}
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
 
+    # 鳴き声バリエーション: 1羽につき複数の録音(さえずり/地鳴き)を埋め込む。
+    # id は rite_audio_{鳥index}_{バリエーションindex}
     audio_tags = "".join(
-        f'<audio id="rite_audio_{i}" preload="auto" loop style="display:none">'
-        f'<source src="data:audio/mp3;base64,{b["b64"]}" type="audio/mp3"></audio>'
+        f'<audio id="rite_audio_{i}_{v}" preload="auto" loop style="display:none">'
+        f'<source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
         for i, b in enumerate(birds)
+        for v, b64 in enumerate(b["b64s"])
     )
 
     # 木のレイアウト:
@@ -460,11 +484,19 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function buildNode(i) {{
-            const audioEl = document.getElementById('rite_audio_' + i);
-            const src    = ctx.createMediaElementSource(audioEl);
+            // 鳴き声バリエーション: 同じ鳥の複数録音を同一チェーンにつなぎ、
+            // 再生するのは常に1本(els[cur])。切り替えで鳴き方が変わる。
+            const els = [];
+            const nv = BIRDS[i].nv || 1;
             // ハイパス: 風・ハンドリングノイズなど低域のゴーッという音を除去
             const hp     = ctx.createBiquadFilter(); hp.type = 'highpass';
             hp.frequency.value = 520; hp.Q.value = 0.7;
+            for (let v = 0; v < nv; v++) {{
+                const el = document.getElementById('rite_audio_' + i + '_' + v);
+                if (!el) continue;
+                els.push(el);
+                ctx.createMediaElementSource(el).connect(hp);
+            }}
             // ローパス: 距離でこもり具合を変える(D[branch].freq)
             const filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
             // ノイズゲート用ゲイン: 鳴き声の合間のサーッというヒスを絞る
@@ -476,15 +508,26 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             const wet    = ctx.createGain();
             // レベル監視用アナライザ(出力には接続しない)
             const ana    = ctx.createAnalyser(); ana.fftSize = 512;
-            src.connect(hp); hp.connect(filter);
+            hp.connect(filter);
             filter.connect(ana);
             filter.connect(gate); gate.connect(gain);
             // ドライ: パンを通してマスターへ
             gain.connect(panner); panner.connect(master);
             // ウェット: 共有リバーブバスへ(拡散音なのでパン前=モノで送る)
             gain.connect(wet); wet.connect(reverb);
-            return {{ audioEl, filter, gain, wet, gate, ana, panner,
+            return {{ els, cur: 0, filter, gain, wet, gate, ana, panner,
                       buf: new Float32Array(ana.fftSize), branch: 'b3' }};
+        }}
+
+        // 鳴き方を別の録音に切り替える(さえずり⇄地鳴きなど)
+        function switchCall(nd) {{
+            if (nd.els.length < 2) return;
+            const prev = nd.cur;
+            let next = Math.floor(Math.random() * nd.els.length);
+            if (next === prev) next = (next + 1) % nd.els.length;
+            try {{ nd.els[prev].pause(); }} catch(e) {{}}
+            nd.cur = next;
+            try {{ nd.els[next].play().catch(()=>{{}}); }} catch(e) {{}}
         }}
 
         // 森の残響をブラウザ内で合成: 減衰ノイズに初期反射を混ぜたインパルス応答。
@@ -681,10 +724,17 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                     b1Dwell[i]++;
                     if (b1Dwell[i] >= 2) markMet(i);
                 }}
+                // 3) ときどき鳴き方を変える(さえずり⇄地鳴き)
+                if (Math.random() < 0.18) switchCall(nd);
             }}
         }}
 
-        function playAll() {{ nodes.forEach(nd => nd.audioEl.play().catch(()=>{{}})); }}
+        function playAll() {{
+            nodes.forEach(nd => {{
+                const el = nd.els[nd.cur];
+                if (el) el.play().catch(()=>{{}});
+            }});
+        }}
 
         // ノイズゲート: 各音源の音量を監視し、鳴き声の合間(静かな区間)は
         // ゲインを絞って背景のサーッというヒスを目立たなくする(癒し向け)。
@@ -748,7 +798,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             if (timer) clearInterval(timer);
             timer = null;
             if (rafId) {{ cancelAnimationFrame(rafId); rafId = null; }}
-            nodes.forEach(nd => {{ try {{ nd.audioEl.pause(); }} catch(e) {{}} }});
+            nodes.forEach(nd => nd.els.forEach(el => {{ try {{ el.pause(); }} catch(e) {{}} }}));
             if (ctx) ctx.suspend();
             running = false;
             btn.textContent = '♪ 耳を澄ます';
