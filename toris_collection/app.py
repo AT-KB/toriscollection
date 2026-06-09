@@ -235,9 +235,11 @@ def render_bird_audio(b_id: str, bird: dict):
                 # ループ再生で軽量化(短い音源を繰り返す)
                 st.audio(audio_bytes, format="audio/mp3", loop=True)
                 if cit:
+                    # 録音の物語: この声がどこで誰に録られたかを添える(出会いの物語性)
                     st.caption(
-                        f"出典: xeno-canto [XC{cit['xc_id']}]({cit['url']}) "
-                        f"by {cit['recordist']} · {cit['country']} · CC"
+                        f"🎙 この声は {cit['country']} で "
+                        f"{cit['recordist']} さんが録音したもの — "
+                        f"[XC{cit['xc_id']}]({cit['url']}) · xeno-canto · CC"
                     )
             except Exception as e:
                 st.caption(f"再生エラー: {e}")
