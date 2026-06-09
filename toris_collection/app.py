@@ -653,8 +653,10 @@ def load_state_from_sheets(tester_id):
 
             # 各イベントを Sheets に記録
             new_mementos = []
+            _welcome_arrivals = []   # ログイン時ポップアップ用
             for ev in evo["events"]:
                 try:
+                    _is_first = ev["bird_id"] not in st.session_state.discovered
                     sc.add_visit(
                         tester_id, ev["bird_id"], "absence",
                         reason_text=ev["reason_text"],
@@ -664,6 +666,13 @@ def load_state_from_sheets(tester_id):
                     )
                     sc.upsert_collection(tester_id, ev["bird_id"])
                     st.session_state.discovered.add(ev["bird_id"])
+                    if not any(a["id"] == ev["bird_id"] for a in _welcome_arrivals):
+                        _welcome_arrivals.append({
+                            "id": ev["bird_id"],
+                            "name": BIRDS.get(ev["bird_id"], {}).get(
+                                "name", ev["bird_id"]),
+                            "first": _is_first,
+                        })
 
                     # 落とし物の記録
                     mid = ev.get("memento_id")
@@ -695,6 +704,21 @@ def load_state_from_sheets(tester_id):
                 )
             # 直近イベントの新規落とし物のサマリ(ホーム画面表示用)
             st.session_state.recent_new_mementos = new_mementos
+
+            # ログイン時ポップアップ: 留守中に何かあった時だけ用意する(毎回は出さない)
+            _hours_away = (now - last_at).total_seconds() / 3600
+            _departures = []
+            for _bid in evo.get("departures", []):
+                _nm = BIRDS.get(_bid, {}).get("name", _bid)
+                if _nm not in _departures:
+                    _departures.append(_nm)
+            if _welcome_arrivals or _departures or new_mementos:
+                st.session_state.welcome_popup = {
+                    "hours_away": _hours_away,
+                    "arrivals": _welcome_arrivals,
+                    "departures": _departures,
+                    "n_mementos": len(new_mementos),
+                }
 
             # 進化が起きていれば field_state を現在時刻で更新
             if evo["n_ticks"] > 0:
@@ -750,14 +774,21 @@ def _handle_ritual_observation():
             except Exception:
                 pass
     if saved:
-        st.session_state["ritual_flash"] = [BIRDS[b].get("name", b) for b in saved]
         # セッション状態にも即時反映(リロード待ちなしで図鑑へ反映)
         _observed = st.session_state.setdefault("observed", {})
         _discovered = st.session_state.setdefault("discovered", set())
+        _flash = []
         for bid in saved:
+            _is_first = _observed.get(bid, {}).get("count", 0) == 0
             rec = _observed.setdefault(bid, {"count": 0, "first": "", "last": ""})
             rec["count"] += 1
             _discovered.add(bid)  # 近くで観察できた鳥は当然「来た鳥」でもある
+            _flash.append({
+                "id": bid,
+                "name": BIRDS[bid].get("name", bid),
+                "first": _is_first,
+            })
+        st.session_state["ritual_flash"] = _flash
     # パラメータを消す(リロードで再保存しないように)。これ自体が再実行を誘発する。
     st.query_params.clear()
 
@@ -1101,6 +1132,67 @@ def render_visit_calendar(tester_id):
         st.markdown(cells, unsafe_allow_html=True)
 
 
+# ============= ポップアップ(出会い・おかえり) =============
+# st.dialog は Streamlit 1.37+。古い環境では tab_home のバナー表示にフォールバック。
+if hasattr(st, "dialog"):
+
+    @st.dialog("🪶 鳥に出会えました")
+    def _obs_dialog(flash):
+        for f in flash:
+            cols = st.columns([1, 3])
+            with cols[0]:
+                st.markdown(
+                    render_bird_sprite_html(f["id"], size_px=72),
+                    unsafe_allow_html=True,
+                )
+            with cols[1]:
+                st.markdown(f"**{f['name']}**")
+                if f.get("first"):
+                    st.markdown("✨ *はじめての観察! 図鑑に生態が記録されました*")
+                else:
+                    st.caption("また会えました。図鑑の観察記録が増えます。")
+        if st.button("とじる", key="obs_dialog_close", use_container_width=True):
+            st.rerun()
+
+    @st.dialog("🌿 おかえりなさい")
+    def _welcome_dialog(data):
+        h = data.get("hours_away", 0)
+        if h >= 48:
+            st.caption(f"{int(h // 24)}日ぶりです。留守のあいだに——")
+        elif h >= 2:
+            st.caption("しばらくぶりです。留守のあいだに——")
+        arrivals = data.get("arrivals", [])
+        for a in arrivals[:6]:
+            cols = st.columns([1, 4])
+            with cols[0]:
+                st.markdown(
+                    render_bird_sprite_html(a["id"], size_px=56),
+                    unsafe_allow_html=True,
+                )
+            with cols[1]:
+                if a.get("first"):
+                    st.markdown(f"**{a['name']}** が初めて庭に来ました ✨")
+                else:
+                    st.markdown(f"**{a['name']}** が来ていました")
+        deps = data.get("departures", [])
+        if deps:
+            st.caption("🕊 " + "、".join(deps[:5]) + " は旅立っていきました")
+        if data.get("n_mementos"):
+            st.caption(f"🎁 新しい落とし物が {data['n_mementos']} 個あります")
+        if st.button("庭を見る", key="welcome_dialog_close",
+                     type="primary", use_container_width=True):
+            st.rerun()
+
+    # 1回の実行で開けるダイアログは1つ。出会い(儀式直後)を優先する。
+    if st.session_state.get("ritual_flash"):
+        _obs_dialog(st.session_state.pop("ritual_flash"))
+    elif st.session_state.get("welcome_popup"):
+        _welcome_dialog(st.session_state.pop("welcome_popup"))
+else:
+    # 旧Streamlit: 不在中の出来事バナー(tab_home)が同じ内容を伝えるので破棄
+    st.session_state.pop("welcome_popup", None)
+
+
 # ============= Tabs =============
 tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
     ["🏞️ 今の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物", "📅 あしあと",
@@ -1110,11 +1202,12 @@ tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, t
 
 # ---------- Tab: Home ----------
 with tab_home:
-    # 儀式終了時に保存された近距離観察を、控えめに一度だけ知らせる
+    # 儀式終了時に保存された近距離観察の知らせ(ダイアログ非対応環境のフォールバック)
     _flash = st.session_state.pop("ritual_flash", None)
     if _flash:
+        _names = "、".join(f["name"] for f in _flash)
         st.success(
-            "🪶 今朝、" + "、".join(_flash) + " が近くまで来てくれました。図鑑に記録しました。"
+            "🪶 今朝、" + _names + " が近くまで来てくれました。図鑑に記録しました。"
         )
 
     # ===== 儀式UI(距離メカニクス)=====
