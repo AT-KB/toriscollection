@@ -38,6 +38,11 @@ except (KeyError, AttributeError):
     import importlib
     xc_client = importlib.import_module("xc_client")
 
+try:
+    import freesound_client
+except Exception:
+    freesound_client = None  # type: ignore
+
 
 _COMPONENT_HEIGHT = 390
 _MAX_BIRDS = 4
@@ -125,6 +130,18 @@ def _get_audio_b64_variants(scientific_name: str,
     return out
 
 
+@st.cache_data(show_spinner=False)
+def _get_ambient_b64() -> str | None:
+    """Freesound から取得した森の環境音を base64 で返す。キーなしは None。"""
+    if freesound_client is None or not freesound_client.is_enabled():
+        return None
+    path = freesound_client.get_ambient_path()
+    if path and path.exists():
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        return b64
+    return None
+
+
 def _fetch_bird_audio(args: tuple) -> tuple:
     """(bid, bird_dict) → (bid, b64リスト or None)  並列実行用"""
     bid, bird = args
@@ -197,6 +214,9 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     id_order = {bid: i for i, bid in enumerate(resident_ids)}
     birds.sort(key=lambda b: id_order.get(b["id"], 999))
 
+    # 森の環境音(Freesound): キーがあれば実録音、なければ JS でシンセ合成
+    ambient_b64 = _get_ambient_b64()
+
     n = len(birds)
     birds_meta = [
         {"id": b["id"], "name": b["name"], "hint": b["hint"],
@@ -205,6 +225,14 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
+
+    # 森の環境音タグ(Freesound がある場合のみ)
+    ambient_tag = ""
+    if ambient_b64:
+        ambient_tag = (
+            '<audio id="rite_ambient" preload="auto" loop style="display:none">'
+            f'<source src="data:audio/mp3;base64,{ambient_b64}" type="audio/mp3"></audio>'
+        )
 
     # 鳴き声バリエーション: 1羽につき複数の録音(さえずり/地鳴き)を埋め込む。
     # id は rite_audio_{鳥index}_{バリエーションindex}
@@ -345,7 +373,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     cloud_html = "".join(cloud_parts)
     scene_html = cloud_html + branch_html + "".join(sprite_divs)
 
+    has_ambient_js = "true" if ambient_b64 else "false"
+
     html = f"""
+    {ambient_tag}
     {audio_tags}
     <style>
       @keyframes rite_bob {{
@@ -413,6 +444,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     <script>
     (function() {{
         const BIRDS = {birds_json};
+        const HAS_AMBIENT = {has_ambient_js};
         const btn    = document.getElementById('rite_btn');
         const metEl  = document.getElementById('rite_met');
         const goneEl = document.getElementById('rite_gone');
@@ -462,6 +494,24 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const birdLeft = [];   // 各鳥の現在の left%
         const b1Dwell  = [];   // b1 連続滞在ステップ数(2以上で観察成立)
         const met = new Set();
+
+        // ── AGC(自動音量正規化) ────────────────────────────────────
+        // 録音ごとの音量差を吸収する。各鳥のピーク RMS を追跡し、
+        // 目標レベルとの比率でゲインをゆっくり追従させる。
+        const peakRMS = [];          // 各鳥のピーク RMS 推定値
+        const AGC_TARGET = 0.065;    // 目標 RMS
+        const AGC_MIN = 0.5, AGC_MAX = 3.5;
+
+        // ── 呼応(かけあい) ────────────────────────────────────────
+        // フレーズの切れ目(休符)を検知し、ゆっくりクロスフェードして
+        // 別の鳥にバトンを渡す。ぶつ切りにならないよう休符で始めて長めにランプ。
+        const phraseOn = [];         // 各鳥が現在フレーズ中か
+        const silentF  = [];         // 連続無音フレーム数
+        let activeIdx  = 0;          // 現在フォアグラウンドの鳥インデックス
+        let activeSince = 0;         // activeIdx になった時刻(ms)
+        const CALL_FLOOR   = 0.12;   // バックグラウンド鳥の chGain 最小値
+        const SILENT_NEED  = 12;     // 休符判定に必要な連続フレーム数(≈200ms)
+        const MIN_SOLO_MS  = 5000;   // 最低フォアグラウンド保持時間
 
         // 初期 left% を b3(最奥)レーン内に等間隔配置(中央のギャップは避ける)
         for (let i = 0; i < n; i++) {{
@@ -565,24 +615,30 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             // ローパス: 距離でこもり具合を変える(D[branch].freq)
             const filter = ctx.createBiquadFilter(); filter.type = 'lowpass';
             // ノイズゲート用ゲイン: 鳴き声の合間のサーッというヒスを絞る
-            const gate   = ctx.createGain(); gate.gain.value = 1.0;
-            const gain   = ctx.createGain();
+            const gate    = ctx.createGain(); gate.gain.value = 1.0;
+            // AGCゲイン: 録音ごとの音量差を正規化する
+            const agcGain = ctx.createGain(); agcGain.gain.value = 1.0;
+            // 距離ゲイン: 枝の遠近で音量を変える
+            const gain    = ctx.createGain();
+            // 呼応ゲイン: フォアグラウンド(1.0) / バックグラウンド(CALL_FLOOR)
+            const chGain  = ctx.createGain(); chGain.gain.value = 1.0;
             // 3D定位(HRTF、フォールバックでStereoPanner)
-            const pan    = makePanner();
+            const pan     = makePanner();
             // リバーブ送り: 遠い枝ほど多く送り、森の奥行きを表現
-            const wet    = ctx.createGain();
+            const wet     = ctx.createGain();
             // レベル監視用アナライザ(出力には接続しない)
-            const ana    = ctx.createAnalyser(); ana.fftSize = 512;
+            const ana     = ctx.createAnalyser(); ana.fftSize = 512;
+            // チェーン: hp → filter → ana → gate → agcGain → gain → chGain → pan / wet
             hp.connect(filter);
             filter.connect(ana);
-            filter.connect(gate); gate.connect(gain);
-            // ドライ: 3D定位を通してマスターへ
-            gain.connect(pan.node); pan.node.connect(master);
-            // ウェット: 共有リバーブバスへ(拡散音なので定位前=モノで送る)
-            gain.connect(wet); wet.connect(reverb);
+            filter.connect(gate);
+            gate.connect(agcGain); agcGain.connect(gain);
+            gain.connect(chGain);
+            chGain.connect(pan.node); pan.node.connect(master);
+            chGain.connect(wet); wet.connect(reverb);
             // 初期の鳴き方も時間帯の好みで選ぶ
             const cur = els.length > 1 ? pickVariant(i, -1) : 0;
-            return {{ els, cur, filter, gain, wet, gate, ana, pan,
+            return {{ els, cur, filter, gain, agcGain, chGain, wet, gate, ana, pan,
                       buf: new Float32Array(ana.fftSize), branch: 'b3' }};
         }}
 
@@ -617,8 +673,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             return ir;
         }}
 
-        // 環境音BGM: ノイズから「風」と「空気のざわめき」の2層を合成し、
-        // 鳴き声の下にうっすら敷く。音源ファイル不要・軽量。
+        // 環境音BGM: Freesound の実録音があればそれを、なければノイズ合成にフォールバック。
         function makeNoiseBuffer(brown) {{
             const dur = 4, len = ctx.sampleRate * dur;
             const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -632,7 +687,21 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             return buffer;
         }}
         function buildAmbient() {{
-            // 層1: 低い風(ブラウンノイズ→ローパス、ゆっくり唸る)
+            const ambEl = document.getElementById('rite_ambient');
+            if (HAS_AMBIENT && ambEl) {{
+                // 実録音パス: Freesound の森の環境音をループ再生
+                const src   = ctx.createMediaElementSource(ambEl);
+                const alp   = ctx.createBiquadFilter(); alp.type = 'lowpass';
+                alp.frequency.value = 6000;  // 高域を少し丸める
+                const again = ctx.createGain(); again.gain.value = 0.0;
+                src.connect(alp); alp.connect(again); again.connect(master);
+                ambEl.volume = 1.0;
+                ambEl.play().catch(() => {{}});
+                const t = ctx.currentTime;
+                again.gain.setTargetAtTime(0.22, t, 3.5);  // ゆっくりフェードイン
+                return {{ wind: ambEl, air: null, lfo: null, wgain: again, again }};
+            }}
+            // 合成フォールバック: 層1=低い風(ブラウンノイズ) + 層2=空気のざわめき
             const wind = ctx.createBufferSource();
             wind.buffer = makeNoiseBuffer(true); wind.loop = true;
             const wlp = ctx.createBiquadFilter(); wlp.type = 'lowpass';
@@ -642,7 +711,6 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             const lfo = ctx.createOscillator(); lfo.frequency.value = 0.06;
             const lfoG = ctx.createGain(); lfoG.gain.value = 200;
             lfo.connect(lfoG); lfoG.connect(wlp.frequency);
-            // 層2: 高い空気のざわめき(バンドパス、ごく薄く)
             const air = ctx.createBufferSource();
             air.buffer = makeNoiseBuffer(false); air.loop = true;
             const abp = ctx.createBiquadFilter(); abp.type = 'bandpass';
@@ -651,7 +719,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             air.connect(abp); abp.connect(again); again.connect(master);
             wind.start(); air.start(); lfo.start();
             const t = ctx.currentTime;
-            wgain.gain.setTargetAtTime(0.075, t, 2.5);   // 控えめにフェードイン
+            wgain.gain.setTargetAtTime(0.075, t, 2.5);
             again.gain.setTargetAtTime(0.012, t, 2.5);
             return {{ wind, air, lfo, wgain, again }};
         }}
@@ -712,7 +780,22 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             rampLin(nd.gain.gain,      D[branch].gain);
             rampExp(nd.filter.frequency, D[branch].freq);
             rampLin(nd.wet.gain,       D[branch].wet);
-            if (branch === 'gone') {{ panGone(nd); flyAwayUp(i); markGone(i); return; }}
+            if (branch === 'gone') {{
+                panGone(nd); flyAwayUp(i); markGone(i);
+                // フォアグラウンドの鳥が飛び去ったら次の鳥に引き継ぐ
+                if (i === activeIdx) {{
+                    const alives = [];
+                    for (let j = 0; j < nodes.length; j++) {{
+                        if (j !== i && nodes[j].branch !== 'gone') alives.push(j);
+                    }}
+                    if (alives.length > 0) {{
+                        const next = alives[Math.floor(Math.random() * alives.length)];
+                        activeIdx = next; activeSince = Date.now();
+                        nodes[next].chGain.gain.setTargetAtTime(1.0, ctx.currentTime, 0.8);
+                    }}
+                }}
+                return;
+            }}
             // 新しい枝でのランダムな着地位置
             birdLeft[i] = hopLeft(branch, i);
             // 3D定位を新しい位置(左右+奥行き)へなめらかに移動
@@ -796,10 +879,9 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             }});
         }}
 
-        // ノイズゲート: 各音源の音量を監視し、鳴き声の合間(静かな区間)は
-        // ゲインを絞って背景のサーッというヒスを目立たなくする(癒し向け)。
-        const GATE_THRESH = 0.020;   // この RMS 未満を「ほぼ無音=ノイズ」とみなす
-        const GATE_FLOOR  = 0.12;    // 絞り切らず薄く残す(自然さのため)
+        // ノイズゲート + AGC + 呼応(かけあい)を1ループで処理する。
+        const GATE_THRESH = 0.020;
+        const GATE_FLOOR  = 0.12;
         function gateTick() {{
             if (!running || !ctx) return;
             const t = ctx.currentTime;
@@ -810,7 +892,50 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 let sum = 0;
                 for (let k = 0; k < nd.buf.length; k++) sum += nd.buf[k] * nd.buf[k];
                 const rms = Math.sqrt(sum / nd.buf.length);
+
+                // ① ノイズゲート: 休符中のヒスノイズを絞る
                 nd.gate.gain.setTargetAtTime(rms < GATE_THRESH ? GATE_FLOOR : 1.0, t, 0.06);
+
+                // ② AGC: 録音ごとの音量差を正規化する
+                // 鳴き声中: ピークを速く追従。無音中: ゆっくり減衰。
+                if (rms > GATE_THRESH) {{
+                    peakRMS[i] = peakRMS[i] * 0.92 + rms * 0.08;  // 速いアタック
+                }} else {{
+                    peakRMS[i] *= 0.9998;                           // ゆっくり減衰
+                }}
+                const agcT = Math.min(Math.max(AGC_TARGET / Math.max(peakRMS[i], 0.003),
+                                               AGC_MIN), AGC_MAX);
+                nd.agcGain.gain.setTargetAtTime(agcT, t, 3.0);     // 3秒でゆっくり追従
+
+                // ③ 呼応: フォアグラウンド鳥のフレーズ末尾でバトン渡し
+                if (i === activeIdx) {{
+                    if (rms > GATE_THRESH * 0.6) {{
+                        phraseOn[i] = true;
+                        silentF[i]  = 0;
+                    }} else if (phraseOn[i]) {{
+                        silentF[i]++;
+                        // 休符が SILENT_NEED フレーム続いたら候補を探す
+                        if (silentF[i] === SILENT_NEED
+                                && Date.now() - activeSince > MIN_SOLO_MS
+                                && Math.random() < 0.40) {{
+                            const cands = [];
+                            for (let j = 0; j < nodes.length; j++) {{
+                                if (j !== i && nodes[j].branch !== 'gone') cands.push(j);
+                            }}
+                            if (cands.length > 0) {{
+                                const next = cands[Math.floor(Math.random() * cands.length)];
+                                // 現在の鳥: 2秒かけてバックグラウンドへ
+                                nd.chGain.gain.setTargetAtTime(CALL_FLOOR, t, 1.5);
+                                // 次の鳥: 0.35秒の「間」を置いてから1秒でフォアグラウンドへ
+                                nodes[next].chGain.gain.setTargetAtTime(1.0, t + 0.35, 0.8);
+                                activeIdx  = next;
+                                activeSince = Date.now();
+                                phraseOn[next] = false;
+                                silentF[next]  = 0;
+                            }}
+                        }}
+                    }}
+                }}
             }}
             rafId = requestAnimationFrame(gateTick);
         }}
@@ -841,14 +966,22 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             reverb.connect(reverbReturn); reverbReturn.connect(master);
             ambient = buildAmbient();
             for (let i = 0; i < n; i++) {{
+                peakRMS.push(0.01);
+                phraseOn.push(false);
+                silentF.push(0);
                 const nd = buildNode(i);
                 nodes.push(nd);
                 // b3 の初期値を直接セット(ランプ不要)
-                nd.gain.gain.value       = D.b3.gain;
+                nd.gain.gain.value        = D.b3.gain;
                 nd.filter.frequency.value = D.b3.freq;
-                nd.wet.gain.value        = D.b3.wet;
+                nd.wet.gain.value         = D.b3.wet;
                 setPan(nd, birdLeft[i], 'b3', ctx.currentTime);
                 applyVisual(i, 'b3');
+            }}
+            // 呼応初期化: 鳥0をフォアグラウンド、他はバックグラウンドに設定
+            activeIdx = 0; activeSince = Date.now();
+            for (let i = 1; i < nodes.length; i++) {{
+                nodes[i].chGain.gain.setValueAtTime(CALL_FLOOR, ctx.currentTime);
             }}
             playAll();
             startRunning();
@@ -872,7 +1005,16 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
         btn.addEventListener('click', function() {{
             if (running) {{ stop(); }}
-            else if (ctx) {{ ctx.resume(); playAll(); startRunning(); }}
+            else if (ctx) {{
+                ctx.resume();
+                // 再開時: 生き残っている鳥の中からフォアグラウンドを復元
+                const alives = nodes.map((nd, j) => j).filter(j => nodes[j].branch !== 'gone');
+                if (alives.length > 0 && !alives.includes(activeIdx)) {{
+                    activeIdx = alives[0]; activeSince = Date.now();
+                    nodes[activeIdx].chGain.gain.setValueAtTime(1.0, ctx.currentTime);
+                }}
+                playAll(); startRunning();
+            }}
             else {{ start(); }}
         }});
 
