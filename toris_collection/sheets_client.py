@@ -482,12 +482,28 @@ def load_observation_counts(tester_id):
 
 
 # ====== access_logs ======
+def _ensure_access_logs_sheet():
+    """access_logs シートが存在しなければヘッダー付きで作成する。"""
+    ss = get_spreadsheet()
+    try:
+        ws = ss.worksheet("access_logs")
+        # 既存シートにヘッダー行がない(最初の行が数字)場合は先頭に挿入
+        first = ws.row_values(1)
+        if first and first[0].isdigit():
+            ws.insert_row(["id", "tester_id", "timestamp", "screen", "action", "details"], 1)
+        return ws
+    except Exception:
+        ws = ss.add_worksheet(title="access_logs", rows=5000, cols=6)
+        ws.append_row(["id", "tester_id", "timestamp", "screen", "action", "details"])
+        return ws
+
+
 def log_access(tester_id, screen, action, details=""):
     """fire-and-forget: 失敗してもアプリは続行する"""
     try:
-        sheet = _ws("access_logs")
+        sheet = _ensure_access_logs_sheet()
         rows = sheet.get_all_values()
-        next_id = len(rows)
+        next_id = max(0, len(rows) - 1)  # ヘッダー行を除いた行数
         sheet.append_row([
             str(next_id), tester_id, now_iso(), screen, action, details
         ])
@@ -505,7 +521,7 @@ def load_visit_calendar(tester_id):
     失敗時は空 dict。
     """
     try:
-        rows = _ws("access_logs").get_all_records()
+        rows = _ensure_access_logs_sheet().get_all_records()
     except Exception:
         return {}
     out = {}
