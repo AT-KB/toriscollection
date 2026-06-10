@@ -17,6 +17,8 @@ from pathlib import Path
 
 import streamlit as st
 
+import ecology
+
 try:
     import xc_client
 except Exception:
@@ -274,8 +276,16 @@ def render_radio(
     # 観察回数 多い順にソート
     birds.sort(key=lambda b: -b["count"])
 
+    # ── 生態的つながり ────────────────────────────────────────
+    # この庭で鳴く鳥たちが「同じ食物源を分け合う仲間」であることを見せる。
+    # 同じ並び順で呼応の重み付け行列も作る(JSへ渡す)。
+    bird_ids = [b["id"] for b in birds]
+    clusters = ecology.resource_clusters(bird_ids, birds_data)
+    affinity = ecology.affinity_matrix(bird_ids, birds_data)
+    _render_connections(clusters, birds_data)
+
     # ── HTML/JS レンダリング ───────────────────────────────────
-    _render_radio_iframe(birds, sim_hour, chosen, season, season_meta)
+    _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, affinity)
 
 
 def _render_bird_chips(
@@ -307,9 +317,40 @@ def _render_bird_chips(
     st.markdown(chips_html, unsafe_allow_html=True)
 
 
+def _render_connections(clusters: list[dict], birds_data: dict) -> None:
+    """この庭の生態的つながり(同じ食物源を分け合う鳥たち)を表示する。
+
+    「なぜこの鳥たちが一緒に鳴いているのか」を食物網で見せるのが狙い。
+    つながりが無い(共有食物源がない)場合は何も出さない。
+    """
+    if not clusters:
+        return
+    rows = ""
+    for c in clusters[:4]:   # 上位4つのつながりまで
+        names = "・".join(birds_data.get(b, {}).get("name", b) for b in c["birds"])
+        rows += (
+            f'<div style="display:flex;align-items:baseline;gap:8px;'
+            f'margin:3px 0;font-size:0.84em;color:#3a5a3a;">'
+            f'<span style="font-size:1.05em;">{c["icon"]}</span>'
+            f'<span style="color:#6a8a5a;min-width:5.5em;">{c["name"]}</span>'
+            f'<span style="color:#7a9a6a;">を</span>'
+            f'<span style="font-weight:500;">{names}</span>'
+            f'<span style="color:#9ab08a;">が分け合う</span>'
+            f'</div>'
+        )
+    st.markdown(
+        f'<div style="background:#f3f7ed;border-left:3px solid #b0c890;'
+        f'border-radius:8px;padding:8px 12px;margin:8px 0;">'
+        f'<div style="font-size:0.78em;color:#7a9a6a;margin-bottom:4px;">'
+        f'🌿 この庭のつながり</div>{rows}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def _render_radio_iframe(
     birds: list[dict], sim_hour: int,
     biome_id: str, season: str, season_meta: dict,
+    affinity: list[list[int]] | None = None,
 ) -> None:
     """Web Audio ベースのラジオ iframe を描画する。"""
 
@@ -320,6 +361,9 @@ def _render_radio_iframe(
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
+    if affinity is None:
+        affinity = [[0] * n for _ in range(n)]
+    affinity_json = json.dumps(affinity)
 
     # 音声タグ
     audio_tags = "".join(
@@ -390,6 +434,7 @@ def _render_radio_iframe(
     <script>
     (function() {{
         const BIRDS = {birds_json};
+        const AFFINITY = {affinity_json};
         const HAS_AMBIENT = {has_ambient};
         const SIM_HOUR = {sim_hour};
         const n = BIRDS.length;
@@ -461,6 +506,20 @@ def _render_radio_iframe(
                 for (let k = 0; k < w; k++) pool.push(v);
             }}
             if (!pool.length) return exclude >= 0 ? exclude : 0;
+            return pool[Math.floor(Math.random() * pool.length)];
+        }}
+
+        // 呼応の相手を選ぶ: 生態的に近い鳥(同じ食物源を分け合う鳥)ほど応えやすい。
+        // 食物網のつながりが無くても基礎確率1で選ばれうるので、全員が孤立しても破綻しない。
+        function pickResponder(from) {{
+            const row = (AFFINITY && AFFINITY[from]) || [];
+            const pool = [];
+            for (let j = 0; j < nodes.length; j++) {{
+                if (j === from) continue;
+                const w = 1 + 2 * (row[j] || 0);   // 共有食物源1つにつき応えやすさ+2
+                for (let k = 0; k < w; k++) pool.push(j);
+            }}
+            if (!pool.length) return -1;
             return pool[Math.floor(Math.random() * pool.length)];
         }}
 
@@ -600,9 +659,8 @@ def _render_radio_iframe(
                         if (silentF[i] === SILENT_NEED
                                 && Date.now() - activeSince > MIN_SOLO_MS
                                 && Math.random() < 0.40) {{
-                            const cands = Array.from({{length: nodes.length}}, (_, j) => j).filter(j => j !== i);
-                            if (cands.length > 0) {{
-                                const next = cands[Math.floor(Math.random() * cands.length)];
+                            const next = pickResponder(i);
+                            if (next >= 0) {{
                                 nd.chGain.gain.setTargetAtTime(CALL_FLOOR, t, 1.5);
                                 nodes[next].chGain.gain.setTargetAtTime(1.0, t+0.35, 0.8);
                                 activeIdx = next; activeSince = Date.now();
