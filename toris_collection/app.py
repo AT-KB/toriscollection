@@ -1405,10 +1405,10 @@ with tab_radio:
         "出会った鳥だけが鳴く。出会った鳥が多いほど、コーラスが豊かになる。",
         help="渡り鳥はいない季節はラジオから消えます。よく観察した鳥ほど近くで聞こえます。",
     )
-    if st.session_state.get("tester_id") and st.session_state.get("observed") is not None:
+    if st.session_state.get("current_tester_id"):
         render_radio(
             biome_id=st.session_state.biome,
-            observed=st.session_state.observed,
+            observed=st.session_state.get("observed", {}),
             birds_data=BIRDS,
         )
     else:
