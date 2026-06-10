@@ -233,15 +233,7 @@ def render_bird_audio(b_id: str, bird: dict):
 
         if audio_bytes:
             try:
-                # ループ再生で軽量化(短い音源を繰り返す)
                 st.audio(audio_bytes, format="audio/mp3", loop=True)
-                if cit:
-                    # 録音の物語: この声がどこで誰に録られたかを添える(出会いの物語性)
-                    st.caption(
-                        f"🎙 この声は {cit['country']} で "
-                        f"{cit['recordist']} さんが録音したもの — "
-                        f"[XC{cit['xc_id']}]({cit['url']}) · xeno-canto · CC"
-                    )
             except Exception as e:
                 st.caption(f"再生エラー: {e}")
         else:
@@ -1297,6 +1289,26 @@ with tab_home:
         st.session_state.month,
         current_temperature(st.session_state.biome, st.session_state.month),
     )
+    st.markdown("---")
+
+    # ── 庭のラジオ(ホーム版: 折りたたみ) ────────────────────────
+    if st.session_state.get("current_tester_id"):
+        _radio_obs_home = dict(st.session_state.get("observed", {}))
+        for _bid in st.session_state.get("discovered", set()):
+            _radio_obs_home.setdefault(_bid, {"count": 1, "first": "", "last": ""})
+        _has_home_radio = any(
+            bid in _radio_obs_home
+            for bid, bird in BIRDS.items()
+            if st.session_state.biome in bird.get("biome_pref", [])
+        )
+        if _has_home_radio:
+            with st.expander("🎙 庭のラジオ", expanded=False):
+                render_radio(
+                    biome_id=st.session_state.biome,
+                    observed=_radio_obs_home,
+                    birds_data=BIRDS,
+                    key_prefix="radio_home",
+                )
     st.markdown("---")
 
     col1, col2 = st.columns([1, 1])

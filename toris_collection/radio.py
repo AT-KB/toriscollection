@@ -141,6 +141,7 @@ def render_radio(
     observed: dict,          # {bird_id: {count, first, last}}
     birds_data: dict,
     selected_biome: str | None = None,
+    key_prefix: str = "radio",   # 複数箇所に埋め込む場合にキーを変える
 ) -> None:
     """
     庭のラジオを描画する。
@@ -174,7 +175,7 @@ def render_radio(
             format_func=lambda x: biome_labels[x],
             index=default_idx,
             horizontal=True,
-            key="radio_biome_select",
+            key=f"{key_prefix}_biome_select",
             label_visibility="collapsed",
         )
     with col_time:
@@ -184,7 +185,7 @@ def render_radio(
             "時間帯",
             options=range(len(time_options)),
             format_func=lambda i: time_options[i],
-            key="radio_time_select",
+            key=f"{key_prefix}_time_select",
             label_visibility="collapsed",
         )
     sim_hour = time_hours[t_idx]
@@ -223,10 +224,11 @@ def render_radio(
         if birds_data[bid].get("scientific")
     ][:_MAX_RADIO_BIRDS * 2]
 
-    if "radio_ready" not in st.session_state:
-        st.session_state.radio_ready = False
+    _ready_key = f"{key_prefix}_ready"
+    if _ready_key not in st.session_state:
+        st.session_state[_ready_key] = False
 
-    if not st.session_state.radio_ready:
+    if not st.session_state[_ready_key]:
         # 開始前: 鳥チップ一覧(在籍+季節外)で「誰が鳴けるか」を見せる
         _render_bird_chips(in_season, out_season, observed, birds_data, season)
         total_observed = len(observed_in_biome)
@@ -235,8 +237,8 @@ def render_radio(
             f'観察済み {total_observed} 羽 · 今の季節に {len(in_season)} 羽が鳴ける</div>',
             unsafe_allow_html=True,
         )
-        if st.button("🎙 ラジオを始める", key="radio_start_btn"):
-            st.session_state.radio_ready = True
+        if st.button("🎙 ラジオを始める", key=f"{key_prefix}_start_btn"):
+            st.session_state[_ready_key] = True
             st.rerun()
         return
 
