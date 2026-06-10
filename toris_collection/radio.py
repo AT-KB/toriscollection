@@ -11,6 +11,7 @@
 from __future__ import annotations
 import json
 import base64
+import random
 import concurrent.futures
 from datetime import date
 from pathlib import Path
@@ -220,12 +221,6 @@ def render_radio(
         st.info(f"今の季節({season_meta['jp']})に鳴ける鳥がいません。他の季節にまた来てください。")
         return
 
-    # ── 音源取得(上位 _MAX_RADIO_BIRDS 羽まで) ────────────────
-    candidates = [
-        (bid, birds_data[bid]) for bid in in_season
-        if birds_data[bid].get("scientific")
-    ][:_MAX_RADIO_BIRDS * 2]
-
     _ready_key = f"{key_prefix}_ready"
     if _ready_key not in st.session_state:
         st.session_state[_ready_key] = False
@@ -247,6 +242,26 @@ def render_radio(
     # 開始後: 在籍チップは iframe 内(♪付き)に出るので、季節外だけ表示
     if out_season:
         _render_bird_chips([], out_season, observed, birds_data, season)
+
+    # ── 今日の顔ぶれを共起ネットワークで選ぶ ────────────────────
+    # 観察済み・季節内の鳥から、共起しやすい(関係の強い)鳥が揃うように選ぶ。
+    # 純粋ランダムではなく、すでに選ばれた鳥と一緒に見られやすい鳥を引きやすくする。
+    playable = [bid for bid in in_season if birds_data[bid].get("scientific")]
+    shuffle_key = f"{key_prefix}_shuffle"
+    shuffle_n = st.session_state.get(shuffle_key, 0)
+    rng = random.Random(f"{chosen}|{season}|{shuffle_n}")
+    # 観察回数が多い鳥ほど主役に出やすい(基礎重み)
+    base_w = {bid: 1.0 + observed.get(bid, {}).get("count", 1) * 0.5 for bid in playable}
+    lineup = ecology.pick_lineup(playable, birds_data, _MAX_RADIO_BIRDS, rng, base_w)
+    # 音源取得に失敗する鳥に備えて、関係の薄い予備を少しだけ足す
+    backups = [b for b in playable if b not in lineup]
+    rng.shuffle(backups)
+    candidates = [(bid, birds_data[bid]) for bid in lineup + backups[:3]]
+
+    if len(playable) > _MAX_RADIO_BIRDS:
+        if st.button("🔀 顔ぶれを変える", key=f"{key_prefix}_shuffle_btn"):
+            st.session_state[shuffle_key] = shuffle_n + 1
+            st.rerun()
 
     birds: list[dict] = []
     with st.spinner("声を集めています…"):
@@ -273,19 +288,21 @@ def render_radio(
         st.info("音源を取得できませんでした。")
         return
 
-    # 観察回数 多い順にソート
-    birds.sort(key=lambda b: -b["count"])
+    # 顔ぶれの並び(lineup)順に整える。先頭が今日の「主役」。
+    order = {bid: i for i, bid in enumerate(lineup)}
+    birds.sort(key=lambda b: order.get(b["id"], 999))
+    birds = birds[:_MAX_RADIO_BIRDS]
 
-    # ── 生態的つながり ────────────────────────────────────────
-    # この庭で鳴く鳥たちが「同じ食物源を分け合う仲間」であることを見せる。
-    # 同じ並び順で呼応の重み付け行列も作る(JSへ渡す)。
+    # ── 共起ネットワーク ──────────────────────────────────────
+    # 鳴く鳥たちが「よく一緒に見られる関係」であることを見せる。
+    # 同じ並び順で呼応の重み付け行列(共起度)も作る(JSへ渡す)。
     bird_ids = [b["id"] for b in birds]
-    clusters = ecology.resource_clusters(bird_ids, birds_data)
-    affinity = ecology.affinity_matrix(bird_ids, birds_data)
-    _render_connections(clusters, birds_data)
+    groups = ecology.guild_groups(bird_ids, birds_data)
+    co_mat = ecology.co_occurrence_matrix(bird_ids, birds_data)
+    _render_connections(groups, birds_data)
 
     # ── HTML/JS レンダリング ───────────────────────────────────
-    _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, affinity)
+    _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, co_mat)
 
 
 def _render_bird_chips(
@@ -317,32 +334,33 @@ def _render_bird_chips(
     st.markdown(chips_html, unsafe_allow_html=True)
 
 
-def _render_connections(clusters: list[dict], birds_data: dict) -> None:
-    """この庭の生態的つながり(同じ食物源を分け合う鳥たち)を表示する。
+def _render_connections(groups: list[dict], birds_data: dict) -> None:
+    """今日の顔ぶれの「関係」を採餌ギルドごとに見せる。
 
-    「なぜこの鳥たちが一緒に鳴いているのか」を食物網で見せるのが狙い。
-    つながりが無い(共有食物源がない)場合は何も出さない。
+    共起の科学的な駆動要因は「同じ環境を好み、採餌のしかたが近いこと」。
+    なので食物の奪い合い(競争)ではなく、同じ採餌ギルドの仲間としてまとめる。
+    ギルドが1羽ずつばらけている場合は何も出さない。
     """
-    if not clusters:
+    if not groups:
         return
     rows = ""
-    for c in clusters[:4]:   # 上位4つのつながりまで
-        names = "・".join(birds_data.get(b, {}).get("name", b) for b in c["birds"])
+    for g in groups[:3]:
+        names = "・".join(birds_data.get(b, {}).get("name", b) for b in g["birds"])
         rows += (
             f'<div style="display:flex;align-items:baseline;gap:8px;'
             f'margin:3px 0;font-size:0.84em;color:#3a5a3a;">'
-            f'<span style="font-size:1.05em;">{c["icon"]}</span>'
-            f'<span style="color:#6a8a5a;min-width:5.5em;">{c["name"]}</span>'
-            f'<span style="color:#7a9a6a;">を</span>'
+            f'<span style="font-size:1.05em;">{g["icon"]}</span>'
+            f'<span style="color:#6a8a5a;min-width:8em;">{g["label"]}</span>'
             f'<span style="font-weight:500;">{names}</span>'
-            f'<span style="color:#9ab08a;">が分け合う</span>'
             f'</div>'
         )
     st.markdown(
         f'<div style="background:#f3f7ed;border-left:3px solid #b0c890;'
         f'border-radius:8px;padding:8px 12px;margin:8px 0;">'
         f'<div style="font-size:0.78em;color:#7a9a6a;margin-bottom:4px;">'
-        f'🌿 この庭のつながり</div>{rows}</div>',
+        f'🔗 今日の顔ぶれ &nbsp;<span style="color:#a8b89a;font-weight:400;">'
+        f'— 同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます</span></div>'
+        f'{rows}</div>',
         unsafe_allow_html=True,
     )
 
@@ -509,14 +527,14 @@ def _render_radio_iframe(
             return pool[Math.floor(Math.random() * pool.length)];
         }}
 
-        // 呼応の相手を選ぶ: 生態的に近い鳥(同じ食物源を分け合う鳥)ほど応えやすい。
-        // 食物網のつながりが無くても基礎確率1で選ばれうるので、全員が孤立しても破綻しない。
+        // 呼応の相手を選ぶ: 共起しやすい鳥(よく一緒に見られる鳥)ほど応えやすい。
+        // AFFINITY[i][j] は 0..1 の共起度。基礎確率1があるので孤立しても破綻しない。
         function pickResponder(from) {{
             const row = (AFFINITY && AFFINITY[from]) || [];
             const pool = [];
             for (let j = 0; j < nodes.length; j++) {{
                 if (j === from) continue;
-                const w = 1 + 2 * (row[j] || 0);   // 共有食物源1つにつき応えやすさ+2
+                const w = Math.round((1 + 4 * (row[j] || 0)) * 4);  // 共起度で重み付け
                 for (let k = 0; k < w; k++) pool.push(j);
             }}
             if (!pool.length) return -1;
