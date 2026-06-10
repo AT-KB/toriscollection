@@ -34,7 +34,7 @@ _COMPONENT_HEIGHT = 340
 # ── アプリ内季節 ───────────────────────────────────────────────
 # 2025-03-01 を春の始まりとして、2週ごとに季節が進む(8週サイクル)。
 _APP_EPOCH = date(2025, 3, 1)
-_WEEKS_PER_SEASON = 2
+_WEEKS_PER_SEASON = 1
 
 _SEASON_META = {
     "spring": {"label": "春", "icon": "🌸", "jp": "春"},
