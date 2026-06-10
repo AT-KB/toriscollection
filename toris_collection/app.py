@@ -23,6 +23,7 @@ import base64
 import xc_client  # Python 3.14 並行インポートバグ対策: ritual.py より先にロード
 from ritual import render_ritual  # 儀式UI(距離メカニクス)
 import observation_log  # 儀式での近距離観察記録の保存
+from radio import render_radio, current_app_season, weeks_until_next_season, _SEASON_META
 
 
 # ============================================================
@@ -1196,9 +1197,9 @@ else:
 
 
 # ============= Tabs =============
-tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
-    ["🏞️ 今の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物", "📅 あしあと",
-     "🕸️ ネットワーク", "❓ 使い方"]
+tab_home, tab_radio, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
+    ["🏞️ 今の様子", "🎙 ラジオ", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
+     "📅 あしあと", "🕸️ ネットワーク", "❓ 使い方"]
 )
 
 
@@ -1386,6 +1387,32 @@ with tab_home:
                     f"</div>", unsafe_allow_html=True
                 )
                 render_bird_audio(b_id, bird)
+
+
+# ---------- Tab: Radio ----------
+with tab_radio:
+    _radio_season = current_app_season()
+    _radio_meta   = _SEASON_META[_radio_season]
+    _weeks_left   = weeks_until_next_season()
+    st.markdown(
+        f"### 🎙 庭のラジオ &nbsp; "
+        f"<span style='font-size:0.75em;font-weight:400;color:#7a9a6a;'>"
+        f"{_radio_meta['icon']} 今は{_radio_meta['jp']} &nbsp;·&nbsp; "
+        f"あと{_weeks_left}週で次の季節へ</span>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "出会った鳥だけが鳴く。出会った鳥が多いほど、コーラスが豊かになる。",
+        help="渡り鳥はいない季節はラジオから消えます。よく観察した鳥ほど近くで聞こえます。",
+    )
+    if st.session_state.get("tester_id") and st.session_state.get("observed") is not None:
+        render_radio(
+            biome_id=st.session_state.biome,
+            observed=st.session_state.observed,
+            birds_data=BIRDS,
+        )
+    else:
+        st.info("ログインすると、あなたが出会った鳥たちの声が聴けます。")
 
 
 # ---------- Tab: Plant ----------
