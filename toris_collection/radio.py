@@ -188,12 +188,8 @@ def render_radio(
             label_visibility="collapsed",
         )
     sim_hour = time_hours[t_idx]
-
-    # ── 季節表示 ────────────────────────────────────────────────
-    st.caption(
-        f"{season_meta['icon']} 今は**{season_meta['jp']}** "
-        f"— あと{weeks_left}週で次の季節へ"
-    )
+    # 季節表示はタブ見出し(app.py)が出すのでここでは出さない
+    _ = weeks_left
 
     # ── バイオームの観察済み鳥を絞り込む ──────────────────────
     biome_birds = [
@@ -213,11 +209,11 @@ def render_radio(
     in_season  = [bid for bid in observed_in_biome if bird_in_season(bid, season)]
     out_season = [bid for bid in observed_in_biome if not bird_in_season(bid, season)]
 
-    # ── 鳥リスト表示(観察回数 多い順) ──────────────────────────
     in_season.sort(key=lambda b: -observed.get(b, {}).get("count", 0))
-    _render_bird_chips(in_season, out_season, observed, birds_data, season)
 
     if not in_season:
+        # 全員季節外: チップで「いつ戻るか」を見せる
+        _render_bird_chips(in_season, out_season, observed, birds_data, season)
         st.info(f"今の季節({season_meta['jp']})に鳴ける鳥がいません。他の季節にまた来てください。")
         return
 
@@ -231,6 +227,8 @@ def render_radio(
         st.session_state.radio_ready = False
 
     if not st.session_state.radio_ready:
+        # 開始前: 鳥チップ一覧(在籍+季節外)で「誰が鳴けるか」を見せる
+        _render_bird_chips(in_season, out_season, observed, birds_data, season)
         total_observed = len(observed_in_biome)
         st.markdown(
             f'<div style="color:#5a7a5a;font-size:0.85em;">'
@@ -241,6 +239,10 @@ def render_radio(
             st.session_state.radio_ready = True
             st.rerun()
         return
+
+    # 開始後: 在籍チップは iframe 内(♪付き)に出るので、季節外だけ表示
+    if out_season:
+        _render_bird_chips([], out_season, observed, birds_data, season)
 
     birds: list[dict] = []
     with st.spinner("声を集めています…"):
@@ -660,4 +662,4 @@ def _render_radio_iframe(
     </script>
     """
 
-    st.components.v1.html(html, height=_COMPONENT_HEIGHT)
+    st.iframe(html, height=_COMPONENT_HEIGHT)

@@ -28,7 +28,7 @@ _MAX_B64_BYTES = 700_000  # base64 上限 ≈ 525KB MP3: 約35秒@128kbps
 def _load_key() -> Optional[str]:
     if KEY_FILE.exists():
         try:
-            k = KEY_FILE.read_text(encoding="utf-8").strip().lstrip("﻿")
+            k = KEY_FILE.read_text(encoding="utf-8").strip().lstrip("\ufeff")
             if k:
                 return k
         except Exception:
