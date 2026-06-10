@@ -1406,9 +1406,14 @@ with tab_radio:
         help="渡り鳥はいない季節はラジオから消えます。よく観察した鳥ほど近くで聞こえます。",
     )
     if st.session_state.get("current_tester_id"):
+        # 図鑑(訪問記録 discovered)の鳥もラジオで鳴ける。
+        # 儀式での近距離観察(observed)があれば、その回数で「近さ」が決まる。
+        _radio_obs = dict(st.session_state.get("observed", {}))
+        for _bid in st.session_state.get("discovered", set()):
+            _radio_obs.setdefault(_bid, {"count": 1, "first": "", "last": ""})
         render_radio(
             biome_id=st.session_state.biome,
-            observed=st.session_state.get("observed", {}),
+            observed=_radio_obs,
             birds_data=BIRDS,
         )
     else:
