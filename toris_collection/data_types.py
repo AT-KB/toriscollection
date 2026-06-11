@@ -24,6 +24,8 @@ TypedDict で定義したスキーマが、そのまま
     temp_fit_max  : int  好む気温の上限 (°C)
     seasons       : str  出現季節のカンマ区切り spring/summer/autumn/winter
                          空 = 年中 (year-round)
+    flock_max     : int  群れの最大サイズ 1〜3 (任意・未設定は rarity から推定)
+                         1=単独 / 3=群れやすい。ラジオで同種が複数で鳴く厚みになる
 
   species_plants シート:
     id, name, scientific, english, icon, biome, temp_fit_min, temp_fit_max
@@ -35,7 +37,7 @@ TypedDict で定義したスキーマが、そのまま
     id, name, scientific, english, temp_fit_min, temp_fit_max, eats_plants
 """
 from __future__ import annotations
-from typing import TypedDict
+from typing import TypedDict, NotRequired
 
 
 class BirdData(TypedDict):
@@ -50,6 +52,8 @@ class BirdData(TypedDict):
     eats_plants: list[str]
     eats_insects: list[str]
     temp_fit: tuple[int, int]
+    # 群れの最大サイズ(任意。未設定は flock.py が rarity から推定)
+    flock_max: NotRequired[int]
 
 
 class PlantData(TypedDict, total=False):

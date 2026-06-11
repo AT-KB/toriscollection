@@ -1,11 +1,21 @@
 """
-庭のラジオ - 観察済みの鳥たちが奏でるアンビエントプレイヤー
+庭のラジオ - 出会った鳥たちが奏でるアンビエントプレイヤー
 
-観察した鳥だけが鳴く。鳴く鳥が多いほど豊かなコーラスになる。
-捕まえる仕組みはない。ただ聴く。
+■ ラジオの正体(交渉不能・HANDOFF §1-1 の背骨)
+  ラジオは「蓄積するコレクション」である。一度会った鳥は observed に
+  記録され、その記録は減らない。嵐や伐採で庭の植物が倒れ、その鳥が
+  live な庭(residents)から去っても、ラジオでは今までどおり鳴く。
+  撹乱が触るのは「庭(=会いに行く手段の層)」だけで、ラジオ(=目的の層)は
+  痩せない。だから「ラジオが豊かになる」は単調に成り立つ。
+    → render_radio は residents ではなく observed/discovered を読む。
+      これがコレクション性の構造的な保証。
+
+  観察した鳥だけが鳴く。会った鳥が増えるほどコーラスが豊かになる。
+  さらに、よく会った社会性の鳥は「群れ」で鳴き、声に厚みが増す(flock.py)。
+  捕まえる仕組みはない。ただ聴く。
 
 季節:  アプリ内時間で2週ごとに季節が変わる(8週サイクル)。
-      渡り鳥はいない季節はラジオから消える。
+      渡り鳥はいない季節は一時的にラジオから引っ込む(コレクションからは消えない)。
 距離感: 観察回数が多い鳥ほど手前(クリア)に聞こえる。
 """
 from __future__ import annotations
@@ -19,6 +29,7 @@ from pathlib import Path
 import streamlit as st
 
 import ecology
+import flock as flk
 import audio_engine as ae
 
 try:
@@ -232,7 +243,7 @@ def render_radio(
         total_observed = len(observed_in_biome)
         st.markdown(
             f'<div style="color:#5a7a5a;font-size:0.85em;">'
-            f'観察済み {total_observed} 羽 · 今の季節に {len(in_season)} 羽が鳴ける</div>',
+            f'🗂 コレクション {total_observed} 羽 · 今の季節に {len(in_season)} 羽が鳴ける</div>',
             unsafe_allow_html=True,
         )
         if st.button("🎙 ラジオを始める", key=f"{key_prefix}_start_btn"):
@@ -281,6 +292,8 @@ def render_radio(
                         "sprite": _radio_sprite_b64(bid),
                         "depth":  _obs_to_depth(cnt),
                         "count":  cnt,
+                        # 群れ: よく会った社会性の鳥ほど複数で鳴き、声が厚くなる
+                        "flock":  flk.flock_size(bid, cnt, birds_data),
                         "nv":     len(b64s),
                         "vt":     [t for _, t in b64s],
                     })
@@ -422,9 +435,11 @@ def _render_radio_iframe(
     """Web Audio ベースのラジオ iframe を描画する。"""
 
     n = len(birds)
+    total_indiv = sum(b.get("flock", 1) for b in birds)  # 群れ込みの総個体数
+    count_label = f"{total_indiv}羽 ({n}種)" if total_indiv > n else f"{n}羽"
     birds_meta = [
         {"id": b["id"], "name": b["name"], "nv": b["nv"],
-         "vt": b["vt"], "depth": b["depth"]}
+         "vt": b["vt"], "depth": b["depth"], "flock": b.get("flock", 1)}
         for b in birds
     ]
     birds_json = json.dumps(birds_meta, ensure_ascii=False)
@@ -466,7 +481,11 @@ def _render_radio_iframe(
             f'background:{b["color"]};display:inline-block;"></span>'
         )
         + f'<span>{b["name"]}</span>'
-        f'<span class="ra_note_{i}" style="font-size:0.9em;color:#7ab040;display:none;">♪</span>'
+        + (
+            f'<span style="color:#6a8a5a;font-size:0.82em;">×{b["flock"]}</span>'
+            if b.get("flock", 1) > 1 else ""
+        )
+        + f'<span class="ra_note_{i}" style="font-size:0.9em;color:#7ab040;display:none;">♪</span>'
         f'</div>'
         for i, b in enumerate(birds)
     )
@@ -492,7 +511,7 @@ def _render_radio_iframe(
         <button id="ra_btn">🎙 ラジオを始める</button>
         <div style="color:#5a7a5a;font-size:0.9em;font-weight:500;">
           {season_meta["icon"]} {season_meta["jp"]}の庭のラジオ &nbsp;·&nbsp;
-          <span style="font-weight:400;">{n}羽</span>
+          <span style="font-weight:400;">{count_label}</span>
         </div>
       </div>
       <div id="ra_chips">{sprite_divs}</div>
@@ -625,6 +644,25 @@ def _render_radio_iframe(
             // 初期水平位置: 均等間隔
             const left = 20 + (i / Math.max(n-1, 1)) * 60;
             setPan({{ pan, depth }}, left);
+
+            // ── 群れ: 同種が複数いる鳥は“ゴースト声”を足して厚くする ──────
+            // 音源は1つ(chGain)を分岐。各個体をわずかに遅延・定位ずらしで重ね、
+            // 同じ声が少しずつ間をずらして鳴く=群れの質感を音源を増やさず作る。
+            // chGain から分岐するので呼応(call-and-response)で群れごと前後する。
+            const flockN = BIRDS[i].flock || 1;
+            for (let f = 1; f < flockN; f++) {{
+                const dl = ctx.createDelay(1.0);
+                dl.delayTime.value = 0.09 + Math.random() * 0.33;   // 群れのずれ
+                const fg = ctx.createGain();
+                fg.gain.value = 0.55 - f * 0.10;                    // 後ろの個体ほど小さく
+                const fp = makePanner();
+                chGain.connect(dl); dl.connect(fg);
+                fg.connect(fp.node); fp.node.connect(master);
+                const fw = ctx.createGain(); fw.gain.value = D[depth].wet * 1.3;
+                fg.connect(fw); fw.connect(reverb);
+                const goff = (f % 2 ? 1 : -1) * (10 + f * 7);       // 左右に広げる
+                setPan({{ pan: fp, depth }}, left + goff);
+            }}
 
             const cur = els.length > 1 ? pickVariant(i, -1) : 0;
             return {{ els, cur, filter, gain, agcGain, chGain, wet, gate, ana,

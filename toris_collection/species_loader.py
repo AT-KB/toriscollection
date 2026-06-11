@@ -74,7 +74,7 @@ def _load_birds_from_sheets() -> dict[str, BirdData] | None:
             try:
                 tmin = int(row.get("temp_fit_min", 0))
                 tmax = int(row.get("temp_fit_max", 30))
-                birds[bid] = BirdData(
+                bird = BirdData(
                     name=str(row.get("name", bid)),
                     scientific=str(row.get("scientific", "")),
                     english=str(row.get("english", "")),
@@ -87,6 +87,11 @@ def _load_birds_from_sheets() -> dict[str, BirdData] | None:
                     eats_insects=_csv_field(row.get("eats_insects")),
                     temp_fit=(tmin, tmax),
                 )
+                # 群れサイズの形質(任意列。空なら入れず flock.py の rarity 推定に委ねる)
+                _fmax = row.get("flock_max")
+                if _fmax not in (None, ""):
+                    bird["flock_max"] = int(_fmax)
+                birds[bid] = bird
             except Exception as e:
                 print(f"[species_loader] birds row '{bid}' skip: {e}")
         return birds if birds else None
