@@ -778,6 +778,9 @@ def _handle_ritual_observation():
             rec = _observed.setdefault(bid, {"count": 0, "first": "", "last": ""})
             rec["count"] += 1
             _discovered.add(bid)  # 近くで観察できた鳥は当然「来た鳥」でもある
+            if _is_first:
+                # 会う→聴くループ: 初めて会った鳥をラジオで「新しく加わった」と祝う信号
+                st.session_state.setdefault("radio_new_arrivals", set()).add(bid)
             _flash.append({
                 "id": bid,
                 "name": BIRDS[bid].get("name", bid),
