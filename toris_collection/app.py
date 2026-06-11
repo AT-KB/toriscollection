@@ -16,6 +16,7 @@ import base64
 import xc_client  # Python 3.14 並行インポートバグ対策: ritual.py より先にロード
 from ritual import render_ritual  # 儀式UI(距離メカニクス)
 import observation_log  # 儀式での近距離観察記録の保存
+import community  # 集合アトラス(みんなの庭) = ユーザー間機能の最小版
 from radio import render_radio, current_app_season, weeks_until_next_season, _SEASON_META
 
 
@@ -1195,9 +1196,9 @@ else:
 # ============= Tabs =============
 # 製品の背骨(HANDOFF §1-1): ラジオがコア = 最前面の帰る場所。
 # 庭(今の様子)は鳥に「会う」ための場所として2番目に置く。
-tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
+tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_community, tab_help = st.tabs(
     ["🎙 ラジオ", "🏞️ 庭の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
-     "📅 あしあと", "🕸️ ネットワーク", "❓ 使い方"]
+     "📅 あしあと", "🕸️ ネットワーク", "🗺 みんなの庭", "❓ 使い方"]
 )
 
 
@@ -2483,6 +2484,11 @@ with tab_network:
         st.caption(
             "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫"
         )
+
+
+# ---------- Tab: Community (みんなの庭 = 集合アトラス) ----------
+with tab_community:
+    community.render_community_atlas(default_biome=st.session_state.get("biome", "kyoto"))
 
 
 # ---------- Tab: Help (使い方) ----------
