@@ -185,6 +185,29 @@ guild_groups(bird_ids, birds_data) -> list[dict]  # {"guild","icon","label","bir
 
 ---
 
+## 4-2. disturbance.py — 撹乱と遷移（PR #20）
+
+**方針（交渉不能）**: 撹乱は「世界の出来事」。プレイヤーのせいにしない。低頻度。
+**損失の次に必ず再生（遷移）を置く** ——倒れた跡地に *違う* 植物が芽吹き、違う鳥が来る＝ラジオに新しい顔ぶれ。罰でなく「庭が移ろう」体験にする（retention にも効く）。
+
+```python
+roll_disturbance(rng) -> dict | None          # 嵐/落雷/伐採を低頻度で抽選
+apply_disturbance(planted, event, plants, rng) -> list[str]   # 倒れる植物(全滅はしない)
+roll_succession(planted, biome, plants, event, rng, exclude) -> str | None  # 跡地に芽吹く別の種
+disturbance_story(event, removed_names, sprout_name) -> str   # 移ろいを一文で語る
+```
+
+設計上の要点:
+- **生息地の質は別の値として持たない**。撹乱は植生（plantings シート）を移ろわせるだけ。木が倒れれば食物網が縮み、`engine.py` の既存 `food_factor`／退去ロジックで**確率・種数が自然に下がる**（種数–面積関係 S=cA^z を余計な係数なしで表現＝モデルに誠実）。
+- `roll_succession` は**倒れたばかりの種を `exclude` で除外**（同じ場で生え直すと「移ろい」にならない）。
+- 植物の形質 `disturbance_sensitivity`（倒れやすさ）/ `successional_role`（pioneer/late）は **species_plants シートの任意列**。未設定はシードの既定値（感受性0.5・パイオニア候補）。
+
+統合: `absence_loop.evolve_state()` が不在の各ティックで撹乱を回し、`disturbances` と `planted_final` を返す。`app.py._apply_disturbances()` が植生を session と plantings シートへ反映し、「🌿 庭の移ろい」バナーで表示。
+
+テスト: `tests/test_disturbance.py`（pytest 不要・stdlib のみ・9ケース）。
+
+---
+
 ## 5. sheets_client.py — あしあと修正
 
 **問題**: `access_logs` シートがヘッダー行なしで作られた場合、`get_all_records()` が最初のデータ行をヘッダーと誤認して全キーが壊れていた。

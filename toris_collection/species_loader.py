@@ -115,7 +115,7 @@ def _load_plants_from_sheets() -> dict[str, PlantData] | None:
             try:
                 tmin = int(row.get("temp_fit_min", 0))
                 tmax = int(row.get("temp_fit_max", 30))
-                plants[pid] = PlantData(
+                plant: PlantData = PlantData(
                     name=str(row.get("name", pid)),
                     scientific=str(row.get("scientific", "")),
                     english=str(row.get("english", "")),
@@ -123,6 +123,14 @@ def _load_plants_from_sheets() -> dict[str, PlantData] | None:
                     biome=_csv_field(row.get("biome")),
                     temp_fit=(tmin, tmax),
                 )
+                # 撹乱・遷移の形質(任意列。空なら入れず disturbance.py の既定に委ねる)
+                _sens = row.get("disturbance_sensitivity")
+                if _sens not in (None, ""):
+                    plant["disturbance_sensitivity"] = float(_sens)
+                _role = str(row.get("successional_role", "")).strip()
+                if _role:
+                    plant["successional_role"] = _role
+                plants[pid] = plant
             except Exception as e:
                 print(f"[species_loader] plants row '{pid}' skip: {e}")
         return plants if plants else None

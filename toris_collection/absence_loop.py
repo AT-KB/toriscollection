@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from species_loader import BIRDS, PLANTS, INSECTS
 from engine import calculate_arrival_probability, run_turn
 import mementos as mem
+import disturbance as dist
 
 
 def parse_iso(s):
@@ -95,6 +96,8 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
         "events": list[dict]           # 到着イベント一覧(時系列順)
         "departures": list[bird_id]    # 不在中に去った鳥(重複あり)
         "n_ticks": int                 # 実行したサイクル数
+        "disturbances": list[dict]     # 不在中の撹乱→再生の出来事
+        "planted_final": list[str]     # 撹乱・遷移を反映した最終的な植生
       }
     """
     result = {
@@ -102,6 +105,8 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
         "events": [],
         "departures": [],
         "n_ticks": 0,
+        "disturbances": [],
+        "planted_final": list(planted),
     }
 
     if not planted or last_access_at is None or current_time is None:
@@ -118,26 +123,52 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
     result["n_ticks"] = n_ticks
 
     residents = set(current_residents)
+    planted_work = list(planted)  # 撹乱・遷移で移ろう作業用の植生
 
     for i in range(n_ticks):
-        tick_result = run_turn(planted, biome, month, residents, rng)
+        # tickの時刻を不在期間内に配置(古い→新しい順に均等に)
+        tick_progress = (i + 1) / n_ticks
+        tick_time = last_access_at + timedelta(
+            seconds=delta.total_seconds() * tick_progress
+        )
+
+        # ── 撹乱と遷移(世界の出来事。低頻度・損失の次に必ず再生) ────────
+        event = dist.roll_disturbance(rng)
+        if event:
+            removed = dist.apply_disturbance(planted_work, event, PLANTS, rng)
+            for pid in removed:
+                if pid in planted_work:
+                    planted_work.remove(pid)
+            sprout = dist.roll_succession(planted_work, biome, PLANTS, event, rng,
+                                          exclude=removed)
+            if sprout:
+                planted_work.append(sprout)
+            if removed or sprout:
+                removed_names = [PLANTS.get(p, {}).get("name", p) for p in removed]
+                sprout_name = PLANTS.get(sprout, {}).get("name", sprout) if sprout else None
+                result["disturbances"].append({
+                    "type": event["type"],
+                    "label": event["label"],
+                    "icon": event["icon"],
+                    "at": tick_time,
+                    "removed": removed,
+                    "sprout": sprout,
+                    "story": dist.disturbance_story(event, removed_names, sprout_name),
+                })
+
+        tick_result = run_turn(planted_work, biome, month, residents, rng)
         residents = tick_result["residents"]
 
         # このサイクルで起きた到着について「なぜ来たか」を計算
         if tick_result["arrivals"]:
             G = tick_result["graph"]
-            # tickの時刻を不在期間内に配置(古い→新しい順に均等に)
-            tick_progress = (i + 1) / n_ticks
-            tick_time = last_access_at + timedelta(
-                seconds=delta.total_seconds() * tick_progress
-            )
             for b in tick_result["arrivals"]:
                 info = calculate_arrival_probability(b, G, biome, month)
                 reason, plant_id, insect_id = build_reason_text(b, info)
 
-                # 落とし物の判定
+                # 落とし物の判定(現在の植生で)
                 memento_id = mem.roll_drop(
-                    b, biome, BIRDS[b], planted, rng
+                    b, biome, BIRDS[b], planted_work, rng
                 )
 
                 result["events"].append({
@@ -152,6 +183,7 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
         result["departures"].extend(tick_result["departures"])
 
     result["residents"] = residents
+    result["planted_final"] = planted_work
     result["events"].sort(key=lambda e: e["arrived_at"])
     return result
 
