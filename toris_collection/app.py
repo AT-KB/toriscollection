@@ -619,6 +619,9 @@ def load_state_from_sheets(tester_id):
                 ev["bird_id"]: ev["reason_text"] for ev in evo["events"]
             }
 
+            # 不在中の撹乱・遷移を反映(植生の移ろい)
+            _apply_disturbances(tester_id, evo)
+
             # 各イベントを Sheets に記録
             new_mementos = []
             _welcome_arrivals = []   # ログイン時ポップアップ用
@@ -716,6 +719,30 @@ def _sheets_safe(fn, *args, **kwargs):
         fn(*args, **kwargs)
     except Exception as e:
         st.warning(f"Sheets同期に失敗(処理は続行されます): {e}", icon="⚠️")
+
+
+def _apply_disturbances(tid, evo):
+    """不在中の撹乱・遷移を session と plantings シートへ反映し、表示用に保存する。
+
+    撹乱は植生(plantings)を移ろわせるだけ。生息地の質は別の値として持たず、
+    植生から創発させる(木が倒れれば食物網が縮み、確率・種数が下がる
+    = 種数–面積関係を engine.py の既存ロジックが自然に表現する)。
+    """
+    disturbances = evo.get("disturbances") or []
+    st.session_state.disturbance_events = disturbances
+    if not disturbances:
+        return
+    # 植生の永続化: 倒れた木を removed に、芽吹いた木を active に
+    for d in disturbances:
+        for pid in d.get("removed", []):
+            _sheets_safe(sc.remove_planting, tid, pid)
+        sprout = d.get("sprout")
+        if sprout:
+            _sheets_safe(sc.add_planting, tid, sprout)
+    # session の植生を最終状態に揃える(撹乱→遷移の結果)
+    if "planted_final" in evo:
+        st.session_state.planted = list(evo["planted_final"])
+
 
 init_state()
 
@@ -877,6 +904,7 @@ with st.sidebar:
                 st.session_state.last_arrivals_info = {
                     ev["bird_id"]: ev["reason_text"] for ev in evo["events"]
                 }
+                _apply_disturbances(tid, evo)
                 new_mementos = []
                 for ev in evo["events"]:
                     _sheets_safe(
@@ -1193,6 +1221,22 @@ with tab_home:
         )
         st.markdown("---")
 
+    # 庭の移ろい(不在中の撹乱→再生)。罰ではなく自然の循環として静かに伝える。
+    _dist_events = st.session_state.get("disturbance_events") or []
+    if _dist_events:
+        _dist_rows = "".join(
+            f"<div style='padding:5px 0;color:#6a5a44;font-size:0.92em;"
+            f"border-bottom:1px solid #ece3d2;'>{d.get('story','')}</div>"
+            for d in _dist_events
+        )
+        st.markdown(
+            f"<div style='background:#f4efe4;padding:14px 18px;border-radius:10px;"
+            f"border-left:4px solid #b8a06a;margin-bottom:18px;'>"
+            f"<div style='color:#8a7048;font-size:0.95em;font-weight:500;"
+            f"margin-bottom:4px;'>🌿 庭の移ろい</div>{_dist_rows}</div>",
+            unsafe_allow_html=True,
+        )
+
     # 不在中の出来事(ログイン直後に生成されたイベントがあれば表示)
     _abs_events = st.session_state.get("absence_events") or []
     _new_mems = st.session_state.get("recent_new_mementos") or []
@@ -1301,6 +1345,7 @@ with tab_home:
                 st.session_state.residents = set()
                 st.session_state.planted = []
                 st.session_state.absence_events = []
+                st.session_state.disturbance_events = []
                 st.session_state.last_arrivals_info = {}
                 tid = st.session_state.current_tester_id
                 _sheets_safe(sc.remove_all_plantings, tid)
