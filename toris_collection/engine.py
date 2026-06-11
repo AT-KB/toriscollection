@@ -9,7 +9,7 @@ v3:
 """
 import math
 import networkx as nx
-from data import PLANTS, INSECTS, BIRDS, BIOMES, SEASON_TEMP_OFFSET
+from species_loader import PLANTS, INSECTS, BIRDS, BIOMES, SEASON_TEMP_OFFSET
 
 # Sony CSL 中心性データ(任意)
 _CENTRALITIES = None

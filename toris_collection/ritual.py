@@ -29,7 +29,7 @@ import concurrent.futures
 from pathlib import Path
 
 import streamlit as st
-from data import PLANTS as _PLANTS
+from species_loader import PLANTS as _PLANTS
 
 try:
     import xc_client

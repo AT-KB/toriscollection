@@ -13,7 +13,7 @@ Toris Collection - 不在中ループ(時間進化エンジン)
 """
 from datetime import datetime, timedelta
 
-from data import BIRDS, PLANTS, INSECTS
+from species_loader import BIRDS, PLANTS, INSECTS
 from engine import calculate_arrival_probability, run_turn
 import mementos as mem
 

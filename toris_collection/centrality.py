@@ -171,7 +171,7 @@ if __name__ == "__main__":
         print(f"配置先: {DATASET_FILE}")
     else:
         print(f"データセット確認OK: {DATASET_FILE}")
-        from data import BIRDS
+        from species_loader import BIRDS
         taxa_of_interest = {
             b["scientific"].upper() for b in BIRDS.values() if b.get("scientific")
         }
