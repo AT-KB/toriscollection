@@ -1190,8 +1190,10 @@ else:
 
 
 # ============= Tabs =============
-tab_home, tab_radio, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
-    ["🏞️ 今の様子", "🎙 ラジオ", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
+# 製品の背骨(HANDOFF §1-1): ラジオがコア = 最前面の帰る場所。
+# 庭(今の様子)は鳥に「会う」ための場所として2番目に置く。
+tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
+    ["🎙 ラジオ", "🏞️ 庭の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
      "📅 あしあと", "🕸️ ネットワーク", "❓ 使い方"]
 )
 
@@ -1203,7 +1205,7 @@ with tab_home:
     if _flash:
         _names = "、".join(f["name"] for f in _flash)
         st.success(
-            "🪶 今朝、" + _names + " が近くまで来てくれました。図鑑に記録しました。"
+            "🪶 今朝、" + _names + " に会えました。🎙 ラジオの顔ぶれに加わりました。"
         )
 
     # ===== 儀式UI(距離メカニクス)=====
@@ -1308,26 +1310,8 @@ with tab_home:
     )
     st.markdown("---")
 
-    # ── 庭のラジオ(ホーム版: 折りたたみ) ────────────────────────
-    if st.session_state.get("current_tester_id"):
-        _radio_obs_home = dict(st.session_state.get("observed", {}))
-        for _bid in st.session_state.get("discovered", set()):
-            _radio_obs_home.setdefault(_bid, {"count": 1, "first": "", "last": ""})
-        _has_home_radio = any(
-            bid in _radio_obs_home
-            for bid, bird in BIRDS.items()
-            if st.session_state.biome in bird.get("biome_pref", [])
-        )
-        if _has_home_radio:
-            with st.expander("🎙 庭のラジオ", expanded=False):
-                render_radio(
-                    biome_id=st.session_state.biome,
-                    observed=_radio_obs_home,
-                    birds_data=BIRDS,
-                    key_prefix="radio_home",
-                )
-    st.markdown("---")
-
+    # 庭は「鳥に会う」場所。聴く体験はラジオタブ(コア)に一本化した。
+    # かつてここにあった折りたたみラジオは二重コアの名残のため撤去(HANDOFF §1-1)。
     col1, col2 = st.columns([1, 1])
 
     with col1:
