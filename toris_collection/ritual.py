@@ -29,7 +29,8 @@ import concurrent.futures
 from pathlib import Path
 
 import streamlit as st
-from data import PLANTS as _PLANTS
+from species_loader import PLANTS as _PLANTS
+import audio_engine as ae
 
 try:
     import xc_client
@@ -495,23 +496,16 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         const b1Dwell  = [];   // b1 連続滞在ステップ数(2以上で観察成立)
         const met = new Set();
 
-        // ── AGC(自動音量正規化) ────────────────────────────────────
-        // 録音ごとの音量差を吸収する。各鳥のピーク RMS を追跡し、
-        // 目標レベルとの比率でゲインをゆっくり追従させる。
+        // ── AGC(自動音量正規化)/ 呼応(かけあい)の状態 ──────────────
+        // 録音ごとの音量差を吸収するため各鳥のピーク RMS を追跡し、
+        // フレーズの切れ目(休符)を検知して別の鳥にゆっくりバトンを渡す。
+        // 数値定数(AGC_TARGET 等)は audio_engine.py に集約。
         const peakRMS = [];          // 各鳥のピーク RMS 推定値
-        const AGC_TARGET = 0.065;    // 目標 RMS
-        const AGC_MIN = 0.5, AGC_MAX = 3.5;
-
-        // ── 呼応(かけあい) ────────────────────────────────────────
-        // フレーズの切れ目(休符)を検知し、ゆっくりクロスフェードして
-        // 別の鳥にバトンを渡す。ぶつ切りにならないよう休符で始めて長めにランプ。
         const phraseOn = [];         // 各鳥が現在フレーズ中か
         const silentF  = [];         // 連続無音フレーム数
         let activeIdx  = 0;          // 現在フォアグラウンドの鳥インデックス
         let activeSince = 0;         // activeIdx になった時刻(ms)
-        const CALL_FLOOR   = 0.12;   // バックグラウンド鳥の chGain 最小値
-        const SILENT_NEED  = 12;     // 休符判定に必要な連続フレーム数(≈200ms)
-        const MIN_SOLO_MS  = 5000;   // 最低フォアグラウンド保持時間
+        {ae.AUDIO_CONSTANTS_JS}
 
         // 初期 left% を b3(最奥)レーン内に等間隔配置(中央のギャップは避ける)
         for (let i = 0; i < n; i++) {{
@@ -540,18 +534,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         // 鳥の左右(x)と枝の奥行き(z)を頭部伝達関数で定位する。
         // 距離減衰は既存の D[branch].gain に任せるため rolloff は 0。
         // 構築に失敗する古い環境では左右だけの StereoPanner にフォールバック。
-        function makePanner() {{
-            try {{
-                const p = new PannerNode(ctx, {{
-                    panningModel: 'HRTF', distanceModel: 'linear',
-                    refDistance: 1, maxDistance: 30, rolloffFactor: 0
-                }});
-                return {{ node: p, hrtf: true }};
-            }} catch (e) {{
-                return {{ node: ctx.createStereoPanner(), hrtf: false }};
-            }}
-        }}
-        const DEPTH_Z = {{ b3: -7, b2: -3.5, b1: -1.2 }};
+        {ae.MAKE_PANNER_JS}
         function setPan(nd, left, branch, t) {{
             const x = (left - 50) / 50 * 4;
             if (nd.pan.hrtf) {{
@@ -585,18 +568,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             if (h >= 16 || h < 4)  return 'call';
             return null;  // 昼はどちらでも
         }}
-        function pickVariant(i, exclude) {{
-            const vt = BIRDS[i].vt || [];
-            const pref = preferredType();
-            const pool = [];
-            for (let v = 0; v < vt.length; v++) {{
-                if (v === exclude) continue;
-                const w = (pref && vt[v] === pref) ? 3 : 1;  // 好みは重み3倍
-                for (let k = 0; k < w; k++) pool.push(v);
-            }}
-            if (!pool.length) return exclude >= 0 ? exclude : 0;
-            return pool[Math.floor(Math.random() * pool.length)];
-        }}
+        {ae.PICK_VARIANT_JS}
 
         function buildNode(i) {{
             // 鳴き声バリエーション: 同じ鳥の複数録音を同一チェーンにつなぎ、
@@ -654,38 +626,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
         // 森の残響をブラウザ内で合成: 減衰ノイズに初期反射を混ぜたインパルス応答。
         // 短め(1.6秒)・控えめにして、鳴き声を濁らせず奥行きだけ足す。
-        function makeReverbIR() {{
-            const dur = 1.6, len = Math.floor(ctx.sampleRate * dur);
-            const ir = ctx.createBuffer(2, len, ctx.sampleRate);
-            for (let ch = 0; ch < 2; ch++) {{
-                const d = ir.getChannelData(ch);
-                for (let k = 0; k < len; k++) {{
-                    // 指数減衰する乱反射(後半ほど静かに)
-                    const decay = Math.pow(1 - k / len, 2.6);
-                    d[k] = (Math.random() * 2 - 1) * decay;
-                }}
-                // 葉や枝による初期反射を数発足す(森らしい粒立ち)
-                [0.013, 0.029, 0.051, 0.078].forEach(function(tt, idx) {{
-                    const p = Math.floor(tt * ctx.sampleRate);
-                    if (p < len) d[p] += (0.5 - idx * 0.1) * (ch === 0 ? 1 : 0.8);
-                }});
-            }}
-            return ir;
-        }}
+        {ae.MAKE_REVERB_IR_JS}
 
         // 環境音BGM: Freesound の実録音があればそれを、なければノイズ合成にフォールバック。
-        function makeNoiseBuffer(brown) {{
-            const dur = 4, len = ctx.sampleRate * dur;
-            const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            let last = 0;
-            for (let i = 0; i < len; i++) {{
-                const white = Math.random() * 2 - 1;
-                if (brown) {{ last = (last + 0.02 * white) / 1.02; data[i] = last * 3.2; }}
-                else {{ data[i] = white; }}
-            }}
-            return buffer;
-        }}
+        {ae.MAKE_NOISE_BUFFER_JS}
         function buildAmbient() {{
             const ambEl = document.getElementById('rite_ambient');
             if (HAS_AMBIENT && ambEl) {{
@@ -880,8 +824,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         // ノイズゲート + AGC + 呼応(かけあい)を1ループで処理する。
-        const GATE_THRESH = 0.020;
-        const GATE_FLOOR  = 0.12;
+        // (GATE_THRESH / GATE_FLOOR は audio_engine.py で定義)
         function gateTick() {{
             if (!running || !ctx) return;
             const t = ctx.currentTime;

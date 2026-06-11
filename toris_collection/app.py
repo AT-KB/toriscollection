@@ -1,16 +1,9 @@
-"""
-Toris Collection - Streamlit アプリ (v2)
-変更点:
-  - ネットワーク図を力学モデル(放射状)に変更 - ハブが見える
-  - 資源ノードを除去 (GloBI互換)
-  - 渡り鳥表示を廃止 (気温で自動表現)
-  - 未訪問の鳥もネットワーク図に表示 (学習効果)
-"""
+"""Toris Collection - Streamlit アプリ"""
 import streamlit as st
 import random
 import math
 from datetime import datetime, timedelta
-from data import BIOMES, BIOME_MIGRATION, PLANTS, INSECTS, BIRDS, SEASON_TEMP_OFFSET
+from species_loader import BIOMES, BIOME_MIGRATION, PLANTS, INSECTS, BIRDS, SEASON_TEMP_OFFSET
 from engine import (
     build_network, calculate_arrival_probability, run_turn,
     current_temperature, force_directed_layout,
@@ -150,25 +143,7 @@ def _cached_network_layout(planted_tuple, biome_id, month, residents_tuple):
     }
 
 
-# 植えてから効果が出るまでの時間 - 廃止(0時間=即効果)
-# 当面は本数制限(BIOMES.max_plants)のみで植えすぎを防ぐ方針
-PLANT_MATURATION_HOURS = 0
-
-
-def _get_mature_plants(planted=None, planted_at_map=None):
-    """24時間ペナルティを廃止したため、すべての植物を成熟扱いとする。
-    関数自体は他箇所からの参照互換のため残す。
-    """
-    if planted is None:
-        planted = st.session_state.get("planted", [])
-    return list(planted)
-
-
-def _get_immature_plants(planted=None, planted_at_map=None):
-    """準備中の植物は常に空(ペナルティ廃止)"""
-    return []
-
-# Google Sheets バックエンド(クローズドテスト用)
+# Google Sheets バックエンド
 try:
     import sheets_client as sc
     SHEETS_AVAILABLE = True
@@ -618,9 +593,7 @@ def load_state_from_sheets(tester_id):
     st.session_state.bird_visited_biomes = visited_by_bird
 
     # ===== 不在中ループ(状態進化) =====
-    # 前回アクセス時刻 → 現在時刻 で生態系を時間進化させる
-    # 24時間以上前に植えた植物のみ確率計算に使う(準備中の植物は影響を持たない)
-    _mature_for_evo = _get_mature_plants()
+    _mature_for_evo = list(st.session_state.get("planted", []))
     if fs and _mature_for_evo:
         last_at = absence_loop.parse_iso(fs.get("last_access_at"))
         if last_at:
@@ -2351,8 +2324,7 @@ with tab_network:
             # bird - 個別の色を優先
             if n in resident_set:
                 # 来た鳥: data.py の color を使う
-                from data import BIRDS as _BIRDS
-                color = _BIRDS.get(n, {}).get("color", "#2a5aa8")
+                color = BIRDS.get(n, {}).get("color", "#2a5aa8")
                 r = 18 + min(deg * 0.8, 8)
                 return (color, r, "#ffffff", 2.5)
             elif deg > 0:

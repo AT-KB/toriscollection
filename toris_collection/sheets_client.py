@@ -348,7 +348,7 @@ def load_mementos(tester_id):
                 mid = f"{kind}:{target}"
         elif kind == "seed":
             # seed は新形式では bird_id, 旧形式では植物名
-            from data import PLANTS, BIRDS
+            from species_loader import PLANTS, BIRDS
             if target in BIRDS:
                 mid = f"seed:{target}"
             elif target in PLANTS:
