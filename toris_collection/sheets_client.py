@@ -262,6 +262,19 @@ def load_collection_set(tester_id):
     }
 
 
+def load_all_collection():
+    """collection シート全行(全テスター)を生の dict リストで返す。
+
+    集合アトラス(みんなの庭)の匿名・集合集計に使う読み取り専用窓口。
+    個人を特定する利用はしない(community.aggregate_atlas が tester_id を
+    集計値=庭の数に畳み込み、名前も順位も持ち出さない)。失敗時は空リスト。
+    """
+    try:
+        return _ws("collection").get_all_records()
+    except Exception:
+        return []
+
+
 def upsert_collection(tester_id, bird_id):
     """初回観測なら追加、既存なら last_seen_at と visit_count を更新"""
     sheet = _ws("collection")
