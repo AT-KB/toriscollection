@@ -19,6 +19,7 @@ from pathlib import Path
 import streamlit as st
 
 import ecology
+import audio_engine as ae
 
 try:
     import xc_client
@@ -475,25 +476,8 @@ def _render_radio_iframe(
         const silentF   = [];
         let activeIdx   = 0;
         let activeSince = 0;
-        const AGC_TARGET = 0.065, AGC_MIN = 0.5, AGC_MAX = 3.5;
-        const CALL_FLOOR = 0.12;
-        const SILENT_NEED = 12;
-        const MIN_SOLO_MS = 5000;
-        const GATE_THRESH = 0.020, GATE_FLOOR = 0.12;
-
-        // HRTF / StereoPanner
-        const DEPTH_Z = {{ b3: -7, b2: -3.5, b1: -1.2 }};
-        function makePanner() {{
-            try {{
-                const p = new PannerNode(ctx, {{
-                    panningModel:'HRTF', distanceModel:'linear',
-                    refDistance:1, maxDistance:30, rolloffFactor:0
-                }});
-                return {{ node: p, hrtf: true }};
-            }} catch(e) {{
-                return {{ node: ctx.createStereoPanner(), hrtf: false }};
-            }}
-        }}
+        {ae.AUDIO_CONSTANTS_JS}
+        {ae.MAKE_PANNER_JS}
         function setPan(nd, left) {{
             const x = (left - 50) / 50 * 4;
             const t = ctx.currentTime;
@@ -514,18 +498,7 @@ def _render_radio_iframe(
             if (h >= 16 || h < 4)  return 'call';
             return null;
         }}
-        function pickVariant(i, exclude) {{
-            const vt = BIRDS[i].vt || [];
-            const pref = preferredType();
-            const pool = [];
-            for (let v = 0; v < vt.length; v++) {{
-                if (v === exclude) continue;
-                const w = (pref && vt[v] === pref) ? 3 : 1;
-                for (let k = 0; k < w; k++) pool.push(v);
-            }}
-            if (!pool.length) return exclude >= 0 ? exclude : 0;
-            return pool[Math.floor(Math.random() * pool.length)];
-        }}
+        {ae.PICK_VARIANT_JS}
 
         // 呼応の相手を選ぶ: 共起しやすい鳥(よく一緒に見られる鳥)ほど応えやすい。
         // AFFINITY[i][j] は 0..1 の共起度。基礎確率1があるので孤立しても破綻しない。
@@ -541,34 +514,8 @@ def _render_radio_iframe(
             return pool[Math.floor(Math.random() * pool.length)];
         }}
 
-        function makeReverbIR() {{
-            const dur = 1.6, len = Math.floor(ctx.sampleRate * dur);
-            const ir = ctx.createBuffer(2, len, ctx.sampleRate);
-            for (let ch = 0; ch < 2; ch++) {{
-                const d = ir.getChannelData(ch);
-                for (let k = 0; k < len; k++) {{
-                    d[k] = (Math.random()*2-1) * Math.pow(1 - k/len, 2.6);
-                }}
-                [0.013, 0.029, 0.051, 0.078].forEach((tt, idx) => {{
-                    const p = Math.floor(tt * ctx.sampleRate);
-                    if (p < len) d[p] += (0.5 - idx*0.1) * (ch===0 ? 1 : 0.8);
-                }});
-            }}
-            return ir;
-        }}
-
-        function makeNoiseBuffer(brown) {{
-            const len = ctx.sampleRate * 4;
-            const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-            const data = buf.getChannelData(0);
-            let last = 0;
-            for (let i = 0; i < len; i++) {{
-                const w = Math.random()*2-1;
-                if (brown) {{ last = (last + 0.02*w)/1.02; data[i] = last*3.2; }}
-                else data[i] = w;
-            }}
-            return buf;
-        }}
+        {ae.MAKE_REVERB_IR_JS}
+        {ae.MAKE_NOISE_BUFFER_JS}
 
         function buildAmbient() {{
             const ambEl = document.getElementById('ra_ambient');
