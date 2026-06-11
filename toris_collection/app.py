@@ -619,6 +619,9 @@ def load_state_from_sheets(tester_id):
                 ev["bird_id"]: ev["reason_text"] for ev in evo["events"]
             }
 
+            # 不在中の撹乱・遷移を反映(植生の移ろい)
+            _apply_disturbances(tester_id, evo)
+
             # 各イベントを Sheets に記録
             new_mementos = []
             _welcome_arrivals = []   # ログイン時ポップアップ用
@@ -717,6 +720,30 @@ def _sheets_safe(fn, *args, **kwargs):
     except Exception as e:
         st.warning(f"Sheets同期に失敗(処理は続行されます): {e}", icon="⚠️")
 
+
+def _apply_disturbances(tid, evo):
+    """不在中の撹乱・遷移を session と plantings シートへ反映し、表示用に保存する。
+
+    撹乱は植生(plantings)を移ろわせるだけ。生息地の質は別の値として持たず、
+    植生から創発させる(木が倒れれば食物網が縮み、確率・種数が下がる
+    = 種数–面積関係を engine.py の既存ロジックが自然に表現する)。
+    """
+    disturbances = evo.get("disturbances") or []
+    st.session_state.disturbance_events = disturbances
+    if not disturbances:
+        return
+    # 植生の永続化: 倒れた木を removed に、芽吹いた木を active に
+    for d in disturbances:
+        for pid in d.get("removed", []):
+            _sheets_safe(sc.remove_planting, tid, pid)
+        sprout = d.get("sprout")
+        if sprout:
+            _sheets_safe(sc.add_planting, tid, sprout)
+    # session の植生を最終状態に揃える(撹乱→遷移の結果)
+    if "planted_final" in evo:
+        st.session_state.planted = list(evo["planted_final"])
+
+
 init_state()
 
 
@@ -751,6 +778,9 @@ def _handle_ritual_observation():
             rec = _observed.setdefault(bid, {"count": 0, "first": "", "last": ""})
             rec["count"] += 1
             _discovered.add(bid)  # 近くで観察できた鳥は当然「来た鳥」でもある
+            if _is_first:
+                # 会う→聴くループ: 初めて会った鳥をラジオで「新しく加わった」と祝う信号
+                st.session_state.setdefault("radio_new_arrivals", set()).add(bid)
             _flash.append({
                 "id": bid,
                 "name": BIRDS[bid].get("name", bid),
@@ -874,6 +904,7 @@ with st.sidebar:
                 st.session_state.last_arrivals_info = {
                     ev["bird_id"]: ev["reason_text"] for ev in evo["events"]
                 }
+                _apply_disturbances(tid, evo)
                 new_mementos = []
                 for ev in evo["events"]:
                     _sheets_safe(
@@ -1162,8 +1193,10 @@ else:
 
 
 # ============= Tabs =============
-tab_home, tab_radio, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
-    ["🏞️ 今の様子", "🎙 ラジオ", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
+# 製品の背骨(HANDOFF §1-1): ラジオがコア = 最前面の帰る場所。
+# 庭(今の様子)は鳥に「会う」ための場所として2番目に置く。
+tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_steps, tab_network, tab_help = st.tabs(
+    ["🎙 ラジオ", "🏞️ 庭の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
      "📅 あしあと", "🕸️ ネットワーク", "❓ 使い方"]
 )
 
@@ -1175,7 +1208,7 @@ with tab_home:
     if _flash:
         _names = "、".join(f["name"] for f in _flash)
         st.success(
-            "🪶 今朝、" + _names + " が近くまで来てくれました。図鑑に記録しました。"
+            "🪶 今朝、" + _names + " に会えました。🎙 ラジオの顔ぶれに加わりました。"
         )
 
     # ===== 儀式UI(距離メカニクス)=====
@@ -1187,6 +1220,22 @@ with tab_home:
             birds_data=BIRDS,
         )
         st.markdown("---")
+
+    # 庭の移ろい(不在中の撹乱→再生)。罰ではなく自然の循環として静かに伝える。
+    _dist_events = st.session_state.get("disturbance_events") or []
+    if _dist_events:
+        _dist_rows = "".join(
+            f"<div style='padding:5px 0;color:#6a5a44;font-size:0.92em;"
+            f"border-bottom:1px solid #ece3d2;'>{d.get('story','')}</div>"
+            for d in _dist_events
+        )
+        st.markdown(
+            f"<div style='background:#f4efe4;padding:14px 18px;border-radius:10px;"
+            f"border-left:4px solid #b8a06a;margin-bottom:18px;'>"
+            f"<div style='color:#8a7048;font-size:0.95em;font-weight:500;"
+            f"margin-bottom:4px;'>🌿 庭の移ろい</div>{_dist_rows}</div>",
+            unsafe_allow_html=True,
+        )
 
     # 不在中の出来事(ログイン直後に生成されたイベントがあれば表示)
     _abs_events = st.session_state.get("absence_events") or []
@@ -1264,26 +1313,8 @@ with tab_home:
     )
     st.markdown("---")
 
-    # ── 庭のラジオ(ホーム版: 折りたたみ) ────────────────────────
-    if st.session_state.get("current_tester_id"):
-        _radio_obs_home = dict(st.session_state.get("observed", {}))
-        for _bid in st.session_state.get("discovered", set()):
-            _radio_obs_home.setdefault(_bid, {"count": 1, "first": "", "last": ""})
-        _has_home_radio = any(
-            bid in _radio_obs_home
-            for bid, bird in BIRDS.items()
-            if st.session_state.biome in bird.get("biome_pref", [])
-        )
-        if _has_home_radio:
-            with st.expander("🎙 庭のラジオ", expanded=False):
-                render_radio(
-                    biome_id=st.session_state.biome,
-                    observed=_radio_obs_home,
-                    birds_data=BIRDS,
-                    key_prefix="radio_home",
-                )
-    st.markdown("---")
-
+    # 庭は「鳥に会う」場所。聴く体験はラジオタブ(コア)に一本化した。
+    # かつてここにあった折りたたみラジオは二重コアの名残のため撤去(HANDOFF §1-1)。
     col1, col2 = st.columns([1, 1])
 
     with col1:
@@ -1314,6 +1345,7 @@ with tab_home:
                 st.session_state.residents = set()
                 st.session_state.planted = []
                 st.session_state.absence_events = []
+                st.session_state.disturbance_events = []
                 st.session_state.last_arrivals_info = {}
                 tid = st.session_state.current_tester_id
                 _sheets_safe(sc.remove_all_plantings, tid)

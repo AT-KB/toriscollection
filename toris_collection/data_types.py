@@ -27,6 +27,9 @@ TypedDict で定義したスキーマが、そのまま
 
   species_plants シート:
     id, name, scientific, english, icon, biome, temp_fit_min, temp_fit_max
+    disturbance_sensitivity : float 0.0〜1.0 撹乱で倒れやすさ(任意・既定0.5)
+    successional_role       : str  'pioneer'(跡地に芽吹く) / 'late'(極相種)
+                                   任意・未設定はパイオニア候補として扱う
 
   species_insects シート:
     id, name, scientific, english, temp_fit_min, temp_fit_max, eats_plants
@@ -49,13 +52,16 @@ class BirdData(TypedDict):
     temp_fit: tuple[int, int]
 
 
-class PlantData(TypedDict):
+class PlantData(TypedDict, total=False):
     name: str
     scientific: str
     english: str
     icon: str
     biome: list[str]
     temp_fit: tuple[int, int]
+    # 撹乱・遷移の形質(任意。未設定なら disturbance.py の既定値を使う)
+    disturbance_sensitivity: float          # 0..1 倒れやすさ
+    successional_role: str                  # 'pioneer' / 'late'
 
 
 class InsectData(TypedDict):

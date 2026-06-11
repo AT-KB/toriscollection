@@ -144,6 +144,39 @@ def pick_lineup(candidate_ids: list[str], birds_data: dict, k: int, rng,
     return chosen
 
 
+def lineup_story(bird_ids: list[str], birds_data: dict) -> str:
+    """今日の顔ぶれが「なぜ一緒にいるか」を1文で説明する(表示用)。
+
+    共起モデルの駆動要因(同じ採餌ギルド / 気候ニッチの重なり)から導く。
+    種固有の逸話(「冬に混群を作る」等)は検証できないので作らない。
+    モデルが言える範囲だけを、嘘なく言語化する。
+    """
+    ids = [b for b in bird_ids if b in birds_data]
+    if len(ids) < 2:
+        return ""
+
+    from collections import Counter
+    guilds = Counter(guild(b, birds_data) for b in ids)
+    top_guild, top_n = guilds.most_common(1)[0]
+
+    pairs = [(ids[i], ids[j]) for i in range(len(ids)) for j in range(i + 1, len(ids))]
+    clim = sum(climate_overlap(a, b, birds_data) for a, b in pairs) / len(pairs)
+
+    # 顔ぶれの主因に応じて文を組む
+    if top_n >= 2 and top_n >= len(ids) * 0.6:
+        _, label = GUILD_LABELS.get(top_guild, GUILD_LABELS["other"])
+        return (
+            f"今日は{label}仲間が中心。"
+            "同じ環境で採餌の層を少しずつ分け合い、一緒に動きます。"
+        )
+    if clim >= 0.45:
+        return (
+            "ギルドはさまざまですが、似た気候帯を好む鳥どうし。"
+            "同じ季節の庭で顔を合わせます。"
+        )
+    return "同じ庭の環境を手がかりに集まった顔ぶれです。"
+
+
 def guild_groups(bird_ids: list[str], birds_data: dict) -> list[dict]:
     """顔ぶれをギルドごとにまとめる(表示用)。
 

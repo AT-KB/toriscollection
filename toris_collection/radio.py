@@ -13,7 +13,7 @@ import json
 import base64
 import random
 import concurrent.futures
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import streamlit as st
@@ -300,7 +300,16 @@ def render_radio(
     bird_ids = [b["id"] for b in birds]
     groups = ecology.guild_groups(bird_ids, birds_data)
     co_mat = ecology.co_occurrence_matrix(bird_ids, birds_data)
-    _render_connections(groups, birds_data)
+
+    # ループの payoff: 会いに行った鳥がラジオに新しく加わったことを祝う
+    fresh_ids = st.session_state.get("radio_new_arrivals", set())
+    fresh_names = [b["name"] for b in birds if _is_fresh(b["id"], observed, fresh_ids)]
+    if fresh_names:
+        _render_new_arrivals(fresh_names)
+
+    # なぜこの顔ぶれかを一文で語る(生態の可視化 = 見えない堀を聞こえる物語に)
+    story = ecology.lineup_story(bird_ids, birds_data)
+    _render_connections(groups, birds_data, story)
 
     # ── HTML/JS レンダリング ───────────────────────────────────
     _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, co_mat)
@@ -335,14 +344,52 @@ def _render_bird_chips(
     st.markdown(chips_html, unsafe_allow_html=True)
 
 
-def _render_connections(groups: list[dict], birds_data: dict) -> None:
-    """今日の顔ぶれの「関係」を採餌ギルドごとに見せる。
+# ── 「新しく加わった」判定(会う→聴くループの payoff) ──────────────
+_FRESH_DAYS = 2  # 何日以内に会った鳥を「新顔」として祝うか
+
+
+def _is_fresh(bid: str, observed: dict, fresh_ids: set) -> bool:
+    """この鳥が最近ラジオに加わったか。
+
+    判定はふたつの信号の OR:
+      ① fresh_ids: 今このセッションで初めて会った鳥(即時)
+      ② observed[bid]["first"] が直近 _FRESH_DAYS 日以内(永続・セッションをまたぐ)
+    """
+    if bid in fresh_ids:
+        return True
+    first = (observed.get(bid) or {}).get("first") or ""
+    if not first:
+        return False
+    try:
+        d = datetime.fromisoformat(str(first)).date()
+    except (ValueError, TypeError):
+        return False
+    return 0 <= (date.today() - d).days <= _FRESH_DAYS
+
+
+def _render_new_arrivals(names: list[str]) -> None:
+    """会いに行った鳥がラジオに加わったことを祝うバナー(ループの payoff)。"""
+    label = "・".join(names)
+    st.markdown(
+        f'<div style="background:#fbf6e8;border-left:3px solid #c8a830;'
+        f'border-radius:8px;padding:8px 12px;margin:8px 0;">'
+        f'<div style="font-size:0.84em;color:#a07f20;">'
+        f'🌟 <b>{label}</b> が新しく加わりました'
+        f'<span style="color:#c0a850;font-weight:400;">'
+        f' — 会いに行った鳥が、ラジオの顔ぶれに増えています。</span>'
+        f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_connections(groups: list[dict], birds_data: dict, story: str = "") -> None:
+    """今日の顔ぶれの「関係」を採餌ギルドごとに見せ、なぜ一緒かを一文で語る。
 
     共起の科学的な駆動要因は「同じ環境を好み、採餌のしかたが近いこと」。
     なので食物の奪い合い(競争)ではなく、同じ採餌ギルドの仲間としてまとめる。
-    ギルドが1羽ずつばらけている場合は何も出さない。
+    story は今日の顔ぶれ固有の説明(ecology.lineup_story)。
     """
-    if not groups:
+    if not groups and not story:
         return
     rows = ""
     for g in groups[:3]:
@@ -355,12 +402,13 @@ def _render_connections(groups: list[dict], birds_data: dict) -> None:
             f'<span style="font-weight:500;">{names}</span>'
             f'</div>'
         )
+    caption = story or "同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます"
     st.markdown(
         f'<div style="background:#f3f7ed;border-left:3px solid #b0c890;'
         f'border-radius:8px;padding:8px 12px;margin:8px 0;">'
         f'<div style="font-size:0.78em;color:#7a9a6a;margin-bottom:4px;">'
         f'🔗 今日の顔ぶれ &nbsp;<span style="color:#a8b89a;font-weight:400;">'
-        f'— 同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます</span></div>'
+        f'— {caption}</span></div>'
         f'{rows}</div>',
         unsafe_allow_html=True,
     )

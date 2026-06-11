@@ -174,7 +174,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             padding:14px 20px;border-radius:12px;border-left:4px solid #7ba87b;
             margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
             <div style="color:#5a7a5a;font-size:0.95em;font-weight:500;">
-                ♪ 鳥たちのコーラス ({n}羽)</div>
+                ♪ 鳥に会いに行く ({n}羽)</div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -423,7 +423,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             ">♪ 耳を澄ます</button>
             <div style="flex-grow: 1;">
                 <div style="color: #5a7a5a; font-size: 0.95em; font-weight: 500;">
-                    ♪ 鳥たちのコーラス ({n}羽)
+                    ♪ 鳥に会いに行く ({n}羽)
                 </div>
             </div>
         </div>
