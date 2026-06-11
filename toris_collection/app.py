@@ -17,6 +17,7 @@ import xc_client  # Python 3.14 並行インポートバグ対策: ritual.py よ
 from ritual import render_ritual  # 儀式UI(距離メカニクス)
 import observation_log  # 儀式での近距離観察記録の保存
 from radio import render_radio, current_app_season, weeks_until_next_season, _SEASON_META
+import daily  # 今日の庭(Wordle 型・1日1回・全員共通の入口)
 
 
 # ============================================================
@@ -637,6 +638,12 @@ def load_state_from_sheets(tester_id):
                     )
                     sc.upsert_collection(tester_id, ev["bird_id"])
                     st.session_state.discovered.add(ev["bird_id"])
+                    # 復帰フック: 留守中に初めて来た鳥は「ラジオに加わった新顔」。
+                    # ラジオが既に読む radio_new_arrivals に積み、🌟バナーを点ける
+                    # (会う→ラジオが豊かになる のループを、不在経由でも閉じる)。
+                    if _is_first:
+                        st.session_state.setdefault(
+                            "radio_new_arrivals", set()).add(ev["bird_id"])
                     if not any(a["id"] == ev["bird_id"] for a in _welcome_arrivals):
                         _welcome_arrivals.append({
                             "id": ev["bird_id"],
@@ -1178,6 +1185,9 @@ if hasattr(st, "dialog"):
             st.caption("🕊 " + "、".join(deps[:5]) + " は旅立っていきました")
         if data.get("n_mementos"):
             st.caption(f"🎁 新しい落とし物が {data['n_mementos']} 個あります")
+        # 復帰フックは軸(ラジオ)へ向ける: 留守中に来た鳥はラジオに加わっている。
+        if arrivals:
+            st.success("🎙 新しい声がラジオの顔ぶれに加わりました。聴きに行けます。")
         if st.button("庭を見る", key="welcome_dialog_close",
                      type="primary", use_container_width=True):
             st.rerun()
@@ -1431,6 +1441,11 @@ with tab_radio:
         _radio_obs = dict(st.session_state.get("observed", {}))
         for _bid in st.session_state.get("discovered", set()):
             _radio_obs.setdefault(_bid, {"count": 1, "first": "", "last": ""})
+        # 今日の庭(1日1回・全員共通)。留守が空振りの日でも「今日」だけは新しい。
+        daily.render_todays_garden(
+            st.session_state.biome, BIRDS, _radio_obs,
+            biome_label=BIOMES.get(st.session_state.biome, {}).get("name", ""),
+        )
         render_radio(
             biome_id=st.session_state.biome,
             observed=_radio_obs,
