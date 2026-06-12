@@ -198,16 +198,20 @@ def render_radio(
             label_visibility="collapsed",
         )
     with col_time:
-        time_options = ["朝 (4-8時)", "昼 (10-15時)", "夕 (16-19時)", "夜 (20-3時)"]
-        time_hours  = [6, 12, 17, 22]
+        # 既定は「今の時刻」= 端末のローカル時刻に追従(JS の new Date() で判定)。
+        # 手動で時間帯を選べば、その時間のさえずり/地鳴きの好みで鳴く。
+        time_options = ["🕒 今の時刻", "朝 (4-8時)", "昼 (10-15時)", "夕 (16-19時)", "夜 (20-3時)"]
+        time_hours  = [None, 6, 12, 17, 22]
         t_idx = st.selectbox(
             "時間帯",
             options=range(len(time_options)),
             format_func=lambda i: time_options[i],
+            index=0,
             key=f"{key_prefix}_time_select",
             label_visibility="collapsed",
         )
-    sim_hour = time_hours[t_idx]
+    use_real_time = time_hours[t_idx] is None
+    sim_hour = 12 if use_real_time else time_hours[t_idx]
     # 季節表示はタブ見出し(app.py)が出すのでここでは出さない
     _ = weeks_left
 
@@ -329,7 +333,8 @@ def render_radio(
     _render_connections(groups, birds_data, story)
 
     # ── HTML/JS レンダリング ───────────────────────────────────
-    _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, co_mat)
+    _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, co_mat,
+                         use_real_time=use_real_time)
 
 
 def _render_bird_chips(
@@ -435,6 +440,7 @@ def _render_radio_iframe(
     birds: list[dict], sim_hour: int,
     biome_id: str, season: str, season_meta: dict,
     affinity: list[list[int]] | None = None,
+    use_real_time: bool = True,
 ) -> None:
     """Web Audio ベースのラジオ iframe を描画する。"""
 
@@ -450,6 +456,7 @@ def _render_radio_iframe(
     if affinity is None:
         affinity = [[0] * n for _ in range(n)]
     affinity_json = json.dumps(affinity)
+    use_real_time_js = "true" if use_real_time else "false"
 
     # 音声タグ
     audio_tags = "".join(
@@ -527,8 +534,19 @@ def _render_radio_iframe(
         const AFFINITY = {affinity_json};
         const HAS_AMBIENT = {has_ambient};
         const SIM_HOUR = {sim_hour};
+        const USE_REAL_TIME = {use_real_time_js};
         const n = BIRDS.length;
         const btn = document.getElementById('ra_btn');
+
+        // ── ラジオ固有の音作り(ritual.py の共有定数は変えずに上書き) ──
+        // 主役の鳥を聞き分けやすく / 雑音を抑える / 常時さえずりに“間”を作る。
+        const RA_CALL_FLOOR  = 0.06;   // 背景の鳥はぐっと小さく(主役を立たせる)
+        const RA_GATE_THRESH = 0.024;  // ノイズゲートをやや厳しめに
+        const RA_GATE_FLOOR  = 0.05;   // 休符中の雑音をより強く絞る(従来0.12)
+        const RA_AGC_MAX     = 2.4;    // 静かな録音を上げすぎない(=雑音の増幅を抑える)
+        const RA_HANDOFF_P   = 0.55;   // 1フレーズ後に主役を入れ替える確率(間が増える)
+        const RA_REST_MIN_S  = 0.8;    // 主役交代時に挟む“沈黙の間”の最小秒
+        const RA_REST_MAX_S  = 3.2;    // 同・最大秒
 
         // 音響パラメータ(ritual.py と同じ)
         const D = {{
@@ -564,7 +582,8 @@ def _render_radio_iframe(
         }}
 
         function preferredType() {{
-            const h = SIM_HOUR;
+            // 「今の時刻」選択時は端末のローカル時刻に追従。手動選択時は SIM_HOUR。
+            const h = USE_REAL_TIME ? new Date().getHours() : SIM_HOUR;
             if (h >= 4 && h < 10)  return 'song';
             if (h >= 16 || h < 4)  return 'call';
             return null;
@@ -621,11 +640,16 @@ def _render_radio_iframe(
             const depth = BIRDS[i].depth || 'b3';
             const nv    = BIRDS[i].nv   || 1;
             const els   = [];
-            const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=520;
+            // ハイパスを上げて低域の暗騒音(風・交通・空調のゴロゴロ)を強めに切る
+            const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=820;
             for (let v = 0; v < nv; v++) {{
                 const el = document.getElementById('ra_' + i + '_' + v);
                 if (el) {{ els.push(el); ctx.createMediaElementSource(el).connect(hp); }}
             }}
+            // 鳥のさえずり帯域(〜3.5kHz)を持ち上げて声の存在感を上げる
+            const presence = ctx.createBiquadFilter();
+            presence.type='peaking'; presence.frequency.value=3500;
+            presence.Q.value=0.9; presence.gain.value=5.0;
             const filter  = ctx.createBiquadFilter(); filter.type='lowpass';
             const gate    = ctx.createGain(); gate.gain.value=1;
             const agcGain = ctx.createGain(); agcGain.gain.value=1;
@@ -635,7 +659,8 @@ def _render_radio_iframe(
             const wet     = ctx.createGain();
             const ana     = ctx.createAnalyser(); ana.fftSize=512;
 
-            hp.connect(filter); filter.connect(ana); filter.connect(gate);
+            hp.connect(presence); presence.connect(filter);
+            filter.connect(ana); filter.connect(gate);
             gate.connect(agcGain); agcGain.connect(gain);
             gain.connect(chGain);
             chGain.connect(pan.node); pan.node.connect(master);
@@ -690,35 +715,40 @@ def _render_radio_iframe(
                 for (let k = 0; k < nd.buf.length; k++) sum += nd.buf[k]*nd.buf[k];
                 const rms = Math.sqrt(sum / nd.buf.length);
 
-                // ① ノイズゲート
-                nd.gate.gain.setTargetAtTime(rms < GATE_THRESH ? GATE_FLOOR : 1.0, t, 0.06);
+                // ① ノイズゲート(休符中の雑音をより強く絞る)
+                nd.gate.gain.setTargetAtTime(rms < RA_GATE_THRESH ? RA_GATE_FLOOR : 1.0, t, 0.06);
 
-                // ② AGC
-                if (rms > GATE_THRESH) peakRMS[i] = peakRMS[i]*0.92 + rms*0.08;
-                else                   peakRMS[i] *= 0.9998;
+                // ② AGC(静かな録音を上げすぎない=雑音の増幅を抑える)
+                if (rms > RA_GATE_THRESH) peakRMS[i] = peakRMS[i]*0.92 + rms*0.08;
+                else                      peakRMS[i] *= 0.9998;
                 const agcT = Math.min(Math.max(AGC_TARGET / Math.max(peakRMS[i], 0.003),
-                                               AGC_MIN), AGC_MAX);
+                                               AGC_MIN), RA_AGC_MAX);
                 nd.agcGain.gain.setTargetAtTime(agcT, t, 3.0);
 
                 // UI: 鳴いている鳥のチップを光らせる
                 const isSolo = (i === activeIdx);
-                const audible = rms > GATE_THRESH * 0.5;
+                const audible = rms > RA_GATE_THRESH * 0.5;
                 updateChip(i, isSolo && audible);
 
-                // ③ 呼応
+                // ③ 呼応 + 休符(間)
                 if (i === activeIdx) {{
-                    if (rms > GATE_THRESH * 0.6) {{
+                    if (rms > RA_GATE_THRESH * 0.6) {{
                         phraseOn[i] = true; silentF[i] = 0;
                     }} else if (phraseOn[i]) {{
                         silentF[i]++;
                         if (silentF[i] === SILENT_NEED
                                 && Date.now() - activeSince > MIN_SOLO_MS
-                                && Math.random() < 0.40) {{
+                                && Math.random() < RA_HANDOFF_P) {{
                             const next = pickResponder(i);
                             if (next >= 0) {{
-                                nd.chGain.gain.setTargetAtTime(CALL_FLOOR, t, 1.5);
-                                nodes[next].chGain.gain.setTargetAtTime(1.0, t+0.35, 0.8);
-                                activeIdx = next; activeSince = Date.now();
+                                // 主役をしずめ、ランダムな“間”をはさんでから次の鳥が入る。
+                                // 常に誰かが鳴いている状態を避け、声を聞き分けやすくする。
+                                const restSec = RA_REST_MIN_S
+                                    + Math.random() * (RA_REST_MAX_S - RA_REST_MIN_S);
+                                nd.chGain.gain.setTargetAtTime(RA_CALL_FLOOR, t, 0.9);
+                                nodes[next].chGain.gain.setTargetAtTime(1.0, t + restSec, 0.8);
+                                activeIdx = next;
+                                activeSince = Date.now() + restSec * 1000;
                                 phraseOn[next] = false; silentF[next] = 0;
                             }}
                         }}
@@ -744,7 +774,7 @@ def _render_radio_iframe(
                 const nd = buildNode(i);
                 nodes.push(nd);
                 // 1羽目をフォアグラウンド、他はバックグラウンド
-                if (i > 0) nd.chGain.gain.setValueAtTime(CALL_FLOOR, ctx.currentTime);
+                if (i > 0) nd.chGain.gain.setValueAtTime(RA_CALL_FLOOR, ctx.currentTime);
             }}
             activeIdx = 0; activeSince = Date.now();
 
