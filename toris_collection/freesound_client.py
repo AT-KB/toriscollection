@@ -2,16 +2,25 @@
 Toris Collection - Freesound クライアント (森の環境音)
 
 Freesound API を使って森の環境音(ループ可能なアンビエント)をキャッシュする。
-プロジェクト直下に freesound_api_key.txt があれば API を使用、なければ無効化。
+APIキーが見つかれば API を使用、なければシンセ合成にフォールバック。
+
+キーの解決順(sheets_client と同じ方針):
+  1. Streamlit Cloud secrets … st.secrets["freesound_api_key"]
+  2. 環境変数 … FREESOUND_API_KEY
+  3. ローカルファイル … freesound_api_key.txt(プロジェクト直下)
 
 【APIキーの取り方】
   1. https://freesound.org/apiv2/apply で登録(無料)
   2. Client credentials の「Client secret / API key」をコピー
-  3. freesound_api_key.txt にキーだけ1行で保存
+  3. 次のいずれかで設定:
+       - ローカル開発     : freesound_api_key.txt にキーだけ1行で保存
+       - 環境変数         : FREESOUND_API_KEY=<キー>
+       - Streamlit Cloud  : secrets に  freesound_api_key = "<キー>"  を追加
   4. アプリ再起動
 """
 from __future__ import annotations
 import json
+import os
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -26,6 +35,20 @@ _MAX_B64_BYTES = 700_000  # base64 上限 ≈ 525KB MP3: 約35秒@128kbps
 
 
 def _load_key() -> Optional[str]:
+    # 1. Streamlit Cloud secrets を優先(Cloud ではキーファイルを置けないため)
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "freesound_api_key" in st.secrets:
+            k = str(st.secrets["freesound_api_key"]).strip()
+            if k:
+                return k
+    except Exception:
+        pass
+    # 2. 環境変数
+    env_key = (os.environ.get("FREESOUND_API_KEY") or "").strip()
+    if env_key:
+        return env_key
+    # 3. ローカルファイル
     if KEY_FILE.exists():
         try:
             k = KEY_FILE.read_text(encoding="utf-8").strip().lstrip("\ufeff")

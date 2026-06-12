@@ -167,7 +167,11 @@ def render_radio(
     selected_biome: ユーザーが選んだバイオーム(None = biome_id を使う)
     """
     if xc_client is None or not xc_client.is_enabled():
-        st.info("xeno-canto APIキーが設定されていません。鳴き声機能を有効にするには xc_api_key.txt を追加してください。")
+        st.info(
+            "xeno-canto APIキーが設定されていません。鳴き声機能を有効にするには、"
+            "Streamlit Cloud では secrets に `xc_api_key`、環境変数なら `XC_API_KEY`、"
+            "ローカルなら `xc_api_key.txt` のいずれかでキーを設定してください。"
+        )
         return
 
     season = current_app_season()
