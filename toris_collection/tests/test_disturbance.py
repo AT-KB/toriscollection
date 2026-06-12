@@ -31,12 +31,6 @@ def test_plant_sensitivity_default_and_clamp():
     assert dist.plant_sensitivity("unknown", PLANTS) == dist.DEFAULT_SENSITIVITY
 
 
-def test_is_pioneer():
-    assert dist.is_pioneer("pioneer", PLANTS) is True
-    assert dist.is_pioneer("grass", PLANTS) is True       # 未設定=候補
-    assert dist.is_pioneer("oak", PLANTS) is False        # late=候補外
-
-
 def test_roll_disturbance_frequency_and_validity():
     rng = random.Random(0)
     hits = [dist.roll_disturbance(rng) for _ in range(2000)]
@@ -47,7 +41,7 @@ def test_roll_disturbance_frequency_and_validity():
     # 返るタイプは必ず定義済み
     for h in fired:
         assert h["type"] in dist.DISTURBANCES
-        assert "severity" in h and "recovery" in h
+        assert "severity" in h
 
 
 def test_apply_disturbance_never_wipes_all():
@@ -68,47 +62,15 @@ def test_apply_disturbance_respects_sensitivity():
     assert removed == []
 
 
-def test_roll_succession_picks_unplanted_pioneer_in_biome():
-    rng = random.Random(3)
-    # recovery=1.0 で必ず芽吹く。kyoto で未植栽のパイオニア = pioneer/grass
-    planted = ["oak"]
-    got = set()
-    for _ in range(50):
-        s = dist.roll_succession(planted, "kyoto", PLANTS, {"recovery": 1.0}, rng)
-        assert s is not None
-        got.add(s)
-    assert got <= {"pioneer", "grass"}, f"想定外の芽吹き: {got}"
-    assert "oak" not in got        # late は芽吹かない
-    assert "gum" not in got        # 別バイオームは出ない
-
-
-def test_roll_succession_excludes_just_fallen():
-    rng = random.Random(9)
-    # grass が倒れたばかりなら、その場で grass は生え直さない(移ろいになる)
-    planted = ["oak"]
-    for _ in range(50):
-        s = dist.roll_succession(planted, "kyoto", PLANTS, {"recovery": 1.0}, rng,
-                                 exclude=["grass"])
-        assert s == "pioneer", f"倒れた grass を除外できていない: {s}"
-
-
-def test_roll_succession_recovery_zero_never_sprouts():
-    rng = random.Random(4)
-    for _ in range(50):
-        assert dist.roll_succession(["oak"], "kyoto", PLANTS,
-                                    {"recovery": 0.0}, rng) is None
-
-
 def test_disturbance_story_branches():
     ev = {"icon": "🌀", "label": "嵐"}
-    s1 = dist.disturbance_story(ev, ["ナラ"], "アカメガシワ")
-    assert "倒れた" in s1 and "芽吹き" in s1
-    s2 = dist.disturbance_story(ev, ["ナラ"], None)
-    assert "倒れた" in s2 and "新しい芽" in s2
-    s3 = dist.disturbance_story(ev, [], "アカメガシワ")
-    assert "芽吹いた" in s3
-    s4 = dist.disturbance_story(ev, [], None)
-    assert "持ちこたえた" in s4
+    # 倒れた植物があれば純減として語る(自動の植え直し・芽吹きは語らない)
+    s1 = dist.disturbance_story(ev, ["ナラ"])
+    assert "倒れた" in s1
+    assert "芽吹" not in s1 and "新しい芽" not in s1
+    # 何も倒れなければ「持ちこたえた」
+    s2 = dist.disturbance_story(ev, [])
+    assert "持ちこたえた" in s2
 
 
 def _run():

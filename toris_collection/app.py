@@ -740,14 +740,11 @@ def _apply_disturbances(tid, evo):
     st.session_state.disturbance_events = disturbances
     if not disturbances:
         return
-    # 植生の永続化: 倒れた木を removed に、芽吹いた木を active に
+    # 植生の永続化: 倒れた木を removed に(自動での植え直しはしない=純減)
     for d in disturbances:
         for pid in d.get("removed", []):
             _sheets_safe(sc.remove_planting, tid, pid)
-        sprout = d.get("sprout")
-        if sprout:
-            _sheets_safe(sc.add_planting, tid, sprout)
-    # session の植生を最終状態に揃える(撹乱→遷移の結果)
+    # session の植生を最終状態に揃える(撹乱の結果)
     if "planted_final" in evo:
         st.session_state.planted = list(evo["planted_final"])
 
@@ -1515,11 +1512,10 @@ with tab_plant:
     st.markdown("---")
     st.markdown("### 🌿 植えた植物")
     if st.session_state.planted:
-        for pid in st.session_state.planted:
+        for idx, pid in enumerate(st.session_state.planted):
             if pid not in PLANTS:
                 continue
             pl = PLANTS[pid]
-            ts_str = st.session_state.planted_at_map.get(pid, "")
 
             cols_p = st.columns([6, 1])
             with cols_p[0]:
@@ -1533,7 +1529,8 @@ with tab_plant:
                     unsafe_allow_html=True,
                 )
             with cols_p[1]:
-                if st.button("🗑️", key=f"remove_{pid}_{ts_str}",
+                # key は行ごとに一意(同じ植物が複数植わっていても衝突しない)
+                if st.button("🗑️", key=f"remove_{idx}_{pid}",
                              help=f"{pl['name']}を抜く",
                              use_container_width=True):
                     # session_state から1本除去

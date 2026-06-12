@@ -96,7 +96,7 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
         "events": list[dict]           # 到着イベント一覧(時系列順)
         "departures": list[bird_id]    # 不在中に去った鳥(重複あり)
         "n_ticks": int                 # 実行したサイクル数
-        "disturbances": list[dict]     # 不在中の撹乱→再生の出来事
+        "disturbances": list[dict]     # 不在中の撹乱(植物の純減)の出来事
         "planted_final": list[str]     # 撹乱・遷移を反映した最終的な植生
       }
     """
@@ -132,28 +132,22 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
             seconds=delta.total_seconds() * tick_progress
         )
 
-        # ── 撹乱と遷移(世界の出来事。低頻度・損失の次に必ず再生) ────────
+        # ── 撹乱(世界の出来事。低頻度。倒れた植物は純減し、自動では植え直さない) ──
         event = dist.roll_disturbance(rng)
         if event:
             removed = dist.apply_disturbance(planted_work, event, PLANTS, rng)
             for pid in removed:
                 if pid in planted_work:
                     planted_work.remove(pid)
-            sprout = dist.roll_succession(planted_work, biome, PLANTS, event, rng,
-                                          exclude=removed)
-            if sprout:
-                planted_work.append(sprout)
-            if removed or sprout:
+            if removed:
                 removed_names = [PLANTS.get(p, {}).get("name", p) for p in removed]
-                sprout_name = PLANTS.get(sprout, {}).get("name", sprout) if sprout else None
                 result["disturbances"].append({
                     "type": event["type"],
                     "label": event["label"],
                     "icon": event["icon"],
                     "at": tick_time,
                     "removed": removed,
-                    "sprout": sprout,
-                    "story": dist.disturbance_story(event, removed_names, sprout_name),
+                    "story": dist.disturbance_story(event, removed_names),
                 })
 
         tick_result = run_turn(planted_work, biome, month, residents, rng)
