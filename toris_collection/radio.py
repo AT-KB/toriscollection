@@ -267,9 +267,7 @@ def render_radio(
     # 観察済み・季節内の鳥から、共起しやすい(関係の強い)鳥が揃うように選ぶ。
     # 純粋ランダムではなく、すでに選ばれた鳥と一緒に見られやすい鳥を引きやすくする。
     playable = [bid for bid in in_season if birds_data[bid].get("scientific")]
-    shuffle_key = f"{key_prefix}_shuffle"
-    shuffle_n = st.session_state.get(shuffle_key, 0)
-    rng = random.Random(f"{chosen}|{season}|{shuffle_n}")
+    rng = random.Random(f"{chosen}|{season}")
     # 観察回数が多い鳥ほど主役に出やすい(基礎重み)
     base_w = {bid: 1.0 + observed.get(bid, {}).get("count", 1) * 0.5 for bid in playable}
     lineup = ecology.pick_lineup(playable, birds_data, _MAX_RADIO_BIRDS, rng, base_w)
@@ -277,11 +275,6 @@ def render_radio(
     backups = [b for b in playable if b not in lineup]
     rng.shuffle(backups)
     candidates = [(bid, birds_data[bid]) for bid in lineup + backups[:3]]
-
-    if len(playable) > _MAX_RADIO_BIRDS:
-        if st.button("🔀 顔ぶれを変える", key=f"{key_prefix}_shuffle_btn"):
-            st.session_state[shuffle_key] = shuffle_n + 1
-            st.rerun()
 
     birds: list[dict] = []
     with st.spinner("声を集めています…"):
@@ -496,7 +489,8 @@ def _render_radio_iframe(
             f'<span style="color:#6a8a5a;font-size:0.82em;">×{b["flock"]}</span>'
             if b.get("flock", 1) > 1 else ""
         )
-        + f'<span class="ra_note_{i}" style="font-size:0.9em;color:#7ab040;display:none;">♪</span>'
+        + f'<span class="ra_note_{i}" style="display:inline-block;width:1em;'
+        f'text-align:center;font-size:0.9em;color:#7ab040;visibility:hidden;">♪</span>'
         f'</div>'
         for i, b in enumerate(birds)
     )
@@ -702,7 +696,8 @@ def _render_radio_iframe(
             const chip = document.getElementById('ra_chip_' + i);
             const note = chip ? chip.querySelector('.ra_note_' + i) : null;
             if (chip) chip.classList.toggle('ra_active', active);
-            if (note) note.style.display = active ? 'inline' : 'none';
+            // ♪ は常に固定幅の枠を確保し、表示/非表示だけ切り替える(チップ位置のブレ防止)
+            if (note) note.style.visibility = active ? 'visible' : 'hidden';
         }}
 
         function gateTick() {{
