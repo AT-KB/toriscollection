@@ -267,9 +267,7 @@ def render_radio(
     # 観察済み・季節内の鳥から、共起しやすい(関係の強い)鳥が揃うように選ぶ。
     # 純粋ランダムではなく、すでに選ばれた鳥と一緒に見られやすい鳥を引きやすくする。
     playable = [bid for bid in in_season if birds_data[bid].get("scientific")]
-    shuffle_key = f"{key_prefix}_shuffle"
-    shuffle_n = st.session_state.get(shuffle_key, 0)
-    rng = random.Random(f"{chosen}|{season}|{shuffle_n}")
+    rng = random.Random(f"{chosen}|{season}")
     # 観察回数が多い鳥ほど主役に出やすい(基礎重み)
     base_w = {bid: 1.0 + observed.get(bid, {}).get("count", 1) * 0.5 for bid in playable}
     lineup = ecology.pick_lineup(playable, birds_data, _MAX_RADIO_BIRDS, rng, base_w)
@@ -277,11 +275,6 @@ def render_radio(
     backups = [b for b in playable if b not in lineup]
     rng.shuffle(backups)
     candidates = [(bid, birds_data[bid]) for bid in lineup + backups[:3]]
-
-    if len(playable) > _MAX_RADIO_BIRDS:
-        if st.button("🔀 顔ぶれを変える", key=f"{key_prefix}_shuffle_btn"):
-            st.session_state[shuffle_key] = shuffle_n + 1
-            st.rerun()
 
     birds: list[dict] = []
     with st.spinner("声を集めています…"):
@@ -496,7 +489,8 @@ def _render_radio_iframe(
             f'<span style="color:#6a8a5a;font-size:0.82em;">×{b["flock"]}</span>'
             if b.get("flock", 1) > 1 else ""
         )
-        + f'<span class="ra_note_{i}" style="font-size:0.9em;color:#7ab040;display:none;">♪</span>'
+        + f'<span class="ra_note_{i}" style="display:inline-block;width:1em;'
+        f'text-align:center;font-size:0.9em;color:#7ab040;visibility:hidden;">♪</span>'
         f'</div>'
         for i, b in enumerate(birds)
     )
@@ -539,32 +533,44 @@ def _render_radio_iframe(
         const btn = document.getElementById('ra_btn');
 
         // ── ラジオ固有の音作り(ritual.py の共有定数は変えずに上書き) ──
-        // 主役の鳥を聞き分けやすく / 雑音を抑える / 常時さえずりに“間”を作る。
-        const RA_CALL_FLOOR  = 0.06;   // 背景の鳥はぐっと小さく(主役を立たせる)
+        // 雑音を抑えつつ声を聞こえやすく / 鳥ごとに“鳴く⇄休む”で間を作る。
         const RA_GATE_THRESH = 0.024;  // ノイズゲートをやや厳しめに
-        const RA_GATE_FLOOR  = 0.05;   // 休符中の雑音をより強く絞る(従来0.12)
-        const RA_AGC_MAX     = 2.4;    // 静かな録音を上げすぎない(=雑音の増幅を抑える)
-        const RA_HANDOFF_P   = 0.55;   // 1フレーズ後に主役を入れ替える確率(間が増える)
-        const RA_REST_MIN_S  = 0.8;    // 主役交代時に挟む“沈黙の間”の最小秒
-        const RA_REST_MAX_S  = 3.2;    // 同・最大秒
+        const RA_GATE_FLOOR  = 0.05;   // 休符中の雑音をより強く絞る
+        const RA_AGC_MAX     = 3.0;    // 静かな録音もしっかり聞こえるよう増幅上限を確保
+        // 鳥ごとの発声スケジュール。1羽が数秒鳴き、しばらく休む。
+        // 同時発声の目安を ~1.2 にすると、ソロ・重なり・無音がばらばらに生まれる。
+        const RA_SING_MIN_S    = 2.5;  // 1フレーズで続けて鳴く最短/最長秒
+        const RA_SING_MAX_S    = 5.5;
+        const RA_TARGET_ACTIVE = 1.2;  // 同時に鳴く鳥数の目安(1前後)
+        const RA_REST_MIN_S    = 2.5;  // 休符の下限/上限秒(鳥数に応じて自動調整)
+        const RA_REST_MAX_S    = 20.0;
 
-        // 音響パラメータ(ritual.py と同じ)
+        // 音響パラメータ。奥行き感(残響/明るさ)は残しつつ、音量差は圧縮して
+        // どの鳥も聞こえるようにする(=一部の鳥だけ小さい問題への対策)。
         const D = {{
-            b3: {{ gain: 0.58, freq: 4200, wet: 0.20 }},
-            b2: {{ gain: 0.90, freq: 8000, wet: 0.09 }},
-            b1: {{ gain: 1.25, freq: 12000, wet: 0.01 }},
+            b3: {{ gain: 0.85, freq: 4600, wet: 0.20 }},
+            b2: {{ gain: 1.00, freq: 8000, wet: 0.09 }},
+            b1: {{ gain: 1.12, freq: 12000, wet: 0.01 }},
         }};
 
         let ctx = null, master = null, reverb = null;
         let running = false, rafId = null;
         const nodes = [];
 
-        // AGC / 呼応の状態
+        // AGC の状態(鳥ごとのピーク追従)
         const peakRMS   = [];
-        const phraseOn  = [];
-        const silentF   = [];
-        let activeIdx   = 0;
-        let activeSince = 0;
+
+        // 鳥ごとの発声サイクル長(秒)
+        function singDuration() {{
+            return RA_SING_MIN_S + Math.random() * (RA_SING_MAX_S - RA_SING_MIN_S);
+        }}
+        function restDuration() {{
+            // 同時発声を RA_TARGET_ACTIVE 前後に保つよう、鳥数で休符を伸縮。
+            const avgSing = (RA_SING_MIN_S + RA_SING_MAX_S) / 2;
+            let r = avgSing * (n / RA_TARGET_ACTIVE - 1);
+            r = Math.max(RA_REST_MIN_S, Math.min(RA_REST_MAX_S, r));
+            return r * (0.7 + Math.random() * 0.6);   // ±30% のゆらぎ(バラバラに)
+        }}
         {ae.AUDIO_CONSTANTS_JS}
         {ae.MAKE_PANNER_JS}
         function setPan(nd, left) {{
@@ -590,20 +596,6 @@ def _render_radio_iframe(
         }}
         {ae.PICK_VARIANT_JS}
 
-        // 呼応の相手を選ぶ: 共起しやすい鳥(よく一緒に見られる鳥)ほど応えやすい。
-        // AFFINITY[i][j] は 0..1 の共起度。基礎確率1があるので孤立しても破綻しない。
-        function pickResponder(from) {{
-            const row = (AFFINITY && AFFINITY[from]) || [];
-            const pool = [];
-            for (let j = 0; j < nodes.length; j++) {{
-                if (j === from) continue;
-                const w = Math.round((1 + 4 * (row[j] || 0)) * 4);  // 共起度で重み付け
-                for (let k = 0; k < w; k++) pool.push(j);
-            }}
-            if (!pool.length) return -1;
-            return pool[Math.floor(Math.random() * pool.length)];
-        }}
-
         {ae.MAKE_REVERB_IR_JS}
         {ae.MAKE_NOISE_BUFFER_JS}
 
@@ -615,24 +607,37 @@ def _render_radio_iframe(
                 const ag  = ctx.createGain(); ag.gain.value=0;
                 src.connect(lp); lp.connect(ag); ag.connect(master);
                 ambEl.play().catch(()=>{{}});
-                ag.gain.setTargetAtTime(0.22, ctx.currentTime, 3.5);
+                ag.gain.setTargetAtTime(0.28, ctx.currentTime, 3.5);
                 return ag;
             }}
+            // ── キー無しのときの森のシンセ環境音(鳥の“間”を自然に埋める) ──
+            const t = ctx.currentTime;
+            // 低い風(ブラウンノイズ)。ゆっくり明暗が揺れる。
             const wind = ctx.createBufferSource(); wind.buffer = makeNoiseBuffer(true); wind.loop=true;
             const wlp  = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=420;
             const wg   = ctx.createGain(); wg.gain.value=0;
             wind.connect(wlp); wlp.connect(wg); wg.connect(master);
             const lfo  = ctx.createOscillator(); lfo.frequency.value=0.06;
-            const lfoG = ctx.createGain(); lfoG.gain.value=200;
+            const lfoG = ctx.createGain(); lfoG.gain.value=220;
             lfo.connect(lfoG); lfoG.connect(wlp.frequency);
+            // 空気のざわめき(高めのホワイトノイズを薄く)
             const air  = ctx.createBufferSource(); air.buffer = makeNoiseBuffer(false); air.loop=true;
             const abp  = ctx.createBiquadFilter(); abp.type='bandpass'; abp.frequency.value=2600;
             const ag2  = ctx.createGain(); ag2.gain.value=0;
             air.connect(abp); abp.connect(ag2); ag2.connect(master);
-            wind.start(); air.start(); lfo.start();
-            const t = ctx.currentTime;
-            wg.gain.setTargetAtTime(0.075, t, 2.5);
-            ag2.gain.setTargetAtTime(0.012, t, 2.5);
+            // 葉ずれ(高域のノイズを、ゆっくり呼吸するように振幅変調)
+            const leaf = ctx.createBufferSource(); leaf.buffer = makeNoiseBuffer(false); leaf.loop=true;
+            const lbp  = ctx.createBiquadFilter(); lbp.type='bandpass';
+            lbp.frequency.value=6500; lbp.Q.value=0.6;
+            const lg   = ctx.createGain(); lg.gain.value=0;
+            leaf.connect(lbp); lbp.connect(lg); lg.connect(master);
+            const lfo2  = ctx.createOscillator(); lfo2.frequency.value=0.13;
+            const lfo2G = ctx.createGain(); lfo2G.gain.value=0.022;
+            lfo2.connect(lfo2G); lfo2G.connect(lg.gain);   // 0 を中心に揺れる葉ずれ
+            wind.start(); air.start(); leaf.start(); lfo.start(); lfo2.start();
+            wg.gain.setTargetAtTime(0.095, t, 2.5);
+            ag2.gain.setTargetAtTime(0.018, t, 2.5);
+            lg.gain.setTargetAtTime(0.030, t, 3.0);        // 葉ずれの平均レベル
             return wg;
         }}
 
@@ -694,15 +699,18 @@ def _render_radio_iframe(
             }}
 
             const cur = els.length > 1 ? pickVariant(i, -1) : 0;
+            chGain.gain.value = 0;   // 開始時は無音。スケジューラが鳴き始めを決める。
             return {{ els, cur, filter, gain, agcGain, chGain, wet, gate, ana,
-                      pan, depth, buf: new Float32Array(ana.fftSize) }};
+                      pan, depth, phase: 'rest', until: 0,
+                      buf: new Float32Array(ana.fftSize) }};
         }}
 
         function updateChip(i, active) {{
             const chip = document.getElementById('ra_chip_' + i);
             const note = chip ? chip.querySelector('.ra_note_' + i) : null;
             if (chip) chip.classList.toggle('ra_active', active);
-            if (note) note.style.display = active ? 'inline' : 'none';
+            // ♪ は常に固定幅の枠を確保し、表示/非表示だけ切り替える(チップ位置のブレ防止)
+            if (note) note.style.visibility = active ? 'visible' : 'hidden';
         }}
 
         function gateTick() {{
@@ -725,35 +733,24 @@ def _render_radio_iframe(
                                                AGC_MIN), RA_AGC_MAX);
                 nd.agcGain.gain.setTargetAtTime(agcT, t, 3.0);
 
-                // UI: 鳴いている鳥のチップを光らせる
-                const isSolo = (i === activeIdx);
-                const audible = rms > RA_GATE_THRESH * 0.5;
-                updateChip(i, isSolo && audible);
-
-                // ③ 呼応 + 休符(間)
-                if (i === activeIdx) {{
-                    if (rms > RA_GATE_THRESH * 0.6) {{
-                        phraseOn[i] = true; silentF[i] = 0;
-                    }} else if (phraseOn[i]) {{
-                        silentF[i]++;
-                        if (silentF[i] === SILENT_NEED
-                                && Date.now() - activeSince > MIN_SOLO_MS
-                                && Math.random() < RA_HANDOFF_P) {{
-                            const next = pickResponder(i);
-                            if (next >= 0) {{
-                                // 主役をしずめ、ランダムな“間”をはさんでから次の鳥が入る。
-                                // 常に誰かが鳴いている状態を避け、声を聞き分けやすくする。
-                                const restSec = RA_REST_MIN_S
-                                    + Math.random() * (RA_REST_MAX_S - RA_REST_MIN_S);
-                                nd.chGain.gain.setTargetAtTime(RA_CALL_FLOOR, t, 0.9);
-                                nodes[next].chGain.gain.setTargetAtTime(1.0, t + restSec, 0.8);
-                                activeIdx = next;
-                                activeSince = Date.now() + restSec * 1000;
-                                phraseOn[next] = false; silentF[next] = 0;
-                            }}
-                        }}
+                // ③ 鳥ごとに独立した“鳴く⇄休む”サイクル。
+                // 同時発声の目安が ~1.2 なので、ソロ(=この鳥はこう鳴くんだ)も
+                // 重なりも無音も、規則に縛られずばらばらに生まれる。
+                if (t >= nd.until) {{
+                    if (nd.phase === 'sing') {{
+                        nd.phase = 'rest';
+                        nd.chGain.gain.setTargetAtTime(0.0, t, 0.7);   // しずかに引く
+                        nd.until = t + restDuration();
+                    }} else {{
+                        nd.phase = 'sing';
+                        nd.chGain.gain.setTargetAtTime(1.0, t, 0.45);  // 鳴き始め
+                        nd.until = t + singDuration();
                     }}
                 }}
+
+                // UI: 鳴いている鳥のチップを光らせる
+                const audible = (nd.phase === 'sing') && rms > RA_GATE_THRESH * 0.5;
+                updateChip(i, audible);
             }}
             rafId = requestAnimationFrame(gateTick);
         }}
@@ -770,13 +767,13 @@ def _render_radio_iframe(
             buildAmbient();
 
             for (let i = 0; i < n; i++) {{
-                peakRMS.push(0.01); phraseOn.push(false); silentF.push(0);
+                peakRMS.push(0.01);
                 const nd = buildNode(i);
                 nodes.push(nd);
-                // 1羽目をフォアグラウンド、他はバックグラウンド
-                if (i > 0) nd.chGain.gain.setValueAtTime(RA_CALL_FLOOR, ctx.currentTime);
+                // 鳴き始めを少しずつずらす(全員が同時に鳴き出さない)
+                nd.phase = 'rest';
+                nd.until = ctx.currentTime + 0.2 + Math.random() * 4.0;
             }}
-            activeIdx = 0; activeSince = Date.now();
 
             nodes.forEach(nd => {{
                 const el = nd.els[nd.cur];
