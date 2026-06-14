@@ -101,14 +101,18 @@ def _obs_to_depth(count: int) -> str:
 
 @st.cache_data(show_spinner=False)
 def _radio_audio_variants(scientific_name: str,
-                          max_n: int = 3) -> list[tuple[str, str]]:
-    """(base64, 鳴き方) のリスト。最大合計 1.5MB base64。"""
+                          max_n: int = 2) -> list[tuple[str, str]]:
+    """(base64, 鳴き方) のリスト。
+
+    iframe に全鳥ぶんを base64 で埋め込むため、毎回の再実行で HTML が重くなる。
+    1鳥あたりの変奏数と容量を絞り、読み込みを軽くする(さえずり/地鳴きの2本まで)。
+    """
     if xc_client is None:
         return []
     paths = xc_client.download_audio_variants(scientific_name, max_n=max_n)
     out: list[tuple[str, str]] = []
     total = 0
-    _BUDGET = 2_000_000
+    _BUDGET = 750_000   # 1鳥あたり base64 約750KB(≈ MP3 560KB)まで
     for p, sound_type in paths:
         if not (p and p.exists()):
             continue
@@ -610,35 +614,39 @@ def _render_radio_iframe(
                 ag.gain.setTargetAtTime(0.28, ctx.currentTime, 3.5);
                 return ag;
             }}
-            // ── キー無しのときの森のシンセ環境音(鳥の“間”を自然に埋める) ──
+            // ── キー無しのときの“ヒーリング”環境音 ──
+            // ザーザーした雑音は使わず、やわらかな持続音(パッド)を主役に。
+            // 完全五度と八度を重ねた濁らない和音を、音ごとに違う速さでそっと揺らす。
             const t = ctx.currentTime;
-            // 低い風(ブラウンノイズ)。ゆっくり明暗が揺れる。
+            const padBus = ctx.createGain(); padBus.gain.value = 0;
+            const padLP  = ctx.createBiquadFilter();
+            padLP.type='lowpass'; padLP.frequency.value=1200;
+            padBus.connect(padLP); padLP.connect(master); padLP.connect(reverb);
+            const notes = [130.81, 196.00, 261.63, 392.00];  // C3 G3 C4 G4
+            notes.forEach(function(f, idx) {{
+                // わずかにデチューンした2本で温かみ(コーラス効果)
+                [-1, 1].forEach(function(sgn, k) {{
+                    const o = ctx.createOscillator();
+                    o.type = 'sine'; o.frequency.value = f; o.detune.value = sgn * 3.5;
+                    const g = ctx.createGain(); g.gain.value = 0.22;  // 揺れの中心
+                    o.connect(g); g.connect(padBus);
+                    // ゆっくりした音量のうねり(息づかい)。音ごとに速さを変える。
+                    const swl  = ctx.createOscillator();
+                    swl.frequency.value = 0.03 + idx * 0.016 + k * 0.004;
+                    const swlG = ctx.createGain(); swlG.gain.value = 0.18;
+                    swl.connect(swlG); swlG.connect(g.gain);
+                    o.start(); swl.start();
+                }});
+            }});
+            padBus.gain.setTargetAtTime(0.06, t, 5.0);   // 全体をそっと立ち上げ
+            // ごく弱い低い風(ザーザー感が出ない範囲で“自然”をひとさじ)
             const wind = ctx.createBufferSource(); wind.buffer = makeNoiseBuffer(true); wind.loop=true;
-            const wlp  = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=420;
+            const wlp  = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=280;
             const wg   = ctx.createGain(); wg.gain.value=0;
             wind.connect(wlp); wlp.connect(wg); wg.connect(master);
-            const lfo  = ctx.createOscillator(); lfo.frequency.value=0.06;
-            const lfoG = ctx.createGain(); lfoG.gain.value=220;
-            lfo.connect(lfoG); lfoG.connect(wlp.frequency);
-            // 空気のざわめき(高めのホワイトノイズを薄く)
-            const air  = ctx.createBufferSource(); air.buffer = makeNoiseBuffer(false); air.loop=true;
-            const abp  = ctx.createBiquadFilter(); abp.type='bandpass'; abp.frequency.value=2600;
-            const ag2  = ctx.createGain(); ag2.gain.value=0;
-            air.connect(abp); abp.connect(ag2); ag2.connect(master);
-            // 葉ずれ(高域のノイズを、ゆっくり呼吸するように振幅変調)
-            const leaf = ctx.createBufferSource(); leaf.buffer = makeNoiseBuffer(false); leaf.loop=true;
-            const lbp  = ctx.createBiquadFilter(); lbp.type='bandpass';
-            lbp.frequency.value=6500; lbp.Q.value=0.6;
-            const lg   = ctx.createGain(); lg.gain.value=0;
-            leaf.connect(lbp); lbp.connect(lg); lg.connect(master);
-            const lfo2  = ctx.createOscillator(); lfo2.frequency.value=0.13;
-            const lfo2G = ctx.createGain(); lfo2G.gain.value=0.022;
-            lfo2.connect(lfo2G); lfo2G.connect(lg.gain);   // 0 を中心に揺れる葉ずれ
-            wind.start(); air.start(); leaf.start(); lfo.start(); lfo2.start();
-            wg.gain.setTargetAtTime(0.095, t, 2.5);
-            ag2.gain.setTargetAtTime(0.018, t, 2.5);
-            lg.gain.setTargetAtTime(0.030, t, 3.0);        // 葉ずれの平均レベル
-            return wg;
+            wind.start();
+            wg.gain.setTargetAtTime(0.03, t, 3.0);
+            return padBus;
         }}
 
         function buildNode(i) {{
@@ -748,9 +756,9 @@ def _render_radio_iframe(
                     }}
                 }}
 
-                // UI: 鳴いている鳥のチップを光らせる
-                const audible = (nd.phase === 'sing') && rms > RA_GATE_THRESH * 0.5;
-                updateChip(i, audible);
+                // UI: 鳴いている鳥のチップは、その鳥の発声フレーズの間ずっと点灯。
+                // (録音内の細かな無音で点滅させない=どの鳥が鳴いているか分かる)
+                updateChip(i, nd.phase === 'sing');
             }}
             rafId = requestAnimationFrame(gateTick);
         }}
