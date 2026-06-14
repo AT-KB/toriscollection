@@ -757,6 +757,10 @@ def _render_radio_iframe(
 
         function start() {{
             ctx    = new (window.AudioContext || window.webkitAudioContext)();
+            // サンドボックス iframe やモバイルでは AudioContext が suspended で
+            // 始まり、currentTime が進まない=スケジューラが動かず無音になる。
+            // クリック(ユーザー操作)内で必ず resume しておく。
+            try {{ ctx.resume(); }} catch(e) {{}}
             master = ctx.createDynamicsCompressor();
             master.threshold.value=-10; master.knee.value=10;
             master.ratio.value=4; master.attack.value=0.003; master.release.value=0.25;
@@ -770,9 +774,9 @@ def _render_radio_iframe(
                 peakRMS.push(0.01);
                 const nd = buildNode(i);
                 nodes.push(nd);
-                // 鳴き始めを少しずつずらす(全員が同時に鳴き出さない)
+                // 1羽目はすぐ鳴き始め(開始直後に必ず声が出る)、残りは少しずつずらす。
                 nd.phase = 'rest';
-                nd.until = ctx.currentTime + 0.2 + Math.random() * 4.0;
+                nd.until = ctx.currentTime + (i === 0 ? 0 : 0.4 + Math.random() * 4.5);
             }}
 
             nodes.forEach(nd => {{
