@@ -530,7 +530,16 @@ def load_state_from_sheets(tester_id):
                 planted_at_map[pid] = ts
         st.session_state.planted = planted_unique
         st.session_state.planted_at_map = planted_at_map
-        # 不整合(無効な植物や重複)があれば Sheets 側もクリーンアップ
+        # 収容力(種数)を超える分は切り詰める。過去の自動補充などで上限を超えて
+        # 残ったデータ(例: 京都で 5/4)を恒久的に解消する。古い順に上限まで残す。
+        _max_plants = BIOMES.get(st.session_state.biome, {}).get("max_plants", 8)
+        if len(st.session_state.planted) > _max_plants:
+            st.session_state.planted = st.session_state.planted[:_max_plants]
+            st.session_state.planted_at_map = {
+                p: ts for p, ts in planted_at_map.items()
+                if p in st.session_state.planted
+            }
+        # 不整合(無効な植物・重複・容量超過)があれば Sheets 側もクリーンアップ
         if len(st.session_state.planted) < len(all_planted_with_time):
             try:
                 sc.remove_all_plantings(tester_id)
