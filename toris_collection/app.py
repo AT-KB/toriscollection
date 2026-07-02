@@ -38,7 +38,9 @@ def _get_bird_sprite_data_url(bird_id: str) -> str | None:
         str: "data:image/png;base64,..." 形式の URL
         None: スプライトファイルが存在しない場合
     """
-    path = SPRITES_DIR / f"{bird_id}.png"
+    from data import SPRITE_ALIASES
+    sprite_id = SPRITE_ALIASES.get(bird_id, bird_id)  # 新種は既存のドット絵を流用
+    path = SPRITES_DIR / f"{sprite_id}.png"
     if not path.exists():
         return None
     try:

@@ -126,6 +126,15 @@ PLANTS = {
                      "icon": "🌸", "temp_fit": (8, 28),  "biome": ["charlotte"]},
     "service_berry":{"name": "サービスベリー",     "scientific": "Amelanchier arborea", "english": "Serviceberry",
                      "icon": "🍒", "temp_fit": (3, 24),  "biome": ["charlotte"]},
+    # ── シャーロット追加(種子・液果を増やして種食/果実食の鳥を呼ぶ) ──
+    "sunflower":    {"name": "ヒマワリ",           "scientific": "Helianthus annuus", "english": "Common Sunflower",
+                     "icon": "🌻", "temp_fit": (12, 32), "biome": ["charlotte"]},
+    "red_cedar":    {"name": "エンピツビャクシン", "scientific": "Juniperus virginiana", "english": "Eastern Red Cedar",
+                     "icon": "🌲", "temp_fit": (-10, 28), "biome": ["charlotte"]},
+    "beautyberry":  {"name": "アメリカムラサキシキブ", "scientific": "Callicarpa americana", "english": "American Beautyberry",
+                     "icon": "🟣", "temp_fit": (5, 32),  "biome": ["charlotte"]},
+    "pokeweed":     {"name": "ヨウシュヤマゴボウ",  "scientific": "Phytolacca americana", "english": "American Pokeweed",
+                     "icon": "🍇", "temp_fit": (5, 32),  "biome": ["charlotte"]},
 }
 
 
@@ -536,6 +545,75 @@ BIRDS = {
         "rarity": 0.45,
         "description": "北米最小のキツツキ。住宅街の餌台にもよく現れる。",
     },
+    # ── シャーロット追加(スプライトは既存を流用、後追いで補充) ──
+    "carolina_chickadee": {
+        "name": "カロライナコガラ", "scientific": "Poecile carolinensis", "english": "Carolina Chickadee",
+        "color": "#8a8a80",
+        "eats_plants": ["sunflower"],
+        "eats_insects": ["tent_caterpillar", "june_beetle"],
+        "temp_fit": (-8, 30), "biome_pref": ["charlotte"],
+        "rarity": 0.3,
+        "description": "小さく人なつこいコガラ。餌台の常連で、ヒマワリの種を好む。",
+    },
+    "house_finch": {
+        "name": "メキシコマシコ", "scientific": "Haemorhous mexicanus", "english": "House Finch",
+        "color": "#c65a52",
+        "eats_plants": ["sunflower", "service_berry", "beautyberry"],
+        "eats_insects": [],
+        "temp_fit": (-4, 34), "biome_pref": ["charlotte"],
+        "rarity": 0.3,
+        "description": "住宅街に多い赤みがかった小鳥。種子と果実を好み、群れで来る。",
+    },
+    "red_bellied_woodpecker": {
+        "name": "ズアカアメリカコゲラ", "scientific": "Melanerpes carolinus", "english": "Red-bellied Woodpecker",
+        "color": "#c04a3a",
+        "eats_plants": ["white_oak", "sunflower"],
+        "eats_insects": ["katydid", "carpenter_bee", "june_beetle"],
+        "temp_fit": (-6, 32), "biome_pref": ["charlotte"],
+        "rarity": 0.45,
+        "description": "頭の赤いキツツキ。ドングリや樹皮の虫、餌台の種まで幅広く食べる。",
+    },
+    "brown_thrasher": {
+        "name": "チャイロツグミモドキ", "scientific": "Toxostoma rufum", "english": "Brown Thrasher",
+        "color": "#9c5a2a",
+        "eats_plants": ["beautyberry", "pokeweed", "service_berry"],
+        "eats_insects": ["june_beetle", "katydid"],
+        "temp_fit": (-4, 33), "biome_pref": ["charlotte"],
+        "rarity": 0.55,
+        "description": "茂みで落ち葉をかき分け虫を探す。警戒心が強く、姿を見せると珍しい。",
+        "wariness": 0.6,
+    },
+    "song_sparrow": {
+        "name": "ウタスズメ", "scientific": "Melospiza melodia", "english": "Song Sparrow",
+        "color": "#8a6a4a",
+        "eats_plants": ["sunflower", "pokeweed"],
+        "eats_insects": ["hoverfly_us"],
+        "temp_fit": (-8, 30), "biome_pref": ["charlotte"],
+        "rarity": 0.35,
+        "description": "やぶ際でよくさえずるスズメの仲間。種子と小さな虫を食べる。",
+        "wariness": 0.45,
+    },
+    "cedar_waxwing": {
+        "name": "ヒメレンジャク", "scientific": "Bombycilla cedrorum", "english": "Cedar Waxwing",
+        "color": "#b9a06a",
+        "eats_plants": ["red_cedar", "service_berry", "dogwood", "beautyberry"],
+        "eats_insects": [],
+        "temp_fit": (-8, 28), "biome_pref": ["charlotte"],
+        "rarity": 0.6,
+        "description": "液果を追って群れで移動する。エンピツビャクシンの実を特に好む。",
+        "wariness": 0.5,
+    },
+}
+
+
+# ── スプライト流用(新種は当面、既存のドット絵を借りる。後追いで専用絵に差し替え) ──
+SPRITE_ALIASES = {
+    "carolina_chickadee":     "shijukara",
+    "house_finch":            "kawarahiwa",
+    "red_bellied_woodpecker": "kogera",
+    "brown_thrasher":         "hiyodori",
+    "song_sparrow":           "suzume",
+    "cedar_waxwing":          "mejiro",
 }
 
 
