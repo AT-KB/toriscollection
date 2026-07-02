@@ -135,6 +135,15 @@ PLANTS = {
                      "icon": "🟣", "temp_fit": (5, 32),  "biome": ["charlotte"]},
     "pokeweed":     {"name": "ヨウシュヤマゴボウ",  "scientific": "Phytolacca americana", "english": "American Pokeweed",
                      "icon": "🍇", "temp_fit": (5, 32),  "biome": ["charlotte"]},
+    # ── 京都追加(里山の液果・種子を増やして冬鳥・果実食を呼ぶ) ──
+    "kuwa":         {"name": "クワ",               "scientific": "Morus australis", "english": "Mulberry",
+                     "icon": "🌿", "temp_fit": (6, 30),  "biome": ["kyoto"]},
+    "murasaki_shikibu": {"name": "ムラサキシキブ", "scientific": "Callicarpa japonica", "english": "Japanese Beautyberry",
+                     "icon": "🟣", "temp_fit": (3, 28),  "biome": ["kyoto"]},
+    "egonoki":      {"name": "エゴノキ",           "scientific": "Styrax japonica", "english": "Japanese Snowbell",
+                     "icon": "🤍", "temp_fit": (2, 26),  "biome": ["kyoto"]},
+    "noibara":      {"name": "ノイバラ",           "scientific": "Rosa multiflora", "english": "Multiflora Rose",
+                     "icon": "🌹", "temp_fit": (-2, 26), "biome": ["kyoto"]},
 }
 
 
@@ -299,11 +308,11 @@ BIRDS = {
     },
     "yamagara": {
         "name": "ヤマガラ", "scientific": "Sittiparus varius", "english": "Varied Tit", "color": "#b06030",
-        "eats_plants": ["kunugi"],
+        "eats_plants": ["kunugi", "egonoki"],
         "eats_insects": ["ao_imo_mushi", "kara_imo_mushi"],
         "temp_fit": (-2, 25), "biome_pref": ["kyoto"],
         "rarity": 0.4,
-        "description": "ドングリを蓄える習性。人懐っこい性格で知られる。",
+        "description": "ドングリやエゴノキの実を蓄える習性。人懐っこい性格で知られる。",
     },
     "kibitaki": {
         "name": "キビタキ", "scientific": "Ficedula narcissina", "english": "Narcissus Flycatcher", "color": "#e8b820",
@@ -603,6 +612,67 @@ BIRDS = {
         "description": "液果を追って群れで移動する。エンピツビャクシンの実を特に好む。",
         "wariness": 0.5,
     },
+    # ── 京都追加(里山の常連・冬鳥。スプライトは既存を流用、後追いで補充) ──
+    "kijibato": {
+        "name": "キジバト", "scientific": "Streptopelia orientalis", "english": "Oriental Turtle Dove",
+        "color": "#9a7a6a",
+        "eats_plants": ["rice", "kunugi", "egonoki"],
+        "eats_insects": [],
+        "temp_fit": (-4, 30), "biome_pref": ["kyoto"],
+        "rarity": 0.3,
+        "description": "「デデッポッポー」と鳴く里のハト。地面で種子や木の実を拾う。",
+        "wariness": 0.35,
+    },
+    "hibari": {
+        "name": "ヒバリ", "scientific": "Alauda arvensis", "english": "Eurasian Skylark",
+        "color": "#b09a6a",
+        "eats_plants": ["rice", "susuki"],
+        "eats_insects": ["ao_imo_mushi"],
+        "temp_fit": (-2, 30), "biome_pref": ["kyoto"],
+        "rarity": 0.45,
+        "description": "草地から舞い上がりさえずる。田畑の種子と虫を食べる。",
+        "wariness": 0.45,
+    },
+    "mozu": {
+        "name": "モズ", "scientific": "Lanius bucephalus", "english": "Bull-headed Shrike",
+        "color": "#a5713a",
+        "eats_plants": [],
+        "eats_insects": ["kuwagata", "abura_zemi", "kara_imo_mushi"],
+        "temp_fit": (-4, 28), "biome_pref": ["kyoto"],
+        "rarity": 0.5,
+        "description": "小さな猛禽のような小鳥。大きな虫を捕らえ、はやにえを作る。",
+        "wariness": 0.55,
+    },
+    "jou_bitaki": {
+        "name": "ジョウビタキ", "scientific": "Phoenicurus auroreus", "english": "Daurian Redstart",
+        "color": "#d07a3a",
+        "eats_plants": ["nanten", "murasaki_shikibu", "noibara"],
+        "eats_insects": ["ao_imo_mushi"],
+        "temp_fit": (-8, 18), "biome_pref": ["kyoto"],
+        "rarity": 0.45,
+        "description": "冬に渡ってくるオレンジ色の小鳥。「ヒッ、ヒッ」と鳴き人を恐れない。",
+        "wariness": 0.25,
+    },
+    "shirohara": {
+        "name": "シロハラ", "scientific": "Turdus pallidus", "english": "Pale Thrush",
+        "color": "#6a5a4a",
+        "eats_plants": ["nanten", "murasaki_shikibu", "kuwa", "kaki"],
+        "eats_insects": ["ao_imo_mushi"],
+        "temp_fit": (-8, 18), "biome_pref": ["kyoto"],
+        "rarity": 0.5,
+        "description": "冬の林床で落ち葉をかき分ける地味なツグミ。木の実と虫を食べる。",
+        "wariness": 0.55,
+    },
+    "aoji": {
+        "name": "アオジ", "scientific": "Emberiza spodocephala", "english": "Black-faced Bunting",
+        "color": "#8a9a5a",
+        "eats_plants": ["susuki", "rice", "noibara"],
+        "eats_insects": [],
+        "temp_fit": (-8, 20), "biome_pref": ["kyoto"],
+        "rarity": 0.5,
+        "description": "冬にやぶ際で種子をついばむ。緑がかった地味なホオジロの仲間。",
+        "wariness": 0.5,
+    },
 }
 
 
@@ -614,6 +684,13 @@ SPRITE_ALIASES = {
     "brown_thrasher":         "hiyodori",
     "song_sparrow":           "suzume",
     "cedar_waxwing":          "mejiro",
+    # 京都の追加種
+    "kijibato":               "mourning_dove",
+    "hibari":                 "suzume",
+    "mozu":                   "hiyodori",
+    "jou_bitaki":             "kibitaki",
+    "shirohara":              "american_robin",
+    "aoji":                   "kawarahiwa",
 }
 
 

@@ -29,10 +29,14 @@ CHARLOTTE_CANDIDATES = [
 ]
 
 KYOTO_CANDIDATES = [
-    ("Passer montanus", "スズメ", "bird"),
-    ("Spinus spinus", "マヒワ", "bird"),
+    # 今回シードで追加した京都の新種(GloBI で食性を裏取りする対象)
+    ("Streptopelia orientalis", "キジバト", "bird"),
+    ("Alauda arvensis", "ヒバリ", "bird"),
+    ("Lanius bucephalus", "モズ", "bird"),
+    ("Phoenicurus auroreus", "ジョウビタキ", "bird"),
     ("Turdus pallidus", "シロハラ", "bird"),
-    ("Garrulus glandarius", "カケス", "bird"),
+    ("Emberiza spodocephala", "アオジ", "bird"),
+    # 餌台連鎖用(将来)
     ("Sciurus lis", "ニホンリス", "mammal"),
     ("Accipiter gularis", "ツミ", "raptor"),
 ]
