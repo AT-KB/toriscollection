@@ -252,6 +252,34 @@ def add_visit(tester_id, bird_id, visit_type, reason_text="",
     ])
 
 
+def load_bird_days(tester_id):
+    """{bird_id: {"days": int, "last": "YYYY-MM-DD"}} を返す。
+
+    bird_visits から、その鳥に会った「異なる暦日」の数を数える(=1日1カウント)。
+    到来のたびに visit が記録されるので、日単位で畳めば自然に習慣カウントになる。
+    列はヘッダ名に依存せず位置で読む(1=tester_id, 2=bird_id, 3=arrived_at)。
+    失敗時は空 dict。
+    """
+    try:
+        rows = _ws("bird_visits").get_all_values()
+    except Exception:
+        return {}
+    per_bird_days: dict[str, set] = {}
+    for row in rows[1:]:  # ヘッダ行を除く
+        if len(row) < 4 or row[1] != tester_id:
+            continue
+        bird_id = row[2]
+        ts = str(row[3]).strip()
+        if not bird_id or "T" not in ts:
+            continue
+        day = ts.split("T", 1)[0]
+        per_bird_days.setdefault(bird_id, set()).add(day)
+    return {
+        bid: {"days": len(days), "last": max(days)}
+        for bid, days in per_bird_days.items()
+    }
+
+
 # ====== collection ======
 def load_collection_set(tester_id):
     """{bird_id, ...} の set"""

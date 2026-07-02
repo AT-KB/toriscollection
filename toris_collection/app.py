@@ -569,6 +569,13 @@ def load_state_from_sheets(tester_id):
     except Exception:
         st.session_state.observed = {}
 
+    # 会った日数(鳥ごと・1日1カウント)。訪問ログから暦日を畳んで集計。
+    # 「よく会う友だち」が増える受動的な習慣カウント(競争でなく愛着)。
+    try:
+        st.session_state.bird_days = sc.load_bird_days(tester_id)
+    except Exception:
+        st.session_state.bird_days = {}
+
     # 月は現実時間に同期する(ターン進行を廃止したため)
     now = datetime.now()
     st.session_state.month = now.month
@@ -747,6 +754,20 @@ def _sheets_safe(fn, *args, **kwargs):
         st.warning(f"Sheets同期に失敗(処理は続行されます): {e}", icon="⚠️")
 
 
+def _mark_met_today(bird_id):
+    """その鳥に「今日会った」ことを会った日数に反映する(1日1カウント)。
+
+    永続の実体は bird_visits(訪問ログ)なので、ここでは session を即時に更新して
+    その日の到来をすぐ図鑑へ映すだけ。次回ログイン時に訪問ログから再集計される。
+    """
+    today = datetime.now().date().isoformat()
+    bd = st.session_state.setdefault("bird_days", {})
+    rec = bd.setdefault(bird_id, {"days": 0, "last": ""})
+    if rec.get("last") != today:
+        rec["days"] = rec.get("days", 0) + 1
+        rec["last"] = today
+
+
 def _apply_disturbances(tid, evo):
     """不在中の撹乱・遷移を session と plantings シートへ反映し、表示用に保存する。
 
@@ -801,6 +822,7 @@ def _handle_ritual_observation():
             rec = _observed.setdefault(bid, {"count": 0, "first": "", "last": ""})
             rec["count"] += 1
             _discovered.add(bid)  # 近くで観察できた鳥は当然「来た鳥」でもある
+            _mark_met_today(bid)  # 会った日数(1日1カウント)に反映
             if _is_first:
                 # 会う→聴くループ: 初めて会った鳥をラジオで「新しく加わった」と祝う信号
                 st.session_state.setdefault("radio_new_arrivals", set()).add(bid)
@@ -939,6 +961,7 @@ with st.sidebar:
                     )
                     _sheets_safe(sc.upsert_collection, tid, ev["bird_id"])
                     st.session_state.discovered.add(ev["bird_id"])
+                    _mark_met_today(ev["bird_id"])  # 会った日数(1日1カウント)に反映
                     # 落とし物の記録
                     mid = ev.get("memento_id")
                     if mid:
@@ -1774,10 +1797,23 @@ with tab_birds:
                 )
 
         _icon = "🪶" if observed else ("🐦" if discovered else "❓")
+        # 会った日数(1日1カウント)。節目で静かな称号を添える(競争でなく愛着)。
+        _met_days = st.session_state.get("bird_days", {}).get(b_id, {}).get("days", 0)
+        if _met_days >= 100:
+            _days_label = f"　🏅 会った日数 {_met_days}日・皆勤の友"
+        elif _met_days >= 30:
+            _days_label = f"　🌿 会った日数 {_met_days}日・常連"
+        elif _met_days >= 10:
+            _days_label = f"　🌱 会った日数 {_met_days}日・おなじみ"
+        elif _met_days >= 1:
+            _days_label = f"　会った日数 {_met_days}日"
+        else:
+            _days_label = ""
         with st.expander(
             f"{_icon} "
             f"{bird['name'] if discovered else '???'} "
-            f"(レア度 {'★' * (1 + int(bird['rarity'] * 5))})",
+            f"(レア度 {'★' * (1 + int(bird['rarity'] * 5))})"
+            + (_days_label if discovered else ""),
             expanded=False,
         ):
             if observed:
