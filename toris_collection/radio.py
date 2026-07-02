@@ -219,6 +219,16 @@ def render_radio(
     # 季節表示はタブ見出し(app.py)が出すのでここでは出さない
     _ = weeks_left
 
+    # ヒーリングBGMモード: やわらかな持続音(パッド)が主役。鳥は“ときどき1羽”だけ、
+    # 静かに鳴く。録音の背景ノイズは、鳥が鳴かない時間を長くとる+強めのゲート/低域
+    # 通過でパッドに溶け込ませる(消しきれないノイズを目立たせない設計)。
+    bgm_mode = st.toggle(
+        "🎧 ヒーリングBGM(鳥はときどき・環境音が主役)",
+        value=False,
+        key=f"{key_prefix}_bgm_toggle",
+        help="作業や就寝のお供に。鳥の声は控えめになり、環境音が中心になります。",
+    )
+
     # ── バイオームの観察済み鳥を絞り込む ──────────────────────
     biome_birds = [
         bid for bid, bird in birds_data.items()
@@ -331,7 +341,7 @@ def render_radio(
 
     # ── HTML/JS レンダリング ───────────────────────────────────
     _render_radio_iframe(birds, sim_hour, chosen, season, season_meta, co_mat,
-                         use_real_time=use_real_time)
+                         use_real_time=use_real_time, bgm_mode=bgm_mode)
 
 
 def _render_bird_chips(
@@ -438,6 +448,7 @@ def _render_radio_iframe(
     biome_id: str, season: str, season_meta: dict,
     affinity: list[list[int]] | None = None,
     use_real_time: bool = True,
+    bgm_mode: bool = False,
 ) -> None:
     """Web Audio ベースのラジオ iframe を描画する。"""
 
@@ -454,6 +465,7 @@ def _render_radio_iframe(
         affinity = [[0] * n for _ in range(n)]
     affinity_json = json.dumps(affinity)
     use_real_time_js = "true" if use_real_time else "false"
+    bgm_js = "true" if bgm_mode else "false"
 
     # 音声タグ
     audio_tags = "".join(
@@ -533,21 +545,22 @@ def _render_radio_iframe(
         const HAS_AMBIENT = {has_ambient};
         const SIM_HOUR = {sim_hour};
         const USE_REAL_TIME = {use_real_time_js};
+        const BGM = {bgm_js};   // ヒーリングBGMモード
         const n = BIRDS.length;
         const btn = document.getElementById('ra_btn');
 
         // ── ラジオ固有の音作り(ritual.py の共有定数は変えずに上書き) ──
-        // 雑音を抑えつつ声を聞こえやすく / 鳥ごとに“鳴く⇄休む”で間を作る。
-        const RA_GATE_THRESH = 0.024;  // ノイズゲートをやや厳しめに
-        const RA_GATE_FLOOR  = 0.05;   // 休符中の雑音をより強く絞る
-        const RA_AGC_MAX     = 3.0;    // 静かな録音もしっかり聞こえるよう増幅上限を確保
-        // 鳥ごとの発声スケジュール。1羽が数秒鳴き、しばらく休む。
-        // 同時発声の目安を ~1.2 にすると、ソロ・重なり・無音がばらばらに生まれる。
-        const RA_SING_MIN_S    = 2.5;  // 1フレーズで続けて鳴く最短/最長秒
-        const RA_SING_MAX_S    = 5.5;
-        const RA_TARGET_ACTIVE = 1.2;  // 同時に鳴く鳥数の目安(1前後)
-        const RA_REST_MIN_S    = 2.5;  // 休符の下限/上限秒(鳥数に応じて自動調整)
-        const RA_REST_MAX_S    = 20.0;
+        // 通常: 鳥ごとに“鳴く⇄休む”で、ソロ・重なり・無音がばらばらに生まれる。
+        // BGM: 環境音(パッド)が主役。鳥は“ときどき1羽”だけ短く鳴き、大半は無音。
+        //      → 消しきれない録音ノイズが鳴る時間そのものを減らし、パッドに溶かす。
+        const RA_GATE_THRESH = BGM ? 0.030 : 0.024;  // BGMはゲートを厳しめに(無音の雑音を切る)
+        const RA_GATE_FLOOR  = BGM ? 0.02  : 0.05;   // 休符中はより深く絞る
+        const RA_AGC_MAX     = BGM ? 2.2   : 3.0;    // BGMは上げすぎない(ノイズ増幅を抑制)
+        const RA_SING_MIN_S    = BGM ? 1.8 : 2.5;    // BGMは1フレーズを短め
+        const RA_SING_MAX_S    = BGM ? 3.5 : 5.5;
+        const RA_TARGET_ACTIVE = BGM ? 0.4 : 1.2;    // BGMは同時発声~0.4(大半は無音、たまに1羽)
+        const RA_REST_MIN_S    = BGM ? 5.0 : 2.5;    // BGMは休符を長く
+        const RA_REST_MAX_S    = BGM ? 26.0 : 20.0;
 
         // 音響パラメータ。奥行き感(残響/明るさ)は残しつつ、音量差は圧縮して
         // どの鳥も聞こえるようにする(=一部の鳥だけ小さい問題への対策)。
@@ -638,7 +651,7 @@ def _render_radio_iframe(
                     o.start(); swl.start();
                 }});
             }});
-            padBus.gain.setTargetAtTime(0.06, t, 5.0);   // 全体をそっと立ち上げ
+            padBus.gain.setTargetAtTime(BGM ? 0.11 : 0.06, t, 5.0);  // BGMはパッドを主役に
             // ごく弱い低い風(ザーザー感が出ない範囲で“自然”をひとさじ)
             const wind = ctx.createBufferSource(); wind.buffer = makeNoiseBuffer(true); wind.loop=true;
             const wlp  = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=280;
@@ -679,8 +692,9 @@ def _render_radio_iframe(
             chGain.connect(pan.node); pan.node.connect(master);
             chGain.connect(wet); wet.connect(reverb);
 
-            gain.gain.value        = D[depth].gain;
-            filter.frequency.value = D[depth].freq;
+            // BGMでは鳥をやや控えめ・高域を抑えめにして、パッドとノイズの角を丸める
+            gain.gain.value        = D[depth].gain * (BGM ? 0.75 : 1.0);
+            filter.frequency.value = BGM ? Math.min(D[depth].freq, 5200) : D[depth].freq;
             wet.gain.value         = D[depth].wet;
 
             // 初期水平位置: 均等間隔

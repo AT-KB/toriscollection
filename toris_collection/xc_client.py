@@ -64,6 +64,50 @@ def is_enabled() -> bool:
     return _API_KEY is not None
 
 
+# ── 商用ライセンス・モード ──────────────────────────────────────────
+# 広告つき=商用アプリでは、CC BY-NC(非商用)録音は使えない。
+# COMMERCIAL_ONLY=True のとき、鳴き声は商用可(CC0 / CC BY / BY-SA / BY-ND /
+# パブリックドメイン)の録音だけに絞る。まずは監査(license_audit.py)で
+# 影響範囲を見てから有効化する想定で、既定は False。
+# secrets の commercial_only / 環境変数 XC_COMMERCIAL_ONLY でも切り替え可。
+def _load_commercial_only() -> bool:
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "commercial_only" in st.secrets:
+            return bool(st.secrets["commercial_only"])
+    except Exception:
+        pass
+    return os.environ.get("XC_COMMERCIAL_ONLY", "").strip().lower() in ("1", "true", "yes")
+
+
+COMMERCIAL_ONLY = _load_commercial_only()
+
+
+def license_class(lic: str) -> str:
+    """録音のライセンス文字列を分類する。
+
+    Returns "commercial"(商用可) / "noncommercial"(NC=不可) / "unknown"。
+    xeno-canto の 'lic' は "//creativecommons.org/licenses/by-nc-sa/4.0/" のような値。
+    """
+    if not lic:
+        return "unknown"
+    s = str(lic).lower()
+    if "-nc" in s or "/nc" in s:      # by-nc, by-nc-sa, by-nc-nd など
+        return "noncommercial"
+    if ("creativecommons" in s or "publicdomain" in s or "zero" in s
+            or "/by" in s):           # by, by-sa, by-nd, cc0
+        return "commercial"
+    return "unknown"
+
+
+def _license_ok(rec: dict) -> bool:
+    """COMMERCIAL_ONLY のとき、この録音を使ってよいか。"""
+    if not COMMERCIAL_ONLY:
+        return True
+    lic = rec.get("lic") or rec.get("license") or ""
+    return license_class(lic) == "commercial"
+
+
 CACHE_DIR = Path(__file__).parent / ".xeno_canto_cache"
 AUDIO_DIR = CACHE_DIR / "audio"
 META_DIR = CACHE_DIR / "meta"
@@ -131,6 +175,8 @@ def get_audio_url(scientific_name: str) -> Optional[str]:
         for q in ["A", "B", "C"]:
             recs = search_recordings(scientific_name, quality=q, sound_type=sound_type)
             for r in recs:
+                if not _license_ok(r):
+                    continue
                 url = r.get("file")
                 if url and url.startswith(("http://", "https://")):
                     return url
@@ -150,6 +196,8 @@ def get_audio_urls(scientific_name: str, max_n: int = 3) -> list[tuple[str, str]
         for q in ["A", "B"]:
             for r in search_recordings(scientific_name, quality=q,
                                        sound_type=sound_type):
+                if not _license_ok(r):
+                    continue
                 url = r.get("file")
                 if url and url.startswith(("http://", "https://")):
                     urls.append(url)
