@@ -1016,6 +1016,40 @@ with st.sidebar:
                     use_container_width=True, hide_index=True,
                 )
 
+        # ===== GloBI 相互作用プレビュー(種・餌台・リス・Hawk 連鎖の材料集め) =====
+        st.markdown("---")
+        st.caption(
+            "GloBI から候補種(鳥/リス/Hawk)の eats・eatenBy・preysOn を引きます。"
+            "餌台→リス→Hawk→小鳥の連鎖を GloBI エッジで組む材料。デプロイ環境で実行。"
+        )
+        _globi_biome = st.selectbox(
+            "候補バイオーム", options=["charlotte", "kyoto"],
+            format_func=lambda b: {"charlotte": "🌳 シャーロット", "kyoto": "🏯 京都"}[b],
+            key="globi_expand_biome",
+        )
+        if st.button("🐿️ GloBI 相互作用プレビュー", use_container_width=True):
+            import species_expand
+            roster = species_expand.roster_for(_globi_biome)
+            with st.spinner("GloBI に問い合わせ中(初回は数分)…"):
+                st.session_state["_globi_preview"] = species_expand.preview_roster(roster)
+        _gp = st.session_state.get("_globi_preview")
+        if _gp:
+            _any = any(r["interactions"] for r in _gp)
+            if not _any:
+                st.warning(
+                    "GloBI から相互作用が取れませんでした。"
+                    "この環境から GloBI に到達できない可能性があります"
+                    "(デプロイ環境=Streamlit Cloud で実行してください)。"
+                )
+            for r in _gp:
+                with st.expander(f"{r['name']}({r['role']}) — {r['scientific']}",
+                                 expanded=False):
+                    if not r["interactions"]:
+                        st.caption("(相互作用データなし)")
+                    for itype, targets in r["interactions"].items():
+                        st.markdown(f"**{itype}** ({len(targets)})")
+                        st.caption("、".join(targets[:30]))
+
         st.markdown("---")
         st.caption("⚠️ **データリセット**(取り消せません)")
         # 二段階確認: チェックボックス → ボタン押下
