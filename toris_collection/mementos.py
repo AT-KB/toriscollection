@@ -42,7 +42,7 @@ PLUME_BIRDS = {
 DROP_PROBABILITIES = {
     "twig":    0.10,
     "feather": 0.05,
-    "plume":   0.015,
+    "plume":   0.04,   # 隠しレア(羽冠)。出会いのご褒美感を強めるため 0.015→0.04 に引き上げ
 }
 
 CATEGORIES = ["twig", "feather", "plume"]
