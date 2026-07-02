@@ -973,6 +973,49 @@ with st.sidebar:
                               f"new_mementos={len(new_mementos)}")
                 st.rerun()
 
+        # ===== 鳴き声ライセンス監査(広告=商用モードの前提チェック) =====
+        st.markdown("---")
+        st.caption(
+            "広告つき(商用)にすると、CC BY-NC の録音は使えません。"
+            "商用可(CC0 / CC BY / BY-SA / BY-ND)の録音がある種を集計します。"
+        )
+        if st.button("🎙 鳴き声ライセンスを監査", use_container_width=True):
+            if xc_client is None or not xc_client.is_enabled():
+                st.warning("xeno-canto APIキーが未設定です。")
+            else:
+                import license_audit
+                with st.spinner("全種の録音ライセンスを照会中(初回は数分)…"):
+                    rows = license_audit.audit(BIRDS)
+                    summary = license_audit.summarize(rows)
+                st.session_state["_license_audit"] = {"rows": rows, "summary": summary}
+        _la = st.session_state.get("_license_audit")
+        if _la:
+            s = _la["summary"]
+            st.metric(
+                "商用モードで鳴かせられる種",
+                f"{s['commercial_ok']} / {s['total_species']} 種",
+                help=f"商用可カバー率 {s['coverage_pct']}%",
+            )
+            if s["nc_only_names"]:
+                st.caption("🔒 NC(非商用)録音のみ → 商用では鳴かせられない: "
+                           + "、".join(s["nc_only_names"]))
+            if s["no_audio_names"]:
+                st.caption("🔇 そもそも録音が見つからない: "
+                           + "、".join(s["no_audio_names"]))
+            with st.expander("種ごとの内訳", expanded=False):
+                st.dataframe(
+                    [{
+                        "鳥": r["name"],
+                        "学名": r["scientific"],
+                        "商用可": "✓" if r["commercial_ok"] else "",
+                        "商用": r["counts"]["commercial"],
+                        "NC": r["counts"]["noncommercial"],
+                        "不明": r["counts"]["unknown"],
+                        "録音数": r["total"],
+                    } for r in _la["rows"]],
+                    use_container_width=True, hide_index=True,
+                )
+
         st.markdown("---")
         st.caption("⚠️ **データリセット**(取り消せません)")
         # 二段階確認: チェックボックス → ボタン押下
