@@ -136,7 +136,9 @@ def _radio_ambient_b64() -> str | None:
 
 @st.cache_data(show_spinner=False)
 def _radio_sprite_b64(bird_id: str) -> str | None:
-    p = _SPRITE_DIR / f"{bird_id}.png"
+    from data import SPRITE_ALIASES
+    sprite_id = SPRITE_ALIASES.get(bird_id, bird_id)  # 新種は既存のドット絵を流用
+    p = _SPRITE_DIR / f"{sprite_id}.png"
     if p.exists():
         try:
             return base64.b64encode(p.read_bytes()).decode("ascii")
