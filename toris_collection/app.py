@@ -1032,11 +1032,11 @@ with st.sidebar:
             mime="text/plain",
             use_container_width=True,
         )
-        st.text_area(
-            "コピーしたい場合はここから",
-            value=_save_code_str, height=100,
-            key="_save_code_copy_area",
-        )
+        # st.text_area(key=固定)だと初回描画時の値のまま更新が止まる
+        # (Streamlitのウィジェット値キャッシュ)ため、st.code で読み取り専用表示にする。
+        # コピー用ボタンが標準で付き、常に最新の _save_code_str を表示できる。
+        st.caption("コピーしたい場合はここから")
+        st.code(_save_code_str, language=None, wrap_lines=True)
 
     st.markdown("---")
     # データソース状況
