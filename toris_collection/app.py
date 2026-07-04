@@ -1,5 +1,6 @@
 """Toris Collection - Streamlit アプリ"""
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 import math
 from datetime import datetime, timedelta
@@ -16,9 +17,11 @@ import base64
 import xc_client  # Python 3.14 並行インポートバグ対策: ritual.py より先にロード
 from ritual import render_ritual  # 儀式UI(距離メカニクス)
 import observation_log  # 儀式での近距離観察記録の保存
-import community  # 集合アトラス(みんなの庭) = ユーザー間機能の最小版
+import community  # 集合アトラス(みんなの庭) = 現在MVPでは非表示(community.py 自体は残置)
 from radio import render_radio, current_app_season, weeks_until_next_season, _SEASON_META
 import daily  # 今日の庭(Wordle 型・1日1回・全員共通の入口)
+import save_code  # ローカル保存 MVP: セーブコードの往復(サーバーに送らない)
+import secrets as _secrets_mod  # ローカル識別子の生成用(st.secrets とは無関係)
 
 
 # ============================================================
@@ -440,53 +443,175 @@ st.markdown("""
 
 
 # ============= State =============
+def _init_default_state():
+    """真っさらな初期状態を session_state にセットする(Sheets には一切触れない)。
+    「新規スタート」と、セーブコード復元の下準備の両方から呼ぶ。"""
+    st.session_state.biome = "kyoto"
+    st.session_state.month = datetime.now().month
+    st.session_state.planted = []
+    st.session_state.planted_at_map = {}
+    st.session_state.residents = set()
+    st.session_state.discovered = set()
+    st.session_state.observed = {}
+    st.session_state.bird_days = {}
+    st.session_state.mementos = []
+    st.session_state.mementos_set = set()
+    st.session_state.bird_notes = {}
+    st.session_state.bird_visited_biomes = {}
+    st.session_state.log = []
+    st.session_state.rng = random.Random()
+    st.session_state.absence_events = []
+    st.session_state.disturbance_events = []
+    st.session_state.last_arrivals_info = {}
+    st.session_state.recent_new_mementos = []
+
+
+def _start_local_session(restore=None):
+    """新規スタート、またはセーブコードからの復元でセッションを開始する。
+
+    ローカル保存 MVP: この関数は Google Sheets に一切依存しない。
+    `current_tester_id` はサーバーに送らないローカル限定のランダム識別子で、
+    既存の `sc.*` 呼び出し(ベストエフォートの副次書き込み)との互換のためだけに残す。
+    """
+    _init_default_state()
+    st.session_state.current_tester_id = "local_" + _secrets_mod.token_hex(6)
+
+    saved_at = None
+    if restore:
+        restore = dict(restore)
+        saved_at = restore.pop("saved_at", None)
+        for key, value in restore.items():
+            st.session_state[key] = value
+
+        # 旧バイオームIDの互換変換(既存の load_state_from_sheets と同じ安全弁)
+        st.session_state.biome = _migrate_biome(st.session_state.get("biome", "kyoto"))
+
+        # 現在のバイオームで無効な植物・図鑑にない鳥IDは静かに除外
+        st.session_state.planted = [
+            p for p in st.session_state.get("planted", [])
+            if p in PLANTS and st.session_state.biome in PLANTS[p].get("biome", [])
+        ]
+        _max_plants = BIOMES.get(st.session_state.biome, {}).get("max_plants", 8)
+        if len(st.session_state.planted) > _max_plants:
+            st.session_state.planted = st.session_state.planted[:_max_plants]
+        st.session_state.planted_at_map = {
+            p: ts for p, ts in st.session_state.get("planted_at_map", {}).items()
+            if p in st.session_state.planted
+        }
+        st.session_state.residents = {
+            b for b in st.session_state.get("residents", set()) if b in BIRDS
+        }
+        st.session_state.discovered = {
+            b for b in st.session_state.get("discovered", set()) if b in BIRDS
+        }
+        if not isinstance(st.session_state.get("mementos_set"), set):
+            st.session_state.mementos_set = {
+                m.get("memento_id") for m in st.session_state.get("mementos", [])
+                if isinstance(m, dict) and m.get("memento_id")
+            }
+
+        # 派生値の再計算(セーブに含めていない、訪問記録から作る値)
+        visited_by_bird = {}
+        for m_rec in st.session_state.get("mementos", []):
+            if not isinstance(m_rec, dict):
+                continue
+            bid = m_rec.get("via_bird_id", "")
+            b_biome = m_rec.get("biome", "")
+            if bid and b_biome:
+                visited_by_bird.setdefault(bid, set()).add(b_biome)
+        for bid in st.session_state.get("residents", set()):
+            visited_by_bird.setdefault(bid, set()).add(st.session_state.biome)
+        st.session_state.bird_visited_biomes = visited_by_bird
+
+        st.session_state.month = datetime.now().month
+
+    st.session_state.initialized = True
+
+    # セーブコードに保存時刻があれば、離れていた時間ぶん生態系を進化させる。
+    # これまで「ログイン時に Sheets の last_access_at と比較」していた不在中ループ
+    # (受動的にコアループの心臓部)を、セーブコード復元でも同じ形で再現する。
+    if saved_at:
+        last_at = absence_loop.parse_iso(saved_at)
+        if last_at:
+            _evolve_since_last_visit(
+                st.session_state.current_tester_id, last_at, datetime.now()
+            )
+
+
 def render_login_screen():
-    """テスター選択画面。current_tester_id が未設定の時に表示する"""
+    """アプリの入口画面。ログイン・認証の概念はない
+    (current_tester_id が未設定の時に表示する、開始方法の選択画面)。
+
+    「新規スタート」か「セーブコードを読み込んで再開」のどちらかを選ぶだけで、
+    名前の登録や選択は一切不要(ローカル保存 MVP)。
+    """
     st.markdown("# 🐦 Toris Collection")
     st.markdown(
-        "<p style='color:#5a7a5a;'>クローズドテスト版。テスター名を選んで開始してください。</p>",
+        "<p style='color:#5a7a5a;'>土地を選び、植物を植え、時間が経つのを待つ。"
+        "やってきた鳥たちの声に耳を澄まそう。</p>",
         unsafe_allow_html=True
     )
-
-    if not SHEETS_AVAILABLE:
-        st.error(f"Google Sheets 連携が利用できません: {_sheets_error}")
-        st.stop()
-
-    try:
-        testers = sc.list_testers()
-    except Exception as e:
-        st.error(f"スプレッドシート接続エラー: {e}")
-        st.caption("credentials.json の配置と、サービスアカウントへの共有設定をご確認ください。")
-        st.stop()
-
-    if not testers:
-        st.warning("テスターが登録されていません。スプレッドシートの testers シートを確認してください。")
-        st.stop()
-
-    name_map = dict(testers)
-    options = [t[0] for t in testers]
-
-    selected = st.selectbox(
-        "テスター",
-        options=options,
-        format_func=lambda t: (
-            f"{name_map[t]}" if name_map[t] != t else t
-        ),
+    st.info(
+        "🔒 進行データ(図鑑・会った日数・落とし物など)は、この端末のこのブラウザにのみ"
+        "保存されます。ブラウザのデータを消す・別の端末や別のブラウザで開くと"
+        "引き継がれません。ときどき「セーブコードを書き出す」(サイドバーの中)で"
+        "バックアップしておくと安心です。",
+        icon="💾",
     )
 
-    if st.button("▶ 開始", type="primary", use_container_width=True):
-        st.session_state.current_tester_id = selected
-        load_state_from_sheets(selected)
-        # details に現在の土地を残す → あしあとカレンダーで日ごとの土地を色分け
-        sc.log_access(selected, "login", "enter",
-                      st.session_state.get("biome", ""))
-        st.rerun()
+    start_mode = st.radio(
+        "はじめかた",
+        options=["new", "restore"],
+        format_func=lambda c: {
+            "new": "🌱 新規スタート",
+            "restore": "📥 セーブコードを読み込んで再開",
+        }[c],
+        label_visibility="collapsed",
+        key="_start_mode_choice",
+    )
+
+    if start_mode == "new":
+        if st.button("▶ はじめる", type="primary", use_container_width=True):
+            _start_local_session()
+            st.rerun()
+    else:
+        pasted_code = st.text_area(
+            "セーブコードを貼り付け",
+            key="_restore_code_text",
+            height=120,
+            placeholder="書き出しておいたセーブコードをここに貼り付けてください",
+        )
+        uploaded_file = st.file_uploader(
+            "またはセーブファイルを選ぶ",
+            type=["txt"],
+            key="_restore_code_file",
+        )
+        code_to_use = pasted_code.strip() if pasted_code else ""
+        if not code_to_use and uploaded_file is not None:
+            try:
+                code_to_use = uploaded_file.getvalue().decode("utf-8").strip()
+            except Exception:
+                code_to_use = ""
+
+        if st.button("📥 読み込んで再開", type="primary", use_container_width=True):
+            if not code_to_use:
+                st.warning("セーブコードを貼り付けるか、ファイルを選んでください。")
+            else:
+                restored = save_code.decode_save(code_to_use)
+                if restored is None:
+                    st.error(
+                        "セーブコードを読み込めませんでした。"
+                        "コードが壊れているか、対応していない形式です。"
+                    )
+                else:
+                    _start_local_session(restore=restored)
+                    st.rerun()
 
     st.stop()
 
 
 def load_state_from_sheets(tester_id):
-    """選択されたテスターの状態を Sheets から読み込み、
+    """[現在未使用・legacy] 選択されたテスターの状態を Sheets から読み込み、
     最終アクセス時刻からの経過時間に応じて生態系を時間進化させて
     session_state にセットする"""
     fs = None
@@ -620,122 +745,131 @@ def load_state_from_sheets(tester_id):
     st.session_state.bird_visited_biomes = visited_by_bird
 
     # ===== 不在中ループ(状態進化) =====
-    _mature_for_evo = list(st.session_state.get("planted", []))
-    if fs and _mature_for_evo:
+    if fs:
         last_at = absence_loop.parse_iso(fs.get("last_access_at"))
         if last_at:
-            try:
-                evo = absence_loop.evolve_state(
-                    _mature_for_evo,
-                    st.session_state.biome,
-                    st.session_state.month,
-                    last_at,
-                    now,
-                    st.session_state.residents,
-                    st.session_state.rng,
+            _evolve_since_last_visit(tester_id, last_at, now)
+
+
+def _evolve_since_last_visit(tester_id, last_at, now):
+    """最後に離れてからの経過時間ぶん、生態系を時間進化させ session_state
+    (residents/absence_events/mementos 等)に反映する共通ロジック。
+
+    Sheets ログイン(`load_state_from_sheets`)・セーブコード復元
+    (`_start_local_session`)の両方から呼ばれる。Sheets への書き戻しは
+    ベストエフォート(失敗しても続行、`_sheets_safe`・try/except で保護)。
+    """
+    _mature_for_evo = list(st.session_state.get("planted", []))
+    if not _mature_for_evo:
+        return
+    try:
+        evo = absence_loop.evolve_state(
+            _mature_for_evo,
+            st.session_state.biome,
+            st.session_state.month,
+            last_at,
+            now,
+            st.session_state.residents,
+            st.session_state.rng,
+        )
+    except Exception:
+        evo = {"residents": st.session_state.residents,
+               "events": [], "departures": [], "n_ticks": 0}
+
+    # 進化した結果を session_state と Sheets に反映
+    st.session_state.residents = evo["residents"]
+    st.session_state.absence_events = evo["events"]
+    # 直近イベントを「なぜ来たか」表示用にも展開(NEWバッジに使う)
+    st.session_state.last_arrivals_info = {
+        ev["bird_id"]: ev["reason_text"] for ev in evo["events"]
+    }
+
+    # 不在中の撹乱・遷移を反映(植生の移ろい)
+    _apply_disturbances(tester_id, evo)
+
+    # 各イベントを記録(Sheets への書き戻しはベストエフォート)
+    new_mementos = []
+    _welcome_arrivals = []   # 「おかえり」ポップアップ用
+    for ev in evo["events"]:
+        try:
+            _is_first = ev["bird_id"] not in st.session_state.discovered
+            _sheets_safe(
+                sc.add_visit, tester_id, ev["bird_id"], "absence",
+                reason_text=ev["reason_text"],
+                related_plant_id=ev["related_plant_id"],
+                related_insect_id=ev["related_insect_id"],
+                arrived_at=ev["arrived_at"],
+            )
+            _sheets_safe(sc.upsert_collection, tester_id, ev["bird_id"])
+            st.session_state.discovered.add(ev["bird_id"])
+            # 復帰フック: 留守中に初めて来た鳥は「ラジオに加わった新顔」。
+            # ラジオが既に読む radio_new_arrivals に積み、🌟バナーを点ける
+            # (会う→ラジオが豊かになる のループを、不在経由でも閉じる)。
+            if _is_first:
+                st.session_state.setdefault(
+                    "radio_new_arrivals", set()).add(ev["bird_id"])
+            if not any(a["id"] == ev["bird_id"] for a in _welcome_arrivals):
+                _welcome_arrivals.append({
+                    "id": ev["bird_id"],
+                    "name": BIRDS.get(ev["bird_id"], {}).get(
+                        "name", ev["bird_id"]),
+                    "first": _is_first,
+                })
+
+            # 落とし物の記録
+            mid = ev.get("memento_id")
+            if mid:
+                kind = mem.memento_category(mid)
+                target = mem.memento_target(mid) if ":" in mid else mid
+                _sheets_safe(
+                    sc.add_memento, tester_id, mid, kind, target,
+                    st.session_state.biome, ev["bird_id"],
                 )
-            except Exception:
-                evo = {"residents": st.session_state.residents,
-                       "events": [], "departures": [], "n_ticks": 0}
+                if mid not in st.session_state.mementos_set:
+                    st.session_state.mementos_set.add(mid)
+                    new_mementos.append({
+                        "memento_id": mid, "kind": kind,
+                        "target_id": target,
+                        "biome": st.session_state.biome,
+                        "found_at": ev["arrived_at"].isoformat(timespec="seconds")
+                                    if hasattr(ev["arrived_at"], "isoformat")
+                                    else str(ev["arrived_at"]),
+                        "via_bird_id": ev["bird_id"],
+                    })
+        except Exception:
+            pass
 
-            # 進化した結果を session_state と Sheets に反映
-            st.session_state.residents = evo["residents"]
-            st.session_state.absence_events = evo["events"]
-            # 直近イベントを「なぜ来たか」表示用にも展開(NEWバッジに使う)
-            st.session_state.last_arrivals_info = {
-                ev["bird_id"]: ev["reason_text"] for ev in evo["events"]
-            }
+    # 取得済みリストにマージ
+    if new_mementos:
+        st.session_state.mementos = (
+            st.session_state.get("mementos", []) + new_mementos
+        )
+    # 直近イベントの新規落とし物のサマリ(ホーム画面表示用)
+    st.session_state.recent_new_mementos = new_mementos
 
-            # 不在中の撹乱・遷移を反映(植生の移ろい)
-            _apply_disturbances(tester_id, evo)
+    # 「おかえり」ポップアップ: 留守中に何かあった時だけ用意する(毎回は出さない)
+    _hours_away = (now - last_at).total_seconds() / 3600
+    _departures = []
+    for _bid in evo.get("departures", []):
+        _nm = BIRDS.get(_bid, {}).get("name", _bid)
+        if _nm not in _departures:
+            _departures.append(_nm)
+    if _welcome_arrivals or _departures or new_mementos:
+        st.session_state.welcome_popup = {
+            "hours_away": _hours_away,
+            "arrivals": _welcome_arrivals,
+            "departures": _departures,
+            "n_mementos": len(new_mementos),
+        }
 
-            # 各イベントを Sheets に記録
-            new_mementos = []
-            _welcome_arrivals = []   # ログイン時ポップアップ用
-            for ev in evo["events"]:
-                try:
-                    _is_first = ev["bird_id"] not in st.session_state.discovered
-                    sc.add_visit(
-                        tester_id, ev["bird_id"], "absence",
-                        reason_text=ev["reason_text"],
-                        related_plant_id=ev["related_plant_id"],
-                        related_insect_id=ev["related_insect_id"],
-                        arrived_at=ev["arrived_at"],
-                    )
-                    sc.upsert_collection(tester_id, ev["bird_id"])
-                    st.session_state.discovered.add(ev["bird_id"])
-                    # 復帰フック: 留守中に初めて来た鳥は「ラジオに加わった新顔」。
-                    # ラジオが既に読む radio_new_arrivals に積み、🌟バナーを点ける
-                    # (会う→ラジオが豊かになる のループを、不在経由でも閉じる)。
-                    if _is_first:
-                        st.session_state.setdefault(
-                            "radio_new_arrivals", set()).add(ev["bird_id"])
-                    if not any(a["id"] == ev["bird_id"] for a in _welcome_arrivals):
-                        _welcome_arrivals.append({
-                            "id": ev["bird_id"],
-                            "name": BIRDS.get(ev["bird_id"], {}).get(
-                                "name", ev["bird_id"]),
-                            "first": _is_first,
-                        })
-
-                    # 落とし物の記録
-                    mid = ev.get("memento_id")
-                    if mid:
-                        kind = mem.memento_category(mid)
-                        target = mem.memento_target(mid) if ":" in mid else mid
-                        sc.add_memento(
-                            tester_id, mid, kind, target,
-                            st.session_state.biome, ev["bird_id"],
-                        )
-                        if mid not in st.session_state.mementos_set:
-                            st.session_state.mementos_set.add(mid)
-                            new_mementos.append({
-                                "memento_id": mid, "kind": kind,
-                                "target_id": target,
-                                "biome": st.session_state.biome,
-                                "found_at": ev["arrived_at"].isoformat(timespec="seconds")
-                                            if hasattr(ev["arrived_at"], "isoformat")
-                                            else str(ev["arrived_at"]),
-                                "via_bird_id": ev["bird_id"],
-                            })
-                except Exception:
-                    pass
-
-            # 取得済みリストにマージ
-            if new_mementos:
-                st.session_state.mementos = (
-                    st.session_state.get("mementos", []) + new_mementos
-                )
-            # 直近イベントの新規落とし物のサマリ(ホーム画面表示用)
-            st.session_state.recent_new_mementos = new_mementos
-
-            # ログイン時ポップアップ: 留守中に何かあった時だけ用意する(毎回は出さない)
-            _hours_away = (now - last_at).total_seconds() / 3600
-            _departures = []
-            for _bid in evo.get("departures", []):
-                _nm = BIRDS.get(_bid, {}).get("name", _bid)
-                if _nm not in _departures:
-                    _departures.append(_nm)
-            if _welcome_arrivals or _departures or new_mementos:
-                st.session_state.welcome_popup = {
-                    "hours_away": _hours_away,
-                    "arrivals": _welcome_arrivals,
-                    "departures": _departures,
-                    "n_mementos": len(new_mementos),
-                }
-
-            # 進化が起きていれば field_state を現在時刻で更新
-            if evo["n_ticks"] > 0:
-                try:
-                    sc.save_field_state(
-                        tester_id, st.session_state.biome,
-                        current_temperature(st.session_state.biome,
-                                            st.session_state.month),
-                        f"month_{st.session_state.month}",
-                        list(st.session_state.residents),
-                    )
-                except Exception:
-                    pass
+    # 進化が起きていれば field_state を現在時刻で更新(ベストエフォート)
+    if evo["n_ticks"] > 0:
+        _sheets_safe(
+            sc.save_field_state, tester_id, st.session_state.biome,
+            current_temperature(st.session_state.biome, st.session_state.month),
+            f"month_{st.session_state.month}",
+            list(st.session_state.residents),
+        )
 
 
 def init_state():
@@ -743,7 +877,9 @@ def init_state():
         render_login_screen()
         return  # render_login_screen が st.stop() を呼ぶので到達しない
     if "initialized" not in st.session_state:
-        load_state_from_sheets(st.session_state.current_tester_id)
+        # 通常は render_login_screen 内の _start_local_session() で初期化済みのはず。
+        # 念のためのフォールバック(何らかの理由で initialized が立っていない場合)。
+        _start_local_session()
 
 
 def _sheets_safe(fn, *args, **kwargs):
@@ -807,11 +943,10 @@ def _handle_ritual_observation():
     saved = []
     if tester_id:
         for bid in bird_ids:
-            try:
-                observation_log.record_observation(tester_id, bid, biome_id)
-                saved.append(bid)
-            except Exception:
-                pass
+            # 近距離観察の Sheets 保存はベストエフォート(失敗しても体験(session_state
+            # 反映)は止めない)。saved には Sheets の成否に関わらず必ず積む。
+            _sheets_safe(observation_log.record_observation, tester_id, bid, biome_id)
+            saved.append(bid)
     if saved:
         # セッション状態にも即時反映(リロード待ちなしで図鑑へ反映)
         _observed = st.session_state.setdefault("observed", {})
@@ -850,9 +985,9 @@ st.markdown(
 
 # ============= Sidebar =============
 with st.sidebar:
-    # 現在のテスター情報(クローズドテスト用)
-    tid = st.session_state.get("current_tester_id", "(未選択)")
-    st.markdown(f"<div style='font-size:0.85em; color:#888;'>👤 {tid}</div>",
+    # この端末だけのローカル識別子(サーバーには送らない。ログイン概念はない)
+    tid = st.session_state.get("current_tester_id", "(未初期化)")
+    st.markdown(f"<div style='font-size:0.85em; color:#888;'>💾 {tid}</div>",
                 unsafe_allow_html=True)
 
     st.markdown("### 🌍 あなたの土地")
@@ -876,6 +1011,32 @@ with st.sidebar:
     _total_mementos = len(mem.all_possible_mementos(BIRDS, PLANTS))
     _owned_mementos = len(st.session_state.get("mementos_set", set()))
     st.metric("落とし物", f"{_owned_mementos} / {_total_mementos}")
+
+    st.markdown("---")
+    with st.expander("💾 セーブコード(バックアップ)", expanded=False):
+        st.caption(
+            "進行データはこの端末にのみ保存されています。"
+            "別の端末へ引き継ぐ・バックアップを残す時は、ここでセーブコードを"
+            "書き出して保管してください。"
+        )
+        _save_snapshot = {
+            k: st.session_state.get(k) for k in save_code.SAVE_KEYS
+            if k in st.session_state
+        }
+        _save_snapshot["saved_at"] = datetime.now().isoformat(timespec="seconds")
+        _save_code_str = save_code.encode_save(_save_snapshot)
+        st.download_button(
+            "⬇️ セーブコードを書き出す",
+            data=_save_code_str,
+            file_name="toris_collection_save.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+        st.text_area(
+            "コピーしたい場合はここから",
+            value=_save_code_str, height=100,
+            key="_save_code_copy_area",
+        )
 
     st.markdown("---")
     # データソース状況
@@ -902,13 +1063,16 @@ with st.sidebar:
                 current_temperature(st.session_state.biome, st.session_state.month),
                 f"month_{st.session_state.month}", []
             )
-            sc.log_access(tid, "home", "leave_field")
+            _sheets_safe(sc.log_access, tid, "home", "leave_field")
         st.rerun()
 
-    if st.button("👤 ログアウト", use_container_width=True):
+    if st.button("🔄 セッションをリセット", use_container_width=True,
+                 help="この端末の今のセッションを終了し、開始画面に戻ります"
+                      "(ログイン概念はないため「ログアウト」ではありません)。"
+                      "セーブコードを書き出していないデータは失われます。"):
         tid = st.session_state.get("current_tester_id")
         if tid:
-            sc.log_access(tid, "login", "leave")
+            _sheets_safe(sc.log_access, tid, "login", "leave")
         for k in list(st.session_state.keys()):
             del st.session_state[k]
         st.rerun()
@@ -993,9 +1157,10 @@ with st.sidebar:
                     f"month_{st.session_state.month}",
                     list(st.session_state.residents),
                 )
-                sc.log_access(tid, "test", "sim_evolved",
-                              f"{sim_hours}h,events={len(evo['events'])},"
-                              f"new_mementos={len(new_mementos)}")
+                _sheets_safe(
+                    sc.log_access, tid, "test", "sim_evolved",
+                    f"{sim_hours}h,events={len(evo['events'])},"
+                    f"new_mementos={len(new_mementos)}")
                 st.rerun()
 
         # ===== 鳴き声ライセンス監査(広告=商用モードの前提チェック) =====
@@ -1183,9 +1348,15 @@ else:
 # ============= Tabs =============
 # 製品の背骨(HANDOFF §1-1): ラジオがコア = 最前面の帰る場所。
 # 庭(今の様子)は鳥に「会う」ための場所として2番目に置く。
-tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_community, tab_help = st.tabs(
+#
+# 「🗺 みんなの庭」(community.py)は MVP 公開版では非表示(企画部提案
+# 2026-07-04・CEO承認)。個人データをローカル保存(セーブコード)方式へ
+# 移行したため、複数ユーザー間の集合集計に必要なサーバー側データが得られない。
+# community.py 自体は削除せず残置(将来、匿名集計の仕組みを別途用意した時点で
+# 復活を検討する)。
+tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = st.tabs(
     ["🎙 ラジオ", "🏞️ 庭の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
-     "🕸️ ネットワーク", "🗺 みんなの庭", "❓ 使い方"]
+     "🕸️ ネットワーク", "❓ 使い方"]
 )
 
 
@@ -1342,7 +1513,7 @@ with tab_home:
                     current_temperature(new_biome, st.session_state.month),
                     f"month_{st.session_state.month}", []
                 )
-                sc.log_access(tid, "home", "biome_changed", new_biome)
+                _sheets_safe(sc.log_access, tid, "home", "biome_changed", new_biome)
                 st.rerun()
 
         st.markdown(
@@ -1430,7 +1601,7 @@ with tab_radio:
             birds_data=BIRDS,
         )
     else:
-        st.info("ログインすると、あなたが出会った鳥たちの声が聴けます。")
+        st.info("庭をはじめると、あなたが出会った鳥たちの声が聴けます。")
 
 
 # ---------- Tab: Plant ----------
@@ -1485,7 +1656,7 @@ with tab_plant:
                 st.session_state.planted.append(pid)
                 tid = st.session_state.current_tester_id
                 _sheets_safe(sc.add_planting, tid, pid)
-                sc.log_access(tid, "plant", "plant_added", pid)
+                _sheets_safe(sc.log_access, tid, "plant", "plant_added", pid)
                 st.session_state.planted_at_map[pid] = datetime.now().isoformat(
                     timespec="seconds"
                 )
@@ -1525,7 +1696,7 @@ with tab_plant:
                         st.session_state.planted_at_map.pop(pid, None)
                     tid = st.session_state.current_tester_id
                     _sheets_safe(sc.remove_planting, tid, pid)
-                    sc.log_access(tid, "plant", "plant_removed", pid)
+                    _sheets_safe(sc.log_access, tid, "plant", "plant_removed", pid)
                     st.rerun()
 
         st.markdown("")
@@ -1535,7 +1706,7 @@ with tab_plant:
             st.session_state.residents = set()
             tid = st.session_state.current_tester_id
             _sheets_safe(sc.remove_all_plantings, tid)
-            sc.log_access(tid, "plant", "plant_removed_all")
+            _sheets_safe(sc.log_access, tid, "plant", "plant_removed_all")
             st.rerun()
     else:
         st.caption("まだ何も植えていません。")
@@ -2484,7 +2655,7 @@ with tab_network:
         </script>
         """
         # 縦横比に基づいた高さ(viewBoxとiframeを一致させる)
-        st.iframe(wrapped_html, height=component_height)
+        components.html(wrapped_html, height=component_height)
 
         st.caption(
             "濃い緑=植えた植物 / 色付き大=来た鳥 / 淡色=未訪問の鳥や昆虫"
@@ -2492,8 +2663,9 @@ with tab_network:
 
 
 # ---------- Tab: Community (みんなの庭 = 集合アトラス) ----------
-with tab_community:
-    community.render_community_atlas(default_biome=st.session_state.get("biome", "kyoto"))
+# MVP公開版では非表示(企画部提案 2026-07-04・CEO承認)。community.py は削除せず残置。
+# with tab_community:
+#     community.render_community_atlas(default_biome=st.session_state.get("biome", "kyoto"))
 
 
 # ---------- Tab: Help (使い方) ----------
@@ -2579,16 +2751,17 @@ with tab_help:
     月は現実時間と同期します(プレイヤーは時間を進める操作はできません)。
     """)
 
-    st.markdown("### データの所在(Google Sheets)")
+    st.markdown("### データの所在(この端末にのみ保存)")
     st.markdown("""
-    すべての記録は Google Sheets に保存されます。
-    - `field_state`: 各テスターの現在のバイオーム・滞在中の鳥・最終アクセス時刻
-    - `plantings`: 植えた植物の履歴
-    - `bird_visits`: 鳥の訪問記録(滞在中・不在中)とその「なぜ来たか」
-    - `collection`: 図鑑(各鳥の初回観測・最終観測・累計訪問回数)
-    - `mementos`: 落とし物の獲得履歴
-    - `bird_notes`: 各鳥への発見地メモ・自由メモ
-    - `access_logs`: 画面遷移と操作の行動ログ
+    進行データ(バイオーム・植えた植物・図鑑・会った日数・落とし物・メモなど)は、
+    この端末のこのブラウザにのみ保存されます。サーバーには送られません。
+
+    - ブラウザのデータを消す・別の端末や別のブラウザで開くと、記録は引き継がれません。
+    - サイドバーの「💾 セーブコード(バックアップ)」から、いつでも進行データを
+      1本のコードとして書き出せます。書き出したコードは、開始画面の
+      「セーブコードを読み込んで再開」から読み込むと復元できます。
+    - セーブコードは手元で保管するものです(サーバーには送信されません)。
+      失くすと復元できないので、大事な節目でときどき書き出しておくのがおすすめです。
     """)
 
     st.caption(

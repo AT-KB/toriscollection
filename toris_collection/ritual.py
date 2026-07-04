@@ -14,7 +14,11 @@ ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
 
 このファイルで使っている技術:
   - Web Audio API(音量・フィルター・エコーの距離変化)
-  - st.iframe(html, ...) — components.v1.html は2026-06-01削除予定のため移行済み
+  - components.v1.html(html, ...)(streamlit.components.v1 をモジュールとして import して
+    呼ぶ経路)でHTML文字列をiframeに埋め込む。`st.iframe()` という同名APIは存在しない
+    (2026-07-04 バグ修正: 以前ここに書かれていた「st.iframe へ移行済み」は事実誤認だった。
+    非推奨/削除予定なのは `st.components.v1.html` という直接属性アクセスの経路のみで、
+    `import streamlit.components.v1 as components; components.html(...)` は現役でサポートされる)
   - lazy loading(音源取得は「耳を澄ます」ボタン押下後にのみ実行、ホームタブを即時表示)
   - top window クエリパラメータで観察記録を Python に渡す
 
@@ -29,6 +33,7 @@ import concurrent.futures
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 from species_loader import PLANTS as _PLANTS
 import audio_engine as ae
 
@@ -970,4 +975,4 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     </script>
     """
 
-    st.iframe(html, height=_COMPONENT_HEIGHT)
+    components.html(html, height=_COMPONENT_HEIGHT)

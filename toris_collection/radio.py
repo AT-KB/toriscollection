@@ -27,6 +27,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 import ecology
 import flock as flk
@@ -832,4 +833,4 @@ def _render_radio_iframe(
     </script>
     """
 
-    st.iframe(html, height=_COMPONENT_HEIGHT)
+    components.html(html, height=_COMPONENT_HEIGHT)
