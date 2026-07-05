@@ -347,7 +347,7 @@ GloBI は鳥の種カタログではなく**種間相互作用（食物網）デ
 | 鳥の録音帰属テキスト（🎙この声は…）を削除 | ユーザーが不要と判断 |
 | ラジオタブ + ホームへの埋め込み（2箇所） | key_prefix で分離済み |
 | `import streamlit.components.v1 as components; components.html(...)` を使用（モジュールimport経由） | `st.iframe()` は実在しないAPIであり、これを使用していたのはバグだった。訂正済み（2026-07-04）。削除予定なのは `st.components.v1.html` という直接属性アクセスの経路のみで、モジュールimport経由の `components.html()` は現役でサポートされる |
-| Google Sheets 永続化 | Streamlit Cloud のステートレス制約を回避 |
+| ~~Google Sheets 永続化~~ → **セーブコード方式(ローカル保存)へ移行(2026-07-04・CEO承認)** | 当初の理由(Streamlit Cloud のステートレス制約回避)は健在だが、個人データをサーバーに集中させる構造そのものがセキュリティ・運用負荷の実体だったため、`save_code.py` によるブラウザローカル保存を主経路に変更。Sheets呼び出しはベストエフォートで残置(`sheets_client.py` 削除せず)。「みんなの庭」はMVPでは非表示。詳細: `docs/team/proposals/2026-07-04_ローカル保存MVP技術検討.md` |
 | 通知機能なし | 罰なし原則・継続性はテストで検証 |
 | 進捗バー・警戒度数値の非表示 | 5つの設計原則（PROJECT_SPEC.md §3-3）|
 
