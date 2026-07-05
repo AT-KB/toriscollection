@@ -1,0 +1,7 @@
+# ローカル開発で `cd toris_collection && streamlit run app.py` する場合に読まれる設定。
+# Streamlit Community Cloud向けの同内容はリポジトリルートの `.streamlit/config.toml` に複製済み
+# (Cloud はリポジトリルートを作業ディレクトリとして起動するため)。
+#
+# PWA化(TWA準備)の下準備: manifest.json / sw.js を静的配信するために必要。
+[server]
+enableStaticServing = true

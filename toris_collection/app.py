@@ -442,6 +442,61 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def _inject_pwa_head():
+    """将来のTWA(Bubblewrap)化に備え、web app manifest をブラウザに知らせる
+    (PWA/TWAの下準備)。
+
+    Streamlit は <head> への直接注入手段を持たないため、components.html() が作る
+    同一オリジンのiframe(allow-same-origin付き)経由で window.parent.document を
+    操作する。失敗しても本編の動作(ラジオ・儀式・図鑑)には一切影響しない
+    (try/exceptで握りつぶし、何もしないだけ)。
+    manifest.json の実体は static/manifest.json
+    (`.streamlit/config.toml` の enableStaticServing=true で配信、実ブラウザで
+    Playwright により配信・注入を確認済み)。
+
+    サービスワーカー(static/sw.js)は用意してあるが、あえて登録していない:
+    Streamlit の静的ファイル配信 (AppStaticFileHandler) は `.js` 拡張子を
+    許可リスト外として扱い、常に `Content-Type: text/plain` +
+    `X-Content-Type-Options: nosniff` を返す仕様になっている
+    (streamlit/web/server/app_static_file_handler.py の
+    SAFE_APP_STATIC_FILE_EXTENSIONS 参照)。ブラウザは nosniff 指定時に
+    text/plain のスクリプトを ServiceWorker として登録できないため、
+    `navigator.serviceWorker.register()` は必ず失敗する
+    (実機Playwrightで "unsupported MIME type" エラーを確認済み)。
+    これは Streamlit 側の仕様上の制約であり、こちらのコードでは回避できない。
+    詳細は docs/team/proposals/2026-07-05_PWA化調査.md を参照。
+    """
+    components.html(
+        """
+        <script>
+        (function () {
+          try {
+            var doc = window.parent.document;
+            if (!doc.querySelector('link[rel="manifest"]')) {
+              var link = doc.createElement('link');
+              link.rel = 'manifest';
+              link.href = '/app/static/manifest.json';
+              doc.head.appendChild(link);
+            }
+            if (!doc.querySelector('meta[name="theme-color"]')) {
+              var meta = doc.createElement('meta');
+              meta.name = 'theme-color';
+              meta.content = '#7ba87b';
+              doc.head.appendChild(meta);
+            }
+          } catch (e) {
+            // Streamlit内部構造の変化等で失敗しても本編には影響させない
+          }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
+_inject_pwa_head()
+
+
 # ============= State =============
 def _init_default_state():
     """真っさらな初期状態を session_state にセットする(Sheets には一切触れない)。

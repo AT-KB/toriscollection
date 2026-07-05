@@ -1,0 +1,9 @@
+# Streamlit Community Cloud はリポジトリのルートを作業ディレクトリとして
+# `streamlit run toris_collection/app.py` を起動するため、このファイルをここに置く。
+# ローカル開発で `cd toris_collection && streamlit run app.py` する場合は
+# `toris_collection/.streamlit/config.toml` の方が読まれる(同内容を複製済み)。
+#
+# PWA化(TWA準備)の下準備: manifest.json / sw.js を静的配信するために必要。
+# `toris_collection/static/` 配下のファイルが `/app/static/...` で配信される。
+[server]
+enableStaticServing = true

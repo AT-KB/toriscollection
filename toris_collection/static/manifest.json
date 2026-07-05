@@ -1,0 +1,15 @@
+{
+  "name": "Toris Collection",
+  "short_name": "Toris",
+  "description": "手のひらで小さなバイオームを育てると、その関係から鳥が来て鳴く。聴いて癒される、受動的な図鑑アプリ。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f9f5",
+  "theme_color": "#7ba87b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
