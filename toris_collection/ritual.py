@@ -66,8 +66,13 @@ def _get_audio_b64(scientific_name: str) -> str | None:
 
 @st.cache_data(show_spinner=False)
 def _get_sprite_b64(bird_id: str) -> str | None:
-    """ドット絵スプライト(png)をbase64で返す。なければ None(色丸で代替)。"""
-    p = _SPRITE_DIR / f"{bird_id}.png"
+    """ドット絵スプライト(png)をbase64で返す。なければ None(色丸で代替)。
+
+    新種は SPRITE_ALIASES で既存のドット絵を流用する(app.py/radio.py と同じ解決順)。
+    """
+    from data import SPRITE_ALIASES
+    sprite_id = SPRITE_ALIASES.get(bird_id, bird_id)
+    p = _SPRITE_DIR / f"{sprite_id}.png"
     if p.exists():
         try:
             return base64.b64encode(p.read_bytes()).decode("ascii")
