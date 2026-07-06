@@ -38,6 +38,9 @@ SAVE_KEYS = (
     "mementos_set",
     "bird_notes",
     "observed",
+    # 生態ログ(「なぜ来たか」の蓄積・重複除去、eco_log.py)。撹乱で植物が
+    # 失われても消さない記録なので、ローカル保存でも復元できるようにする。
+    "eco_log",
     "current_tester_id",
     # セーブした瞬間の時刻(ISO文字列)。復元時に「離れていた時間」を
     # 計算し、不在中ループ(absence_loop)を再現するために使う。

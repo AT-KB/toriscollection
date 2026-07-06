@@ -51,8 +51,26 @@ def is_met(bird_id: str, observed: dict) -> bool:
 # ── UI(streamlit 依存。ロジックは上の純粋関数に閉じている) ──────────
 
 def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
-                         biome_label: str = "") -> None:
-    """ラジオタブ上部に「今日の一羽」を一筆だけ描く。読み取り専用・no-fail。"""
+                         biome_label: str = "",
+                         sprite_html_fn=None, audio_render_fn=None) -> None:
+    """ラジオタブ上部に「今日の一羽」を一筆だけ描く。読み取り専用・no-fail。
+
+    Args:
+        sprite_html_fn: (bird_id, size_px, fallback_emoji) -> HTML文字列 を
+            返す任意のコールバック(通常は app.py の render_bird_sprite_html)。
+            渡された場合のみドット絵サムネイルを添える。既存アセットの流用のみで、
+            新規アセットは要求しない。
+        audio_render_fn: (bird_id, bird_dict) -> None を実行する任意のコールバック
+            (通常は app.py の render_bird_audio)。渡された場合のみ、その場で
+            鳴き声を試聴するボタンを添える。鳴き声のアクセスは元から無料であり、
+            ここで課金をゲートすることはしない(交渉不能の原則3)。
+        いずれも渡さなければ従来どおりテキストと帯のみの表示になる
+        (後方互換・呼び出し側の変更は任意)。
+
+    ■ 方針(daily.py 冒頭の設計思想を厳守)
+        別画面のクイズにはしない・ゲーム化しない。追加するのは「見た目」と
+        「試聴」のみで、新しい判定ロジック・連続日数条件は一切足さない。
+    """
     import streamlit as st
 
     bid = todays_bird(biome_id, birds_data)
@@ -79,7 +97,7 @@ def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
     else:
         invite = "まだ会っていません。会いに行くと、ラジオに加わります。"
 
-    st.markdown(
+    card_html = (
         f'<div style="background:linear-gradient(180deg,#fcfaf3,#f4f0e2);'
         f'border-left:4px solid {color};border-radius:10px;'
         f'padding:10px 14px;margin:2px 0 12px;">'
@@ -88,6 +106,30 @@ def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
         f'<div style="font-size:1.05em;color:#3a4a2a;font-weight:600;margin:2px 0;">'
         f'{name}</div>'
         f'<div style="font-size:0.84em;color:#6a7a5a;">{eco}{invite}</div>'
-        f'</div>',
-        unsafe_allow_html=True,
+        f'</div>'
     )
+
+    if sprite_html_fn:
+        try:
+            sprite_html = sprite_html_fn(bid, size_px=56, fallback_emoji="🐦")
+        except Exception:
+            sprite_html = None
+        if sprite_html:
+            cols = st.columns([1, 5])
+            with cols[0]:
+                st.markdown(
+                    f'<div style="margin-top:6px;">{sprite_html}</div>',
+                    unsafe_allow_html=True,
+                )
+            with cols[1]:
+                st.markdown(card_html, unsafe_allow_html=True)
+        else:
+            st.markdown(card_html, unsafe_allow_html=True)
+    else:
+        st.markdown(card_html, unsafe_allow_html=True)
+
+    if audio_render_fn:
+        try:
+            audio_render_fn(bid, bird)
+        except Exception:
+            pass

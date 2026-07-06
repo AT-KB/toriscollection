@@ -25,6 +25,12 @@ def _sample_state():
         "mementos_set": {"feather:shijukara"},
         "bird_notes": {"shijukara": "庭の隅で会った"},
         "observed": {"shijukara": {"count": 2, "first": "", "last": ""}},
+        "eco_log": [
+            {"bird_id": "shijukara", "text": "サクラの虫を求めて来た",
+             "first_at": "2026-07-01T08:00:00"},
+            {"bird_id": "mejiro", "text": "花の蜜を求めて来た",
+             "first_at": "2026-07-02T09:00:00"},
+        ],
         "current_tester_id": "local_abcdef",
         "saved_at": "2026-07-04T12:00:00",
     }
@@ -44,7 +50,29 @@ def test_round_trip_preserves_data():
     assert restored["mementos_set"] == {"feather:shijukara"}
     assert restored["bird_notes"] == state["bird_notes"]
     assert restored["observed"] == state["observed"]
+    assert restored["eco_log"] == state["eco_log"]
     assert restored["saved_at"] == "2026-07-04T12:00:00"
+
+
+def test_round_trip_preserves_eco_log_as_plain_list_no_set_conversion():
+    # eco_log は list[dict] であり SET_KEYS には含まれない(set化は不要)。
+    # 順序・中身とも完全に保持されることを確認する。
+    state = {"eco_log": [
+        {"bird_id": "b1", "text": "t1", "first_at": "2026-07-01T00:00:00"},
+        {"bird_id": "b1", "text": "t2", "first_at": "2026-07-02T00:00:00"},
+        {"bird_id": "b2", "text": "t1", "first_at": "2026-07-03T00:00:00"},
+    ]}
+    code = save_code.encode_save(state)
+    restored = save_code.decode_save(code)
+    assert isinstance(restored["eco_log"], list)
+    assert restored["eco_log"] == state["eco_log"]
+
+
+def test_round_trip_handles_empty_eco_log():
+    state = {"eco_log": []}
+    code = save_code.encode_save(state)
+    restored = save_code.decode_save(code)
+    assert restored["eco_log"] == []
 
 
 def test_round_trip_sets_survive_json_conversion():
