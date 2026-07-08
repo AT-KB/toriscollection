@@ -1,0 +1,55 @@
+# Render.com Blueprint 設定(https://render.com/docs/blueprint-spec)
+#
+# 目的: Streamlit Community Cloud の非公開設定トラブル(auth画面への303リダイレクト、
+# 2026-07-07時点で未解決)から独立した、無料の代替ホスティングルートを用意する。
+# 詳細な比較・手順は
+# `toris_collection/docs/team/proposals/2026-07-08_ホスティング代替ルート比較.md` を参照。
+#
+# 重要: 既存のStreamlitアプリコード(toris_collection/app.py 等)は一切変更していない。
+# rootDir で toris_collection/ をアプリのルートとして扱うため、リポジトリ構成の変更も不要。
+# このファイルを置くだけでは何もデプロイされない。CEOがRenderにサインアップし、
+# このリポジトリを「Blueprint」として接続して初めてサービスが作成される。
+#
+# CEOが行う操作(開発部からは実行できない、アカウント作成・外部サービス接続のため):
+#   1. https://render.com にサインアップ(GitHub連携推奨)。
+#      無料のWebサービスはクレジットカード登録なしで作成できる場合が多いが、
+#      Renderのサインアップ画面・料金ページで最新の条件を必ず確認すること
+#      (本ファイル作成時点でこのツールから最新のRender公式ページを直接確認できていない)。
+#   2. Render ダッシュボード →「New +」→「Blueprint」→ このリポジトリ
+#      (AT-KB/toriscollection)を接続。Renderが本ファイルを自動検出し、
+#      下記の web サービスを作成する。
+#   3. 環境変数(Render ダッシュボードの Environment タブ)を設定:
+#        XC_API_KEY          … xeno-canto の鳴き声を有効化する場合(xc_client.py が読む)
+#        FREESOUND_API_KEY   … Freesound の環境音を有効化する場合(freesound_client.py が読む)
+#      (Google Sheets 連携は現在ベストエフォート・任意。無くてもローカル保存 MVP で動作する)
+#   4. デプロイ完了後に発行される `https://<サービス名>.onrender.com` が、
+#      Streamlit Cloud から独立した公開URLになる。
+#
+# 既知の制約(無料プラン、CEO申し送り事項):
+#   - 無料の Web サービスは一定時間(目安15分)アクセスが無いとスリープし、
+#     次回アクセス時にコールドスタート(数十秒〜1分程度)がかかる。
+#     受動的な癒しアプリの性質上、致命的ではないが体験に影響しうる。
+#   - 無料プランには月間の実行時間上限がある。超過時の挙動・金額発生の有無は
+#     Renderの公式プライシングページで最新の数値を必ず確認すること。
+#   - assetlinks.json のルート配信(TWA再検討時に必要)は、ホストを変えるだけでは
+#     解決しない(Streamlitのルーティングが固定である問題は Streamlit 本体の制約のため、
+#     ホスティング先に依らない)。将来必要になれば、このサービスを Docker + 簡易リバース
+#     プロキシ構成に切り替える(Renderは Docker デプロイにも対応)ことで対応できる余地を
+#     残しているが、今回は着手しない。
+
+services:
+  - type: web
+    name: toris-collection
+    runtime: python
+    plan: free
+    rootDir: toris_collection
+    buildCommand: pip install -r requirements.txt
+    startCommand: >-
+      streamlit run app.py
+      --server.port $PORT
+      --server.address 0.0.0.0
+      --server.headless true
+      --browser.gatherUsageStats false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
