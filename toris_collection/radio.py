@@ -186,7 +186,7 @@ def render_radio(
     weeks_left = weeks_until_next_season()
 
     # ── バイオーム選択 ──────────────────────────────────────────
-    biome_labels = {"kyoto": "🏯 京都", "sydney": "🦘 シドニー", "charlotte": "🌳 シャーロット"}
+    biome_labels = {"kyoto": "🏯 京都", "charlotte": "🌳 シャーロット"}
     biome_ids = list(biome_labels.keys())
     current_biome = selected_biome or biome_id
     if current_biome not in biome_ids:

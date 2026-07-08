@@ -23,7 +23,6 @@ Toris Collection - 落とし物(Mementos)システム
 # ============================================================
 PLUME_BIRDS = {
     # 派手な冠羽を持つ
-    "sulphur_crested_cockatoo",  # キバタン: 黄色い冠羽
     "northern_cardinal",          # ショウジョウコウカンチョウ: 赤い冠
     "pileated_woodpecker",        # エボシクマゲラ: 赤い冠
     "blue_jay",                   # アオカケス: 青い冠羽
@@ -32,7 +31,6 @@ PLUME_BIRDS = {
     "kawasemi",                   # カワセミ(水場必須)
     "ikaru",                      # イカル
     "ruby_throated_hummingbird",  # ルビーノドハチドリ
-    "eastern_yellow_robin",       # キバラオーストラリアコマドリ
 }
 
 

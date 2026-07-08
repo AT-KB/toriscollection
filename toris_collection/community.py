@@ -127,7 +127,7 @@ def _load_atlas_cached(_birds_sig: tuple) -> dict:
 
 # ── UI ────────────────────────────────────────────────────────────
 
-_BIOME_LABELS = {"kyoto": "🏯 京都", "sydney": "🦘 シドニー", "charlotte": "🌳 シャーロット"}
+_BIOME_LABELS = {"kyoto": "🏯 京都", "charlotte": "🌳 シャーロット"}
 
 
 def render_community_atlas(default_biome: str = "kyoto") -> None:

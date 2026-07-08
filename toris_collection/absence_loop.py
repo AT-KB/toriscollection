@@ -17,6 +17,7 @@ from species_loader import BIRDS, PLANTS, INSECTS
 from engine import calculate_arrival_probability, run_turn
 import mementos as mem
 import disturbance as dist
+import garden_items
 
 
 def parse_iso(s):
@@ -56,14 +57,23 @@ def estimate_tick_count(hours_passed: float) -> int:
     return 6
 
 
-def build_reason_text(bird_id: str, info: dict):
+def build_reason_text(bird_id: str, info: dict, item_hint: str | None = None):
     """なぜ来たか の一文を生成する。
     Returns: (reason_text, related_plant_id, related_insect_id)
+
+    item_hint: 食物網由来の理由が薄い(incoming_pathsが空)場合にだけ使う、
+      「今日の庭アイテム」の名前(例: "ハチドリ用ネクター給餌器")。
+      GloBI由来の食物網経路が実在する場合はここを一切参照しない
+      = 生態ログ(GloBI由来の理由文)にアイテム効果を混ぜないことを保証する。
+      食物網の裏付けが無いのに正体不明のまま「立ち寄りました」と誤魔化す
+      よりも、正直に「アイテムに誘われた」と言う(捏造しない・原則4)。
     """
     bird = BIRDS[bird_id]
     bird_name = bird["name"]
     paths = info.get("incoming_paths") or []
     if not paths:
+        if item_hint:
+            return (f"{bird_name}が、{item_hint}に誘われて立ち寄りました。", "", "")
         return (f"{bird_name}が立ち寄りました。", "", "")
 
     # 一番重みの大きい食物経路を採用
@@ -86,9 +96,14 @@ def build_reason_text(bird_id: str, info: dict):
 
 
 def evolve_state(planted, biome, month, last_access_at, current_time,
-                 current_residents, rng):
+                 current_residents, rng, item_placement=None):
     """
     last_access_at から current_time までの間、生態系を時間進化させる。
+
+    item_placement: 広告リワード「今日の庭アイテム」(garden_items.py)の配置情報
+      ({item_id, placed_at, expires_at} または None)。既定は None で、その場合は
+      既存の挙動(アイテム効果ゼロ)から一切変わらない。tick ごとの時刻で
+      有効期限を判定するので、不在中にアイテムが切れるケースも正しく扱う。
 
     Returns:
       {
@@ -150,7 +165,16 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
                     "story": dist.disturbance_story(event, removed_names),
                 })
 
-        tick_result = run_turn(planted_work, biome, month, residents, rng)
+        # 「今日の庭アイテム」の効果(未配置・期限切れなら常に無効=既存挙動のまま)
+        _arrival_bonus_fn = garden_items.make_arrival_bonus_fn(
+            item_placement, biome, BIRDS, at_time=tick_time
+        )
+        _departure_bonus = garden_items.departure_bonus(item_placement, at_time=tick_time)
+
+        tick_result = run_turn(
+            planted_work, biome, month, residents, rng,
+            arrival_bonus_fn=_arrival_bonus_fn, departure_bonus=_departure_bonus,
+        )
         residents = tick_result["residents"]
 
         # このサイクルで起きた到着について「なぜ来たか」を計算
@@ -158,7 +182,15 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
             G = tick_result["graph"]
             for b in tick_result["arrivals"]:
                 info = calculate_arrival_probability(b, G, biome, month)
-                reason, plant_id, insect_id = build_reason_text(b, info)
+                _item_hint = None
+                if garden_items.is_item_boosted_arrival(
+                    b, item_placement, biome, BIRDS, at_time=tick_time
+                ):
+                    _item = garden_items.ITEMS.get(
+                        (item_placement or {}).get("item_id"), {}
+                    )
+                    _item_hint = _item.get("name")
+                reason, plant_id, insect_id = build_reason_text(b, info, item_hint=_item_hint)
 
                 # 落とし物の判定(現在の植生で)
                 memento_id = mem.roll_drop(

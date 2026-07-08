@@ -25,6 +25,7 @@ import eco_log  # 生態ログ(「なぜ来たか」の蓄積・重複除去)
 import badges  # 会った日数の節目バッジ(静かな演出)
 import secrets as _secrets_mod  # ローカル識別子の生成用(st.secrets とは無関係)
 import ads  # 広告UIの土台(プレースホルダー。実SDK未接続)
+import garden_items  # 広告リワード「今日の庭アイテム」(6種・6時間限定)
 
 
 # ============================================================
@@ -604,6 +605,10 @@ def _init_default_state():
     st.session_state.disturbance_events = []
     st.session_state.last_arrivals_info = {}
     st.session_state.recent_new_mementos = []
+    # 広告リワード「今日の庭アイテム」(garden_items.py)。未配置ならNone。
+    st.session_state.garden_item_placement = None
+    st.session_state.garden_item_claimed_date = ""
+    st.session_state.twig_reward_claimed_date = ""
 
 
 def _start_local_session(restore=None):
@@ -916,6 +921,7 @@ def _evolve_since_last_visit(tester_id, last_at, now):
             now,
             st.session_state.residents,
             st.session_state.rng,
+            item_placement=st.session_state.get("garden_item_placement"),
         )
     except Exception:
         evo = {"residents": st.session_state.residents,
@@ -1063,6 +1069,36 @@ def _mark_met_today(bird_id):
     if rec.get("last") != today:
         rec["days"] = rec.get("days", 0) + 1
         rec["last"] = today
+
+
+def _grant_memento_now(tester_id, memento_id, bird_id):
+    """不在ループの外から、単発で落とし物を1つ即時付与する共通ヘルパー。
+
+    広告リワード(落とし物連動・案A)専用。既存の不在中ループの roll_drop 抽選
+    (mementos.py)とは別枠の確定付与であり、確率抽選には一切触れない。
+    Sheetsへの書き戻しはベストエフォート(_sheets_safe、失敗してもアプリは止めない)。
+    """
+    kind = mem.memento_category(memento_id)
+    target = mem.memento_target(memento_id) if ":" in memento_id else memento_id
+    _sheets_safe(
+        sc.add_memento, tester_id, memento_id, kind, target,
+        st.session_state.biome, bird_id,
+    )
+    is_new = memento_id not in st.session_state.mementos_set
+    if is_new:
+        st.session_state.mementos_set.add(memento_id)
+    record = {
+        "memento_id": memento_id, "kind": kind, "target_id": target,
+        "biome": st.session_state.biome,
+        "found_at": datetime.now().isoformat(timespec="seconds"),
+        "via_bird_id": bird_id,
+    }
+    st.session_state.mementos = st.session_state.get("mementos", []) + [record]
+    if is_new:
+        st.session_state.recent_new_mementos = (
+            st.session_state.get("recent_new_mementos", []) + [record]
+        )
+    return record
 
 
 def _apply_disturbances(tid, evo):
@@ -1267,6 +1303,7 @@ with st.sidebar:
                     datetime.now(),
                     st.session_state.residents,
                     st.session_state.rng,
+                    item_placement=st.session_state.get("garden_item_placement"),
                 )
                 # 結果を反映(本番の不在中ループと同じ処理)
                 st.session_state.residents = evo["residents"]
@@ -1624,6 +1661,23 @@ with tab_home:
                     unsafe_allow_html=True
                 )
 
+    # 「今日の庭アイテム」バッジ(広告リワード・案B)。GloBI由来の「なぜ来たか」
+    # 生態ログとは完全に別枠で表示する(混ぜない)。未配置・期限切れなら何も出さない。
+    _garden_item = st.session_state.get("garden_item_placement")
+    if garden_items.is_active(_garden_item):
+        _gi_meta = garden_items.ITEMS.get(_garden_item.get("item_id"), {})
+        _gi_hours = garden_items.hours_remaining(_garden_item)
+        st.markdown(
+            f"<div style='background:#eef6ee; padding:10px 16px; border-radius:10px; "
+            f"border-left:4px solid #7ba87b; margin-bottom:14px;'>"
+            f"<span style='color:#4a6a4a; font-size:0.92em;'>"
+            f"{_gi_meta.get('emoji', '🎁')} 今日は「{_gi_meta.get('name', '')}」を"
+            f"置いています(あと{_gi_hours:.1f}時間)。"
+            f"<span style='color:#8a9a8a; font-size:0.85em;'>"
+            f"({_gi_meta.get('hint', '')})</span></span></div>",
+            unsafe_allow_html=True,
+        )
+
     # フィールドの様子(全幅で表示)
     st.markdown("### 🌳 フィールドの様子")
     render_field_view(
@@ -1668,6 +1722,9 @@ with tab_home:
                 st.session_state.absence_events = []
                 st.session_state.disturbance_events = []
                 st.session_state.last_arrivals_info = {}
+                # 庭アイテムは物理的な道具なので、土地を移ると一緒には持っていけない。
+                # (1日1回の権利=日付ゲートは消費済みのまま。翌日また選べる)
+                st.session_state.garden_item_placement = None
                 tid = st.session_state.current_tester_id
                 _sheets_safe(sc.remove_all_plantings, tid)
                 _sheets_safe(
@@ -1732,6 +1789,26 @@ with tab_home:
     # 任意のリワード広告(見ると今日だけ珍しい種が来やすくなる、の予定)。
     # 現時点ではダミー(押しても庭の進み方には一切影響しない)。
     ads.render_reward_ad_button(key_prefix="home_ads")
+
+    # 広告リワード(落とし物連動): 今日来た鳥から小枝をもう一つ(1日1回・確定付与)。
+    def _grant_twig_reward(bird_id):
+        _tid = st.session_state.current_tester_id
+        _mid = mem.twig_id(bird_id)
+        _grant_memento_now(_tid, _mid, bird_id)
+
+    ads.render_twig_reward_button(
+        st.session_state, st.session_state.residents, BIRDS,
+        grant_fn=_grant_twig_reward, key_prefix="home_ads",
+    )
+
+    # 広告リワード(庭アイテム・6種): 6時間だけ効く任意のおまけを1つ置ける(1日1回)。
+    def _place_garden_item(item_id):
+        st.session_state.garden_item_placement = garden_items.place_item(item_id)
+
+    ads.render_garden_item_button(
+        st.session_state, st.session_state.biome, BIRDS,
+        place_fn=_place_garden_item, key_prefix="home_ads",
+    )
 
 
 # ---------- Tab: Radio ----------
@@ -2877,7 +2954,7 @@ with tab_help:
 
     st.markdown("### 基本のサイクル")
     st.markdown("""
-    1. **土地(都市)を選ぶ**: 京都・シドニー・シャーロットの3つから選びます。それぞれ気候と生息する鳥が違います。
+    1. **土地(都市)を選ぶ**: 京都・シャーロットの2つから選びます。それぞれ気候と生息する鳥が違います。
     2. **植物を植える**: その土地に合う植物を選んで植えます。植物が昆虫を呼び、植物と昆虫が鳥を呼び寄せます。
     3. **しばらく待つ**: アプリを閉じている間にも、生態系は時間とともに動きます。次に開いたとき、新しい鳥が来ているかもしれません。
     4. **鳥を眺める・聴く**: フィールドに来た鳥たちのコーラスを聴いたり、図鑑で詳細を確認したりできます。
@@ -2948,8 +3025,7 @@ with tab_help:
 
     月オフセット(北半球): 1月=-6、2月=-5、3月=-2、4月=+1、5月=+4、6月=+6、7月=+8、8月=+8、9月=+5、10月=+1、11月=-2、12月=-5
 
-    **南半球(シドニー)** はオフセットが6ヶ月反転します。
-    つまり北半球の5月(+4)が、シドニーでは11月(-2)相当になります。
+    現在の土地(京都・シャーロット)はどちらも北半球のため、このオフセットがそのまま使われます。
 
     月は現実時間と同期します(プレイヤーは時間を進める操作はできません)。
     """)

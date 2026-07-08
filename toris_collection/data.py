@@ -19,15 +19,6 @@ BIOMES = {
         "max_plants": 4,
         "description": "四季がはっきりした温帯モンスーン。里山と二次林が広がり、植物・昆虫・鳥の多様性が高い。",
     },
-    "sydney": {
-        "name": "シドニー",
-        "lat": -33.9, "lon": 151.2,
-        "temp_mean": 18,
-        "precip_mean": 1200,
-        "hemisphere": "south",
-        "max_plants": 4,
-        "description": "南半球の温帯海洋性。ユーカリ林が広がり、独自進化したオーストラリア固有の鳥が多い。",
-    },
     "charlotte": {
         "name": "シャーロット",
         "lat": 35.2, "lon": -80.8,
@@ -44,6 +35,7 @@ BIOME_MIGRATION = {
     "satoyama": "kyoto",
     "temperate_forest": "kyoto",
     "evergreen_forest": "kyoto",
+    "sydney": "kyoto",  # シドニーバイオーム削除(2026-07-08)。旧セーブはkyotoへ安全に移行。
 }
 
 
@@ -78,30 +70,6 @@ PLANTS = {
                   "icon": "🌾", "temp_fit": (5, 28),  "biome": ["kyoto"]},
     "kobushi":   {"name": "コブシ",       "scientific": "Magnolia kobus", "english": "Kobushi Magnolia",
                   "icon": "🌼", "temp_fit": (3, 22),  "biome": ["kyoto"]},
-
-    # ----- シドニー -----
-    "eucalyptus": {"name": "ユーカリ",      "scientific": "Eucalyptus globulus", "english": "Tasmanian Blue Gum",
-                   "icon": "🌳", "temp_fit": (8, 26),  "biome": ["sydney"]},
-    "banksia":    {"name": "バンクシア",    "scientific": "Banksia integrifolia", "english": "Coast Banksia",
-                   "icon": "🌼", "temp_fit": (10, 26), "biome": ["sydney"]},
-    "waratah":    {"name": "ワラタ",        "scientific": "Telopea speciosissima", "english": "New South Wales Waratah",
-                   "icon": "🌺", "temp_fit": (10, 24), "biome": ["sydney"]},
-    "jacaranda":  {"name": "ジャカランダ",  "scientific": "Jacaranda mimosifolia", "english": "Blue Jacaranda",
-                   "icon": "🌸", "temp_fit": (12, 28), "biome": ["sydney"]},
-    "bottlebrush":{"name": "ブラシノキ",    "scientific": "Callistemon citrinus", "english": "Crimson Bottlebrush",
-                   "icon": "🌺", "temp_fit": (12, 28), "biome": ["sydney"]},
-    "wattle":     {"name": "ゴールデンワトル", "scientific": "Acacia pycnantha", "english": "Golden Wattle",
-                   "icon": "🌼", "temp_fit": (8, 26),  "biome": ["sydney"]},
-    "tea_tree":   {"name": "ティーツリー",     "scientific": "Leptospermum scoparium", "english": "Tea Tree",
-                   "icon": "🌼", "temp_fit": (8, 26),  "biome": ["sydney"]},
-    "grevillea":  {"name": "グレヴィレア",     "scientific": "Grevillea robusta", "english": "Silky Oak",
-                   "icon": "🌺", "temp_fit": (10, 28), "biome": ["sydney"]},
-    "lemon_myrtle":{"name": "レモンマートル",  "scientific": "Backhousia citriodora", "english": "Lemon Myrtle",
-                   "icon": "🌿", "temp_fit": (12, 28), "biome": ["sydney"]},
-    "kangaroo_paw":{"name": "カンガルーポー",  "scientific": "Anigozanthos flavidus", "english": "Kangaroo Paw",
-                   "icon": "🌺", "temp_fit": (10, 26), "biome": ["sydney"]},
-    "boronia":    {"name": "ボロニア",         "scientific": "Boronia megastigma", "english": "Brown Boronia",
-                   "icon": "🌸", "temp_fit": (8, 22),  "biome": ["sydney"]},
 
     # ----- シャーロット(NC) -----
     "dogwood":      {"name": "アメリカハナミズキ", "scientific": "Cornus florida", "english": "Flowering Dogwood",
@@ -181,24 +149,6 @@ INSECTS = {
         "temp_fit": (10, 28), "eats_plants": ["rice"]
     },
 
-    # ----- シドニー -----
-    "blue_banded_bee": {
-        "name": "アオスジハナバチ", "scientific": "Amegilla cingulata", "english": "Blue-banded Bee",
-        "temp_fit": (14, 30), "eats_plants": ["banksia", "waratah", "bottlebrush", "wattle"]
-    },
-    "christmas_beetle": {
-        "name": "クリスマスビートル", "scientific": "Anoplognathus pallidicollis", "english": "Christmas Beetle",
-        "temp_fit": (16, 30), "eats_plants": ["eucalyptus"]
-    },
-    "bogong_moth": {
-        "name": "ボゴンガ", "scientific": "Agrotis infusa", "english": "Bogong Moth",
-        "temp_fit": (10, 24), "eats_plants": ["wattle", "eucalyptus"]
-    },
-    "australian_cicada": {
-        "name": "グリーングローサー", "scientific": "Cyclochila australasiae", "english": "Green Grocer Cicada",
-        "temp_fit": (18, 32), "eats_plants": ["eucalyptus", "jacaranda"]
-    },
-
     # ----- シャーロット -----
     "monarch": {
         "name": "オオカバマダラ", "scientific": "Danaus plexippus", "english": "Monarch Butterfly",
@@ -229,16 +179,6 @@ INSECTS = {
     "kuwagata": {
         "name": "クワガタムシ", "scientific": "Lucanidae", "english": "Stag Beetle",
         "temp_fit": (15, 28), "eats_plants": ["kunugi", "enoki", "momiji"]
-    },
-
-    # ----- シドニー(追加) -----
-    "sugar_glider_insect": {
-        "name": "オーストラリアハチノスツヅリガ", "scientific": "Galleria mellonella", "english": "Wax Moth",
-        "temp_fit": (14, 28), "eats_plants": ["eucalyptus", "tea_tree"]
-    },
-    "lacewing_au": {
-        "name": "オーストラリアクサカゲロウ", "scientific": "Mallada signatus", "english": "Green Lacewing",
-        "temp_fit": (10, 28), "eats_plants": ["grevillea", "lemon_myrtle", "boronia"]
     },
 
     # ----- シャーロット(追加) -----
@@ -366,94 +306,6 @@ BIRDS = {
         "temp_fit": (-5, 24), "biome_pref": ["kyoto"],
         "rarity": 0.55,
         "description": "ドングリを地面に隠す習性で、ナラ類の森を育てる賢い鳥。",
-    },
-
-    # ----- シドニー -----
-    "rainbow_lorikeet": {
-        "name": "ゴシキセイガイインコ", "scientific": "Trichoglossus moluccanus", "english": "Rainbow Lorikeet",
-        "color": "#1a8a4a",
-        "eats_plants": ["banksia", "waratah", "bottlebrush", "eucalyptus", "jacaranda"],
-        "eats_insects": [],
-        "temp_fit": (10, 30), "biome_pref": ["sydney"],
-        "rarity": 0.3,
-        "description": "鮮やかな七色の羽。花の蜜を好み、群れで賑やかに飛び回る。",
-    },
-    "kookaburra": {
-        "name": "ワライカワセミ", "scientific": "Dacelo novaeguineae", "english": "Laughing Kookaburra",
-        "color": "#a08040",
-        "eats_plants": [], "eats_insects": ["christmas_beetle", "australian_cicada"],
-        "temp_fit": (8, 28), "biome_pref": ["sydney"],
-        "rarity": 0.5,
-        "description": "笑い声のような鳴き声で有名。世界最大のカワセミ科の鳥。",
-    },
-    "australian_magpie": {
-        "name": "カササギフエガラス", "scientific": "Gymnorhina tibicen", "english": "Australian Magpie",
-        "color": "#1a1a1a",
-        "eats_plants": [], "eats_insects": ["christmas_beetle", "june_beetle", "bogong_moth"],
-        "temp_fit": (5, 28), "biome_pref": ["sydney"],
-        "rarity": 0.35,
-        "description": "美しいフルートのような囀り。賢く、人の顔を覚えると言われる。",
-    },
-    "sulphur_crested_cockatoo": {
-        "name": "キバタン", "scientific": "Cacatua galerita", "english": "Sulphur-crested Cockatoo",
-        "color": "#f0e090",
-        "eats_plants": ["eucalyptus", "wattle", "banksia"],
-        "eats_insects": [],
-        "temp_fit": (8, 30), "biome_pref": ["sydney"],
-        "rarity": 0.55,
-        "description": "黄色い冠羽が印象的な大型のオウム。長寿で、80年以上生きる個体もいる。",
-    },
-    "eastern_yellow_robin": {
-        "name": "キバラオーストラリアコマドリ", "scientific": "Eopsaltria australis", "english": "Eastern Yellow Robin",
-        "color": "#e8d048",
-        "eats_plants": [], "eats_insects": ["bogong_moth", "christmas_beetle"],
-        "temp_fit": (8, 24), "biome_pref": ["sydney"],
-        "rarity": 0.65,
-        "description": "鮮やかな黄色いお腹。森の縁で昆虫を狙う。",
-    },
-    "superb_fairywren": {
-        "name": "ルリオーストラリアムシクイ", "scientific": "Malurus cyaneus", "english": "Superb Fairywren",
-        "color": "#3a4ac8",
-        "eats_plants": [], "eats_insects": ["bogong_moth", "blue_banded_bee"],
-        "temp_fit": (5, 26), "biome_pref": ["sydney"],
-        "rarity": 0.55,
-        "description": "繁殖期の雄は鮮やかな青。家族群で藪の中を移動する。",
-    },
-    "noisy_miner": {
-        "name": "クロガオミツスイ", "scientific": "Manorina melanocephala", "english": "Noisy Miner",
-        "color": "#a8b0a0",
-        "eats_plants": ["banksia", "bottlebrush", "eucalyptus"],
-        "eats_insects": ["blue_banded_bee"],
-        "temp_fit": (8, 30), "biome_pref": ["sydney"],
-        "rarity": 0.4,
-        "description": "賑やかで攻撃的。ユーカリ林の蜜を巡って群れで縄張りを守る。",
-    },
-    "galah": {
-        "name": "モモイロインコ", "scientific": "Eolophus roseicapilla", "english": "Galah",
-        "color": "#e89aa8",
-        "eats_plants": ["wattle", "eucalyptus", "grevillea"],
-        "eats_insects": [],
-        "temp_fit": (8, 30), "biome_pref": ["sydney"],
-        "rarity": 0.5,
-        "description": "ピンクとグレーの羽が美しい。芝生で種を食べる姿が見られる。",
-    },
-    "willie_wagtail": {
-        "name": "オウギビタキ", "scientific": "Rhipidura leucophrys", "english": "Willie Wagtail",
-        "color": "#1a1a1a",
-        "eats_plants": [],
-        "eats_insects": ["blue_banded_bee", "australian_cicada", "bogong_moth"],
-        "temp_fit": (10, 30), "biome_pref": ["sydney"],
-        "rarity": 0.45,
-        "description": "尾を扇状に広げて昆虫を追う。庭でも見られる人懐っこい鳥。",
-    },
-    "satin_bowerbird": {
-        "name": "アオアズマヤドリ", "scientific": "Ptilonorhynchus violaceus", "english": "Satin Bowerbird",
-        "color": "#2a2050",
-        "eats_plants": ["banksia", "jacaranda", "lemon_myrtle"],
-        "eats_insects": ["christmas_beetle"],
-        "temp_fit": (8, 28), "biome_pref": ["sydney"],
-        "rarity": 0.7,
-        "description": "雄が青い物を集めて求愛舞台(あずまや)を作る、知性的な鳥。",
     },
 
     # ----- シャーロット -----
@@ -705,11 +557,6 @@ _WARINESS = {
     "uguisu": 0.70, "kogera": 0.50, "yamagara": 0.30, "kibitaki": 0.65,
     "tsubame": 0.40, "kawasemi": 0.70, "ikaru": 0.55, "kawarahiwa": 0.45,
     "enaga": 0.50, "kakesu": 0.60,
-    # シドニー
-    "rainbow_lorikeet": 0.30, "kookaburra": 0.35, "australian_magpie": 0.35,
-    "sulphur_crested_cockatoo": 0.40, "eastern_yellow_robin": 0.55,
-    "superb_fairywren": 0.50, "noisy_miner": 0.30, "galah": 0.40,
-    "willie_wagtail": 0.35, "satin_bowerbird": 0.70,
     # シャーロット
     "northern_cardinal": 0.35, "blue_jay": 0.35, "eastern_bluebird": 0.45,
     "american_robin": 0.30, "carolina_wren": 0.45, "pileated_woodpecker": 0.80,

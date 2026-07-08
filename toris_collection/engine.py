@@ -297,11 +297,18 @@ def calculate_arrival_probability(bird_id: str, G: nx.DiGraph, biome_id: str, mo
 
 
 def run_turn(planted_plants, biome_id, month, resident_birds, rng,
-             max_residents=4, max_arrivals_per_turn=1):
+             max_residents=4, max_arrivals_per_turn=1,
+             arrival_bonus_fn=None, departure_bonus=0.0):
     """1サイクル進める。
     生態学的・体験的な落ち着きのため、上限を設ける:
       max_residents: 滞在中の最大鳥数(自然観察と画面の静けさ)
       max_arrivals_per_turn: 1サイクルあたり新規到着の最大数(急激な変化を避ける)
+
+    arrival_bonus_fn / departure_bonus: 広告リワードの「今日の庭アイテム」
+    (garden_items.py)向けの軽量フック。どちらも既定値(None / 0.0)では
+    一切呼ばれず、既存の確率計算(build_network含む)には触れない。
+      arrival_bonus_fn: (bird_id) -> float。到来確率に加算するpp(0.0〜1.0)。
+      departure_bonus:  float。退去率から減算する値(バードバス用、0なら無効)。
     """
     G, temp = build_network(planted_plants, biome_id, month)
 
@@ -313,7 +320,10 @@ def run_turn(planted_plants, biome_id, month, resident_birds, rng,
         info = calculate_arrival_probability(b_id, G, biome_id, month)
         p = info["probability"]
         # 退去率: p=0→0.3, p=1→0.05
-        if rng.random() < (0.3 - 0.25 * p):
+        dep_rate = 0.3 - 0.25 * p
+        if departure_bonus:
+            dep_rate = max(0.02, dep_rate - departure_bonus)
+        if rng.random() < dep_rate:
             new_residents.remove(b_id)
             departures.append(b_id)
 
@@ -323,8 +333,11 @@ def run_turn(planted_plants, biome_id, month, resident_birds, rng,
         if b_id in new_residents:
             continue
         info = calculate_arrival_probability(b_id, G, biome_id, month)
-        if info["probability"] > 0:
-            candidates.append((b_id, info["probability"]))
+        p = info["probability"]
+        if arrival_bonus_fn:
+            p = min(1.0, p + arrival_bonus_fn(b_id))
+        if p > 0:
+            candidates.append((b_id, p))
     rng.shuffle(candidates)
 
     for b_id, p in candidates:

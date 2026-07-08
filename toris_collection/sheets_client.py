@@ -366,7 +366,7 @@ def load_mementos(tester_id):
     sheet = _ensure_mementos_sheet()
     rows = sheet.get_all_records()
     out = []
-    KNOWN_BIOMES = {"kyoto", "sydney", "charlotte"}
+    KNOWN_BIOMES = {"kyoto", "sydney", "charlotte"}  # sydney: 削除済みバイオームだが旧レコード吸収のため残す
     for r in rows:
         if str(r.get("tester_id", "")) != tester_id:
             continue

@@ -14,7 +14,7 @@ TypedDict で定義したスキーマが、そのまま
     scientific    : str  学名 (例: Parus minor)
     english       : str  英語名
     color         : str  16進カラーコード (例: #2a2a2a)
-    biome_pref    : str  カンマ区切りのバイオームID (例: kyoto,sydney)
+    biome_pref    : str  カンマ区切りのバイオームID (例: kyoto,charlotte)
     rarity        : float 0.0〜1.0 (高いほどレア)
     wariness      : float 0.0〜1.0 (高いほど近づきにくい)
     description   : str  図鑑の説明文
