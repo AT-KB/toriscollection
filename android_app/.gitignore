@@ -1,0 +1,12 @@
+# npm
+node_modules/
+
+# 署名鍵(keystore)は絶対にコミットしない
+*.keystore
+*.jks
+key.properties
+
+# Android Studio / ローカル固有ファイル
+android/local.properties
+android/.idea/
+android/*.iml

@@ -1,6 +1,15 @@
+---
+title: プライバシーポリシー — Toris Collection
+---
+
 # プライバシーポリシー — Toris Collection
 
 最終更新日: 2026-07-07
+
+> このページは `toris_collection/PRIVACY_POLICY.md` の内容をGitHub Pagesで
+> 公開するためのミラーです。内容の正本(編集の起点)は
+> [`toris_collection/PRIVACY_POLICY.md`](https://github.com/AT-KB/toriscollection/blob/main/toris_collection/PRIVACY_POLICY.md)
+> です。今後の改定時は両方のファイルを同時に更新してください。
 
 ## このアプリについて
 

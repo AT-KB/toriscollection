@@ -507,6 +507,79 @@ def _inject_pwa_head():
 _inject_pwa_head()
 
 
+def _inject_native_share_button():
+    """Android版(Capacitorラップ)でのみ現れる、共有用の小さな浮きボタンを注入する。
+
+    Google Playの「Minimum Functionality」ポリシー(単なるWebサイト表示だけの
+    ラッパーは審査で弾かれうる)への対応として、Web版にはないネイティブ機能を
+    1つ追加する(`docs/team/proposals/2026-07-07_Phase1実行計画.md`後継の
+    Capacitor方式検討を踏まえた実装)。
+
+    `window.Capacitor.isNativePlatform()` で「Capacitorでラップされたネイティブ
+    アプリ内かどうか」を判定し、真の場合のみボタンを表示する。通常のブラウザ
+    (Streamlit Cloud上のWeb版)では `window.Capacitor` 自体が存在しないため、
+    このボタンは一切表示されず、既存のWeb体験には影響しない
+    (`_inject_pwa_head()` と同じ try/except で握りつぶすパターンに倣う)。
+
+    Capacitorの `server.url` でリモートURLを直接ロードする方式でも、
+    Capacitor Android の `WebViewLocalServer`(`handleProxyRequest`)が
+    トップレベルのHTMLレスポンスにブリッジJSを注入する実装になっているため
+    (`node_modules/@capacitor/android` の `Bridge.java`/`WebViewLocalServer.java`
+    で確認済み)、`window.Capacitor` はネイティブアプリ内では自動的に利用可能になる。
+    実際に共有シートを呼び出すには `@capacitor/share` プラグインが
+    `android_app/`(Capacitorプロジェクト、npm install・cap sync 済み)側に
+    導入されている必要がある。
+    """
+    components.html(
+        """
+        <script>
+        (function () {
+          try {
+            var doc = window.parent.document;
+            var win = window.parent;
+            if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+              return; // Web版(通常ブラウザ)では何もしない
+            }
+            if (doc.getElementById('toris-native-share-btn')) {
+              return; // 二重注入防止
+            }
+            var btn = doc.createElement('button');
+            btn.id = 'toris-native-share-btn';
+            btn.textContent = '🐦 共有する';
+            btn.style.cssText = [
+              'position:fixed', 'right:14px', 'bottom:14px', 'z-index:9999',
+              'background:#7ba87b', 'color:#fff', 'border:none',
+              'border-radius:20px', 'padding:10px 16px', 'font-size:14px',
+              'box-shadow:0 2px 8px rgba(0,0,0,0.2)', 'cursor:pointer'
+            ].join(';');
+            btn.addEventListener('click', function () {
+              try {
+                if (win.Capacitor.Plugins && win.Capacitor.Plugins.Share) {
+                  win.Capacitor.Plugins.Share.share({
+                    title: 'Toris Collection',
+                    text: '手のひらの庭に鳥がやってくる、癒しアプリ「Toris Collection」',
+                    url: 'https://toriscollection-test202605.streamlit.app/',
+                    dialogTitle: '共有する'
+                  });
+                }
+              } catch (e) {
+                // 共有に失敗しても本編の動作には影響させない
+              }
+            });
+            doc.body.appendChild(btn);
+          } catch (e) {
+            // Capacitor非搭載環境・DOM構造の変化等で失敗しても本編には影響させない
+          }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
+_inject_native_share_button()
+
+
 # ============= State =============
 def _init_default_state():
     """真っさらな初期状態を session_state にセットする(Sheets には一切触れない)。

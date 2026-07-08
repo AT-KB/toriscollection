@@ -1,0 +1,16 @@
+{
+  "appId": "com.toriscollection.app",
+  "appName": "Toris Collection",
+  "webDir": "www",
+  "server": {
+    "url": "https://toriscollection-test202605.streamlit.app/",
+    "cleartext": false,
+    "allowNavigation": [
+      "*.streamlit.app",
+      "share.streamlit.io"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
