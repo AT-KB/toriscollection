@@ -3,11 +3,11 @@
   "appName": "Toris Collection",
   "webDir": "www",
   "server": {
-    "url": "https://toriscollection-test202605.streamlit.app/",
+    "url": "https://toris-collection.onrender.com",
     "cleartext": false,
     "allowNavigation": [
-      "*.streamlit.app",
-      "share.streamlit.io"
+      "toris-collection.onrender.com",
+      "*.onrender.com"
     ]
   },
   "android": {
