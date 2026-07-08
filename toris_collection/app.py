@@ -76,6 +76,50 @@ def render_bird_sprite_html(bird_id: str, size_px: int = 64,
     )
 
 
+# ============================================================
+# 詳細ドット絵(高解像度、種ごとに個別制作)
+# designbird/{bird_id}_detail.png があれば図鑑の詳細表示でのみ大きく使う。
+# ファイルが無い種は今まで通り(render_bird_sprite_html の簡易スプライトのみ)。
+# SPRITE_ALIASES は使わない(詳細画像は流用せず、制作済みの種だけに厳密に紐づける)。
+# 存在判定・パス解決は detail_sprites.py(Streamlit非依存の純粋関数、テスト対象)に委譲。
+# ============================================================
+import detail_sprites
+
+
+@st.cache_data(show_spinner=False, max_entries=100)
+def _get_bird_detail_image_data_url(bird_id: str) -> str | None:
+    """種の詳細ドット絵(高解像度)を data: URL として返す。
+    designbird/{bird_id}_detail.png が無ければ None(呼び出し側は何もしない=
+    既存の簡易スプライト表示のみのまま)。
+    """
+    if not detail_sprites.has_detail_image(bird_id):
+        return None
+    path = detail_sprites.detail_image_path(bird_id)
+    try:
+        with open(path, "rb") as f:
+            data = base64.b64encode(f.read()).decode("ascii")
+        return f"data:image/png;base64,{data}"
+    except Exception:
+        return None
+
+
+def render_bird_detail_image_html(bird_id: str, max_width_px: int = 320) -> str | None:
+    """詳細ドット絵があれば図鑑の詳細表示に大きく載せる img タグを返す。
+    無ければ None を返す(呼び出し側は何も描画しない)。
+    """
+    detail_url = _get_bird_detail_image_data_url(bird_id)
+    if not detail_url:
+        return None
+    return (
+        f'<div style="text-align:center; margin-bottom:10px;">'
+        f'<img src="{detail_url}" '
+        f'style="width:100%; max-width:{max_width_px}px; height:auto; '
+        f'image-rendering:pixelated; image-rendering:crisp-edges; '
+        f'border-radius:12px;" alt="{bird_id}" />'
+        f'</div>'
+    )
+
+
 def _migrate_biome(biome_id):
     """既存テスターのスプレッドシートに残っている旧バイオームIDを新IDに変換"""
     if biome_id in BIOMES:
@@ -2236,6 +2280,12 @@ with tab_birds:
             expanded=False,
         ):
             if observed:
+                # 詳細ドット絵(高解像度)があれば、種の詳細表示にのみ大きく表示。
+                # ファイルが無い種は何も描画しない(今まで通りの表示のまま)。
+                _detail_img_html = render_bird_detail_image_html(b_id)
+                if _detail_img_html:
+                    st.markdown(_detail_img_html, unsafe_allow_html=True)
+
                 # スプライト(ドット絵)を表示。ファイルがなければ Emoji。
                 sprite_html = render_bird_sprite_html(
                     b_id, size_px=128, fallback_emoji="🐦"
