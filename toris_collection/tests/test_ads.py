@@ -96,6 +96,66 @@ def test_render_admob_banner_is_noop_when_disabled():
         ads.ADMOB_ENABLED = orig
 
 
+# ── リワード広告(実SDK接続、2026-07-08追記) ────────────────────────────
+
+def test_load_admob_rewarded_unit_id_falls_back_to_google_test_id():
+    orig = os.environ.get("ADMOB_REWARDED_UNIT_ID")
+    try:
+        os.environ.pop("ADMOB_REWARDED_UNIT_ID", None)
+        # 未設定時はGoogle公式のテスト用リワード広告ID(実収益が発生しない安全な値)
+        assert ads._load_admob_rewarded_unit_id() == ads._ADMOB_TEST_REWARDED_UNIT_ID
+    finally:
+        if orig is not None:
+            os.environ["ADMOB_REWARDED_UNIT_ID"] = orig
+
+
+def test_load_admob_rewarded_unit_id_prefers_env_override():
+    orig = os.environ.get("ADMOB_REWARDED_UNIT_ID")
+    try:
+        os.environ["ADMOB_REWARDED_UNIT_ID"] = "ca-app-pub-9999/8888"
+        assert ads._load_admob_rewarded_unit_id() == "ca-app-pub-9999/8888"
+    finally:
+        if orig is None:
+            os.environ.pop("ADMOB_REWARDED_UNIT_ID", None)
+        else:
+            os.environ["ADMOB_REWARDED_UNIT_ID"] = orig
+
+
+def test_render_pending_ad_loader_noop_when_disabled():
+    # ADMOB_ENABLED=False(既定)では、pendingが積まれていても何もせず False
+    # (Streamlit未起動のテスト環境でも例外を出さないことの確認・壊さない)
+    orig = ads.ADMOB_ENABLED
+    try:
+        ads.ADMOB_ENABLED = False
+        state = {"ads_pending_twig": {"nonce": "abc", "bird_id": "kawasemi"}}
+        assert ads.render_pending_ad_loader(state, "ads_pending_twig") is False
+    finally:
+        ads.ADMOB_ENABLED = orig
+
+
+def test_render_pending_ad_loader_noop_when_no_pending():
+    # ADMOB_ENABLED=True でも pending が無ければ何もせず False
+    orig = ads.ADMOB_ENABLED
+    try:
+        ads.ADMOB_ENABLED = True
+        assert ads.render_pending_ad_loader({}, "ads_pending_twig") is False
+    finally:
+        ads.ADMOB_ENABLED = orig
+
+
+def test_reward_js_template_contains_expected_admob_calls():
+    # 広告視聴イベント名・API呼び出しがテンプレートに含まれているか(タイプミス防止)。
+    # 実際のJS実行はNode --check + Playwrightで別途確認する。
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    for token in (
+        "prepareRewardVideoAd", "showRewardVideoAd",
+        "onRewardedVideoAdReward", "onRewardedVideoAdDismissed",
+        "onRewardedVideoAdFailedToShow", "onRewardedVideoAdFailedToLoad",
+        "window.top.location", "ad_result", "ad_nonce",
+    ):
+        assert token in js, f"missing token: {token}"
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

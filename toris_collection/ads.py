@@ -32,9 +32,39 @@ ads.py - 広告UIの土台(プレースホルダー)
   比較、`app._mark_met_today` と同じ「今日=1カウント」パターン)で管理する。
   実際の状態変更(memento付与・アイテム配置)は呼び出し側(app.py)の関数に委譲し、
   ここでは UI と日付ゲートの判定だけを持つ(疎結合を保つ既存方針を踏襲)。
+
+■ 2026-07-08 追記(実SDK接続): リワード広告の視聴完了を待ってから報酬を確定する
+  JS↔Python連携
+  - `ADMOB_ENABLED=False`(既定・現状の本番設定)のときは、これまでどおり
+    「ボタンを押したら即時付与」(壊さない=挙動を一切変えない)。
+  - `ADMOB_ENABLED=True` のときだけ、ボタン押下は即時付与せず
+    `session_state["ads_pending_twig"|"ads_pending_garden_item"]` に
+    `{"nonce": ..., ...payload}` を積んで `st.rerun()` する。次の実行で
+    `render_pending_ad_loader()` が実際に `@capacitor-community/admob` の
+    `AdMob.showRewardVideoAd()` を呼び出す `components.html` を描画する。
+  - Streamlitはコンポーネント→サーバーの汎用な双方向通信を持たないため、
+    `ritual.py`(儀式UI)が使っている「JS が `window.top.location` にクエリ
+    パラメータを付けてトップウィンドウごとリロードし、Python 側が
+    `st.query_params` で読み取る」という既存の片道経路パターンをそのまま
+    踏襲した(`app._handle_ritual_observation` 参照)。広告視聴完了
+    (`onRewardedVideoAdDismissed`、reward獲得フラグ込み)のイベントを受けて
+    `?ad_result=success|fail|unavailable&ad_nonce=...` を付けてトップを
+    リロードし、`app._handle_ad_reward_result()` が pending の nonce と
+    照合してから初めて報酬を確定する。nonceが一致しない・pendingが無い
+    場合は何もしない(古いリロード・多重送信への耐性)。
+  - Web版(通常ブラウザ、`window.Capacitor` が存在しない)では即座に
+    `ad_result=unavailable` を返す。ADMOB_ENABLED=True の場合、Web版では
+    「テスト用に即時付与」ではなく「アプリ版でのみ利用可」を選んだ
+    (実SDK接続後は"広告なしで無料付与できる抜け道"を残さないため。
+    詳細判断理由は開発部の報告参照)。
+  - 広告読み込み失敗・視聴中断(`FailedToLoad`/`FailedToShow`/reward無しで
+    `Dismissed`)は `ad_result=fail` を返し、報酬を付与せず静かに伝える
+    (交渉不能の原則2「罰しない」・原則1「受動的」— 失敗してもペナルティは
+    無く、いつでも再挑戦できる)。
 """
 from __future__ import annotations
 
+import uuid
 from datetime import date
 
 
@@ -199,6 +229,136 @@ def render_admob_banner(session_state, key_prefix: str = "ads") -> None:
     components.html(js, height=0)
 
 
+_ADMOB_TEST_REWARDED_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+
+
+def _load_admob_rewarded_unit_id() -> str:
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "admob_rewarded_unit_id" in st.secrets:
+            val = str(st.secrets["admob_rewarded_unit_id"]).strip()
+            if val:
+                return val
+    except Exception:
+        pass
+    import os
+    env_val = (os.environ.get("ADMOB_REWARDED_UNIT_ID") or "").strip()
+    return env_val or _ADMOB_TEST_REWARDED_UNIT_ID
+
+
+# JS↔Python連携の片道経路(ritual.py と同じ設計、上のクラスdocstring参照)。
+# 視聴完了(Dismissed)まで待ってから top window をリロードする。navigateを
+# 「Rewarded」の瞬間ではなく「Dismissed」の瞬間に遅らせているのは、リワード広告
+# 自体はネイティブの別Activity(WebViewの上に重なる全画面ビュー)として表示され、
+# 裏のWebViewを先にナビゲートしても広告再生は妨げないはずだが、念のため
+# ユーザーが広告を見終えてから戻す方が自然な体感になるため。
+_ADMOB_REWARD_JS_TEMPLATE = """
+<script>
+(function () {
+  var NONCE = "__NONCE__";
+
+  function reportResult(status) {
+    try {
+      var url = new URL(window.top.location.href);
+      url.searchParams.set('ad_result', status);
+      url.searchParams.set('ad_nonce', NONCE);
+      window.top.location.href = url.toString();
+    } catch (e) {}
+  }
+
+  var settled = false;
+  function finish(status) {
+    if (settled) return;
+    settled = true;
+    reportResult(status);
+  }
+
+  try {
+    var win = window.parent;
+    if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+      finish('unavailable'); // Web版(通常ブラウザ)には広告SDKが無い
+      return;
+    }
+    var AdMob = win.Capacitor.Plugins && win.Capacitor.Plugins.AdMob;
+    if (!AdMob) {
+      finish('unavailable'); // プラグイン未導入のネイティブビルドでも落とさない
+      return;
+    }
+
+    var unitId = "__UNIT_ID__";
+    var isTesting = __IS_TESTING__;
+    var earned = false;
+
+    AdMob.addListener('onRewardedVideoAdReward', function () { earned = true; });
+    AdMob.addListener('onRewardedVideoAdDismissed', function () {
+      finish(earned ? 'success' : 'fail');
+    });
+    AdMob.addListener('onRewardedVideoAdFailedToShow', function () { finish('fail'); });
+    AdMob.addListener('onRewardedVideoAdFailedToLoad', function () { finish('fail'); });
+
+    function playAd() {
+      AdMob.prepareRewardVideoAd({ adId: unitId, isTesting: isTesting })
+        .then(function () { return AdMob.showRewardVideoAd(); })
+        .catch(function () { finish('fail'); });
+    }
+
+    if (!win.__torisAdmobInitialized) {
+      win.__torisAdmobInitialized = true;
+      AdMob.initialize().then(playAd).catch(function () { finish('fail'); });
+    } else {
+      playAd();
+    }
+
+    // 安全弁: 実機の異常系でイベントが一切発火しない場合でも pending 状態が
+    // 固まらないよう、2分でタイムアウトして失敗扱いにする(通常のリワード
+    // 動画は数十秒で終わる想定。報酬は付与しない=安全側に倒す)。
+    setTimeout(function () { finish('fail'); }, 120000);
+  } catch (e) {
+    finish('fail'); // Capacitor非搭載環境・ブリッジ未接続等で失敗しても本編には影響させない
+  }
+})();
+</script>
+"""
+
+
+def render_pending_ad_loader(session_state, pending_key: str, key_prefix: str = "ads") -> bool:
+    """`pending_key` に保留中の広告視聴リクエストがあれば、実際にリワード広告を
+    再生する `components.html` を描画し、視聴完了まで待つ画面を返す。
+
+    保留が無い、または ADMOB_ENABLED=False(既定)のときは何もせず False を返す
+    (呼び出し側は通常のボタンUIをそのまま表示すればよい)。保留を検出して
+    広告ローダーを描画したときは True を返す(呼び出し側はこの回、通常の
+    ボタンUIの代わりにこちらだけを表示する)。
+
+    実際の報酬確定は行わない(`app._handle_ad_reward_result()` の責務)。
+    ここは「広告を再生し、結果を top window のクエリパラメータで知らせる」
+    までを担当する。
+    """
+    if not ADMOB_ENABLED:
+        return False
+    pending = session_state.get(pending_key)
+    if not pending:
+        return False
+
+    import streamlit as st
+    import streamlit.components.v1 as components
+
+    st.caption("🎬 広告を読み込んでいます……見終わると自動で戻ります。")
+    unit_id = _load_admob_rewarded_unit_id()
+    is_testing = unit_id == _ADMOB_TEST_REWARDED_UNIT_ID
+    js = (
+        _ADMOB_REWARD_JS_TEMPLATE
+        .replace("__NONCE__", str(pending.get("nonce", "")))
+        .replace("__UNIT_ID__", unit_id)
+        .replace("__IS_TESTING__", "true" if is_testing else "false")
+    )
+    components.html(js, height=0)
+    if st.button("キャンセルする", key=f"{key_prefix}_{pending_key}_cancel_btn"):
+        session_state.pop(pending_key, None)
+        st.rerun()
+    return True
+
+
 def render_banner_placeholder(session_state, key_prefix: str = "ads") -> None:
     """ホーム下部の静かなバナー広告のプレースホルダーを描画する。
 
@@ -255,10 +415,16 @@ def render_twig_reward_button(session_state, residents, birds_data, grant_fn,
     「1日1回」の日付ゲートだけを扱う)。
 
     庭に誰も来ていない日はボタンを無効化(選べる鳥がないため)する。
+
+    ADMOB_ENABLED=True のときは、押しても即時付与せず `session_state["ads_pending_twig"]`
+    に選んだ鳥と乱数(nonce)を積んで広告視聴フローへ回す(実際の付与は
+    `app._handle_ad_reward_result()` が視聴完了イベントを受け取ってから行う)。
+    ADMOB_ENABLED=False(既定)のときは、これまでどおり即時付与のまま(壊さない)。
     """
     import streamlit as st  # 遅延importでロジック部分をstreamlit非依存に保つ
 
     flag_key = "twig_reward_claimed_date"
+    pending_key = "ads_pending_twig"
     with st.expander("🎁 応援広告(今日来た鳥から、小枝をもう一つ)", expanded=False):
         st.caption(
             "見ると、今日庭に来てくれた鳥から、記念の小枝をもう一つもらえます。"
@@ -270,6 +436,9 @@ def render_twig_reward_button(session_state, residents, birds_data, grant_fn,
         if not residents:
             st.caption("今日はまだ庭に鳥が来ていません。鳥が来てから受け取れます。")
             return
+
+        if render_pending_ad_loader(session_state, pending_key, key_prefix=key_prefix):
+            return  # 広告視聴中: 通常のボタンUIは隠す
 
         ids_sorted = sorted(
             residents, key=lambda b: birds_data.get(b, {}).get("name", b)
@@ -285,8 +454,11 @@ def render_twig_reward_button(session_state, residents, birds_data, grant_fn,
             key=f"{key_prefix}_twig_reward_btn",
             use_container_width=True,
         ):
-            grant_fn(choice)
-            mark_claimed_today(session_state, flag_key)
+            if ADMOB_ENABLED:
+                session_state[pending_key] = {"nonce": uuid.uuid4().hex, "bird_id": choice}
+            else:
+                grant_fn(choice)
+                mark_claimed_today(session_state, flag_key)
             st.rerun()
 
 
@@ -298,11 +470,18 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
     session_state["garden_item_placement"] を更新する)。
     pp数値はユーザーには見せず、`garden_items.ITEMS` の hint/culture_note の
     言葉に翻訳して見せる(提案書§4 UI仕様)。
+
+    ADMOB_ENABLED=True のときは、押しても即時配置せず
+    `session_state["ads_pending_garden_item"]` に選んだアイテムと乱数(nonce)を
+    積んで広告視聴フローへ回す(実際の配置は `app._handle_ad_reward_result()` が
+    視聴完了イベントを受け取ってから行う)。ADMOB_ENABLED=False(既定)のときは、
+    これまでどおり即時配置のまま(壊さない)。
     """
     import streamlit as st  # 遅延importでロジック部分をstreamlit非依存に保つ
     import garden_items as gi
 
     flag_key = "garden_item_claimed_date"
+    pending_key = "ads_pending_garden_item"
     with st.expander("🎁 応援広告(今日の庭アイテムを選ぶ)", expanded=False):
         active = session_state.get("garden_item_placement")
         if gi.is_active(active):
@@ -316,6 +495,9 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
         if has_claimed_today(session_state, flag_key):
             st.caption("✓ 今日はもう1つ選びました。また明日、別のアイテムを選べます。")
             return
+
+        if render_pending_ad_loader(session_state, pending_key, key_prefix=key_prefix):
+            return  # 広告視聴中: 通常のボタンUIは隠す
 
         st.caption(
             "見ると、庭に6時間だけ道具を1つ置けます。アメリカの裏庭バードウォッチング"
@@ -334,8 +516,13 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
                     key=f"{key_prefix}_item_{item_id}_btn",
                     use_container_width=True,
                 ):
-                    place_fn(item_id)
-                    mark_claimed_today(session_state, flag_key)
+                    if ADMOB_ENABLED:
+                        session_state[pending_key] = {
+                            "nonce": uuid.uuid4().hex, "item_id": item_id,
+                        }
+                    else:
+                        place_fn(item_id)
+                        mark_claimed_today(session_state, flag_key)
                     st.rerun()
             else:
                 st.markdown(f"~~{label}~~ (今のこの庭では選べません)")

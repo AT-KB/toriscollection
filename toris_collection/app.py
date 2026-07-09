@@ -1220,6 +1220,62 @@ def _handle_ritual_observation():
 _handle_ritual_observation()
 
 
+def _handle_ad_reward_result():
+    """リワード広告JS(ads.py の components.html)が top window のクエリパラメータ
+    ?ad_result=success|fail|unavailable&ad_nonce=... を付けてリロードしてきたら、
+    保留中のリクエスト(ads_pending_twig / ads_pending_garden_item)と nonce を
+    照合し、一致かつ success のときだけ実際に報酬を確定する。
+
+    _handle_ritual_observation() と同じ「JS→top.location のクエリ→ここ」という
+    片道経路(ads.py 冒頭のdocstring参照)。ADMOB_ENABLED=False(既定)の間は
+    session_state に pending が積まれることが無いため、この関数は事実上 no-op
+    のまま(壊さない)。
+    """
+    result = st.query_params.get("ad_result")
+    if not result:
+        return
+    nonce = st.query_params.get("ad_nonce")
+    flash = None
+
+    twig_pending = st.session_state.get("ads_pending_twig")
+    if twig_pending and nonce and twig_pending.get("nonce") == nonce:
+        st.session_state.pop("ads_pending_twig", None)
+        if result == "success":
+            bird_id = twig_pending.get("bird_id")
+            if bird_id in BIRDS:
+                _tid = st.session_state.get("current_tester_id")
+                _mid = mem.twig_id(bird_id)
+                _grant_memento_now(_tid, _mid, bird_id)
+                ads.mark_claimed_today(st.session_state, "twig_reward_claimed_date")
+                flash = ("twig_success", BIRDS[bird_id].get("name", bird_id))
+        elif result == "unavailable":
+            flash = ("ad_unavailable", None)
+        else:
+            flash = ("ad_fail", None)
+
+    item_pending = st.session_state.get("ads_pending_garden_item")
+    if item_pending and nonce and item_pending.get("nonce") == nonce:
+        st.session_state.pop("ads_pending_garden_item", None)
+        if result == "success":
+            item_id = item_pending.get("item_id")
+            if item_id in garden_items.ITEMS:
+                st.session_state.garden_item_placement = garden_items.place_item(item_id)
+                ads.mark_claimed_today(st.session_state, "garden_item_claimed_date")
+                flash = ("item_success", garden_items.ITEMS[item_id].get("name", item_id))
+        elif result == "unavailable":
+            flash = ("ad_unavailable", None)
+        else:
+            flash = ("ad_fail", None)
+
+    if flash:
+        st.session_state["ad_reward_flash"] = flash
+    # パラメータを消す(リロードで再処理しないように)。これ自体が再実行を誘発する。
+    st.query_params.clear()
+
+
+_handle_ad_reward_result()
+
+
 # ============= Header =============
 st.markdown("# 🐦 #Toris Collection#")
 st.markdown(
@@ -1617,6 +1673,25 @@ with tab_home:
         st.success(
             "🪶 今朝、" + _names + " に会えました。🎙 ラジオの顔ぶれに加わりました。"
         )
+
+    # 広告リワード(実SDK視聴後)の結果通知(app._handle_ad_reward_result 参照)
+    _ad_flash = st.session_state.pop("ad_reward_flash", None)
+    if _ad_flash:
+        _ad_kind, _ad_label = _ad_flash
+        if _ad_kind == "twig_success":
+            st.success(
+                f"🎁 広告を見てくれてありがとう。{_ad_label} から記念の小枝をもう一つもらいました。"
+            )
+        elif _ad_kind == "item_success":
+            st.success(
+                f"🎁 広告を見てくれてありがとう。今日は「{_ad_label}」を庭に置きました(6時間)。"
+            )
+        elif _ad_kind == "ad_unavailable":
+            st.info("この広告リワードは、アプリ版(Android)でのみご利用いただけます。")
+        elif _ad_kind == "ad_fail":
+            st.info(
+                "広告を最後まで見られなかったため、今回は受け取れませんでした。またいつでもどうぞ。"
+            )
 
     # ===== 儀式UI(距離メカニクス)=====
     # 滞在中の鳥がいる時だけ、ホームタブの最上部に儀式エリアを表示する
