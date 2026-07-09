@@ -30,8 +30,15 @@ def test_existing_detail_images_found():
 
 
 def test_missing_detail_image_returns_false():
-    # 現時点でまだ詳細画像を作っていない種(2026-07-08時点)
-    assert detail_sprites.has_detail_image("blue_jay") is False
+    # 詳細画像が無い種は常にFalseになること。個別の種IDをハードコードすると
+    # 新しい詳細画像が追加されるたびにテストが壊れるため、実行時点でファイルが
+    # 存在しない種をdata.BIRDSから動的に選んで確認する。
+    missing = [
+        bird_id for bird_id in data.BIRDS.keys()
+        if not detail_sprites.detail_image_path(bird_id).is_file()
+    ]
+    assert missing, "検証対象がありません(全種に詳細画像がある状態は想定外)"
+    assert detail_sprites.has_detail_image(missing[0]) is False
 
 
 def test_unknown_bird_id_no_exception():
