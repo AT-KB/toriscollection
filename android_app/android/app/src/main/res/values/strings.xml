@@ -4,4 +4,7 @@
     <string name="title_activity_main">Toris Collection</string>
     <string name="package_name">com.toriscollection.app</string>
     <string name="custom_url_scheme">com.toriscollection.app</string>
+    <!-- AdMob: Googleのテスト用App ID(2026-07-08時点)。本番前にCEOが取得した
+         実IDへ差し替える。https://developers.google.com/admob/android/quick-start -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
 </resources>

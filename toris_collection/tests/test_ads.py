@@ -40,6 +40,62 @@ def test_is_radio_active_tolerates_object_without_get():
     assert ads.is_radio_active(NoGet()) is False
 
 
+# ── AdMob(2026-07-08追記) ────────────────────────────────────────────
+
+def test_admob_disabled_by_default():
+    # secrets/環境変数を何も設定していないテスト実行環境では、AdMobは既定で無効
+    # (壊さない=既存の広告プレースホルダー挙動を変えないことの保証)
+    assert ads.ADMOB_ENABLED is False
+
+
+def test_load_admob_enabled_reads_env_var():
+    orig = os.environ.get("ADMOB_ENABLED")
+    try:
+        os.environ["ADMOB_ENABLED"] = "1"
+        assert ads._load_admob_enabled() is True
+        os.environ["ADMOB_ENABLED"] = "0"
+        assert ads._load_admob_enabled() is False
+    finally:
+        if orig is None:
+            os.environ.pop("ADMOB_ENABLED", None)
+        else:
+            os.environ["ADMOB_ENABLED"] = orig
+
+
+def test_load_admob_banner_unit_id_falls_back_to_google_test_id():
+    orig = os.environ.get("ADMOB_BANNER_UNIT_ID")
+    try:
+        os.environ.pop("ADMOB_BANNER_UNIT_ID", None)
+        # 未設定時はGoogle公式のテスト用バナーID(実収益が発生しない安全な値)
+        assert ads._load_admob_banner_unit_id() == ads._ADMOB_TEST_BANNER_UNIT_ID
+    finally:
+        if orig is not None:
+            os.environ["ADMOB_BANNER_UNIT_ID"] = orig
+
+
+def test_load_admob_banner_unit_id_prefers_env_override():
+    orig = os.environ.get("ADMOB_BANNER_UNIT_ID")
+    try:
+        os.environ["ADMOB_BANNER_UNIT_ID"] = "ca-app-pub-1234/5678"
+        assert ads._load_admob_banner_unit_id() == "ca-app-pub-1234/5678"
+    finally:
+        if orig is None:
+            os.environ.pop("ADMOB_BANNER_UNIT_ID", None)
+        else:
+            os.environ["ADMOB_BANNER_UNIT_ID"] = orig
+
+
+def test_render_admob_banner_is_noop_when_disabled():
+    # ADMOB_ENABLED=False のときは streamlit.components すら import せず即return する
+    # (Streamlit未起動のテスト環境でも例外を出さないことの確認)
+    orig = ads.ADMOB_ENABLED
+    try:
+        ads.ADMOB_ENABLED = False
+        ads.render_admob_banner({"radio_ready": False})  # 例外が出なければOK
+    finally:
+        ads.ADMOB_ENABLED = orig
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

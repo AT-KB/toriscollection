@@ -317,7 +317,16 @@ def render_radio(
                     })
 
     if not birds:
-        st.info("音源を取得できませんでした。")
+        if xc_client is not None and xc_client.COMMERCIAL_ONLY and any(
+            xc_client.is_nc_only(birds_data[bid].get("scientific", ""))
+            for bid in lineup + backups[:3]
+        ):
+            st.info(
+                "🔒 今日の顔ぶれの声はNC(非商用)音源のため、録音準備中です。"
+                "図鑑や庭での観察はこれまでどおり楽しめます。"
+            )
+        else:
+            st.info("音源を取得できませんでした。")
         return
 
     # 顔ぶれの並び(lineup)順に整える。先頭が今日の「主役」。

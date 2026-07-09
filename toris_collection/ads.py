@@ -78,6 +78,127 @@ def is_radio_active(session_state) -> bool:
         return False
 
 
+
+# ── AdMob(Android版のみ・Capacitorネイティブブリッジ経由) ─────────────
+# 2026-07-08 追記: @capacitor-community/admob を android_app/ に導入済み
+# (npm install・npx cap sync 済み。AndroidManifest.xml/strings.xml に
+# Googleのテスト用App IDを設定済み)。ただし ADMOB_ENABLED は既定 False で、
+# 有効化するまでは一切の広告呼び出しを行わない(壊さない=現状の挙動を
+# 変えない)。
+#
+# 有効化方法(CEO操作): Streamlit secrets に admob_enabled = true を追加
+# (または環境変数 ADMOB_ENABLED=1)。広告ユニットIDも同様に
+# admob_banner_unit_id で差し替え可能(未設定時はGoogle公式のテスト用
+# バナーIDを使うため、実収益は発生しない=安全に先行動作確認できる)。
+#
+# Web版(Renderの通常ブラウザアクセス)では window.Capacitor 自体が
+# 存在しないため、ADMOB_ENABLED=True にしても常に何もしない
+# (isNativePlatform() チェックで自動的に絞られる。
+# app.py の _inject_native_share_button と同じ安全設計を踏襲)。
+# 広告表示はネイティブAndroid Viewとして画面に重なる形で出るため、
+# Streamlit側のHTML DOM(components.html)には描画されない。
+_ADMOB_TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
+_ADMOB_TEST_BANNER_UNIT_ID = "ca-app-pub-3940256099942544/9214589741"
+
+
+def _load_admob_enabled() -> bool:
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "admob_enabled" in st.secrets:
+            return bool(st.secrets["admob_enabled"])
+    except Exception:
+        pass
+    import os
+    return os.environ.get("ADMOB_ENABLED", "").strip().lower() in ("1", "true", "yes")
+
+
+def _load_admob_banner_unit_id() -> str:
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and "admob_banner_unit_id" in st.secrets:
+            val = str(st.secrets["admob_banner_unit_id"]).strip()
+            if val:
+                return val
+    except Exception:
+        pass
+    import os
+    env_val = (os.environ.get("ADMOB_BANNER_UNIT_ID") or "").strip()
+    return env_val or _ADMOB_TEST_BANNER_UNIT_ID
+
+
+ADMOB_ENABLED = _load_admob_enabled()
+
+_ADMOB_BANNER_JS_TEMPLATE = """
+<script>
+(function () {
+  try {
+    var win = window.parent;
+    if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+      return; // Web版(通常ブラウザ)では何もしない
+    }
+    var AdMob = win.Capacitor.Plugins && win.Capacitor.Plugins.AdMob;
+    if (!AdMob) {
+      return; // プラグイン未導入のネイティブビルドでも落とさない
+    }
+    var shouldHide = __HIDE__;
+    var unitId = "__UNIT_ID__";
+    var isTesting = __IS_TESTING__;
+
+    function showOrHide() {
+      if (shouldHide) {
+        AdMob.hideBanner().catch(function () {});
+        return;
+      }
+      AdMob.resumeBanner().catch(function () {
+        AdMob.showBanner({
+          adId: unitId,
+          adSize: "ADAPTIVE_BANNER",
+          position: "BOTTOM_CENTER",
+          margin: 0,
+          isTesting: isTesting
+        }).catch(function () {});
+      });
+    }
+
+    if (!win.__torisAdmobInitialized) {
+      win.__torisAdmobInitialized = true;
+      AdMob.initialize().then(showOrHide).catch(function () {});
+    } else {
+      showOrHide();
+    }
+  } catch (e) {
+    // AdMob非搭載環境・ブリッジ未接続等で失敗しても本編には影響させない
+  }
+})();
+</script>
+"""
+
+
+def render_admob_banner(session_state, key_prefix: str = "ads") -> None:
+    """Android版(Capacitorネイティブ)でのみ、AdMobの静かなバナー広告を表示する。
+
+    ADMOB_ENABLED=False(既定)のときは何もしない。ラジオ再生中は
+    render_banner_placeholder と同じ is_radio_active 判定で隠す
+    (交渉不能の原則: 鳥の声と癒しは常に無料・広告で邪魔しない)。
+    """
+    if not ADMOB_ENABLED:
+        return
+
+    import streamlit.components.v1 as components
+
+    unit_id = _load_admob_banner_unit_id()
+    hide = is_radio_active(session_state)
+    is_testing = unit_id == _ADMOB_TEST_BANNER_UNIT_ID
+
+    js = (
+        _ADMOB_BANNER_JS_TEMPLATE
+        .replace("__HIDE__", "true" if hide else "false")
+        .replace("__UNIT_ID__", unit_id)
+        .replace("__IS_TESTING__", "true" if is_testing else "false")
+    )
+    components.html(js, height=0)
+
+
 def render_banner_placeholder(session_state, key_prefix: str = "ads") -> None:
     """ホーム下部の静かなバナー広告のプレースホルダーを描画する。
 

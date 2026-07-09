@@ -219,6 +219,13 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                     })
 
     if not birds:
+        if xc_client.COMMERCIAL_ONLY and any(
+            xc_client.is_nc_only(b.get("scientific", "")) for _, b in candidates
+        ):
+            st.info(
+                "🔒 ここにいる鳥の声はNC(非商用)音源のため、録音準備中です。"
+                "図鑑や庭での観察はこれまでどおり楽しめます。"
+            )
         st.session_state.ritual_ready = False
         return
 

@@ -108,6 +108,31 @@ def _license_ok(rec: dict) -> bool:
     return license_class(lic) == "commercial"
 
 
+def is_nc_only(scientific_name: str) -> bool:
+    """録音はあるが全てNC(非商用)のため、COMMERCIAL_ONLY時に鳴かせられない種か。
+
+    UI側(app.py の render_bird_audio、radio.py、ritual.py)が「録音が
+    そもそも無い/接続失敗」と「録音はあるがライセンス上使えない」を
+    区別して、後者だけ正直に「NC音源のため準備中」と伝えるための判定。
+    録音が1件も見つからない場合(未登録・接続失敗)は False を返す
+    (そちらは既存の「録音が見つかりませんでした」表示のまま)。
+    COMMERCIAL_ONLY=False のときは判定不要なので常に False。
+
+    search_recordings() は @キャッシュ済みなので、get_audio_url() 等が
+    既に同じ種を検索済みならここでの追加ネットワーク呼び出しは発生しない。
+    """
+    if not COMMERCIAL_ONLY or not is_enabled():
+        return False
+    seen_total = 0
+    for sound_type in ("song", "call"):
+        for q in ("A", "B", "C"):
+            for r in search_recordings(scientific_name, quality=q, sound_type=sound_type):
+                seen_total += 1
+                if _license_ok(r):
+                    return False  # 商用可の録音が見つかった → NC-onlyではない
+    return seen_total > 0
+
+
 CACHE_DIR = Path(__file__).parent / ".xeno_canto_cache"
 AUDIO_DIR = CACHE_DIR / "audio"
 META_DIR = CACHE_DIR / "meta"

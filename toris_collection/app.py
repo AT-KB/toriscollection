@@ -274,6 +274,11 @@ def render_bird_audio(b_id: str, bird: dict, key_prefix: str = ""):
                 st.audio(audio_bytes, format="audio/mp3", loop=True)
             except Exception as e:
                 st.caption(f"再生エラー: {e}")
+        elif xc_client.COMMERCIAL_ONLY and xc_client.is_nc_only(sci):
+            st.caption(
+                "🔒 この鳥の声はNC(非商用)音源のため、録音準備中です。"
+                "図鑑や庭での観察は、これまでどおり楽しめます。"
+            )
         else:
             st.caption("録音が見つかりませんでした(xeno-cantoに登録なしまたは接続失敗)")
 
@@ -1830,6 +1835,9 @@ with tab_home:
     # 広告スペース(ホーム下部・静かなバナー1枚のプレースホルダー)。
     # ラジオ再生中(radio_readyがTrue)は非表示にする。実SDKは未接続(ads.py参照)。
     ads.render_banner_placeholder(st.session_state)
+    # Android版(Capacitorネイティブ)のみ、AdMob実バナーを配線(既定 ADMOB_ENABLED=False
+    # のため現状は無効・Web版には影響なし。ads.py の解説コメント参照)。
+    ads.render_admob_banner(st.session_state)
     # 任意のリワード広告(見ると今日だけ珍しい種が来やすくなる、の予定)。
     # 現時点ではダミー(押しても庭の進み方には一切影響しない)。
     ads.render_reward_ad_button(key_prefix="home_ads")

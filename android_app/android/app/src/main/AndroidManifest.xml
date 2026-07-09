@@ -33,6 +33,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!--
+          AdMob アプリID(@capacitor-community/admob 導入、2026-07-08)。
+          今はGoogle公式のテスト用App ID(ca-app-pub-3940256099942544~3347511713)を
+          使用中。本番配信前に、CEOがAdMobで取得した実際のApp IDに
+          strings.xml の admob_app_id を差し替えること(このファイルは変更不要)。
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id"/>
     </application>
 
     <!-- Permissions -->
