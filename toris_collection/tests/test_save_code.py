@@ -165,6 +165,47 @@ def test_encode_handles_empty_state():
     assert restored == {}
 
 
+def test_build_current_snapshot_only_includes_known_keys():
+    import datetime
+    state = _sample_state()
+    state["secret_password"] = "nope"
+    snap = save_code.build_current_snapshot(
+        state, now=datetime.datetime(2026, 7, 9, 10, 0, 0))
+    assert "secret_password" not in snap
+    assert snap["biome"] == "kyoto"
+    assert snap["saved_at"] == "2026-07-09T10:00:00"
+
+
+def test_build_current_snapshot_defaults_saved_at_to_now():
+    snap = save_code.build_current_snapshot({"biome": "kyoto"})
+    assert "saved_at" in snap and snap["saved_at"]
+
+
+def test_encode_current_state_round_trips_like_encode_save():
+    import datetime
+    state = _sample_state()
+    now = datetime.datetime(2026, 7, 9, 10, 0, 0)
+    code = save_code.encode_current_state(state, now=now)
+    restored = save_code.decode_save(code)
+    assert restored is not None
+    assert restored["biome"] == "kyoto"
+    assert restored["residents"] == {"shijukara", "mejiro"}
+    assert restored["saved_at"] == "2026-07-09T10:00:00"
+
+
+def test_encode_current_state_supports_dict_like_session_state():
+    # st.session_state は dict そのものではないが .get(key, default) を持つ。
+    # ここでは通常の dict で「.get だけに依存する」実装であることを確認する。
+    class FakeSessionState(dict):
+        pass
+
+    state = FakeSessionState(_sample_state())
+    code = save_code.encode_current_state(state)
+    restored = save_code.decode_save(code)
+    assert restored is not None
+    assert restored["biome"] == "kyoto"
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

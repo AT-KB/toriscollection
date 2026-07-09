@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import base64
 import json
+from datetime import datetime
 
 # セーブコードのフォーマットバージョン。将来キー構成を変えるときはこれを上げ、
 # 旧バージョンのコードは decode_save が None を返して静かに拒否する。
@@ -126,3 +127,20 @@ def decode_save(code: str) -> dict | None:
     # 未知キーは無視して既知キーだけ通す(将来のフォーマット変更・改ざんへの安全弁)
     cleaned = {k: v for k, v in data.items() if k in SAVE_KEYS}
     return _restore_payload(cleaned)
+
+
+def build_current_snapshot(state: dict, now: datetime | None = None) -> dict:
+    """session_state 相当の dict から、現在時刻(saved_at)付きのスナップショットを作る。
+
+    サイドバーの「セーブコードを書き出す」(手動バックアップ)と、自動保存
+    (`app._inject_local_save_write()`、ブラウザの localStorage への書き込み)の
+    両方が同じロジックを使うための共通ヘルパー(ロジックの重複を避ける)。
+    """
+    snapshot = {k: state.get(k) for k in SAVE_KEYS if k in state}
+    snapshot["saved_at"] = (now or datetime.now()).isoformat(timespec="seconds")
+    return snapshot
+
+
+def encode_current_state(state: dict, now: datetime | None = None) -> str:
+    """`build_current_snapshot` + `encode_save` をまとめた便利関数。"""
+    return encode_save(build_current_snapshot(state, now))

@@ -3,6 +3,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import random
 import math
+import json
 from datetime import datetime, timedelta
 from species_loader import BIOMES, BIOME_MIGRATION, PLANTS, INSECTS, BIRDS, SEASON_TEMP_OFFSET
 from engine import (
@@ -504,6 +505,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# 自動保存(ローカル保存MVP・案A上乗せ)で使う localStorage のキー名。
+# 書き込み(_inject_local_save_write)・読み込みチェック(_inject_local_restore_check)・
+# 壊れたデータの掃除(render_login_screen)の3箇所で共通に使う。
+_LOCAL_SAVE_STORAGE_KEY = "toris_save_code"
+
+
 def _inject_pwa_head():
     """将来のTWA(Bubblewrap)化に備え、web app manifest をブラウザに知らせる
     (PWA/TWAの下準備)。
@@ -632,6 +639,50 @@ def _inject_native_share_button():
 _inject_native_share_button()
 
 
+def _inject_local_save_write():
+    """現在の進行データを、ブラウザの localStorage に自動保存する(自動再開MVP)。
+
+    案A(ブラウザストレージ、`docs/team/proposals/2026-07-04_ローカル保存MVP技術検討.md`)を
+    案B(セーブコード方式・既存実装)へ"上乗せ"する形の実装。保存内容は
+    `save_code.encode_current_state()` が作る、手動書き出し(サイドバー)と
+    完全に同一フォーマットのセーブコード文字列そのものであり、復元時は
+    既存の `_start_local_session(restore=...)` をそのまま再利用する
+    (新しい復元ロジックは作らない)。
+
+    `_inject_pwa_head()` と同じ一方向 JS 注入パターン(components.html、
+    双方向のカスタムコンポーネントではない)。この関数は毎回の script rerun
+    ごとに呼ばれ、そのつど最新の状態で localStorage を上書きする
+    (「植える・時間経過・観察などの操作のたび」を、個別のフックを増やさず
+    シンプルに満たす)。
+
+    current_tester_id が未設定(まだセッションが始まっていない=ログイン画面)
+    のときは何もしない。エンコードに失敗しても例外は投げず、本編の動作には
+    一切影響させない(壊さない方針)。
+    """
+    if not st.session_state.get("current_tester_id"):
+        return
+    try:
+        code = save_code.encode_current_state(st.session_state)
+    except Exception:
+        return
+    code_json = json.dumps(code)  # JS文字列リテラルとして安全にエスケープする
+    key_json = json.dumps(_LOCAL_SAVE_STORAGE_KEY)
+    components.html(
+        f"""
+        <script>
+        (function () {{
+          try {{
+            window.top.localStorage.setItem({key_json}, {code_json});
+          }} catch (e) {{
+            // localStorage無効・シークレットモード等で失敗しても本編には影響させない
+          }}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+
+
 # ============= State =============
 def _init_default_state():
     """真っさらな初期状態を session_state にセットする(Sheets には一切触れない)。
@@ -746,13 +797,129 @@ def _start_local_session(restore=None):
             )
 
 
+def _inject_local_restore_check():
+    """ログイン画面(まだセッションが始まっていない状態)で、ブラウザの
+    localStorage に前回の自動保存(`_inject_local_save_write()`)があるかを確認し、
+    あれば `?local_restore=<コード>` を付けてトップウィンドウごとリロードする。
+
+    `ritual.py`(`?ritual_obs=...`)・`ads.py`(`?ad_result=...`)と同じ、
+    JS→Python の片道経路(top window クエリパラメータ)パターンをそのまま踏襲する。
+    localStorage が空、または読み取りに失敗した場合は何もしない
+    (=通常の「新規スタート/セーブコードで再開」の選択画面がそのまま表示される)。
+
+    無限リダイレクトループ対策: この関数はコードが実際に localStorage に
+    存在するときにしか location を書き換えない(状態駆動・カウンタに依存しない)。
+    復元が失敗した場合の後始末(localStorage の掃除・この関数自体の呼び出し停止)は
+    呼び出し側の `render_login_screen()` が `_local_restore_failed` フラグで行う
+    (`_handle_local_restore_query()` 参照)。
+
+    実装上の注意(実機Playwrightで判明した制約): `components.html()` が作る
+    iframe は `sandbox` 属性に `allow-top-navigation`/
+    `allow-top-navigation-by-user-activation` を含まないため、iframe内の
+    スクリプトから直接 `window.top.location.href = ...` を書き換えるトップ
+    ウィンドウ遷移はブラウザに拒否される(コンソールに
+    "Unsafe attempt to initiate navigation ... sandboxed" エラーが出る)。
+    `ritual.py`/`ads.py` の同パターンがこれまで動いていたのは、常にボタン
+    クリック(ユーザー操作)というユーザーアクティベーションの文脈内で
+    遷移を発火していたため(`allow-top-navigation-by-user-activation` 相当が
+    暗黙に満たされていた)。本関数はページロード直後に自動発火する必要があり
+    ユーザー操作を伴わないため、`_inject_pwa_head()` と同じ「iframe内から
+    `window.parent.document` に `<script>` 要素を生成して差し込む」手法を使い、
+    実際の localStorage 読み取り・location 書き換えはトップウィンドウ自身の
+    (サンドボックスされていない)実行コンテキストで行わせる。
+    """
+    # 実際にトップウィンドウで実行させたい中身(素のJS)。まず素朴な文字列として組み立て、
+    # json.dumps() でJS文字列リテラルとして安全にエスケープしてから
+    # <script>要素のtextContentへ渡す(手動でのJS文字列連結・二重エスケープを避ける)。
+    inner_script = (
+        "(function () {\n"
+        "  try {\n"
+        f"    var code = window.localStorage.getItem({json.dumps(_LOCAL_SAVE_STORAGE_KEY)});\n"
+        "    if (!code) return;\n"
+        "    var url = new URL(window.location.href);\n"
+        "    url.searchParams.set('local_restore', code);\n"
+        "    window.location.href = url.toString();\n"
+        "  } catch (e) {}\n"
+        "})();"
+    )
+    inner_script_json = json.dumps(inner_script)
+    components.html(
+        f"""
+        <script>
+        (function () {{
+          try {{
+            var doc = window.parent.document;
+            if (doc.getElementById('toris-local-restore-check')) return;  // 二重注入防止
+            var script = doc.createElement('script');
+            script.id = 'toris-local-restore-check';
+            script.textContent = {inner_script_json};
+            doc.head.appendChild(script);
+          }} catch (e) {{
+            // Streamlit内部構造の変化・localStorage無効等で失敗しても
+            // 通常の選択画面にフォールバックする
+          }}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+
+
+def _handle_local_restore_query():
+    """`_inject_local_restore_check()` が付けてきた `?local_restore=<コード>` を
+    受け取り、既存の「セーブコードで再開」ロジック(`_start_local_session`)を
+    そのまま呼び出して復元する。JS→Python の片道経路の受け口
+    (`_handle_ritual_observation()` と同じ形)。
+
+    `init_state()` の一番最初(ログイン画面を出すかどうかの判定より前)で呼ぶことで、
+    復元に成功した回はログイン画面を一切経由せずアプリ本編に入れるようにする。
+
+    復元に失敗しても例外は投げない(壊さない方針)。失敗時は
+    `st.session_state["_local_restore_failed"] = True` を立てるだけで、実際の
+    ブラウザ側クリーンアップ(localStorage の削除)は `render_login_screen()` に委譲する
+    (ここでは Python 側の状態を汚さないことだけに専念する)。
+
+    既にセッションが始まっている(current_tester_id 設定済み)場合は、
+    クエリパラメータだけ消して何もしない(二重復元・意図しない上書きを防ぐ)。
+    """
+    raw = st.query_params.get("local_restore")
+    if not raw:
+        return
+    if st.session_state.get("current_tester_id") is not None:
+        st.query_params.clear()
+        return
+    restored = None
+    try:
+        restored = save_code.decode_save(raw)
+    except Exception:
+        restored = None
+    if restored is None:
+        st.session_state["_local_restore_failed"] = True
+    else:
+        try:
+            _start_local_session(restore=restored)
+        except Exception:
+            st.session_state["_local_restore_failed"] = True
+    # パラメータを消す(リロードで再処理しないように)。これ自体が再実行を誘発する。
+    st.query_params.clear()
+
+
 def render_login_screen():
     """アプリの入口画面。ログイン・認証の概念はない
     (current_tester_id が未設定の時に表示する、開始方法の選択画面)。
 
     「新規スタート」か「セーブコードを読み込んで再開」のどちらかを選ぶだけで、
     名前の登録や選択は一切不要(ローカル保存 MVP)。
+
+    自動再開(ローカル保存MVP・案A上乗せ): 同じ端末・同じブラウザなら、通常は
+    この画面を表示する前に `_handle_local_restore_query()`(`init_state()` の
+    冒頭で呼ばれる)が localStorage の内容から自動的に復元を済ませてしまうため、
+    ここが実際に表示されるのは (1) 初回アクセスで localStorage が空、
+    (2) 自動復元が壊れたデータで失敗した、(3) ユーザーが意図的に
+    「セッションをリセット」した、のいずれかの場合になる。
     """
+    _restore_failed = st.session_state.pop("_local_restore_failed", False)
+
     st.markdown("# 🐦 Toris Collection")
     st.markdown(
         "<p style='color:#5a7a5a;'>土地を選び、植物を植え、時間が経つのを待つ。"
@@ -761,11 +928,37 @@ def render_login_screen():
     )
     st.info(
         "🔒 進行データ(図鑑・会った日数・落とし物など)は、この端末のこのブラウザにのみ"
-        "保存されます。ブラウザのデータを消す・別の端末や別のブラウザで開くと"
+        "保存されます。次にこの端末・このブラウザで開いたときは自動的に続きから"
+        "始まります。ブラウザのデータを消す・別の端末や別のブラウザで開くと"
         "引き継がれません。ときどき「セーブコードを書き出す」(サイドバーの中)で"
         "バックアップしておくと安心です。",
         icon="💾",
     )
+
+    if _restore_failed:
+        # 壊れたセーブデータを検出: ブラウザ側を1回だけ掃除し、この回は
+        # 自動復元チェックJSを再注入しない(無限リダイレクトループ防止)。
+        # 掃除後は localStorage が空になるため、次回以降のチェックは
+        # 何もしない(=通常の選択画面のまま)状態に自然に収束する。
+        key_json = json.dumps(_LOCAL_SAVE_STORAGE_KEY)
+        components.html(
+            f"""
+            <script>
+            (function () {{
+              try {{ window.top.localStorage.removeItem({key_json}); }} catch (e) {{}}
+            }})();
+            </script>
+            """,
+            height=0,
+        )
+        st.warning(
+            "この端末に保存されていた進行データを自動で読み込めませんでした"
+            "(壊れているか、対応していない形式のようです)。"
+            "セーブコードをお持ちの場合は、下から読み込んで再開してください。",
+            icon="⚠️",
+        )
+    else:
+        _inject_local_restore_check()
 
     start_mode = st.radio(
         "はじめかた",
@@ -1084,6 +1277,11 @@ def _evolve_since_last_visit(tester_id, last_at, now):
 
 
 def init_state():
+    # 自動再開(ローカル保存MVP・案A上乗せ): ログイン画面を出すかどうかを
+    # 判定する前に、まず「?local_restore=...」が来ていないか確認する。
+    # 復元に成功していればここで current_tester_id が設定され、
+    # 下の分岐でログイン画面を経由せずアプリ本編にそのまま入る。
+    _handle_local_restore_query()
     if st.session_state.get("current_tester_id") is None:
         render_login_screen()
         return  # render_login_screen が st.stop() を呼ぶので到達しない
@@ -1284,6 +1482,13 @@ def _handle_ad_reward_result():
 
 _handle_ad_reward_result()
 
+# 自動保存(ローカル保存MVP・案A上乗せ): セッションが始まっていれば
+# (=current_tester_id 設定済み。ログイン画面表示中は何もしない)、
+# 今回のrerunで確定した最新の状態をブラウザの localStorage に書き込む。
+# 「植える・時間経過・観察などの操作のたび」を、個別のフックを増やさず
+# 満たすため、毎回のscript rerunの終盤でまとめて1回だけ呼ぶ。
+_inject_local_save_write()
+
 
 # ============= Header =============
 st.markdown("# 🐦 #Toris Collection#")
@@ -1390,12 +1595,7 @@ with st.sidebar:
             "別の端末へ引き継ぐ・バックアップを残す時は、ここでセーブコードを"
             "書き出して保管してください。"
         )
-        _save_snapshot = {
-            k: st.session_state.get(k) for k in save_code.SAVE_KEYS
-            if k in st.session_state
-        }
-        _save_snapshot["saved_at"] = datetime.now().isoformat(timespec="seconds")
-        _save_code_str = save_code.encode_save(_save_snapshot)
+        _save_code_str = save_code.encode_current_state(st.session_state)
         st.download_button(
             "⬇️ セーブコードを書き出す",
             data=_save_code_str,
