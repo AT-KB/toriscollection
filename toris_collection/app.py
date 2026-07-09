@@ -26,6 +26,7 @@ import badges  # 会った日数の節目バッジ(静かな演出)
 import secrets as _secrets_mod  # ローカル識別子の生成用(st.secrets とは無関係)
 import ads  # 広告UIの土台(プレースホルダー。実SDK未接続)
 import garden_items  # 広告リワード「今日の庭アイテム」(6種・6時間限定)
+import tutorial  # 新規スタート向けチュートリアル(案内文言・ステップ進行の純粋ロジック)
 
 
 # ============================================================
@@ -658,6 +659,10 @@ def _init_default_state():
     st.session_state.garden_item_placement = None
     st.session_state.garden_item_claimed_date = ""
     st.session_state.twig_reward_claimed_date = ""
+    # 新規スタート用チュートリアル(スキップ可・強制ブロックなし)。
+    # _start_local_session がこの直後に restore の有無で上書きする。
+    st.session_state.tutorial_done = False
+    st.session_state.tutorial_step = 0
 
 
 def _start_local_session(restore=None):
@@ -723,6 +728,10 @@ def _start_local_session(restore=None):
         st.session_state.bird_visited_biomes = visited_by_bird
 
         st.session_state.month = datetime.now().month
+
+        # セーブコードからの復元 = 既に一度プレイしたことがある人なので、
+        # チュートリアル(新規スタート向けの案内)は表示しない。
+        st.session_state.tutorial_done = True
 
     st.session_state.initialized = True
 
@@ -1285,6 +1294,66 @@ st.markdown(
 )
 
 
+# ============= チュートリアル(新規スタート専用・スキップ可)=============
+# 交渉不能の原則(受動的・罰しない)を守るため、ポップアップでブロックせず、
+# ページ最上部に「案内」として静かに置くだけ。いつでも「スキップ」で消せて、
+# 一度スキップ/完了すると tutorial_done が立ち、二度と出さない(このブラウザ
+# セッションの間。セーブコードには含めない=既存ユーザーの復元時は常に非表示)。
+# 文言・ステップ進行の純粋ロジックは tutorial.py に切り出し、ここでは
+# session_state の読み書きと描画だけを行う。
+
+
+def _tutorial_finish():
+    st.session_state.tutorial_done = True
+
+
+def _tutorial_next():
+    step = tutorial.advance_step(st.session_state.get("tutorial_step", 0))
+    st.session_state.tutorial_step = step
+    if tutorial.is_done(step):
+        _tutorial_finish()
+
+
+def render_tutorial_banner():
+    """新規スタート直後だけ表示する、3ステップの案内バナー。
+
+    ステップ2(植物を植える)は、実際に1つ植えた時点で自動的に次へ進む
+    (「案内されながら進める」体験。手動の「次へ」でも進められる)。
+    どのステップからでも「チュートリアルをスキップ」でいつでも終了できる。
+    """
+    if st.session_state.get("tutorial_done", True):
+        return
+
+    step = tutorial.resolve_step(
+        st.session_state.get("tutorial_step", 0), st.session_state.get("planted")
+    )
+    st.session_state.tutorial_step = step
+
+    biome_name = BIOMES.get(st.session_state.biome, {}).get("name", st.session_state.biome)
+    content = tutorial.step_content(step, biome_name)
+
+    st.markdown(
+        f"<div style='background:#eef6ee; padding:14px 18px; border-radius:10px; "
+        f"border-left:4px solid #7ba87b; margin-bottom:14px;'>"
+        f"<div style='color:#3f5f3f; font-weight:600; margin-bottom:4px;'>{content['title']}</div>"
+        f"<div style='color:#4a6a4a; font-size:0.92em; line-height:1.6;'>{content['body']}</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+    col_next, col_skip = st.columns([1, 1])
+    with col_next:
+        if st.button(content["next_label"], key="tutorial_next_btn", use_container_width=True):
+            _tutorial_next()
+            st.rerun()
+    with col_skip:
+        if st.button("チュートリアルをスキップ", key="tutorial_skip_btn", use_container_width=True):
+            _tutorial_finish()
+            st.rerun()
+
+
+render_tutorial_banner()
+
+
 # ============= Sidebar =============
 with st.sidebar:
     # この端末だけのローカル識別子(サーバーには送らない。ログイン概念はない)
@@ -1346,9 +1415,9 @@ with st.sidebar:
         from engine import _try_load_centralities
         cents = _try_load_centralities()
         if cents:
-            st.caption(f"🔬 Sony CSL中心性: {len(cents)}種で有効")
+            st.caption(f"🔬 生態的な重要度スコア: {len(cents)}種で有効")
         else:
-            st.caption("🔬 Sony CSL中心性: シードrarityのみ使用")
+            st.caption("🔬 生態的な重要度スコア: シードrarityのみ使用")
     except Exception:
         pass
 
@@ -2469,7 +2538,7 @@ with tab_birds:
                     if info.get("centrality_used"):
                         st.write(
                             f"- GloBI補正済PageRank: **{info['centrality_used']:.2e}** "
-                            f"(Sony CSL補正値を使用)"
+                            f"(生態的な重要度スコアを使用)"
                         )
                     if info["incoming_paths"]:
                         paths = "、".join(
@@ -3106,7 +3175,7 @@ with tab_help:
     - **気温適合度 (temp_fit)**: 0〜1の値。その鳥の好む気温域の中心に近いほど1に近い、外れるほど0に近い。
     - **バイオーム補正 (biome_bonus)**: 1.0(好む土地) または 0.15(それ以外)。
     - **食物係数 (food_factor)**: 食物スコア(植物・昆虫からのエサ経路の合計重み)から計算。経路が太いほど高い。
-    - **レア度係数 (rarity_factor)**: 1 - rarity*0.85 で、レアな種ほど1未満に下がる。Sony CSL補正済PageRankを反映。
+    - **レア度係数 (rarity_factor)**: 1 - rarity*0.85 で、レアな種ほど1未満に下がる。生態ネットワーク上の重要度(補正済PageRank)を反映。
     - 末尾の **× 0.5** は、滞在2-4種に落ち着かせるための全体倍率。
 
     **食物経路** の表示は、その鳥が来る原因となった「植物 → 昆虫 → 鳥」または「植物 → 鳥」の経路と、各経路の重み(寄与度)です。
