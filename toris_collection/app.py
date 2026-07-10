@@ -639,6 +639,74 @@ def _inject_native_share_button():
 _inject_native_share_button()
 
 
+def _inject_native_save_code_share_button(save_code_str: str):
+    """Android版(Capacitorラップ)でのみ現れる、セーブコード共有ボタンを注入する。
+
+    2026-07-09 追記(P1修正): CEO実機報告「セーブコードを書き出すのがよく
+    わからん、押しても何も起こらない」への対応。`st.download_button` は
+    ブラウザの `<a download>` + blob URL でファイルダウンロードを行う仕組みだが、
+    CapacitorのネイティブWebView内ではこの種のダウンロードが正常に動作しない
+    ことがある(WebViewの既知の制約)。Web版(通常ブラウザ)では
+    `st.download_button` がそのまま動くため変更しない。
+
+    アプリ版では代わりに、既に導入済みの `@capacitor/share` プラグイン
+    (`_inject_native_share_button` と同じ判定パターン)でセーブコードの
+    文字列をネイティブの共有シートに渡す。メモアプリ・メッセージ・
+    クリップボードコピー等、OSの共有機能経由で確実に保存・送信できる。
+    サイドバーの `st.code`(選択してコピー)も既存のフォールバックとして
+    引き続き併存させる(Web版・アプリ版どちらでも確実に動く)。
+    """
+    payload = json.dumps(save_code_str)
+    components.html(
+        """
+        <script>
+        (function () {
+          try {
+            var doc = window.parent.document;
+            var win = window.parent;
+            if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+              return; // Web版(通常ブラウザ)では st.download_button がそのまま動く
+            }
+            var SAVE_CODE = """ + payload + """;
+            var existing = doc.getElementById('toris-save-share-btn');
+            if (existing) {
+              existing.dataset.saveCode = SAVE_CODE;
+              return; // 二重注入防止(最新のセーブコードだけ更新)
+            }
+            var btn = doc.createElement('button');
+            btn.id = 'toris-save-share-btn';
+            btn.textContent = '💾 セーブコードを共有';
+            btn.dataset.saveCode = SAVE_CODE;
+            btn.style.cssText = [
+              'position:fixed', 'right:14px', 'bottom:64px', 'z-index:9999',
+              'background:#a8845a', 'color:#fff', 'border:none',
+              'border-radius:20px', 'padding:10px 16px', 'font-size:14px',
+              'box-shadow:0 2px 8px rgba(0,0,0,0.2)', 'cursor:pointer'
+            ].join(';');
+            btn.addEventListener('click', function () {
+              try {
+                if (win.Capacitor.Plugins && win.Capacitor.Plugins.Share) {
+                  win.Capacitor.Plugins.Share.share({
+                    title: 'Toris Collection セーブコード',
+                    text: btn.dataset.saveCode,
+                    dialogTitle: 'セーブコードを共有・保存'
+                  });
+                }
+              } catch (e) {
+                // 共有に失敗しても本編の動作には影響させない
+              }
+            });
+            doc.body.appendChild(btn);
+          } catch (e) {
+            // Capacitor非搭載環境・DOM構造の変化等で失敗しても本編には影響させない
+          }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
 def _inject_local_save_write():
     """現在の進行データを、ブラウザの localStorage に自動保存する(自動再開MVP)。
 
@@ -709,7 +777,6 @@ def _init_default_state():
     # 広告リワード「今日の庭アイテム」(garden_items.py)。未配置ならNone。
     st.session_state.garden_item_placement = None
     st.session_state.garden_item_claimed_date = ""
-    st.session_state.twig_reward_claimed_date = ""
     # 新規スタート用チュートリアル(スキップ可・強制ブロックなし)。
     # _start_local_session がこの直後に restore の有無で上書きする。
     st.session_state.tutorial_done = False
@@ -1330,9 +1397,11 @@ def _mark_met_today(bird_id):
 def _grant_memento_now(tester_id, memento_id, bird_id):
     """不在ループの外から、単発で落とし物を1つ即時付与する共通ヘルパー。
 
-    広告リワード(落とし物連動・案A)専用。既存の不在中ループの roll_drop 抽選
-    (mementos.py)とは別枠の確定付与であり、確率抽選には一切触れない。
-    Sheetsへの書き戻しはベストエフォート(_sheets_safe、失敗してもアプリは止めない)。
+    既存の不在中ループの roll_drop 抽選(mementos.py)とは別枠の確定付与であり、
+    確率抽選には一切触れない。Sheetsへの書き戻しはベストエフォート
+    (_sheets_safe、失敗してもアプリは止めない)。
+    2026-07-09時点: 広告リワード「案A(小枝確定付与)」の削除により現在は
+    呼び出し元が無いが、将来の確定付与系の演出のために汎用ヘルパーとして残す。
     """
     kind = mem.memento_category(memento_id)
     target = mem.memento_target(memento_id) if ":" in memento_id else memento_id
@@ -1406,7 +1475,12 @@ def _handle_ritual_observation():
         _discovered = st.session_state.setdefault("discovered", set())
         _flash = []
         for bid in saved:
-            _is_first = _observed.get(bid, {}).get("count", 0) == 0
+            # 「初めて」= 図鑑への新規登録(discovered)かどうかで判定する
+            # (_evolve_since_last_visit と同じ判定軸に揃える。以前は
+            # observedのcountで判定していたため、絶対数観察は初めてでも
+            # discovered済み=図鑑には既に載っている鳥にまで「はじめての観察!」
+            # と出てしまう不一致があった)。
+            _is_first = bid not in _discovered
             rec = _observed.setdefault(bid, {"count": 0, "first": "", "last": ""})
             rec["count"] += 1
             _discovered.add(bid)  # 近くで観察できた鳥は当然「来た鳥」でもある
@@ -1430,7 +1504,7 @@ _handle_ritual_observation()
 def _handle_ad_reward_result():
     """リワード広告JS(ads.py の components.html)が top window のクエリパラメータ
     ?ad_result=success|fail|unavailable&ad_nonce=... を付けてリロードしてきたら、
-    保留中のリクエスト(ads_pending_twig / ads_pending_garden_item)と nonce を
+    保留中のリクエスト(ads_pending_garden_item)と nonce を
     照合し、一致かつ success のときだけ実際に報酬を確定する。
 
     _handle_ritual_observation() と同じ「JS→top.location のクエリ→ここ」という
@@ -1443,22 +1517,6 @@ def _handle_ad_reward_result():
         return
     nonce = st.query_params.get("ad_nonce")
     flash = None
-
-    twig_pending = st.session_state.get("ads_pending_twig")
-    if twig_pending and nonce and twig_pending.get("nonce") == nonce:
-        st.session_state.pop("ads_pending_twig", None)
-        if result == "success":
-            bird_id = twig_pending.get("bird_id")
-            if bird_id in BIRDS:
-                _tid = st.session_state.get("current_tester_id")
-                _mid = mem.twig_id(bird_id)
-                _grant_memento_now(_tid, _mid, bird_id)
-                ads.mark_claimed_today(st.session_state, "twig_reward_claimed_date")
-                flash = ("twig_success", BIRDS[bird_id].get("name", bird_id))
-        elif result == "unavailable":
-            flash = ("ad_unavailable", None)
-        else:
-            flash = ("ad_fail", None)
 
     item_pending = st.session_state.get("ads_pending_garden_item")
     if item_pending and nonce and item_pending.get("nonce") == nonce:
@@ -1602,12 +1660,20 @@ with st.sidebar:
             file_name="toris_collection_save.txt",
             mime="text/plain",
             use_container_width=True,
+            help="アプリ版(サイドロード)では反応しないことがあります。"
+                 "その場合は右下に出る「💾 セーブコードを共有」ボタン、"
+                 "または下のコピー欄をお使いください。",
         )
         # st.text_area(key=固定)だと初回描画時の値のまま更新が止まる
         # (Streamlitのウィジェット値キャッシュ)ため、st.code で読み取り専用表示にする。
         # コピー用ボタンが標準で付き、常に最新の _save_code_str を表示できる。
-        st.caption("コピーしたい場合はここから")
+        # (Web版・アプリ版どちらでも確実に動く、上のdownload_buttonの主要な
+        # フォールバック。2026-07-09 CEO実機報告により重要度が上がったため明記)
+        st.caption("⬆️のボタンで反応がない場合は、ここから選択してコピーできます")
         st.code(_save_code_str, language=None, wrap_lines=True)
+        # アプリ版(Capacitor)限定: ネイティブの共有シート経由で確実に渡せる
+        # ボタンを追加で出す(download_buttonがWebView内で動かないことがある対策)。
+        _inject_native_save_code_share_button(_save_code_str)
 
     st.markdown("---")
     # データソース状況
@@ -1870,7 +1936,7 @@ if hasattr(st, "dialog"):
             with cols[1]:
                 st.markdown(f"**{f['name']}**")
                 if f.get("first"):
-                    st.markdown("✨ *はじめての観察! 図鑑に生態が記録されました*")
+                    st.markdown("✨ *はじめまして! 新しく図鑑に登録されました*")
                 else:
                     st.caption("また会えました。図鑑の観察記録が増えます。")
         if st.button("とじる", key="obs_dialog_close", use_container_width=True):
@@ -1893,7 +1959,7 @@ if hasattr(st, "dialog"):
                 )
             with cols[1]:
                 if a.get("first"):
-                    st.markdown(f"**{a['name']}** が初めて庭に来ました ✨")
+                    st.markdown(f"✨ はじめまして、**{a['name']}**! 新しく図鑑に登録されました")
                 else:
                     st.markdown(f"**{a['name']}** が来ていました")
         deps = data.get("departures", [])
@@ -1947,11 +2013,7 @@ with tab_home:
     _ad_flash = st.session_state.pop("ad_reward_flash", None)
     if _ad_flash:
         _ad_kind, _ad_label = _ad_flash
-        if _ad_kind == "twig_success":
-            st.success(
-                f"🎁 広告を見てくれてありがとう。{_ad_label} から記念の小枝をもう一つもらいました。"
-            )
-        elif _ad_kind == "item_success":
+        if _ad_kind == "item_success":
             st.success(
                 f"🎁 広告を見てくれてありがとう。今日は「{_ad_label}」を庭に置きました(6時間)。"
             )
@@ -2054,7 +2116,7 @@ with tab_home:
                     unsafe_allow_html=True
                 )
 
-    # 「今日の庭アイテム」バッジ(広告リワード・案B)。GloBI由来の「なぜ来たか」
+    # 「今日の庭アイテム」バッジ(広告リワード・完全ランダム付与)。GloBI由来の「なぜ来たか」
     # 生態ログとは完全に別枠で表示する(混ぜない)。未配置・期限切れなら何も出さない。
     _garden_item = st.session_state.get("garden_item_placement")
     if garden_items.is_active(_garden_item):
@@ -2182,22 +2244,12 @@ with tab_home:
     # Android版(Capacitorネイティブ)のみ、AdMob実バナーを配線(既定 ADMOB_ENABLED=False
     # のため現状は無効・Web版には影響なし。ads.py の解説コメント参照)。
     ads.render_admob_banner(st.session_state)
-    # 任意のリワード広告(見ると今日だけ珍しい種が来やすくなる、の予定)。
-    # 現時点ではダミー(押しても庭の進み方には一切影響しない)。
-    ads.render_reward_ad_button(key_prefix="home_ads")
 
-    # 広告リワード(落とし物連動): 今日来た鳥から小枝をもう一つ(1日1回・確定付与)。
-    def _grant_twig_reward(bird_id):
-        _tid = st.session_state.current_tester_id
-        _mid = mem.twig_id(bird_id)
-        _grant_memento_now(_tid, _mid, bird_id)
-
-    ads.render_twig_reward_button(
-        st.session_state, st.session_state.residents, BIRDS,
-        grant_fn=_grant_twig_reward, key_prefix="home_ads",
-    )
-
-    # 広告リワード(庭アイテム・6種): 6時間だけ効く任意のおまけを1つ置ける(1日1回)。
+    # 広告リワード(庭アイテム・6種からランダムに1つ): 6時間だけ効く任意の
+    # おまけを1つ置ける(1日1回)。CEO確定仕様(2026-07-09)により、これが
+    # 唯一のリワード広告ボタン(選ぶUIは廃止・完全ランダム付与)。
+    def _place_garden_item(item_id):
+        st.session_state.garden_item_placement = garden_items.place_item(item_id)
     def _place_garden_item(item_id):
         st.session_state.garden_item_placement = garden_items.place_item(item_id)
 
@@ -2221,7 +2273,7 @@ with tab_radio:
     )
     st.markdown(
         "ここはあなたのコレクション。一度会った鳥は、庭を離れても、ここではいつでも会える。"
-        "会った鳥が増えるほどコーラスは豊かになり、よく会った鳥は群れで鳴く。",
+        "会った鳥が増えるほどキャストは豊かになり、よく会った鳥は群れで鳴く。",
         help="嵐や伐採で庭の植物が倒れても、ここで鳴く鳥は減りません。"
              "渡り鳥は季節が外れると一時的に引っ込みます。"
              "よく観察した鳥ほど近くで・群れで聞こえます。",
@@ -3359,9 +3411,22 @@ with tab_help:
     1. **土地(都市)を選ぶ**: 京都・シャーロットの2つから選びます。それぞれ気候と生息する鳥が違います。
     2. **植物を植える**: その土地に合う植物を選んで植えます。植物が昆虫を呼び、植物と昆虫が鳥を呼び寄せます。
     3. **しばらく待つ**: アプリを閉じている間にも、生態系は時間とともに動きます。次に開いたとき、新しい鳥が来ているかもしれません。
-    4. **鳥を眺める・聴く**: フィールドに来た鳥たちのコーラスを聴いたり、図鑑で詳細を確認したりできます。
+    4. **鳥を眺める・聴く**: フィールドに来た鳥たちのキャストを聴いたり、図鑑で詳細を確認したりできます。
+       はじめて出会った鳥・久しぶりに来た鳥は、ポップアップでお知らせします。
     5. **落とし物を集める**: 鳥はときどき羽根や種などの宝物を残します。集めるごとに図鑑が充実します。
-    6. **庭のラジオを聴く**: 図鑑に載った鳥たちが掛け合いで鳴くアンビエントラジオ。出会った鳥が多いほどコーラスが豊かになります。季節は1週間ごとに巡り、渡り鳥はいない季節はラジオから消えます。
+    6. **庭のラジオを聴く**: 図鑑に載った鳥たちが掛け合いで鳴くアンビエントラジオ。出会った鳥が多いほどキャストが豊かになります。季節は1週間ごとに巡り、渡り鳥はいない季節はラジオから消えます。
+    """)
+
+    st.markdown("### 鳥に出会えた時")
+    st.markdown("""
+    庭で鳥に出会う(留守のあいだに来ていた・「♪ 耳を澄ます」で近くまで来てくれた)と、
+    ポップアップでお知らせします。
+
+    - **はじめての種**: 「はじめまして! 新しく図鑑に登録されました」と表示され、図鑑にすぐ反映されます。
+    - **すでに図鑑にいる種**: 「また会えました」と、再会をやわらかく伝えます。
+
+    「♪ 耳を澄ます」で鳥に近づいているときは、しばらく待つと自動的に記録されます
+    (止めるボタンを押さなくても大丈夫です)。
     """)
 
     st.markdown("### 出現確率の仕組み(図鑑の「なぜこの確率?」)")
@@ -3437,12 +3502,28 @@ with tab_help:
     進行データ(バイオーム・植えた植物・図鑑・会った日数・落とし物・メモなど)は、
     この端末のこのブラウザにのみ保存されます。サーバーには送られません。
 
-    - ブラウザのデータを消す・別の端末や別のブラウザで開くと、記録は引き継がれません。
-    - サイドバーの「💾 セーブコード(バックアップ)」から、いつでも進行データを
-      1本のコードとして書き出せます。書き出したコードは、開始画面の
-      「セーブコードを読み込んで再開」から読み込むと復元できます。
+    - **同じ端末・同じブラウザなら、開くだけで自動的に続きから始まります**
+      (裏でセーブコードを自動保存しているため、毎回読み込み直す必要はありません)。
+    - ブラウザのデータを消す・別の端末や別のブラウザで開く時は、記録は自動では
+      引き継がれません。サイドバーの「💾 セーブコード(バックアップ)」から、
+      いつでも進行データを1本のコードとして書き出せます。書き出したコードは、
+      開始画面の「セーブコードを読み込んで再開」から読み込むと復元できます。
+    - アプリ版で「⬇️ セーブコードを書き出す」ボタンが反応しない場合は、
+      同じ場所にある「💾 セーブコードを共有」ボタン(共有シート経由)か、
+      コードを直接選択してコピーする欄をお使いください。
     - セーブコードは手元で保管するものです(サーバーには送信されません)。
       失くすと復元できないので、大事な節目でときどき書き出しておくのがおすすめです。
+    """)
+
+    st.markdown("### 広告について(すべて任意)")
+    st.markdown("""
+    広告は庭の下部にある、完全に任意の応援広告だけです。
+
+    - 鳥の声・ラジオ・図鑑は、広告を見ても見なくても、いつもどおり無料で楽しめます。
+    - 「🎁 応援広告(庭に道具をひとつ)」を見ると、アメリカの裏庭バードウォッチング
+      文化の道具(バードフィーダー・バードバス等、全6種)から**ランダムで1つ**、
+      庭に6時間だけ置けます。1日1回だけの、完全に任意のおまけです。
+    - 広告を見なくても、鳥の来やすさやコレクションの進み方は一切変わりません。
     """)
 
     st.caption(

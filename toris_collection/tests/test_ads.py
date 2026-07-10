@@ -127,8 +127,8 @@ def test_render_pending_ad_loader_noop_when_disabled():
     orig = ads.ADMOB_ENABLED
     try:
         ads.ADMOB_ENABLED = False
-        state = {"ads_pending_twig": {"nonce": "abc", "bird_id": "kawasemi"}}
-        assert ads.render_pending_ad_loader(state, "ads_pending_twig") is False
+        state = {"ads_pending_garden_item": {"nonce": "abc", "item_id": "feeder"}}
+        assert ads.render_pending_ad_loader(state, "ads_pending_garden_item") is False
     finally:
         ads.ADMOB_ENABLED = orig
 
@@ -138,7 +138,7 @@ def test_render_pending_ad_loader_noop_when_no_pending():
     orig = ads.ADMOB_ENABLED
     try:
         ads.ADMOB_ENABLED = True
-        assert ads.render_pending_ad_loader({}, "ads_pending_twig") is False
+        assert ads.render_pending_ad_loader({}, "ads_pending_garden_item") is False
     finally:
         ads.ADMOB_ENABLED = orig
 
@@ -154,6 +154,56 @@ def test_reward_js_template_contains_expected_admob_calls():
         "window.top.location", "ad_result", "ad_nonce",
     ):
         assert token in js, f"missing token: {token}"
+
+
+# ── 2026-07-09追記: 「読み込んでいます」が永遠に固まるP0バグの修正 ──────────
+
+def test_reward_js_template_has_staged_timeouts_that_never_hang_forever():
+    # 開始前(12秒)・視聴中(90秒)の二段階タイムアウトが両方存在すること
+    # (CEO実機報告: 広告が「読み込んでいます」のまま一生終わらない、への対策)。
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    assert "12000" in js, "12秒の開始前タイムアウトが無い"
+    assert "90000" in js, "90秒の視聴中タイムアウトが無い"
+    # 120秒の単一タイムアウト(旧実装)には戻っていないこと
+    assert "120000" not in js
+
+
+def test_reward_js_template_listens_for_loaded_and_showed_events():
+    # 開始前→視聴中の安全弁切り替えに必要な Loaded/Showed イベントを購読している
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    assert "onRewardedVideoAdLoaded" in js
+    assert "onRewardedVideoAdShowed" in js
+
+
+def test_reward_js_template_has_console_logging_for_debugging():
+    # 実機再現時にログから原因を追えるよう console.log を仕込んでいること
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    assert "console.log" in js
+
+
+# ── 2026-07-09追記: リワード広告を1本化・完全ランダム化(CEO確定仕様) ──────
+
+def test_twig_and_dummy_reward_functions_are_removed():
+    # 案A(小枝確定付与)・「珍しい鳥が来やすくなる」ダミー案は完全に削除されている
+    assert not hasattr(ads, "render_twig_reward_button")
+    assert not hasattr(ads, "render_reward_ad_button")
+
+
+def test_no_rare_bird_probability_wording_remains_in_module():
+    # 交渉不能の原則4(生態に誠実): 広告で到来確率を操作する概念の文言が
+    # ソース中に残っていないこと(コメント・docstring含め完全除去の確認)。
+    src = open(os.path.join(os.path.dirname(__file__), "..", "ads.py"),
+                encoding="utf-8").read()
+    assert "珍しい" not in src
+
+
+def test_garden_item_button_is_now_the_only_reward_pending_key():
+    # pending_key の一本化: ads_pending_twig は完全に廃止され、
+    # ads_pending_garden_item だけが残っていること。
+    src = open(os.path.join(os.path.dirname(__file__), "..", "ads.py"),
+                encoding="utf-8").read()
+    assert "ads_pending_twig" not in src
+    assert "ads_pending_garden_item" in src
 
 
 def _run():

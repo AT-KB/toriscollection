@@ -10,7 +10,7 @@
     → render_radio は residents ではなく observed/discovered を読む。
       これがコレクション性の構造的な保証。
 
-  観察した鳥だけが鳴く。会った鳥が増えるほどコーラスが豊かになる。
+  観察した鳥だけが鳴く。会った鳥が増えるほどキャストが豊かになる。
   さらに、よく会った社会性の鳥は「群れ」で鳴き、声に厚みが増す(flock.py)。
   捕まえる仕組みはない。ただ聴く。
 
@@ -191,6 +191,19 @@ def render_radio(
     current_biome = selected_biome or biome_id
     if current_biome not in biome_ids:
         current_biome = biome_ids[0]
+
+    # 2026-07-09追記(P2修正): 庭タブで土地を切り替えた時、ラジオタブの
+    # バイオーム選択が追従せず「独立して選べてしまう」ことが分かりにくい、
+    # という指摘への対応。st.radio は key を持つと以後は index 引数を無視して
+    # 前回選択を保持し続けるため、「庭の土地が変わった」ことを検知した時だけ
+    # ウィジェットの保存値を消して強制的に追従させる(それ以外は、ラジオタブ内で
+    # 過去にコレクションした別バイオームの顔ぶれを聴きたい時のために、
+    # 手動での一時的な聴き比べは引き続きできるようにする)。
+    _sync_key = f"{key_prefix}_biome_synced_from"
+    _widget_key = f"{key_prefix}_biome_select"
+    if st.session_state.get(_sync_key) != biome_id:
+        st.session_state[_sync_key] = biome_id
+        st.session_state.pop(_widget_key, None)
     default_idx = biome_ids.index(current_biome)
 
     col_biome, col_time = st.columns([2, 1])
@@ -201,21 +214,32 @@ def render_radio(
             format_func=lambda x: biome_labels[x],
             index=default_idx,
             horizontal=True,
-            key=f"{key_prefix}_biome_select",
+            key=_widget_key,
             label_visibility="collapsed",
+            help="今、庭で選んでいる土地に自動的に合わせます。過去にコレクション"
+                 "した別の土地の顔ぶれを聴きたい時だけ、ここで一時的に切り替えられます。",
         )
     with col_time:
         # 既定は「今の時刻」= 端末のローカル時刻に追従(JS の new Date() で判定)。
-        # 手動で時間帯を選べば、その時間のさえずり/地鳴きの好みで鳴く。
-        time_options = ["🕒 今の時刻", "朝 (4-8時)", "昼 (10-15時)", "夕 (16-19時)", "夜 (20-3時)"]
+        # これがラジオの核(実時刻ラジオ=朝はさえずり、夜は静か)。
+        # 手動で時間帯を選べば、その時間のさえずり/地鳴きの好みで試し聴きできる。
+        # 2026-07-09追記(P2修正): 「今の時刻」表記だけでは何のための選択肢か
+        # 分かりにくい、という指摘を受け、見出しを表示した上で各選択肢を
+        # 雰囲気(🌅🌞🌆🌙)で表すようにした。裏側の「実時刻に応じて鳴き方が
+        # 変わる」仕組み自体(use_real_time)は変更していない。
+        time_options = [
+            "🕒 今の時間のまま", "🌅 朝の庭", "🌞 昼の庭", "🌆 夕方の庭", "🌙 夜の庭",
+        ]
         time_hours  = [None, 6, 12, 17, 22]
         t_idx = st.selectbox(
-            "時間帯",
+            "鳴く時間帯",
             options=range(len(time_options)),
             format_func=lambda i: time_options[i],
             index=0,
             key=f"{key_prefix}_time_select",
-            label_visibility="collapsed",
+            help="既定はこの端末の今の時間に合わせて鳴きます"
+                 "(朝はさえずり、夜は静かに)。試しに別の時間帯の雰囲気を"
+                 "聴くこともできます。",
         )
     use_real_time = time_hours[t_idx] is None
     sim_hour = 12 if use_real_time else time_hours[t_idx]
@@ -225,11 +249,14 @@ def render_radio(
     # ヒーリングBGMモード: やわらかな持続音(パッド)が主役。鳥は“ときどき1羽”だけ、
     # 静かに鳴く。録音の背景ノイズは、鳥が鳴かない時間を長くとる+強めのゲート/低域
     # 通過でパッドに溶け込ませる(消しきれないノイズを目立たせない設計)。
+    # 2026-07-09追記(P2修正): ボタン表記に説明文が同居して分かりにくい、との
+    # 指摘を受け、表記は「ヒーリングBGMスイッチ」に簡略化(説明は help に集約)。
     bgm_mode = st.toggle(
-        "🎧 ヒーリングBGM(鳥はときどき・環境音が主役)",
+        "🎧 ヒーリングBGMスイッチ",
         value=False,
         key=f"{key_prefix}_bgm_toggle",
-        help="作業や就寝のお供に。鳥の声は控えめになり、環境音が中心になります。",
+        help="鳥の声は控えめになり、環境音がやわらかく主役になります。"
+             "作業や就寝のお供に。",
     )
 
     # ── バイオームの観察済み鳥を絞り込む ──────────────────────

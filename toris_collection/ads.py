@@ -18,27 +18,33 @@ ads.py - 広告UIの土台(プレースホルダー)
 
   将来ここに実SDKを差し込む際は:
     - render_banner_placeholder() の中身を実SDKのタグ/コンポーネントに置き換える
-    - render_reward_ad_button() の disabled/no-op 部分を実際のリワード広告呼び出しに置き換える
-  だけで済むよう、呼び出し側(app.py)とはこの2関数のインターフェースだけで疎結合にしてある。
+    - render_garden_item_button() の disabled/no-op 部分を実際のリワード広告呼び出しに置き換える
+  だけで済むよう、呼び出し側(app.py)とはこれらの関数のインターフェースだけで疎結合にしてある。
 
 集計/判定ロジックは Streamlit から切り離した純粋関数。テスト可能。
 
 ■ 2026-07-08 追記: 広告リワードアイテム拡充
   docs/team/proposals/2026-07-08_広告リワードアイテム拡充案.md に基づき、
-  以下2種類の「見ると1日1回だけ受け取れる」リワードを追加した(いずれも完全に任意):
-    - 落とし物(mementos)連動リワード: 今日庭に来た鳥から小枝を1個確定付与。
-    - 庭アイテム(garden_items.py・6種)配置リワード: 6時間だけ効くおまけを1つ置ける。
-  どちらも1日1回のゲートは `has_claimed_today`/`mark_claimed_today`(ISO日付文字列の
+  「見ると1日1回だけ受け取れる」庭アイテム(garden_items.py・6種)配置リワードを
+  追加した(6時間だけ効くおまけを1つ置ける・完全に任意)。
+  1日1回のゲートは `has_claimed_today`/`mark_claimed_today`(ISO日付文字列の
   比較、`app._mark_met_today` と同じ「今日=1カウント」パターン)で管理する。
-  実際の状態変更(memento付与・アイテム配置)は呼び出し側(app.py)の関数に委譲し、
+  実際の状態変更(アイテム配置)は呼び出し側(app.py)の関数に委譲し、
   ここでは UI と日付ゲートの判定だけを持つ(疎結合を保つ既存方針を踏襲)。
+
+■ 2026-07-09 追記(CEO確定仕様): リワード広告を1本化・完全ランダム化
+  以前あった案A(落とし物連動・小枝を確定付与)と、「見ると到来確率が上がる」
+  という未接続のダミー案は削除した。庭アイテムの「選ぶ」UIも廃止し、6種
+  (バイオーム制約はそのまま)の中から完全ランダムで1つ付与する方式にした。
+  広告=道具屋さんからのおまけ、という単純な1本のフローに揃えることで、
+  AdMobフロー(P0で安定化した箇所)もシンプルに保てる。
 
 ■ 2026-07-08 追記(実SDK接続): リワード広告の視聴完了を待ってから報酬を確定する
   JS↔Python連携
   - `ADMOB_ENABLED=False`(既定・現状の本番設定)のときは、これまでどおり
     「ボタンを押したら即時付与」(壊さない=挙動を一切変えない)。
   - `ADMOB_ENABLED=True` のときだけ、ボタン押下は即時付与せず
-    `session_state["ads_pending_twig"|"ads_pending_garden_item"]` に
+    `session_state["ads_pending_garden_item"]` に
     `{"nonce": ..., ...payload}` を積んで `st.rerun()` する。次の実行で
     `render_pending_ad_loader()` が実際に `@capacitor-community/admob` の
     `AdMob.showRewardVideoAd()` を呼び出す `components.html` を描画する。
@@ -252,35 +258,74 @@ def _load_admob_rewarded_unit_id() -> str:
 # 自体はネイティブの別Activity(WebViewの上に重なる全画面ビュー)として表示され、
 # 裏のWebViewを先にナビゲートしても広告再生は妨げないはずだが、念のため
 # ユーザーが広告を見終えてから戻す方が自然な体感になるため。
+#
+# 2026-07-09 追記(P0修正): 実機で「読み込んでいます」のまま終わらない不具合が
+# 報告された。原因は特定できていない(AdMob.initialize()が理由不明のまま
+# 一度も resolve/reject しない、等が実機ログから疑われる)が、原因の如何を
+# 問わず「絶対に固まらない」ことを保証するため、二段階のタイムアウトを導入する。
+#   1. START_TIMEOUT(12秒): 広告が実際に画面に表示される(Showedイベント)前に
+#      12秒経っても進まなければ、initialize/prepare/show のどこで止まっていても
+#      失敗扱いにする(CEO実機報告への直接対応: 10〜15秒で見切りをつける)。
+#   2. WATCH_TIMEOUT(90秒): 広告が表示された後、視聴完了(Dismissed)が万一
+#      来ない異常系に備えた、より長い最終安全弁。
+# あわせて console.log でも段階を記録し(タグ "[TorisAd]")、次回実機再現時に
+# chrome://inspect のリモートデバッグ / logcat から原因を追いやすくする。
 _ADMOB_REWARD_JS_TEMPLATE = """
 <script>
 (function () {
   var NONCE = "__NONCE__";
+  var TAG = '[TorisAd]';
 
-  function reportResult(status) {
+  function log(msg) {
+    try { console.log(TAG, msg); } catch (e) {}
+  }
+
+  function reportResult(status, reason) {
     try {
       var url = new URL(window.top.location.href);
       url.searchParams.set('ad_result', status);
       url.searchParams.set('ad_nonce', NONCE);
+      if (reason) { url.searchParams.set('ad_reason', reason); }
+      log('報告して戻ります: ' + status + (reason ? ' (' + reason + ')' : ''));
       window.top.location.href = url.toString();
-    } catch (e) {}
+    } catch (e) {
+      log('reportResult failed: ' + e);
+    }
   }
 
   var settled = false;
-  function finish(status) {
+  var startTimer = null;
+  var watchTimer = null;
+
+  function clearTimers() {
+    if (startTimer) { clearTimeout(startTimer); startTimer = null; }
+    if (watchTimer) { clearTimeout(watchTimer); watchTimer = null; }
+  }
+
+  function finish(status, reason) {
     if (settled) return;
     settled = true;
-    reportResult(status);
+    clearTimers();
+    reportResult(status, reason);
   }
+
+  // 安全弁1(開始前): initialize/prepare/show のどこで止まっても、
+  // 広告が実際に表示される前に12秒経てば失敗扱いにする。
+  startTimer = setTimeout(function () {
+    log('タイムアウト: 12秒たっても広告が始まらない(init/prepare/showのどこかで停止)');
+    finish('fail', 'timeout_before_start');
+  }, 12000);
 
   try {
     var win = window.parent;
     if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+      log('Web版のため広告SDKなし');
       finish('unavailable'); // Web版(通常ブラウザ)には広告SDKが無い
       return;
     }
     var AdMob = win.Capacitor.Plugins && win.Capacitor.Plugins.AdMob;
     if (!AdMob) {
+      log('AdMobプラグインが見つからない');
       finish('unavailable'); // プラグイン未導入のネイティブビルドでも落とさない
       return;
     }
@@ -289,32 +334,66 @@ _ADMOB_REWARD_JS_TEMPLATE = """
     var isTesting = __IS_TESTING__;
     var earned = false;
 
-    AdMob.addListener('onRewardedVideoAdReward', function () { earned = true; });
-    AdMob.addListener('onRewardedVideoAdDismissed', function () {
-      finish(earned ? 'success' : 'fail');
+    AdMob.addListener('onRewardedVideoAdLoaded', function () {
+      log('event: Loaded');
     });
-    AdMob.addListener('onRewardedVideoAdFailedToShow', function () { finish('fail'); });
-    AdMob.addListener('onRewardedVideoAdFailedToLoad', function () { finish('fail'); });
+    AdMob.addListener('onRewardedVideoAdShowed', function () {
+      log('event: Showed(広告が表示された。安全弁を延長)');
+      // 安全弁2(視聴中): 実際に表示されたら、開始前タイマーを止めて
+      // 視聴完了(Dismissed)が万一来ない異常系向けの長め安全弁に切り替える。
+      if (startTimer) { clearTimeout(startTimer); startTimer = null; }
+      watchTimer = setTimeout(function () {
+        log('タイムアウト: 表示後90秒たってもDismissedが来ない');
+        finish('fail', 'timeout_after_show');
+      }, 90000);
+    });
+    AdMob.addListener('onRewardedVideoAdReward', function () {
+      log('event: Reward獲得');
+      earned = true;
+    });
+    AdMob.addListener('onRewardedVideoAdDismissed', function () {
+      log('event: Dismissed (earned=' + earned + ')');
+      finish(earned ? 'success' : 'fail', earned ? undefined : 'dismissed_without_reward');
+    });
+    AdMob.addListener('onRewardedVideoAdFailedToShow', function (err) {
+      log('event: FailedToShow ' + (err && err.message ? err.message : ''));
+      finish('fail', 'failed_to_show');
+    });
+    AdMob.addListener('onRewardedVideoAdFailedToLoad', function (err) {
+      log('event: FailedToLoad ' + (err && err.message ? err.message : ''));
+      finish('fail', 'failed_to_load');
+    });
 
     function playAd() {
+      log('prepareRewardVideoAd を呼び出します');
       AdMob.prepareRewardVideoAd({ adId: unitId, isTesting: isTesting })
-        .then(function () { return AdMob.showRewardVideoAd(); })
-        .catch(function () { finish('fail'); });
+        .then(function () {
+          log('prepareRewardVideoAd 完了、showRewardVideoAd を呼び出します');
+          return AdMob.showRewardVideoAd();
+        })
+        .catch(function (e) {
+          log('prepare/show が失敗: ' + (e && e.message ? e.message : e));
+          finish('fail', 'prepare_or_show_rejected');
+        });
     }
 
     if (!win.__torisAdmobInitialized) {
       win.__torisAdmobInitialized = true;
-      AdMob.initialize().then(playAd).catch(function () { finish('fail'); });
+      log('AdMob.initialize() を呼び出します');
+      AdMob.initialize().then(function () {
+        log('initialize 完了');
+        playAd();
+      }).catch(function (e) {
+        log('initialize が失敗: ' + (e && e.message ? e.message : e));
+        finish('fail', 'init_rejected');
+      });
     } else {
+      log('初期化済みのため playAd へ');
       playAd();
     }
-
-    // 安全弁: 実機の異常系でイベントが一切発火しない場合でも pending 状態が
-    // 固まらないよう、2分でタイムアウトして失敗扱いにする(通常のリワード
-    // 動画は数十秒で終わる想定。報酬は付与しない=安全側に倒す)。
-    setTimeout(function () { finish('fail'); }, 120000);
   } catch (e) {
-    finish('fail'); // Capacitor非搭載環境・ブリッジ未接続等で失敗しても本編には影響させない
+    log('想定外の例外: ' + e);
+    finish('fail', 'exception'); // Capacitor非搭載環境・ブリッジ未接続等で失敗しても本編には影響させない
   }
 })();
 </script>
@@ -343,7 +422,10 @@ def render_pending_ad_loader(session_state, pending_key: str, key_prefix: str = 
     import streamlit as st
     import streamlit.components.v1 as components
 
-    st.caption("🎬 広告を読み込んでいます……見終わると自動で戻ります。")
+    st.caption(
+        "🎬 広告を読み込んでいます……見終わると自動で戻ります"
+        "(10秒ほど始まらない場合は自動的に終了します)。"
+    )
     unit_id = _load_admob_rewarded_unit_id()
     is_testing = unit_id == _ADMOB_TEST_REWARDED_UNIT_ID
     js = (
@@ -381,95 +463,26 @@ def render_banner_placeholder(session_state, key_prefix: str = "ads") -> None:
     )
 
 
-def render_reward_ad_button(key_prefix: str = "ads") -> None:
-    """任意のリワード広告ボタンのプレースホルダーを描画する。
-
-    将来「見ると今日だけ珍しい種が来やすくなる」等の一時的なブーストを
-    想定しているが、現時点では広告配信を開始していないため、押しても
-    ゲーム進行には何の影響も与えないダミー。あくまで完全に任意のおまけで
-    あり、見なくても庭の進み方・鳥の声は変わらないことを明示する。
-    """
-    import streamlit as st  # 遅延importでロジック部分をstreamlit非依存に保つ
-
-    with st.expander("🎁 応援広告(準備中)", expanded=False):
-        st.caption(
-            "見ると今日だけ珍しい鳥が来やすくなる……予定の任意広告です。"
-            "今はまだ広告配信を始めていません。見ても見なくても、"
-            "庭の進み方や鳥の声はいつもどおりです。"
-        )
-        if st.button(
-            "▶ 広告を見る(準備中)",
-            key=f"{key_prefix}_reward_btn",
-            use_container_width=True,
-        ):
-            st.info("広告はまだ準備中です。もうしばらくお待ちください。")
-
-
-def render_twig_reward_button(session_state, residents, birds_data, grant_fn,
-                              key_prefix: str = "ads") -> None:
-    """落とし物(mementos)連動リワード(1日1回)。
-
-    今日庭に来ている鳥(residents)から1羽選び、小枝(twig)を1個確定付与する。
-    実際の付与処理は `grant_fn(bird_id)` に委譲する(app.py 側が mementos の
-    session反映・Sheetsへのベストエフォート書き戻しを持つ。ここではUIと
-    「1日1回」の日付ゲートだけを扱う)。
-
-    庭に誰も来ていない日はボタンを無効化(選べる鳥がないため)する。
-
-    ADMOB_ENABLED=True のときは、押しても即時付与せず `session_state["ads_pending_twig"]`
-    に選んだ鳥と乱数(nonce)を積んで広告視聴フローへ回す(実際の付与は
-    `app._handle_ad_reward_result()` が視聴完了イベントを受け取ってから行う)。
-    ADMOB_ENABLED=False(既定)のときは、これまでどおり即時付与のまま(壊さない)。
-    """
-    import streamlit as st  # 遅延importでロジック部分をstreamlit非依存に保つ
-
-    flag_key = "twig_reward_claimed_date"
-    pending_key = "ads_pending_twig"
-    with st.expander("🎁 応援広告(今日来た鳥から、小枝をもう一つ)", expanded=False):
-        st.caption(
-            "見ると、今日庭に来てくれた鳥から、記念の小枝をもう一つもらえます。"
-            "見なくても、鳥の声や落とし物のチャンスはいつもどおりです。"
-        )
-        if has_claimed_today(session_state, flag_key):
-            st.caption("✓ 今日はもう受け取りました。また明日。")
-            return
-        if not residents:
-            st.caption("今日はまだ庭に鳥が来ていません。鳥が来てから受け取れます。")
-            return
-
-        if render_pending_ad_loader(session_state, pending_key, key_prefix=key_prefix):
-            return  # 広告視聴中: 通常のボタンUIは隠す
-
-        ids_sorted = sorted(
-            residents, key=lambda b: birds_data.get(b, {}).get("name", b)
-        )
-        choice = st.selectbox(
-            "小枝をもらう鳥を選ぶ",
-            options=ids_sorted,
-            format_func=lambda b: birds_data.get(b, {}).get("name", b),
-            key=f"{key_prefix}_twig_bird_choice",
-        )
-        if st.button(
-            "▶ 広告を見て、小枝をもらう",
-            key=f"{key_prefix}_twig_reward_btn",
-            use_container_width=True,
-        ):
-            if ADMOB_ENABLED:
-                session_state[pending_key] = {"nonce": uuid.uuid4().hex, "bird_id": choice}
-            else:
-                grant_fn(choice)
-                mark_claimed_today(session_state, flag_key)
-            st.rerun()
+# 2026-07-09 追記(CEO確定仕様): 広告リワードは「庭アイテムをランダムで1つ」
+# の1本に一本化した。以前あった案A(小枝を確定付与・render_twig_reward_button)、
+# および「見ると到来確率が上がる」という未接続のダミー案
+# (render_reward_ad_button)は削除した(交渉不能の原則4「生態に誠実」——
+# 到来確率を広告で恣意的に操作する概念は採用しない、という判断を明文化)。
+# 実質1種類のボタンにすることで、AdMobフロー(P0の安定化対象)もシンプルになる。
 
 
 def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
                               key_prefix: str = "ads") -> None:
     """庭アイテム(garden_items.py・6種)配置リワード(1日1回・6時間持続)。
 
+    2026-07-09 追記(CEO確定仕様): 「選ぶ」UIを廃止し、完全ランダムで1つ
+    付与する方式に一本化した(このリワードが広告ボタンの唯一の種類になる)。
+    今のバイオームで意味を持つアイテム(既存の `garden_items.is_available` の
+    制約=例: ハチドリ用給餌器はシャーロットのみ、をそのまま踏襲)の中から
+    等確率で1つ選ぶ。アイテム自体・数値効果は一切変更しない。
+
     実際の配置処理は `place_fn(item_id)` に委譲する(app.py 側が
     session_state["garden_item_placement"] を更新する)。
-    pp数値はユーザーには見せず、`garden_items.ITEMS` の hint/culture_note の
-    言葉に翻訳して見せる(提案書§4 UI仕様)。
 
     ADMOB_ENABLED=True のときは、押しても即時配置せず
     `session_state["ads_pending_garden_item"]` に選んだアイテムと乱数(nonce)を
@@ -477,12 +490,13 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
     視聴完了イベントを受け取ってから行う)。ADMOB_ENABLED=False(既定)のときは、
     これまでどおり即時配置のまま(壊さない)。
     """
+    import random
     import streamlit as st  # 遅延importでロジック部分をstreamlit非依存に保つ
     import garden_items as gi
 
     flag_key = "garden_item_claimed_date"
     pending_key = "ads_pending_garden_item"
-    with st.expander("🎁 応援広告(今日の庭アイテムを選ぶ)", expanded=False):
+    with st.expander("🎁 応援広告(庭に道具をひとつ)", expanded=False):
         active = session_state.get("garden_item_placement")
         if gi.is_active(active):
             item = gi.ITEMS.get(active.get("item_id"), {})
@@ -493,38 +507,35 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
             )
             return
         if has_claimed_today(session_state, flag_key):
-            st.caption("✓ 今日はもう1つ選びました。また明日、別のアイテムを選べます。")
+            st.caption("✓ 今日はもう受け取りました。また明日。")
             return
 
         if render_pending_ad_loader(session_state, pending_key, key_prefix=key_prefix):
             return  # 広告視聴中: 通常のボタンUIは隠す
 
+        available_items = [
+            item_id for item_id in gi.ITEM_ORDER
+            if gi.is_available(item_id, biome_id, birds_data)
+        ]
         st.caption(
-            "見ると、庭に6時間だけ道具を1つ置けます。アメリカの裏庭バードウォッチング"
-            "文化の道具を紹介する、今日だけの特別な小窓です。見なくても庭の進み方は"
-            "いつもどおりです。"
+            "見ると、アメリカの裏庭インテリアショップから、ランダムで道具を"
+            "1つもらえます。庭に6時間だけ置けるおまけです。見なくても庭の"
+            "進み方はいつもどおりです。"
         )
-        for item_id in gi.ITEM_ORDER:
-            item = gi.ITEMS[item_id]
-            label = f"{item['emoji']} {item['name']}"
-            available = gi.is_available(item_id, biome_id, birds_data)
-            if available:
-                st.markdown(f"**{label}**")
-                st.caption(f"{item['hint']} {item['culture_note']}")
-                if st.button(
-                    f"▶ {label} を置く",
-                    key=f"{key_prefix}_item_{item_id}_btn",
-                    use_container_width=True,
-                ):
-                    if ADMOB_ENABLED:
-                        session_state[pending_key] = {
-                            "nonce": uuid.uuid4().hex, "item_id": item_id,
-                        }
-                    else:
-                        place_fn(item_id)
-                        mark_claimed_today(session_state, flag_key)
-                    st.rerun()
+        if not available_items:
+            st.caption("今のこの庭では、まだ選べる道具がありません。")
+            return
+        if st.button(
+            "▶ 広告を見て、道具をもらう",
+            key=f"{key_prefix}_item_random_btn",
+            use_container_width=True,
+        ):
+            item_id = random.choice(available_items)
+            if ADMOB_ENABLED:
+                session_state[pending_key] = {
+                    "nonce": uuid.uuid4().hex, "item_id": item_id,
+                }
             else:
-                st.markdown(f"~~{label}~~ (今のこの庭では選べません)")
-                st.caption(gi.unavailable_reason(item_id, biome_id, birds_data))
-            st.markdown("---")
+                place_fn(item_id)
+                mark_claimed_today(session_state, flag_key)
+            st.rerun()

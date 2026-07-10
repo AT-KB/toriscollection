@@ -1,5 +1,5 @@
 """
-ritual.py - 鳥たちのコーラス UI (ステップ5a+5b)
+ritual.py - 鳥たちのキャスト UI (ステップ5a+5b)
 
 これまでの積み上げ:
   - ステップ3: 「♪ 耳を澄ます」で音を鳴らす(自動再生制限の突破)
@@ -164,7 +164,7 @@ def _fetch_bird_audio(args: tuple) -> tuple:
 
 def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     """
-    鳥たちのコーラスUI(4本枝・ホップメカニクス)をホームタブに描画する。
+    鳥たちのキャストUI(4本枝・ホップメカニクス)をホームタブに描画する。
 
     ロード戦略(遅延読み込み):
       - 初回: 軽量な招待ボタンだけ表示(xeno-canto アクセスなし → ホームタブ即時表示)
@@ -539,12 +539,27 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function saveObservations() {{
             if (saved || met.size === 0) return;
             saved = true;
+            if (autoSaveTimer) {{ clearTimeout(autoSaveTimer); autoSaveTimer = null; }}
             const ids = [...met].map(j => BIRDS[j].id).join(',');
             try {{
                 const url = new URL(window.top.location.href);
                 url.searchParams.set('ritual_obs', ids);
                 window.top.location.href = url.toString();
             }} catch(e) {{}}
+        }}
+
+        // 2026-07-09追記(P1修正): 以前は「♪ 耳を澄ます」を明示的に止める・
+        // ページを離れる、まで図鑑への反映(=保存の往復)を待っていたため、
+        // 「会えたのに図鑑に反映されない」という報告につながっていた
+        // (ユーザーはタブを切り替えるだけで、止めるボタンを押すとは限らない)。
+        // 出会いから少し余韻を置いた後、自動的に保存の往復を行うことで、
+        // 図鑑への反映と「出会えました」ポップアップ(app.py _obs_dialog)を
+        // すぐに出す。複数羽がほぼ同時に出会った場合はタイマーを延長して
+        // まとめて1回の往復にする(不要な連続リロードを避ける)。
+        let autoSaveTimer = null;
+        function scheduleAutoSave() {{
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(saveObservations, 4000);
         }}
 
         // ── 3D音響(HRTF) ─────────────────────────────────────
@@ -775,6 +790,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function markMet(i) {{
             if (met.has(i)) return;
             met.add(i);
+            scheduleAutoSave();  // 図鑑へすぐ反映(P1修正、上のコメント参照)
             // テキスト: hint + 名前、フェードインして残す
             const line = document.createElement('div');
             line.style.cssText = 'animation:rite_met_in 0.5s ease-out;';

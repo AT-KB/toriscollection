@@ -175,12 +175,12 @@ def test_is_item_boosted_arrival_only_for_active_targets():
 def test_daily_gate_claim_and_check():
     session = {}
     today = datetime(2026, 7, 8).date()
-    assert ads.has_claimed_today(session, "twig_reward_claimed_date", today) is False
-    ads.mark_claimed_today(session, "twig_reward_claimed_date", today)
-    assert ads.has_claimed_today(session, "twig_reward_claimed_date", today) is True
+    assert ads.has_claimed_today(session, "garden_item_claimed_date", today) is False
+    ads.mark_claimed_today(session, "garden_item_claimed_date", today)
+    assert ads.has_claimed_today(session, "garden_item_claimed_date", today) is True
 
     tomorrow = today + timedelta(days=1)
-    assert ads.has_claimed_today(session, "twig_reward_claimed_date", tomorrow) is False
+    assert ads.has_claimed_today(session, "garden_item_claimed_date", tomorrow) is False
 
 
 if __name__ == "__main__":
