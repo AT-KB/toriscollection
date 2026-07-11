@@ -4,6 +4,11 @@
     <string name="title_activity_main">Toris Collection</string>
     <string name="package_name">com.toriscollection.app</string>
     <string name="custom_url_scheme">com.toriscollection.app</string>
-    <!-- AdMob: 本番App ID(2026-07-08、CEOのAdMobアカウントで取得済み)。 -->
-    <string name="admob_app_id">ca-app-pub-9002945296291643~1195899268</string>
+    <!-- AdMob: 本番App ID(2026-07-08、CEOのAdMobアカウントで取得済み)は
+         ca-app-pub-9002945296291643~1195899268。
+         2026-07-11: Googleの審査(アカウント承認)が完了するまで本番IDでは
+         広告が一切配信されない("Account not approved yet"エラー)ため、
+         審査完了までGoogle公式のテスト用App IDに一時的に戻す。
+         審査完了の連絡が来たら、上記の本番IDに戻すこと。 -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
 </resources>
