@@ -1520,9 +1520,19 @@ def init_state():
 
 
 def _sheets_safe(fn, *args, **kwargs):
-    """書き戻しの共通ラッパ。失敗してもアプリは止めず、警告だけ出す"""
+    """書き戻しの共通ラッパ。失敗してもアプリは止めない。
+
+    2026-07-11修正(CEO実機報告): credentials.json 未配置(Sheets永続化を
+    ローカル保存方式に移行済み・sheets_client.py の CREDENTIALS_PATH 参照)の
+    環境では、この関数は毎回 FileNotFoundError で失敗するのが既定の想定内動作。
+    これを毎回 st.warning で表示するとノイズになる(受動的・かわいさ最優先の
+    原則に反する)ため、credentials.json 未配置に起因する失敗は静かに無視し、
+    それ以外の予期しない失敗のみ警告表示する。
+    """
     try:
         fn(*args, **kwargs)
+    except FileNotFoundError:
+        pass
     except Exception as e:
         st.warning(f"Sheets同期に失敗(処理は続行されます): {e}", icon="⚠️")
 
@@ -1620,6 +1630,17 @@ def _handle_ritual_observation():
     raw = st.query_params.get("ritual_obs")
     if not raw:
         return
+    # 2026-07-11追記(CEO実機報告調査用): 儀式で会った鳥が図鑑に反映されない
+    # 不具合の原因特定用。ここまで来た(=Python側がクエリを受け取れた)ことを
+    # ritual.py側の "[TorisRitual]" ログと対にして記録する。
+    components.html(
+        f"""
+        <script>
+        try {{ console.log('[TorisRitual]', 'python received ritual_obs=' + {json.dumps(raw)}); }} catch (e) {{}}
+        </script>
+        """,
+        height=0,
+    )
     tester_id = st.session_state.get("current_tester_id")
     biome_id = st.session_state.get("biome", "")
     bird_ids = [b for b in raw.split(",") if b and b in BIRDS]

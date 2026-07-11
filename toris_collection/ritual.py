@@ -536,11 +536,19 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             birdLeft.push(v < leftW ? lmin + v : mid + GAP_HALF + (v - leftW));
         }}
 
+        function ritLog(msg) {{
+            // 2026-07-11追記(CEO実機報告調査用): 儀式で会った鳥が図鑑に反映されない
+            // 不具合の原因特定用。"[TorisRitual]" タグで
+            // `adb logcat | Select-String "TorisRitual"` から追える。
+            try {{ console.log('[TorisRitual]', msg); }} catch (e) {{}}
+        }}
+
         function saveObservations() {{
             if (saved || met.size === 0) return;
             saved = true;
             if (autoSaveTimer) {{ clearTimeout(autoSaveTimer); autoSaveTimer = null; }}
             const ids = [...met].map(j => BIRDS[j].id).join(',');
+            ritLog('saveObservations: met=' + ids);
             try {{
                 const url = new URL(window.top.location.href);
                 url.searchParams.set('ritual_obs', ids);
@@ -555,7 +563,8 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 const script = doc.createElement('script');
                 script.textContent = 'window.location.href = ' + JSON.stringify(url.toString()) + ';';
                 doc.head.appendChild(script);
-            }} catch(e) {{}}
+                ritLog('redirect script injected -> ' + url.toString());
+            }} catch(e) {{ ritLog('failed: ' + e); }}
         }}
 
         // 2026-07-09追記(P1修正): 以前は「♪ 耳を澄ます」を明示的に止める・
