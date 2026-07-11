@@ -41,8 +41,9 @@ def test_copy_button_has_three_stage_fallback():
 
 def test_copy_button_gives_success_and_failure_feedback():
     # 「押しても何も起こらない」ように見えないための必須要件
+    # 2026-07-11: CEO依頼により、成功時の文言をより直感的な「セーブしました」に微調整
     src = _read_app_source()
-    assert "コピーしました" in src
+    assert "セーブしました" in src
     assert "コピーできませんでした" in src
 
 
@@ -61,6 +62,22 @@ def test_existing_fallback_ui_still_present():
     src = _read_app_source()
     assert "st.code(_save_code_str" in src
     assert "_inject_native_save_code_share_button(_save_code_str)" in src
+
+
+def test_fallback_controls_hidden_behind_toggle():
+    # 2026-07-11: CEO実機フィードバック「コピーと書き込むの違いが分からない」
+    # への対応。書き出し・直接表示・共有ボタンは常時表示せず、
+    # 「うまくいかない場合」チェックボックスの内側だけに配置する。
+    src = _read_app_source()
+    toggle_idx = src.index('st.checkbox("うまくいかない場合はこちら"')
+    copy_idx = src.index("_render_save_code_copy_button(_save_code_str)")
+    download_idx = src.index('"⬇️ セーブコードを書き出す"')
+    code_idx = src.index("st.code(_save_code_str")
+    share_idx = src.index("_inject_native_save_code_share_button(_save_code_str)")
+    # コピー ボタンはトグルより前(常時表示)
+    assert copy_idx < toggle_idx
+    # 書き出し・直接表示・共有ボタンはトグルより後(トグルの内側)
+    assert toggle_idx < download_idx < code_idx < share_idx
 
 
 def _run():

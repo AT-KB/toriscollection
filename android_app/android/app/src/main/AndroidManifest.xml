@@ -48,4 +48,11 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+      Google Mobile Ads SDK(AdMob)の広告ID取得に必要。
+      targetSdkVersion 33以降でこのSDKを使う場合、この宣言が無いと
+      SDK初期化・広告ID取得が正常に完了しないことがある(2026-07-10 実機で
+      リワード広告が「白画面→即終了」する不具合の調査で発覚)。
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 </manifest>
