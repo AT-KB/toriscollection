@@ -511,6 +511,29 @@ st.markdown("""
 _LOCAL_SAVE_STORAGE_KEY = "toris_save_code"
 
 
+def _log_local_restore_debug(msg: str):
+    """2026-07-11追記(CEO実機報告調査用): Python側で分かったこと(クエリ受信・
+    復元成否)を、ブラウザの console.log に "[TorisSave]" タグで出す。
+
+    Android実機(Capacitor版)で自動継続がうまく動いていないという報告の原因を
+    `adb logcat | Select-String "TorisSave"` で追えるようにするための、
+    JS側ログ(_inject_local_save_write・_inject_local_restore_check)と対になる
+    Python側からの片方向ログ。失敗しても本編の動作には一切影響させない
+    (components.html自体が失敗しても何もしないだけ)。
+    """
+    try:
+        components.html(
+            f"""
+            <script>
+            try {{ console.log('[TorisSave]', {json.dumps(msg)}); }} catch (e) {{}}
+            </script>
+            """,
+            height=0,
+        )
+    except Exception:
+        pass
+
+
 def _inject_pwa_head():
     """将来のTWA(Bubblewrap)化に備え、web app manifest をブラウザに知らせる
     (PWA/TWAの下準備)。
@@ -617,7 +640,7 @@ def _inject_native_share_button():
                   win.Capacitor.Plugins.Share.share({
                     title: 'Toris Collection',
                     text: '手のひらの庭に鳥がやってくる、癒しアプリ「Toris Collection」',
-                    url: 'https://toriscollection-test202605.streamlit.app/',
+                    url: 'https://toris-collection.onrender.com/',
                     dialogTitle: '共有する'
                   });
                 }
@@ -837,14 +860,24 @@ def _inject_local_save_write():
         return
     code_json = json.dumps(code)  # JS文字列リテラルとして安全にエスケープする
     key_json = json.dumps(_LOCAL_SAVE_STORAGE_KEY)
+    # 2026-07-11追記(CEO実機報告調査): Android実機(Capacitor版)で自動継続が
+    # 効いていないように見える不具合の原因特定用デバッグログ。タグ "[TorisSave]" で
+    # 統一し、`adb logcat | Select-String "TorisSave"` で書き込み成否・コード長を
+    # 追えるようにする(既存の ads.py の "[TorisAd]" ログと同じ狙い・同じパターン)。
+    # ログ自体は console.log の成否に関わらず try/except で握りつぶすので、
+    # 本編の自動保存動作(壊さない方針)には一切影響しない。
     components.html(
         f"""
         <script>
         (function () {{
+          var TAG = '[TorisSave]';
+          function log(msg) {{ try {{ console.log(TAG, msg); }} catch (e) {{}} }}
           try {{
             window.top.localStorage.setItem({key_json}, {code_json});
+            log('write ok, len=' + {code_json}.length);
           }} catch (e) {{
             // localStorage無効・シークレットモード等で失敗しても本編には影響させない
+            log('write failed: ' + e);
           }}
         }})();
         </script>
@@ -1000,15 +1033,22 @@ def _inject_local_restore_check():
     # 実際にトップウィンドウで実行させたい中身(素のJS)。まず素朴な文字列として組み立て、
     # json.dumps() でJS文字列リテラルとして安全にエスケープしてから
     # <script>要素のtextContentへ渡す(手動でのJS文字列連結・二重エスケープを避ける)。
+    # 2026-07-11追記(CEO実機報告調査): 上の _inject_local_save_write と同じ狙いの
+    # "[TorisSave]" デバッグログ。トップウィンドウの実行コンテキストで動くコードなので、
+    # 「保存はできているのに復元チェック側で見つからない」のか「復元チェック自体が
+    # 走っていない」のかを実機ログで切り分けられるようにする。
     inner_script = (
         "(function () {\n"
+        "  var TAG = '[TorisSave]';\n"
+        "  function log(msg) { try { console.log(TAG, msg); } catch (e) {} }\n"
         "  try {\n"
         f"    var code = window.localStorage.getItem({json.dumps(_LOCAL_SAVE_STORAGE_KEY)});\n"
-        "    if (!code) return;\n"
+        "    if (!code) { log('restore-check: no code found'); return; }\n"
+        "    log('restore-check: found code, len=' + code.length + ' -> redirecting');\n"
         "    var url = new URL(window.location.href);\n"
         "    url.searchParams.set('local_restore', code);\n"
         "    window.location.href = url.toString();\n"
-        "  } catch (e) {}\n"
+        "  } catch (e) { log('restore-check failed: ' + e); }\n"
         "})();"
     )
     inner_script_json = json.dumps(inner_script)
@@ -1016,6 +1056,8 @@ def _inject_local_restore_check():
         f"""
         <script>
         (function () {{
+          var TAG = '[TorisSave]';
+          function log(msg) {{ try {{ console.log(TAG, msg); }} catch (e) {{}} }}
           try {{
             var doc = window.parent.document;
             if (doc.getElementById('toris-local-restore-check')) return;  // 二重注入防止
@@ -1023,9 +1065,11 @@ def _inject_local_restore_check():
             script.id = 'toris-local-restore-check';
             script.textContent = {inner_script_json};
             doc.head.appendChild(script);
+            log('restore-check script injected into top document');
           }} catch (e) {{
             // Streamlit内部構造の変化・localStorage無効等で失敗しても
             // 通常の選択画面にフォールバックする
+            log('failed to inject restore-check script: ' + e);
           }}
         }})();
         </script>
@@ -1054,6 +1098,11 @@ def _handle_local_restore_query():
     raw = st.query_params.get("local_restore")
     if not raw:
         return
+    # 2026-07-11追記(CEO実機報告調査): ここまで来た(=Python側が
+    # ?local_restore= クエリを受け取れた)ことを "[TorisSave]" ログに残す。
+    # JS側(_inject_local_restore_check)のログと合わせて見ることで、
+    # 「JSはリダイレクトしたのにPython側に届いていない」パターンを切り分けられる。
+    _log_local_restore_debug(f"python received local_restore query, len={len(raw)}")
     if st.session_state.get("current_tester_id") is not None:
         st.query_params.clear()
         return
@@ -1064,11 +1113,14 @@ def _handle_local_restore_query():
         restored = None
     if restored is None:
         st.session_state["_local_restore_failed"] = True
+        _log_local_restore_debug("decode failed (corrupted or unsupported format)")
     else:
         try:
             _start_local_session(restore=restored)
-        except Exception:
+            _log_local_restore_debug("restore succeeded, session started")
+        except Exception as e:
             st.session_state["_local_restore_failed"] = True
+            _log_local_restore_debug(f"_start_local_session raised: {e}")
     # パラメータを消す(リロードで再処理しないように)。これ自体が再実行を誘発する。
     st.query_params.clear()
 
@@ -1114,7 +1166,14 @@ def render_login_screen():
             f"""
             <script>
             (function () {{
-              try {{ window.top.localStorage.removeItem({key_json}); }} catch (e) {{}}
+              var TAG = '[TorisSave]';
+              function log(msg) {{ try {{ console.log(TAG, msg); }} catch (e) {{}} }}
+              try {{
+                window.top.localStorage.removeItem({key_json});
+                log('cleaned up corrupted local save data');
+              }} catch (e) {{
+                log('cleanup failed: ' + e);
+              }}
             }})();
             </script>
             """,
