@@ -151,7 +151,7 @@ def test_reward_js_template_contains_expected_admob_calls():
         "prepareRewardVideoAd", "showRewardVideoAd",
         "onRewardedVideoAdReward", "onRewardedVideoAdDismissed",
         "onRewardedVideoAdFailedToShow", "onRewardedVideoAdFailedToLoad",
-        "window.top.location", "ad_result", "ad_nonce",
+        "toris_ad_pending_result", "localStorage.setItem",
     ):
         assert token in js, f"missing token: {token}"
 
@@ -204,6 +204,60 @@ def test_garden_item_button_is_now_the_only_reward_pending_key():
                 encoding="utf-8").read()
     assert "ads_pending_twig" not in src
     assert "ads_pending_garden_item" in src
+
+
+# ── 2026-07-10追記: sandbox iframe から top を直接遷移できない不具合の修正 ──
+# (最初の修正: window.top.documentへのscript注入による自己遷移。
+#  その後さらにP1修正でlocalStorage方式に置き換え。下のセクション参照。)
+
+def test_reward_js_template_does_not_directly_assign_top_location_href():
+    # components.html() のiframeはsandboxにallow-top-navigation系フラグが無いため、
+    # `window.top.location.href = ...` の直接代入はSecurityErrorで拒否される
+    # (実機Playwright確認済み)。この後継のP1修正でナビゲーション自体をこの
+    # モジュールから無くしたが、直接代入への後退が無いことは引き続き確認する。
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    assert "window.top.location.href =" not in js
+    assert "window.top.location.href=" not in js
+
+
+# ── 2026-07-10追記(P1修正・CEO承認): 広告結果の伝達をlocalStorage経由の
+# 「書いて後で読む」方式に変更(_inject_local_save_write/_inject_local_restore_checkと同じパターン) ──
+
+def test_reward_js_template_no_longer_navigates_directly_from_ad_callback():
+    # 実機PlaywrightでCDPのページライフサイクル(frozen→active)により、
+    # 広告視聴中の実際のバックグラウンド化を再現したところ、広告SDKコールバック
+    # の中で直接トップウィンドウへナビゲーションを試みる旧実装(window.top.document
+    # へのscript注入)は不安定(成功したり失敗したりする)ことが判明した。
+    # このモジュールはもはやナビゲーションを一切試みず、localStorageへの
+    # 書き込みだけを行うこと(ナビゲーションはapp.py側の独立したポーリングに委譲)。
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    assert "window.top.document" not in js
+    assert "createElement('script')" not in js
+    assert "appendChild(script)" not in js
+
+
+def test_reward_js_template_writes_pending_result_to_top_local_storage():
+    js = ads._ADMOB_REWARD_JS_TEMPLATE
+    assert "window.top.localStorage.setItem('toris_ad_pending_result'" in js
+    # status/nonce/reason/ts を持つペイロードであること(app.py側の読み取りと整合)
+    assert "status: status" in js
+    assert "nonce: NONCE" in js
+    assert "reason: reason" in js
+    assert "ts: Date.now()" in js
+
+
+def test_app_injects_ad_result_check_gated_by_admob_enabled():
+    # app.py 側: _inject_ad_result_check() が localStorage をポーリングし、
+    # 見つけたらナビゲーションする(旧ads.py実装と同じ「script注入」手法を
+    # app.py 側に引き継いでいる)。ADMOB_ENABLED=False(既定)のときは
+    # 何もしない(壊さない)ことも確認する。
+    src = open(os.path.join(os.path.dirname(__file__), "..", "app.py"),
+                encoding="utf-8").read()
+    assert "_inject_ad_result_check" in src
+    assert "toris_ad_pending_result" in src
+    assert "if not ads.ADMOB_ENABLED" in src
+    assert "setInterval(tryDeliver" in src
+    assert "removeItem(KEY)" in src  # 二重処理防止(読み取った時点で削除)
 
 
 def _run():

@@ -544,7 +544,17 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             try {{
                 const url = new URL(window.top.location.href);
                 url.searchParams.set('ritual_obs', ids);
-                window.top.location.href = url.toString();
+                // components.html() の iframe は sandbox に allow-top-navigation 系
+                // フラグを含まないため、ここから直接 window.top.location.href を
+                // 書き換える遷移はブラウザに拒否される(SecurityError)。
+                // app.py の _inject_local_restore_check() と同じ回避策:
+                // window.top.document に <script> 要素を生成して差し込み、
+                // サンドボックスされていないトップウィンドウ自身の実行コンテキストで
+                // location 書き換えを行わせる。
+                const doc = window.top.document;
+                const script = doc.createElement('script');
+                script.textContent = 'window.location.href = ' + JSON.stringify(url.toString()) + ';';
+                doc.head.appendChild(script);
             }} catch(e) {{}}
         }}
 

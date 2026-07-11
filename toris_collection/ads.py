@@ -67,6 +67,31 @@ ads.py - 広告UIの土台(プレースホルダー)
     `Dismissed`)は `ad_result=fail` を返し、報酬を付与せず静かに伝える
     (交渉不能の原則2「罰しない」・原則1「受動的」— 失敗してもペナルティは
     無く、いつでも再挑戦できる)。
+
+■ 2026-07-10 追記(P1修正): 広告結果の伝達をトップwindowへの直接ナビゲーション
+  からlocalStorage経由の「書いて後で読む」方式に変更
+  実機で「SecurityError回避策(window.top.documentへの<script>要素注入による
+  自己遷移)を入れたのに、視聴後に報酬が確定しないことがある」という報告が
+  あった。原因調査(PlaywrightでCDPの `Page.setWebLifecycleState`
+  (frozen⇄active)によりページのバックグラウンド化を再現)の結果、
+  ネイティブのフルスクリーン広告Activity表示中はこのWebViewが実際に
+  バックグラウンド化されており、視聴完了(Dismissed等)イベントの
+  コールバックそのものはバックグラウンド復帰後に正しく届くものの、
+  「そのコールバックの中で直接トップウィンドウへナビゲーションを試みる」
+  という操作自体が、復帰直後のタイミングでは成功したり失敗したりする
+  不安定な挙動になることを確認した。
+  このため `reportResult()` は、広告視聴の結果確定イベントを受けても
+  もはやナビゲーションを一切試みない。代わりに
+  `window.top.localStorage.setItem('toris_ad_pending_result', ...)` という
+  ナビゲーションを伴わない同期的な書き込みだけを行う(`app._inject_local_save_write()`
+  と同じ、バックグラウンド化の影響を受けにくい手段)。実際にPython側へ
+  結果を届けるナビゲーションは、広告SDKのコールバックとは完全に独立した
+  タイミングで動く `app._inject_ad_result_check()`(アプリの毎回のrerunで
+  常に描画され、1秒おきにlocalStorageをポーリングする)が行う。
+  こうして「広告SDKのコールバックが発火する不安定なタイミング」と
+  「実際にPythonへ通知するナビゲーションを試みるタイミング」を分離し、
+  後者を複数回リトライ可能にすることで、バックグラウンド化をまたいでも
+  報酬が確実に反映されるようにした。
 """
 from __future__ import annotations
 
@@ -282,12 +307,24 @@ _ADMOB_REWARD_JS_TEMPLATE = """
 
   function reportResult(status, reason) {
     try {
-      var url = new URL(window.top.location.href);
-      url.searchParams.set('ad_result', status);
-      url.searchParams.set('ad_nonce', NONCE);
-      if (reason) { url.searchParams.set('ad_reason', reason); }
-      log('報告して戻ります: ' + status + (reason ? ' (' + reason + ')' : ''));
-      window.top.location.href = url.toString();
+      log('結果を保存します(localStorage): ' + status + (reason ? ' (' + reason + ')' : ''));
+      // 2026-07-10追記(P1修正): ここでトップウィンドウへ直接ナビゲーションを
+      // 試みていた旧実装(トップwindowのdocumentへの<script>要素注入による
+      // 自己遷移)は、実機PlaywrightでCDPのページライフサイクル
+      // (frozen→active、ネイティブ広告Activity表示中の実際のバックグラウンド化を
+      // 再現)により、視聴完了直後のタイミングでは不安定(成功したり失敗したり)
+      // であることを確認した。ナビゲーションという操作自体をこの場では行わず、
+      // トップwindowのlocalStorage への同期的な書き込みだけに留める(モジュール
+      // docstring「2026-07-10 追記(P1修正)」参照)。実際にPython側へ結果を
+      // 届けるナビゲーションは、この広告SDKコールバックとは完全に独立した
+      // タイミングで動く app._inject_ad_result_check() が行う。
+      var payload = {
+        status: status,
+        nonce: NONCE,
+        reason: reason || null,
+        ts: Date.now(),
+      };
+      window.top.localStorage.setItem('toris_ad_pending_result', JSON.stringify(payload));
     } catch (e) {
       log('reportResult failed: ' + e);
     }

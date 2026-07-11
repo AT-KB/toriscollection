@@ -707,6 +707,108 @@ def _inject_native_save_code_share_button(save_code_str: str):
     )
 
 
+def _render_save_code_copy_button(save_code_str: str):
+    """セーブコードを「ボタン1つでクリップボードにコピー」できるようにする。
+
+    2026-07-10追記(CEO依頼): 「バックアップが面倒」への対応。従来は
+    `st.code()` の選択→コピーのみで、特にアプリ版(Capacitor WebView)では
+    手順が分かりにくかった。ここでは components.html() のiframe内に、
+    見た目にも分かりやすい単独のコピーボタンを描画する。
+
+    コピー手段は3段のフォールバック(上から順に試す):
+      1. Capacitorネイティブの `@capacitor/clipboard` プラグイン
+         (アプリ版・最も確実。Web版では window.parent.Capacitor が無いのでスキップ)
+      2. 標準Web API `navigator.clipboard.writeText()`
+         (Web版・モダンWebViewで動作。Streamlit の components.html iframe には
+         `allow="clipboard-write"` が付与されているため、iframe内からの
+         呼び出しでも権限エラーにならない)
+      3. 旧来の `document.execCommand('copy')`(1・2が使えない環境向けの最終手段)
+
+    どの経路でも、成功/失敗を画面上のテキストで即座にフィードバックする
+    (「押しても何も起こらない」ように見えないようにするため)。
+    """
+    payload = json.dumps(save_code_str)
+    components.html(
+        """
+        <div id="toris-copy-wrap" style="font-family:inherit;">
+          <button id="toris-copy-btn" style="
+            width:100%; box-sizing:border-box; padding:12px 16px;
+            background:#4a7c59; color:#fff; border:none; border-radius:10px;
+            font-size:15px; font-weight:600; cursor:pointer;
+          ">📋 セーブコードをコピー(ワンタップ)</button>
+          <div id="toris-copy-feedback" style="
+            margin-top:6px; font-size:13px; min-height:18px; text-align:center;
+          "></div>
+        </div>
+        <script>
+        (function () {
+          var SAVE_CODE = """ + payload + """;
+          var btn = document.getElementById('toris-copy-btn');
+          var feedback = document.getElementById('toris-copy-feedback');
+
+          function showFeedback(msg, ok) {
+            feedback.textContent = msg;
+            feedback.style.color = ok ? '#2e7d32' : '#b3261e';
+          }
+
+          async function copyViaCapacitor(text) {
+            var parentWin = window.parent;
+            if (parentWin && parentWin.Capacitor &&
+                parentWin.Capacitor.isNativePlatform &&
+                parentWin.Capacitor.isNativePlatform() &&
+                parentWin.Capacitor.Plugins &&
+                parentWin.Capacitor.Plugins.Clipboard) {
+              await parentWin.Capacitor.Plugins.Clipboard.write({ string: text });
+              return true;
+            }
+            return false;
+          }
+
+          async function copyViaWebApi(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+              return true;
+            }
+            return false;
+          }
+
+          function copyViaExecCommand(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            document.body.removeChild(ta);
+            return ok;
+          }
+
+          btn.addEventListener('click', async function () {
+            var text = SAVE_CODE;
+            var done = false;
+            try { done = await copyViaCapacitor(text); } catch (e) { done = false; }
+            if (!done) {
+              try { done = await copyViaWebApi(text); } catch (e) { done = false; }
+            }
+            if (!done) {
+              try { done = copyViaExecCommand(text); } catch (e) { done = false; }
+            }
+            if (done) {
+              showFeedback('✅ コピーしました。貼り付けて保管してください', true);
+            } else {
+              showFeedback('コピーできませんでした。下の欄から選択してコピーしてください', false);
+            }
+          });
+        })();
+        </script>
+        """,
+        height=90,
+    )
+
+
 def _inject_local_save_write():
     """現在の進行データを、ブラウザの localStorage に自動保存する(自動再開MVP)。
 
@@ -1540,6 +1642,83 @@ def _handle_ad_reward_result():
 
 _handle_ad_reward_result()
 
+
+def _inject_ad_result_check():
+    """広告視聴結果(ads.py の `_ADMOB_REWARD_JS_TEMPLATE` が書き込む
+    `window.top.localStorage["toris_ad_pending_result"]`)を検出し、
+    見つかったら `?ad_result=...&ad_nonce=...` を付けてトップウィンドウを
+    リロードする(`_handle_ad_reward_result()` が処理する既存の片道経路に合流)。
+
+    2026-07-10追記(P1修正・CEO承認): 広告SDKの `Dismissed` 等のコールバックの
+    「その場」でトップウィンドウへ直接ナビゲーションを試みていた旧実装は、
+    実機PlaywrightでCDPのページライフサイクル(`Page.setWebLifecycleState`
+    の frozen→active、ネイティブ広告Activity表示中に実際に起きる
+    WebViewのバックグラウンド化を再現)により、視聴完了直後のタイミングでは
+    ナビゲーションが成功したり失敗したりする不安定な挙動になることを確認した
+    (`ads.py` モジュールdocstring「2026-07-10 追記(P1修正)」参照)。
+
+    この関数はそれとは完全に独立して、アプリの**毎回のrerun**で描画され
+    (=ADMOB_ENABLED=Trueの間、常にページ上に存在する)、1秒おきに
+    localStorageをポーリングする。広告視聴の完了イベント(バックグラウンド
+    復帰直後の不安定なタイミング)と、実際にナビゲーションを試みるタイミング
+    (このポーリングの独立したタイミング、何度でもリトライ可能)を分離する
+    ことで、バックグラウンド化をまたいでも報酬が確実に反映されるようにする。
+
+    二重処理防止: 見つけたら**読み取った瞬間に localStorage から削除**してから
+    ナビゲーションする(Python側の `_handle_ad_reward_result()` も
+    nonce照合後に対象のpendingを pop するため、二重に安全)。
+    ADMOB_ENABLED=False(既定)のときは何もしない(壊さない)。
+    """
+    if not ads.ADMOB_ENABLED:
+        return
+    components.html(
+        """
+        <script>
+        (function () {
+          var KEY = 'toris_ad_pending_result';
+          function tryDeliver() {
+            try {
+              var top = window.top;
+              var raw = top.localStorage.getItem(KEY);
+              if (!raw) return;
+              // 読み取った時点で削除(以後のポーリングでの二重処理を防ぐ)
+              top.localStorage.removeItem(KEY);
+              var data = JSON.parse(raw);
+              var url = new URL(top.location.href);
+              url.searchParams.set('ad_result', data.status || 'fail');
+              url.searchParams.set('ad_nonce', data.nonce || '');
+              if (data.reason) { url.searchParams.set('ad_reason', data.reason); }
+              // components.html() の iframe は sandbox に allow-top-navigation 系
+              // フラグを含まないため、ここから直接 top.location.href を書き換える
+              // 遷移はブラウザに拒否される(SecurityError)。_inject_local_restore_check()
+              // と同じ回避策: top.document に <script> 要素を生成して差し込み、
+              // サンドボックスされていないトップウィンドウ自身の実行コンテキストで
+              // location 書き換えを行わせる。
+              var doc = top.document;
+              var script = doc.createElement('script');
+              script.textContent = 'window.location.href = ' + JSON.stringify(url.toString()) + ';';
+              doc.head.appendChild(script);
+            } catch (e) {
+              // localStorage無効・想定外のJSON等で失敗しても、通常のUIに
+              // フォールバックする(次のポーリングでまた試すだけ)。
+            }
+          }
+          // 既に書き込まれている場合に備え即座に1回確認しつつ、以後は
+          // 広告視聴中(バックグラウンド化からの復帰)を待って定期的に再確認する。
+          tryDeliver();
+          var intervalId = setInterval(tryDeliver, 1000);
+          window.addEventListener('beforeunload', function () {
+            clearInterval(intervalId);
+          });
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
+_inject_ad_result_check()
+
 # 自動保存(ローカル保存MVP・案A上乗せ): セッションが始まっていれば
 # (=current_tester_id 設定済み。ログイン画面表示中は何もしない)、
 # 今回のrerunで確定した最新の状態をブラウザの localStorage に書き込む。
@@ -1654,6 +1833,9 @@ with st.sidebar:
             "書き出して保管してください。"
         )
         _save_code_str = save_code.encode_current_state(st.session_state)
+        # ワンタップコピー(主要な手段。2026-07-10追記)。ボタン1つで
+        # クリップボードにコピーできるため、まずはここを試してもらう想定。
+        _render_save_code_copy_button(_save_code_str)
         st.download_button(
             "⬇️ セーブコードを書き出す",
             data=_save_code_str,
@@ -1661,7 +1843,8 @@ with st.sidebar:
             mime="text/plain",
             use_container_width=True,
             help="アプリ版(サイドロード)では反応しないことがあります。"
-                 "その場合は右下に出る「💾 セーブコードを共有」ボタン、"
+                 "その場合は上の「📋 セーブコードをコピー」ボタン、"
+                 "右下に出る「💾 セーブコードを共有」ボタン、"
                  "または下のコピー欄をお使いください。",
         )
         # st.text_area(key=固定)だと初回描画時の値のまま更新が止まる
@@ -3508,9 +3691,11 @@ with tab_help:
       引き継がれません。サイドバーの「💾 セーブコード(バックアップ)」から、
       いつでも進行データを1本のコードとして書き出せます。書き出したコードは、
       開始画面の「セーブコードを読み込んで再開」から読み込むと復元できます。
-    - アプリ版で「⬇️ セーブコードを書き出す」ボタンが反応しない場合は、
-      同じ場所にある「💾 セーブコードを共有」ボタン(共有シート経由)か、
-      コードを直接選択してコピーする欄をお使いください。
+    - 「📋 セーブコードをコピー」ボタンを押すだけで、クリップボードに
+      コピーされます(メモアプリなどに貼り付けて保管してください)。
+      うまくいかない場合は、同じ場所にある「⬇️ セーブコードを書き出す」、
+      「💾 セーブコードを共有」ボタン(共有シート経由)、
+      コードを直接選択してコピーする欄もお使いいただけます。
     - セーブコードは手元で保管するものです(サーバーには送信されません)。
       失くすと復元できないので、大事な節目でときどき書き出しておくのがおすすめです。
     """)
