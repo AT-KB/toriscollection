@@ -107,6 +107,25 @@ def test_still_reports_ritual_obs_query_param_end_to_end():
     assert "ritual_obs" in app_src
 
 
+def test_ritual_observation_records_done_residents_for_cooldown_gate():
+    # 2026-07-12追記(CEO指示): 儀式が成立したら、その時点の滞在中メンバー構成を
+    # session_state に記録する(ritual.py 側のガードが「入れ替わるまで再度は
+    # 出さない」判定に使う)。
+    app_src = _read_app_source()
+    assert '"ritual_done_for_residents"' in app_src
+    assert "frozenset(" in app_src
+
+
+def test_render_ritual_gates_reentry_until_residents_change():
+    # 直前の儀式と滞在メンバーが1羽も変わっていなければ、招待ボタン自体を
+    # 出さず、罰ではない待機メッセージだけを表示する
+    # (図鑑・観察カウントには一切触れない=交渉不能の原則2に抵触しない)。
+    src = _read_source()
+    assert 'st.session_state.get("ritual_done_for_residents")' in src
+    assert "frozenset(resident_ids)" in src
+    assert "今日はもう十分に耳を澄ませました" in src
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

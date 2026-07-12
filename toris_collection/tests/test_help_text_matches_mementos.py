@@ -35,8 +35,8 @@ def test_mementos_module_has_exactly_three_categories():
 
 def test_help_text_mentions_actual_categories_only():
     src = _read_app_source()
-    section = src[src.index("### 落とし物のしくみ"):]
-    section = section[:section.index('st.markdown("### 土地と気温')]
+    section = src[src.index("落とし物のしくみ"):]
+    section = section[:section.index('土地と気温')]
     assert "小枝" in section
     assert "羽根" in section
     assert "羽冠" in section

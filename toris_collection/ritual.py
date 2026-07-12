@@ -188,6 +188,24 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     if not xc_client.is_enabled():
         return
 
+    # 2026-07-12追記(CEO指示): 直前の儀式と滞在メンバーが1羽も変わっていなければ、
+    # 再度「耳を澄ます」を差し出さない(次に鳥が入れ替わるまで待ってもらう)。
+    # 図鑑・観察カウントは既に確定済みでここでは一切触らない(交渉不能の原則2:
+    # 罰しない。減るものは無い)。あくまで「もう一度同じ相手に儀式をやり直せて
+    # しまう」入り口だけを閉じる(app.py `_handle_ritual_observation()` 参照)。
+    _done_for = st.session_state.get("ritual_done_for_residents")
+    if _done_for is not None and _done_for == frozenset(resident_ids):
+        st.markdown(
+            """<div style="background:linear-gradient(180deg,#f7faf2,#eef4e6);
+            padding:14px 20px;border-radius:12px;border-left:4px solid #b7c7a3;
+            margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+            <div style="color:#6b7a63;font-size:0.95em;">
+                🌙 今日はもう十分に耳を澄ませました。新しい鳥が来たら、また会いに行けます。</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+        return
+
     # ── フェーズ1: 招待ボタン(音源未取得・軽量) ────────────────────────────────
     if not st.session_state.get("ritual_ready"):
         n = min(len(resident_ids), _MAX_BIRDS)
