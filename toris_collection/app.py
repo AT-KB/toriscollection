@@ -1924,6 +1924,53 @@ _inject_ritual_result_check()
 _inject_local_save_write()
 
 
+def _inject_splash_hide():
+    """Android版(Capacitorラップ)のネイティブスプラッシュ画面を、実際の
+    アプリの中身(タブ群)が描画された直後にだけ消す。
+
+    背景(2026-07-11・CEO報告「開いたら白紙のまま」): 本番ホスティング
+    (Renderの無料プラン)は一定時間アクセスが無いとスリープし、次回アクセス時に
+    コールドスタート(数十秒〜1分)がかかる(`render.yaml` に記載済みの
+    既知の制約で、今回のバグ修正とは無関係)。この間、Android版はOS標準の
+    起動時スプラッシュ(`styles.xml` の `Theme.SplashScreen`)がWebViewの
+    最初の空フレーム描画と同時に自動で消えてしまうため、実際にはRenderが
+    起きるまでの数十秒〜1分、ユーザーには「真っ白な画面」にしか見えず
+    アプリが壊れているように見えていた。
+
+    `@capacitor/splash-screen` プラグイン(`android_app/` に導入・
+    `capacitor.config.json` で `launchAutoHide: false` 設定済み)を使うと、
+    スプラッシュをJS側から明示的に `hide()` するまで表示し続けられる。
+    この関数をタブ群(`st.tabs()`)描画の直後という「実際に中身が表示された」
+    最も早いタイミングで呼ぶことで、コールドスタート中はスプラッシュ
+    (ロゴ・背景色)を表示し続け、本編が描画された瞬間に自動で消える。
+
+    Web版(`window.Capacitor` が存在しない通常ブラウザ)では何もしない
+    (`_inject_native_share_button()` と同じ判定・同じtry/exceptパターン)。
+    毎回のrerunで呼ばれるが、`hide()` は既に非表示のスプラッシュに対して
+    呼んでも安全(冪等)なため、二重呼び出し防止の特別なガードは設けていない。
+    """
+    components.html(
+        """
+        <script>
+        (function () {
+          try {
+            var win = window.parent;
+            if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+              return; // Web版(通常ブラウザ)では何もしない(スプラッシュ自体が無い)
+            }
+            if (win.Capacitor.Plugins && win.Capacitor.Plugins.SplashScreen) {
+              win.Capacitor.Plugins.SplashScreen.hide();
+            }
+          } catch (e) {
+            // プラグイン未導入・Capacitor非搭載環境等で失敗しても本編には影響させない
+          }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
 # 2026-07-11追記(CEO報告「毎回ラジオ画面/ログイン画面に戻る」対応):
 # タブ選択状態を、JSがトップウィンドウをフルリロードさせる各種の片道経路
 # (ローカルセーブ自動復元・広告視聴結果受信・儀式の観察記録、いずれも
@@ -2510,6 +2557,9 @@ tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, t
 # タブ選択状態を、儀式/広告/自動復元のフルリロードをまたいで維持する
 # (_inject_active_tab_persistence() 参照。タブ構成・コアループ自体は不変)。
 _inject_active_tab_persistence()
+# ネイティブスプラッシュ(起動中画面)を、実際の中身(このタブ群)が
+# 描画されたこのタイミングで初めて消す(_inject_splash_hide() 参照)。
+_inject_splash_hide()
 
 
 # ---------- Tab: Home ----------

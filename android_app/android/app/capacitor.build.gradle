@@ -12,6 +12,7 @@ dependencies {
     implementation project(':capacitor-community-admob')
     implementation project(':capacitor-clipboard')
     implementation project(':capacitor-share')
+    implementation project(':capacitor-splash-screen')
 
 }
 
