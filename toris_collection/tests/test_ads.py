@@ -260,6 +260,34 @@ def test_app_injects_ad_result_check_gated_by_admob_enabled():
     assert "removeItem(KEY)" in src  # 二重処理防止(読み取った時点で削除)
 
 
+# ── 2026-07-11追記(P0根本修正): バナー広告が実機で一切表示されない不具合 ──────
+# @capacitor-community/admob 8.0.0 の resumeBanner() は、AdView未作成でも
+# 必ず resolve する(rejectしない)ため、「resumeBanner().catch(()=>showBanner)」
+# という旧実装だと最初の1回、showBanner() が永久に呼ばれない(=バナー非表示)。
+
+def test_banner_js_tracks_creation_state_instead_of_relying_on_resume_reject():
+    # 自前のフラグでAdView作成済みかどうかを管理していること
+    # (resumeBanner()の成否だけに依存する実装に戻っていないことの確認)
+    js = ads._ADMOB_BANNER_JS_TEMPLATE
+    assert "__torisAdmobBannerCreated" in js
+
+
+def test_banner_js_calls_show_banner_directly_when_not_yet_created():
+    # 「まだ一度もAdViewを作成していない」分岐では、resumeBanner()のcatchの中では
+    # なく、直接 showBanner() を呼ぶこと(P0バグの再発防止)。
+    js = ads._ADMOB_BANNER_JS_TEMPLATE
+    if_not_created_idx = js.index("if (win.__torisAdmobBannerCreated) {\n        // 既にAdViewを作成済み")
+    show_banner_idx = js.index("AdMob.showBanner({")
+    resume_banner_idx = js.index("AdMob.resumeBanner()")
+    # showBanner() の呼び出しが、条件分岐(既存フラグチェック)より後、かつ
+    # resumeBanner() の呼び出しの後(=elseブロック相当)に単独で存在すること
+    assert if_not_created_idx < show_banner_idx
+    assert resume_banner_idx < show_banner_idx
+    # 旧実装の特徴的なパターン(resumeBanner().catch(function () { ... showBanner)
+    # には戻っていないこと
+    assert "resumeBanner().catch(function () {\n        AdMob.showBanner" not in js
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

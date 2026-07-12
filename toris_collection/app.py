@@ -1093,7 +1093,20 @@ def _handle_local_restore_query():
     (ここでは Python 側の状態を汚さないことだけに専念する)。
 
     既にセッションが始まっている(current_tester_id 設定済み)場合は、
-    クエリパラメータだけ消して何もしない(二重復元・意図しない上書きを防ぐ)。
+    `local_restore` パラメータだけ消して何もしない(二重復元・意図しない
+    上書きを防ぐ)。
+
+    2026-07-11修正(CEO実機報告調査): クエリパラメータの削除は
+    `st.query_params.clear()`(クエリ文字列全体を消す)ではなく
+    `st.query_params.pop("local_restore", None)`(自分が処理したキーだけを
+    消す)を使う。ローカルセーブの自動復元チェックJS
+    (`_inject_local_restore_check()`)は、`?ritual_obs=...` や
+    `?ad_result=...` による意図的なフルリロードにも便乗して既存のクエリを
+    保持したまま `local_restore=...` を追加する(=通常運用でセーブコードが
+    localStorage にある限りほぼ毎回起こる)。ここで `clear()` してしまうと
+    `_handle_ritual_observation()` / `_handle_ad_reward_result()` に届く前に
+    それらのクエリが消え、儀式の観察記録や広告報酬がサイレントに握りつぶされる
+    (実際にPlaywrightで再現・特定済み)。
     """
     raw = st.query_params.get("local_restore")
     if not raw:
@@ -1104,7 +1117,15 @@ def _handle_local_restore_query():
     # 「JSはリダイレクトしたのにPython側に届いていない」パターンを切り分けられる。
     _log_local_restore_debug(f"python received local_restore query, len={len(raw)}")
     if st.session_state.get("current_tester_id") is not None:
-        st.query_params.clear()
+        # 2026-07-11修正(CEO実機報告調査): ここで st.query_params.clear() を
+        # 呼ぶと、たまたま同じリロードに乗っていた ?ritual_obs= / ?ad_result= 等
+        # 他のクエリまで巻き込んで消してしまい、後続の
+        # _handle_ritual_observation() / _handle_ad_reward_result() に
+        # 届かなくなる(ローカルセーブの自動復元チェックJSは、既存のクエリを
+        # 保持したまま local_restore= を追加してリロードするため、この衝突は
+        # 通常運用のほぼ全ケースで起き得る)。自分が処理した local_restore
+        # キーだけを消す。
+        st.query_params.pop("local_restore", None)
         return
     restored = None
     try:
@@ -1122,7 +1143,8 @@ def _handle_local_restore_query():
             st.session_state["_local_restore_failed"] = True
             _log_local_restore_debug(f"_start_local_session raised: {e}")
     # パラメータを消す(リロードで再処理しないように)。これ自体が再実行を誘発する。
-    st.query_params.clear()
+    # 自分が処理した local_restore キーだけを消す(他のクエリを巻き込まない)。
+    st.query_params.pop("local_restore", None)
 
 
 def render_login_screen():
@@ -1677,7 +1699,12 @@ def _handle_ritual_observation():
             })
         st.session_state["ritual_flash"] = _flash
     # パラメータを消す(リロードで再保存しないように)。これ自体が再実行を誘発する。
-    st.query_params.clear()
+    # 2026-07-11修正(CEO実機報告調査): clear() だと、たまたま同じリロードに
+    # 乗っている ?local_restore= 等の他のクエリまで巻き込んで消してしまう
+    # (ローカルセーブ自動復元チェックJSが既存クエリを保持したまま
+    # local_restore= を足す通常運用でほぼ必ず起こる)。自分が処理した
+    # ritual_obs キーだけを消す。
+    st.query_params.pop("ritual_obs", None)
 
 
 _handle_ritual_observation()
@@ -1717,7 +1744,13 @@ def _handle_ad_reward_result():
     if flash:
         st.session_state["ad_reward_flash"] = flash
     # パラメータを消す(リロードで再処理しないように)。これ自体が再実行を誘発する。
-    st.query_params.clear()
+    # 2026-07-11修正(CEO実機報告調査): clear() だと ?local_restore= 等
+    # 他のクエリまで巻き込んで消してしまう(_handle_ritual_observation() と
+    # 同じ理由)。自分が処理した ad_result / ad_nonce / ad_reason キーだけを
+    # 消す。
+    st.query_params.pop("ad_result", None)
+    st.query_params.pop("ad_nonce", None)
+    st.query_params.pop("ad_reason", None)
 
 
 _handle_ad_reward_result()
@@ -1799,12 +1832,219 @@ def _inject_ad_result_check():
 
 _inject_ad_result_check()
 
+
+_RITUAL_OBS_STORAGE_KEY = "toris_ritual_pending_obs"
+
+
+def _inject_ritual_result_check():
+    """儀式UI(ritual.py の saveObservations)が書き込む
+    `window.top.localStorage["toris_ritual_pending_obs"]` を検出し、
+    見つかったら `?ritual_obs=id1,id2` を付けてトップウィンドウをリロードする
+    (`_handle_ritual_observation()` が処理する既存の片道経路に合流)。
+
+    2026-07-11追記(P1修正): 「儀式で会った鳥が図鑑に反映されないことがある」
+    というCEO報告の根本原因対応。ritual.py の `saveObservations()` は以前、
+    出会いの確定イベントの「その場」で window.top.document への <script>
+    要素注入によりトップウィンドウを直接ナビゲーションしていたが、これは
+    `_inject_ad_result_check()` のdocstring(`ads.py` P1修正)で判明したのと
+    同じ理由——タブ切り替え・バックグラウンド化などと重なるタイミングでは
+    ナビゲーションという操作自体が不安定になりうる——により、時々サイレントに
+    失敗していたと考えられる。この関数はそれとは完全に独立して、アプリの
+    **毎回のrerun**で描画され、1秒おきに localStorage をポーリングする。
+    「儀式側が結果を書き込むタイミング」と「実際にナビゲーションを試みる
+    タイミング」を分離し、後者を何度でもリトライ可能にすることで、
+    バックグラウンド化やタブ切り替えをまたいでも観察記録が確実に図鑑へ
+    届くようにする(`_inject_ad_result_check()` と全く同じパターン)。
+
+    二重処理防止: 見つけたら**読み取った瞬間に localStorage から削除**してから
+    ナビゲーションする(Python側の `_handle_ritual_observation()` も
+    処理後に自分が処理した `ritual_obs` クエリキーだけを削除する
+    (`st.query_params.pop("ritual_obs", None)`)ため、二重に安全)。
+
+    2026-07-11修正(CEO実機報告調査): 以前はここで
+    `st.query_params.clear()`(クエリ全体を消す)が使われていたため、
+    たまたま同じリロードに `?local_restore=...`(ローカルセーブの自動復元
+    チェックJSが既存のクエリを保持したまま付け足す)が乗っていた場合、
+    `_handle_local_restore_query()` が先にクエリ全体を消してしまい、
+    この `ritual_obs` が後続の `_handle_ritual_observation()` に届かない
+    ことがあった。今は各ハンドラが自分の担当キーだけを消すため、他の
+    クエリと共存しても巻き込まれない。
+    """
+    components.html(
+        f"""
+        <script>
+        (function () {{
+          var KEY = {json.dumps(_RITUAL_OBS_STORAGE_KEY)};
+          function tryDeliver() {{
+            try {{
+              var top = window.top;
+              var raw = top.localStorage.getItem(KEY);
+              if (!raw) return;
+              // 読み取った時点で削除(以後のポーリングでの二重処理を防ぐ)
+              top.localStorage.removeItem(KEY);
+              var data = JSON.parse(raw);
+              if (!data || !data.ids) return;
+              var url = new URL(top.location.href);
+              url.searchParams.set('ritual_obs', data.ids);
+              // components.html() の iframe は sandbox に allow-top-navigation 系
+              // フラグを含まないため、ここから直接 top.location.href を書き換える
+              // 遷移はブラウザに拒否される(SecurityError)。_inject_ad_result_check()
+              // と同じ回避策: top.document に <script> 要素を生成して差し込み、
+              // サンドボックスされていないトップウィンドウ自身の実行コンテキストで
+              // location 書き換えを行わせる。
+              var doc = top.document;
+              var script = doc.createElement('script');
+              script.textContent = 'window.location.href = ' + JSON.stringify(url.toString()) + ';';
+              doc.head.appendChild(script);
+            }} catch (e) {{
+              // localStorage無効・想定外のJSON等で失敗しても、次のポーリングで再試行する
+            }}
+          }}
+          // 既に書き込まれている場合に備え即座に1回確認しつつ、以後は
+          // 儀式終了・タブ切り替え等をまたいで定期的に再確認する。
+          tryDeliver();
+          var intervalId = setInterval(tryDeliver, 1000);
+          window.addEventListener('beforeunload', function () {{
+            clearInterval(intervalId);
+          }});
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+
+
+_inject_ritual_result_check()
+
 # 自動保存(ローカル保存MVP・案A上乗せ): セッションが始まっていれば
 # (=current_tester_id 設定済み。ログイン画面表示中は何もしない)、
 # 今回のrerunで確定した最新の状態をブラウザの localStorage に書き込む。
 # 「植える・時間経過・観察などの操作のたび」を、個別のフックを増やさず
 # 満たすため、毎回のscript rerunの終盤でまとめて1回だけ呼ぶ。
 _inject_local_save_write()
+
+
+# 2026-07-11追記(CEO報告「毎回ラジオ画面/ログイン画面に戻る」対応):
+# タブ選択状態を、JSがトップウィンドウをフルリロードさせる各種の片道経路
+# (ローカルセーブ自動復元・広告視聴結果受信・儀式の観察記録、いずれも
+# `?xxx=...` を付けて `window.location.href`/`window.top.location` を書き換える
+# パターン)をまたいでも保持するための補助。
+_ACTIVE_TAB_STORAGE_KEY = "toris_active_tab_label"
+
+
+def _inject_active_tab_persistence():
+    """直前に見ていたタブ(`st.tabs()` の選択状態)を、フルページリロードを
+    またいで維持する。
+
+    背景: `st.tabs()` は選択中のタブをフロントエンドのReactコンポーネント内部
+    状態としてのみ持ち、Pythonから初期選択タブを指定する公式APIが無い。
+    一方 `_inject_local_restore_check()`・`_inject_ad_result_check()`・
+    `ritual.py` の観察記録は、いずれも「JSがtopウィンドウを
+    `window.location.href` 経由でフルリロードし、Python側が
+    `st.query_params` で受け取る」という片道パターンを使っており、フルリロード
+    のたびにフロントエンドのReactアプリ自体が作り直されるため、`st.tabs()` は
+    常に最初のタブ(🎙 ラジオ)から再開してしまう。
+
+    この関数は `st.tabs()` 自体の実装・タブ構成・コアループには一切手を
+    入れず、フロントエンドの表示状態だけをDOM操作で補助する:
+      1. タブボタン(`role="tab"`)がクリックされたら、そのラベル文字列を
+         `window.parent.localStorage` に覚えておく。
+      2. ページ読み込み後(タブのDOM要素がまだ無ければ短時間ポーリングで待つ)、
+         覚えておいたラベルと一致するタブボタンを探して `.click()` し、
+         直前のタブへ復元する。
+
+    実装メモ: `components.html()` のiframeは`allow-same-origin`を持つため、
+    (ナビゲーションを伴わない)`window.parent.document` へのDOM読み書き・
+    `.click()` 呼び出しや `window.parent.localStorage` へのアクセスは、
+    `ritual.py`/`ads.py`/`_inject_local_restore_check()` が
+    `window.top.location` の書き換え(ナビゲーション)のために使っていた
+    「script要素をtopのdocumentへ注入して不可視化を回避する」という手法を
+    使わなくても、そのまま行える(サンドボックスが制限するのはナビゲーション
+    であって、同一オリジンのDOM読み書きやlocalStorageアクセスではないため)。
+    """
+    key_json = json.dumps(_ACTIVE_TAB_STORAGE_KEY)
+    components.html(
+        f"""
+        <script>
+        (function () {{
+          try {{
+            var doc = window.parent.document;
+            var KEY = {key_json};
+
+            function getTabButtons() {{
+              return Array.prototype.slice.call(doc.querySelectorAll('[role="tab"]'));
+            }}
+
+            function currentLabel() {{
+              var buttons = getTabButtons();
+              for (var i = 0; i < buttons.length; i++) {{
+                if (buttons[i].getAttribute('aria-selected') === 'true') {{
+                  return buttons[i].textContent.trim();
+                }}
+              }}
+              return null;
+            }}
+
+            function saveCurrent() {{
+              var label = currentLabel();
+              if (label) {{
+                try {{ window.parent.localStorage.setItem(KEY, label); }} catch (e) {{}}
+              }}
+            }}
+
+            function restoreIfNeeded() {{
+              var stored;
+              try {{ stored = window.parent.localStorage.getItem(KEY); }} catch (e) {{ return; }}
+              if (!stored) return;
+              var buttons = getTabButtons();
+              if (!buttons.length) return;
+              if (currentLabel() === stored) return;  // 既に正しいタブが選ばれている
+              for (var i = 0; i < buttons.length; i++) {{
+                if (buttons[i].textContent.trim() === stored) {{
+                  buttons[i].click();
+                  return;
+                }}
+              }}
+            }}
+
+            if (!doc.__torisTabClickListenerInstalled) {{
+              doc.__torisTabClickListenerInstalled = true;
+              doc.addEventListener('click', function (e) {{
+                var el = e.target;
+                while (el && el !== doc.body) {{
+                  if (el.getAttribute && el.getAttribute('role') === 'tab') {{
+                    // aria-selectedの更新後に保存する(クリック直後は未反映のため少し待つ)
+                    setTimeout(saveCurrent, 50);
+                    break;
+                  }}
+                  el = el.parentElement;
+                }}
+              }}, true);
+            }}
+
+            // 復元: タブのDOMがまだ描画されていない場合に備えて短時間ポーリングする
+            // (最大 40 * 150ms = 6秒。それでも見つからなければ諦めて既定の
+            // 最初のタブのままにする=壊さない)。
+            var tries = 0;
+            var restoreInterval = setInterval(function () {{
+              tries++;
+              var buttons = getTabButtons();
+              if (buttons.length) {{
+                restoreIfNeeded();
+                clearInterval(restoreInterval);
+              }} else if (tries > 40) {{
+                clearInterval(restoreInterval);
+              }}
+            }}, 150);
+          }} catch (e) {{
+            // Streamlit内部構造の変化・localStorage無効等で失敗しても
+            // 通常の(最初のタブが選ばれた)表示にフォールバックする
+          }}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
 
 
 # ============= Header =============
@@ -2267,6 +2507,9 @@ tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, t
     ["🎙 ラジオ", "🏞️ 庭の様子", "🌱 植える", "🧪 シミュ", "📖 図鑑", "🎁 落とし物",
      "🕸️ ネットワーク", "❓ 使い方"]
 )
+# タブ選択状態を、儀式/広告/自動復元のフルリロードをまたいで維持する
+# (_inject_active_tab_persistence() 参照。タブ構成・コアループ自体は不変)。
+_inject_active_tab_persistence()
 
 
 # ---------- Tab: Home ----------

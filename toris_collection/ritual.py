@@ -11,6 +11,16 @@ ritual.py - 鳥たちのキャスト UI (ステップ5a+5b)
   - 改善第二弾: 奥から手前に4本の枝(SVG)が並び、鳥が枝を行き来する。
     手前の枝(b1)に来た瞬間に観察記録。飛び立ちはどの枝からでも起こりうる。
     隣の枝への往復ホップで「ぴょんぴょん」感を表現。
+  - 2026-07-11追記(P1修正): 儀式で会った鳥が図鑑に反映されないことがある
+    という不具合の根本原因対応。`saveObservations()` は以前、出会いの
+    確定イベントの「その場」で window.top.document への <script> 要素注入に
+    よりトップウィンドウを直接ナビゲーションしていたが、ads.py の広告結果
+    伝達で判明したのと同じ理由(ads.py モジュールdocstring
+    「2026-07-10 追記(P1修正)」参照)で不安定だった。ナビゲーションは行わず
+    window.top.localStorage への同期的な書き込みだけに留め、実際に
+    Python 側へ届けるナビゲーションは app.py の
+    `_inject_ritual_result_check()`(毎回のrerunで動き続ける独立したポーリング、
+    `_inject_ad_result_check()` と同じパターン)に委譲するよう変更した。
 
 このファイルで使っている技術:
   - Web Audio API(音量・フィルター・エコーの距離変化)
@@ -20,7 +30,9 @@ ritual.py - 鳥たちのキャスト UI (ステップ5a+5b)
     非推奨/削除予定なのは `st.components.v1.html` という直接属性アクセスの経路のみで、
     `import streamlit.components.v1 as components; components.html(...)` は現役でサポートされる)
   - lazy loading(音源取得は「耳を澄ます」ボタン押下後にのみ実行、ホームタブを即時表示)
-  - top window クエリパラメータで観察記録を Python に渡す
+  - window.top.localStorage への書き込み(観察記録)を、app.py 側の独立した
+    ポーリング(`_inject_ritual_result_check()`)が top window クエリパラメータ
+    経由の片道リロードとして Python に渡す(ads.py と同じパターン)
 
 設計原則(仕様§3-3):
   - 距離レベルの数値・メーター・進捗バーは出さない。変化は音と絵で伝える。
@@ -549,21 +561,21 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             if (autoSaveTimer) {{ clearTimeout(autoSaveTimer); autoSaveTimer = null; }}
             const ids = [...met].map(j => BIRDS[j].id).join(',');
             ritLog('saveObservations: met=' + ids);
+            // 2026-07-11追記(P1修正): 以前はここでトップwindowのdocumentへの
+            // <script> 要素注入によりトップウィンドウを直接ナビゲーションしていたが、
+            // ads.py の広告結果伝達で判明したのと同じ理由(モジュールdocstring
+            // 「2026-07-10 追記(P1修正)」参照)——タブ切り替え・バックグラウンド化
+            // など、コールバックが発火するタイミングそのものでナビゲーションを
+            // 試みる操作は不安定になりうる——により、ここでのナビゲーションは
+            // やめる。window.top.localStorage への同期的な書き込みだけに留め、
+            // 実際にPython側へ届けるナビゲーションは app.py の
+            // _inject_ritual_result_check()(毎回のrerunで動き続ける独立した
+            // ポーリング、ads.py の _inject_ad_result_check() と同じパターン)
+            // に委譲する。
             try {{
-                const url = new URL(window.top.location.href);
-                url.searchParams.set('ritual_obs', ids);
-                // components.html() の iframe は sandbox に allow-top-navigation 系
-                // フラグを含まないため、ここから直接 window.top.location.href を
-                // 書き換える遷移はブラウザに拒否される(SecurityError)。
-                // app.py の _inject_local_restore_check() と同じ回避策:
-                // window.top.document に <script> 要素を生成して差し込み、
-                // サンドボックスされていないトップウィンドウ自身の実行コンテキストで
-                // location 書き換えを行わせる。
-                const doc = window.top.document;
-                const script = doc.createElement('script');
-                script.textContent = 'window.location.href = ' + JSON.stringify(url.toString()) + ';';
-                doc.head.appendChild(script);
-                ritLog('redirect script injected -> ' + url.toString());
+                const payload = JSON.stringify({{ ids: ids, ts: Date.now() }});
+                window.top.localStorage.setItem('toris_ritual_pending_obs', payload);
+                ritLog('pending obs written to localStorage: ' + ids);
             }} catch(e) {{ ritLog('failed: ' + e); }}
         }}
 

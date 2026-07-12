@@ -206,6 +206,157 @@ def test_encode_current_state_supports_dict_like_session_state():
     assert restored["biome"] == "kyoto"
 
 
+def _large_realistic_state():
+    """長時間プレイを想定した大きめの状態(圧縮効果・URL長対策の検証用)。
+    モジュールdocstring記載の実測(discovered=全37種+mementos全カタログ+eco_log多数で
+    約54,000文字)に近づけるため、37種分の図鑑・落とし物・生態ログ・メモを
+    日本語テキストで生成する。
+    """
+    bird_ids = [f"bird_{i:03d}" for i in range(37)]
+    discovered = set(bird_ids)
+    residents = set(bird_ids[:20])
+    mementos = []
+    mementos_set = set()
+    bird_days = {}
+    bird_notes = {}
+    observed = {}
+    eco_log = []
+    reasons = [
+        "サクラの花の蜜を求めて庭に来た",
+        "カエデの木に潜む虫を探しに来た",
+        "冬の寒さをしのぐため餌台の周りに集まった",
+        "縄張り争いの合間に水浴びをしに来た",
+        "渡りの途中で羽を休めるために立ち寄った",
+    ]
+    for i, bird in enumerate(bird_ids):
+        for kind in ("feather", "footprint", "eggshell"):
+            memento_id = f"{kind}:{bird}"
+            mementos.append({
+                "memento_id": memento_id,
+                "kind": kind,
+                "bird_id": bird,
+                "found_at": f"2026-0{(i % 6) + 1}-{(i % 28) + 1:02d}T08:00:00",
+                "note": f"{bird}が残した{kind}。庭の隅で見つけた記録。",
+            })
+            mementos_set.add(memento_id)
+        bird_days[bird] = {"days": (i % 30) + 1, "last": f"2026-07-{(i % 28) + 1:02d}"}
+        bird_notes[bird] = f"{bird}とは庭で何度も会った。{reasons[i % len(reasons)]}。"
+        observed[bird] = {"count": i + 1, "first": "2026-06-01T08:00:00",
+                           "last": f"2026-07-{(i % 28) + 1:02d}T09:00:00"}
+        for j in range(4):
+            eco_log.append({
+                "bird_id": bird,
+                "text": reasons[(i + j) % len(reasons)],
+                "first_at": f"2026-0{(j % 6) + 1}-{(i % 28) + 1:02d}T0{j}:00:00",
+            })
+    return {
+        "biome": "kyoto",
+        "planted": ["sakura", "kaede", "matsu", "ume", "tsubaki"],
+        "planted_at_map": {p: "2026-06-01T08:00:00" for p in
+                           ("sakura", "kaede", "matsu", "ume", "tsubaki")},
+        "residents": residents,
+        "discovered": discovered,
+        "bird_days": bird_days,
+        "mementos": mementos,
+        "mementos_set": mementos_set,
+        "bird_notes": bird_notes,
+        "observed": observed,
+        "eco_log": eco_log,
+        "current_tester_id": "local_abcdef0123456789",
+        "saved_at": "2026-07-11T12:00:00",
+    }
+
+
+def test_compression_shrinks_large_realistic_save_below_url_limit():
+    # 圧縮なしで書き出した場合(旧実装相当)の長さを再現して比較する。
+    import base64 as _b64
+    import json as _json
+
+    state = _large_realistic_state()
+    payload = save_code._build_payload(state)
+    envelope = {"v": save_code.SAVE_FORMAT_VERSION, "data": payload}
+    raw = _json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    uncompressed_code = _b64.urlsafe_b64encode(raw).decode("ascii")
+
+    compressed_code = save_code.encode_save(state)
+
+    # 一般的なリバースプロキシ/WebサーバーのURL長上限の目安(8KB=8192文字)。
+    URL_LIMIT_CHARS = 8192
+
+    # 圧縮なしなら上限を大きく超える規模のサンプルであることを前提として確認する
+    # (この前提が崩れたら、圧縮対策の意義を示すテストとして機能しなくなるため)。
+    assert len(uncompressed_code) > URL_LIMIT_CHARS, (
+        f"サンプルが小さすぎて対策の効果を検証できない: {len(uncompressed_code)}文字"
+    )
+
+    # 圧縮後は上限を十分に下回ること。
+    assert len(compressed_code) < URL_LIMIT_CHARS, (
+        f"圧縮後もURL長上限を超えている: {len(compressed_code)}文字"
+    )
+
+    # 圧縮率がおおむね実測(約1/16)に近い、大幅な圧縮になっていること。
+    assert len(compressed_code) < len(uncompressed_code) * 0.5
+
+    # 圧縮しても中身は完全に一致して復元できること。
+    restored = save_code.decode_save(compressed_code)
+    assert restored is not None
+    assert restored["discovered"] == state["discovered"]
+    assert restored["mementos_set"] == state["mementos_set"]
+    assert len(restored["eco_log"]) == len(state["eco_log"])
+    assert restored["bird_notes"] == state["bird_notes"]
+
+
+def test_decode_save_reads_legacy_uncompressed_code_for_backward_compatibility():
+    # 2026-07-11のzlib圧縮導入より前に書き出された「圧縮なしの生JSON」セーブコードが、
+    # 導入後も引き続き読み込めることを確認する(後方互換性の要)。
+    import base64 as _b64
+    import json as _json
+
+    state = _sample_state()
+    payload = save_code._build_payload(state)
+    envelope = {"v": save_code.SAVE_FORMAT_VERSION, "data": payload}
+    raw = _json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    legacy_code = _b64.urlsafe_b64encode(raw).decode("ascii")  # zlib圧縮なし(旧形式)
+
+    restored = save_code.decode_save(legacy_code)
+    assert restored is not None
+    assert restored["biome"] == "kyoto"
+    assert restored["residents"] == {"shijukara", "mejiro"}
+    assert restored["discovered"] == {"shijukara", "mejiro", "suzume"}
+    assert restored["eco_log"] == state["eco_log"]
+    assert restored["saved_at"] == "2026-07-04T12:00:00"
+
+
+def test_decode_save_reads_legacy_uncompressed_empty_state():
+    # 空状態の旧形式コードも例外にならず {} を返すこと。
+    import base64 as _b64
+    import json as _json
+
+    envelope = {"v": save_code.SAVE_FORMAT_VERSION, "data": {}}
+    raw = _json.dumps(envelope).encode("utf-8")
+    legacy_code = _b64.urlsafe_b64encode(raw).decode("ascii")
+    assert save_code.decode_save(legacy_code) == {}
+
+
+def test_legacy_and_new_format_codes_decode_to_identical_data():
+    # 同じ状態を「旧形式(圧縮なし)」「新形式(zlib圧縮)」それぞれで書き出しても、
+    # decode_save の結果が完全に一致すること(利用者からは違いが見えないことの確認)。
+    import base64 as _b64
+    import json as _json
+
+    state = _sample_state()
+    payload = save_code._build_payload(state)
+    envelope = {"v": save_code.SAVE_FORMAT_VERSION, "data": payload}
+    raw = _json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    legacy_code = _b64.urlsafe_b64encode(raw).decode("ascii")
+
+    new_code = save_code.encode_save(state)
+
+    assert save_code.decode_save(legacy_code) == save_code.decode_save(new_code)
+    # 新形式は圧縮されている分、旧形式より短くなる(この往復サンプルでも確認)。
+    assert len(new_code) <= len(legacy_code)
+
+
 def _run():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

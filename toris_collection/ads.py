@@ -92,6 +92,21 @@ ads.py - 広告UIの土台(プレースホルダー)
   「実際にPythonへ通知するナビゲーションを試みるタイミング」を分離し、
   後者を複数回リトライ可能にすることで、バックグラウンド化をまたいでも
   報酬が確実に反映されるようにした。
+
+■ 2026-07-11 追記(P0根本修正): バナー広告が実機で一切表示されない不具合
+  CEO報告「Android版で広告が表示されない」の原因調査で、`_ADMOB_BANNER_JS_TEMPLATE`
+  自体のロジックバグを発見した。`@capacitor-community/admob` 8.0.0 のネイティブ実装
+  (`BannerExecutor.resumeBanner()`)を読むと、AdView がまだ一度も作成されていない
+  (`mAdView == null`)状態で呼んでも、内部のnullチェックとは無関係に
+  必ず `call.resolve()` する(rejectしない)ことが確認できた。旧実装は
+  「`resumeBanner().catch(() => showBanner(...))`」という、resumeBannerの失敗を
+  「まだ一度も表示していない合図」として使うパターンだったため、アプリ起動後
+  最初の1回は resumeBanner() が(何もしないまま)成功してしまい、catch内の
+  `showBanner()` が一度も呼ばれず、バナーが永久に作成されないまま終わっていた。
+  自前のフラグ(`win.__torisAdmobBannerCreated`)でAdView作成済みかどうかを
+  管理する形に修正し、resumeBanner()の成否には依存しないようにした。
+  なお、この修正とは別に `ADMOB_ENABLED`(Streamlit secrets/環境変数)が本番で
+  実際に有効化されているかはコードからは確認できないため、CEO確認が必要。
 """
 from __future__ import annotations
 
@@ -205,19 +220,40 @@ _ADMOB_BANNER_JS_TEMPLATE = """
     var unitId = "__UNIT_ID__";
     var isTesting = __IS_TESTING__;
 
+    // 2026-07-11追記(P0根本修正): 「バナーが実機で一切表示されない」不具合の原因調査。
+    // @capacitor-community/admob 8.0.0 のネイティブ実装(BannerExecutor.resumeBanner)は、
+    // まだ一度も showBanner() で AdView を作成していない状態(mAdView == null)で
+    // 呼んでも、内部の null チェックに関わらず必ず call.resolve() する(rejectしない)。
+    // そのため旧実装の「resumeBanner().catch(() => showBanner(...))」は、
+    // アプリ起動後 最初の1回、mAdView が存在せず何も起きないにも関わらず
+    // resumeBanner() のPromiseが成功してしまい、catch内のshowBanner()が
+    // 一度も呼ばれないまま終わっていた(=バナーが永久に作成されない)。
+    // このため「AdViewを作成済みかどうか」を自前のフラグ(win.__torisAdmobBannerCreated)
+    // で管理し、resumeBanner()の成否には依存しない形に修正する。
     function showOrHide() {
       if (shouldHide) {
-        AdMob.hideBanner().catch(function () {});
+        if (win.__torisAdmobBannerCreated) {
+          AdMob.hideBanner().catch(function () {});
+        }
         return;
       }
-      AdMob.resumeBanner().catch(function () {
-        AdMob.showBanner({
-          adId: unitId,
-          adSize: "ADAPTIVE_BANNER",
-          position: "BOTTOM_CENTER",
-          margin: 0,
-          isTesting: isTesting
-        }).catch(function () {});
+      if (win.__torisAdmobBannerCreated) {
+        // 既にAdViewを作成済み: 再表示するだけ
+        AdMob.resumeBanner().catch(function () {});
+        return;
+      }
+      // 初回: 必ず showBanner() でAdViewを新規作成する
+      // (resumeBanner()の成功/失敗を作成済み判定の代わりに使わない)
+      win.__torisAdmobBannerCreated = true;
+      AdMob.showBanner({
+        adId: unitId,
+        adSize: "ADAPTIVE_BANNER",
+        position: "BOTTOM_CENTER",
+        margin: 0,
+        isTesting: isTesting
+      }).catch(function () {
+        // 作成に失敗した場合は、次回の描画でまた作成を試せるようにフラグを戻す
+        win.__torisAdmobBannerCreated = false;
       });
     }
 

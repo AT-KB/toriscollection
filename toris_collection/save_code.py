@@ -9,13 +9,41 @@ save_code.py - セーブコード(ローカル保存 MVP)
   (`sheets_client.py` の「失敗時にも例外を投げない」流儀を踏襲)。
 - 将来のフォーマット変更に備えて、セーブコードにはバージョン番号を含める。
 
-依存は標準ライブラリのみ(base64 / json)。Streamlit にも依存しないため、
+依存は標準ライブラリのみ(base64 / json / zlib)。Streamlit にも依存しないため、
 `app.py` から独立してユニットテストできる。
+
+2026-07-11追記(自動継続バグ調査・実装): 自動継続(`app._inject_local_restore_check()`)は
+ブラウザの localStorage に保存されたセーブコードを、Python 側に渡すために
+`?local_restore=<コード>` という **URLクエリパラメータ** に載せてトップウィンドウごと
+リロードする(Streamlitはサーバー型のためこれ以外に軽量な橋渡し手段がない)。
+実際にプレイが進んだ状態(図鑑・会った日数・落とし物・生態ログ等)を圧縮なしで
+base64化すると、長時間プレイ後には**数万文字規模**のセーブコードになりうることが
+判明した(実測: discovered=全37種+mementos全カタログ+eco_log多数などを想定した
+サンプルで約54,000文字)。これは一般的なリバースプロキシ/Webサーバーの
+URL・ヘッダ長上限(多くは8KB前後)を大きく超え、Android実機(Capacitor版、
+`server.url`でRender.com上のURLを直接ロード)で「自動継続がうまく動いていない」と
+いう報告の実体である可能性が高い(URLが長すぎてサーバー側でリクエスト自体が
+拒否される、またはブラウザ側の実装差でリロードが失敗する)。
+手動の「セーブコードを貼り付けて再開」はURLを経由しない(通常のStreamlitウィジェット
+経由)ため、この上限の影響を受けない。「自動継続だけ」が壊れて見えるという報告の
+症状と整合する。
+
+対策として、`encode_save`/`decode_save` の内部表現に **zlib 圧縮** を挟んだ
+(JSON→zlib圧縮→base64、の順)。テキストデータ(日本語の理由文・日付・キー名の
+繰り返し)は圧縮率が高く、上記の約54,000文字のサンプルは圧縮後 約3,300文字まで
+縮む(実測、約1/16)。セーブコードは元々「人が読んで編集する」形式ではなく
+不透明な文字列として貼り付けるだけの運用のため、圧縮を挟んでも既存の使い勝手
+(コピー&ペースト)には影響しない。
+
+後方互換性: 圧縮前に書き出された(=zlib圧縮されていない生のJSON)旧セーブコードも
+引き続き読み込めるよう、`decode_save` はまず伸長を試み、失敗したら「圧縮されて
+いない生のJSON」として扱うフォールバックを行う(壊さない方針)。
 """
 from __future__ import annotations
 
 import base64
 import json
+import zlib
 from datetime import datetime
 
 # セーブコードのフォーマットバージョン。将来キー構成を変えるときはこれを上げ、
@@ -89,11 +117,14 @@ def encode_save(state: dict) -> str:
 
     Returns:
         base64(urlsafe) 文字列。サーバーには送らず、ユーザーが手元で保管する想定。
+        内部では zlib 圧縮してから base64化する(自動継続のURL長対策、
+        モジュールdocstring参照)。
     """
     payload = _build_payload(state or {})
     envelope = {"v": SAVE_FORMAT_VERSION, "data": payload}
     raw = json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    return base64.urlsafe_b64encode(raw).decode("ascii")
+    compressed = zlib.compress(raw, 9)
+    return base64.urlsafe_b64encode(compressed).decode("ascii")
 
 
 def decode_save(code: str) -> dict | None:
@@ -110,7 +141,19 @@ def decode_save(code: str) -> dict | None:
     if not code or not isinstance(code, str):
         return None
     try:
-        raw = base64.urlsafe_b64decode(code.strip().encode("ascii"))
+        decoded = base64.urlsafe_b64decode(code.strip().encode("ascii"))
+    except Exception:
+        return None
+
+    # 新形式(zlib圧縮済み)を優先して伸長を試み、失敗したら旧形式
+    # (圧縮なしの生JSON、2026-07-11のこの変更より前に書き出されたコード)として
+    # 扱う。壊れたコードは例外を投げず None を返す方針は変えない。
+    try:
+        raw = zlib.decompress(decoded)
+    except Exception:
+        raw = decoded
+
+    try:
         envelope = json.loads(raw.decode("utf-8"))
     except Exception:
         return None
