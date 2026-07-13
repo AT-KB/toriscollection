@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
@@ -54,9 +55,42 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
         if (webView != null) {
             webView.addJavascriptInterface(new WatchdogBridge(), "AndroidWatchdog");
+            stripWebViewMarkerFromUserAgent(webView);
         }
 
         scheduleWatchdogCheck();
+    }
+
+    /**
+     * 2026-07-13追記(仮説3・検証中): 実機で取得したWebSocketリクエストの
+     * User-Agentに、埋め込みWebViewであることを示す "; wv)" マーカーが
+     * 含まれていることを確認した(例:
+     * "Mozilla/5.0 (Linux; Android 16; ...; wv) ... Chrome/149...")。
+     * 本アプリはRender→Cloudflare経由で配信されており、CDN/ボット対策の
+     * 一部はこの "wv" マーカーを見て埋め込みWebView由来の通信を検知し、
+     * 通常のブラウザと異なる扱い(接続は許可するがデータ配信を絞る等)を
+     * する場合がある。通常のChromeアプリ(このマーカーが無い)では問題なく
+     * 動作する一方、本アプリ(WebView)だけが「WebSocketは繋がるがメッセージが
+     * 一切流れない」状態を実機で確認済みであることと矛盾しない仮説のため、
+     * このマーカーを取り除いたUser-Agentに上書きして切り分ける。
+     */
+    private void stripWebViewMarkerFromUserAgent(WebView webView) {
+        WebSettings settings = webView.getSettings();
+        String currentUa = settings.getUserAgentString();
+        if (currentUa == null) {
+            return;
+        }
+        String strippedUa = currentUa
+                .replace("; wv)", ")")
+                .replace(" wv)", ")");
+        if (!strippedUa.equals(currentUa)) {
+            settings.setUserAgentString(strippedUa);
+            // Capacitorが起動時に既に発行した初回loadUrl()が、UA変更前の設定で
+            // リクエストを飛ばしてしまう競合を避けるため、設定直後に明示的に
+            // 再読み込みする(ネイティブスプラッシュが隠れている間に起きるため
+            // ユーザーには見えない)。
+            webView.reload();
+        }
     }
 
     private void scheduleWatchdogCheck() {
