@@ -12,3 +12,11 @@ enableStaticServing = true
 # 固まる不具合が発生。本アプリは外部に公開APIを持たない単一オリジン構成(Renderの
 # このURLのみから配信)のため、CORSを無効化してもセキュリティ上の低下は無い。
 enableCORS = false
+# 2026-07-13 追記(Renderの実ログで判明): enableCORS=false は
+# enableXsrfProtection=true(既定)と両立できず、Streamlit自身が起動時に
+# 警告を出して enableCORS を黙って true に戻していた(=これまでのCORS無効化は
+# 一度も反映されていなかった)。CORSを実際に無効化するには、XSRF保護も
+# 併せて無効化する必要がある(Streamlit公式の警告メッセージの指示通り)。
+# 本アプリはst.login/[auth]を使わずCSRFで保護すべき認証状態を持たないため、
+# 無効化してもセキュリティ上の実害はない。
+enableXsrfProtection = false

@@ -1147,6 +1147,84 @@ def _handle_local_restore_query():
     st.query_params.pop("local_restore", None)
 
 
+def _inject_splash_hide():
+    """Android版(Capacitorラップ)のネイティブスプラッシュ画面を、実際に
+    何らかの本編コンテンツ(ログイン/開始画面、またはタブ群)が描画された
+    直後にだけ消す。
+
+    背景(2026-07-11・CEO報告「開いたら白紙のまま」): 本番ホスティング
+    (Renderの無料プラン)は一定時間アクセスが無いとスリープし、次回アクセス時に
+    コールドスタート(数十秒〜1分)がかかる(`render.yaml` に記載済みの
+    既知の制約)。この間、Android版はOS標準の起動時スプラッシュ
+    (`styles.xml` の `Theme.SplashScreen`)がWebViewの最初の空フレーム描画と
+    同時に自動で消えてしまうため、実際にはRenderが起きるまでの数十秒〜1分、
+    ユーザーには「真っ白な画面」にしか見えずアプリが壊れているように見えていた。
+
+    `@capacitor/splash-screen` プラグイン(`android_app/` に導入・
+    `capacitor.config.json` で `launchAutoHide: false` 設定済み)を使うと、
+    スプラッシュをJS側から明示的に `hide()` するまで表示し続けられる。
+
+    2026-07-13追記(実機ログ・Chrome DevTools Protocolでの直接調査により
+    確定した根本原因): これまで `render_login_screen()`(初回・未セッションの
+    ユーザーが最初に見る「新規スタート/セーブコードで再開」の選択画面)では
+    この関数を一度も呼んでおらず、`st.tabs()` 描画後(=既にセッションを
+    開始したユーザーの画面)でしか呼んでいなかった。ところが初回ユーザーは
+    必ずこの選択画面を経由してから初めてタブ群に到達するため、
+    「ログイン画面は実際には正常に描画され、DOM上は`はじめる`ボタンまで
+    完成しているのに、ネイティブスプラッシュがそれを覆ったまま一度も
+    消えず、ユーザーはボタンを押すどころか画面を見ることさえできない」
+    という詰み状態になっていた(Chrome DevTools Protocolで
+    `document.body.innerText` を直接取得し、DOMには完全な描画内容が
+    存在することを実証済み。CORS・WebSocket圧縮・User-Agent・Render
+    コールドスタート・GPUタイルメモリのいずれも無関係で、単純に
+    「スプラッシュを消すきっかけとなる画面がこの関数を呼んでいなかった」
+    というロジック上の抜けだった)。この関数を `render_login_screen()`
+    (`st.stop()` の直前)からも呼ぶことで、初回ユーザーがこの選択画面に
+    到達した時点でスプラッシュを消すようにした。
+
+    Web版(`window.Capacitor` が存在しない通常ブラウザ)では何もしない
+    (`_inject_native_share_button()` と同じ判定・同じtry/exceptパターン)。
+    毎回のrerunで呼ばれるが、`hide()` は既に非表示のスプラッシュに対して
+    呼んでも安全(冪等)なため、二重呼び出し防止の特別なガードは設けていない。
+
+    この「本編が実際に描画された」タイミングで、`MainActivity.java` が
+    登録したネイティブ側の監視インターフェース `window.AndroidWatchdog.markLoaded()`
+    にも合図を送る。WebSocket接続不能等で本編が一切描画されないまま固まった
+    場合、ネイティブ側が一定時間後に自動で `WebView.reload()` する保険の
+    トリガーとして使う(詳細は `MainActivity.java` のコメント参照)。
+    Web版・このインターフェース未登録のビルドでは `window.AndroidWatchdog`
+    自体が存在しないため、既存のtry/exceptで無害にスキップされる。
+    """
+    components.html(
+        """
+        <script>
+        (function () {
+          try {
+            var win = window.parent;
+            if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
+              return; // Web版(通常ブラウザ)では何もしない(スプラッシュ自体が無い)
+            }
+            if (win.Capacitor.Plugins && win.Capacitor.Plugins.SplashScreen) {
+              win.Capacitor.Plugins.SplashScreen.hide();
+            }
+          } catch (e) {
+            // プラグイン未導入・Capacitor非搭載環境等で失敗しても本編には影響させない
+          }
+          try {
+            var parentWin = window.parent;
+            if (parentWin.AndroidWatchdog && parentWin.AndroidWatchdog.markLoaded) {
+              parentWin.AndroidWatchdog.markLoaded();
+            }
+          } catch (e) {
+            // 監視インターフェース未登録(Web版・旧ビルド)では何もしない
+          }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
 def render_login_screen():
     """アプリの入口画面。ログイン・認証の概念はない
     (current_tester_id が未設定の時に表示する、開始方法の選択画面)。
@@ -1258,6 +1336,12 @@ def render_login_screen():
                     _start_local_session(restore=restored)
                     st.rerun()
 
+    # 2026-07-13追記: この画面(新規スタート/セーブコード再開の選択画面)は
+    # 初回ユーザーが最初に到達する実描画コンテンツ。ここでスプラッシュを
+    # 消さないと、Android版の初回ユーザーはこの画面(はじめるボタン含む)が
+    # DOM上は完成しているのに一生スプラッシュの下に隠れたまま操作できない
+    # (根本原因の詳細は `_inject_splash_hide()` のdocstring参照)。
+    _inject_splash_hide()
     st.stop()
 
 
@@ -1934,70 +2018,6 @@ _inject_ritual_result_check()
 # 「植える・時間経過・観察などの操作のたび」を、個別のフックを増やさず
 # 満たすため、毎回のscript rerunの終盤でまとめて1回だけ呼ぶ。
 _inject_local_save_write()
-
-
-def _inject_splash_hide():
-    """Android版(Capacitorラップ)のネイティブスプラッシュ画面を、実際の
-    アプリの中身(タブ群)が描画された直後にだけ消す。
-
-    背景(2026-07-11・CEO報告「開いたら白紙のまま」): 本番ホスティング
-    (Renderの無料プラン)は一定時間アクセスが無いとスリープし、次回アクセス時に
-    コールドスタート(数十秒〜1分)がかかる(`render.yaml` に記載済みの
-    既知の制約で、今回のバグ修正とは無関係)。この間、Android版はOS標準の
-    起動時スプラッシュ(`styles.xml` の `Theme.SplashScreen`)がWebViewの
-    最初の空フレーム描画と同時に自動で消えてしまうため、実際にはRenderが
-    起きるまでの数十秒〜1分、ユーザーには「真っ白な画面」にしか見えず
-    アプリが壊れているように見えていた。
-
-    `@capacitor/splash-screen` プラグイン(`android_app/` に導入・
-    `capacitor.config.json` で `launchAutoHide: false` 設定済み)を使うと、
-    スプラッシュをJS側から明示的に `hide()` するまで表示し続けられる。
-    この関数をタブ群(`st.tabs()`)描画の直後という「実際に中身が表示された」
-    最も早いタイミングで呼ぶことで、コールドスタート中はスプラッシュ
-    (ロゴ・背景色)を表示し続け、本編が描画された瞬間に自動で消える。
-
-    Web版(`window.Capacitor` が存在しない通常ブラウザ)では何もしない
-    (`_inject_native_share_button()` と同じ判定・同じtry/exceptパターン)。
-    毎回のrerunで呼ばれるが、`hide()` は既に非表示のスプラッシュに対して
-    呼んでも安全(冪等)なため、二重呼び出し防止の特別なガードは設けていない。
-
-    2026-07-13追記(重大インシデント対応・保険): この「本編が実際に描画された」
-    タイミングで、`MainActivity.java` が登録したネイティブ側の監視インターフェース
-    `window.AndroidWatchdog.markLoaded()` にも合図を送る。WebSocket接続不能等で
-    本編が一切描画されないまま固まった場合、ネイティブ側が一定時間後に自動で
-    `WebView.reload()` する保険のトリガーとして使う(詳細は `MainActivity.java`
-    のコメント参照)。Web版・このインターフェース未登録のビルドでは
-    `window.AndroidWatchdog` 自体が存在しないため、既存のtry/exceptで無害に
-    スキップされる。
-    """
-    components.html(
-        """
-        <script>
-        (function () {
-          try {
-            var win = window.parent;
-            if (!win.Capacitor || !win.Capacitor.isNativePlatform || !win.Capacitor.isNativePlatform()) {
-              return; // Web版(通常ブラウザ)では何もしない(スプラッシュ自体が無い)
-            }
-            if (win.Capacitor.Plugins && win.Capacitor.Plugins.SplashScreen) {
-              win.Capacitor.Plugins.SplashScreen.hide();
-            }
-          } catch (e) {
-            // プラグイン未導入・Capacitor非搭載環境等で失敗しても本編には影響させない
-          }
-          try {
-            var parentWin = window.parent;
-            if (parentWin.AndroidWatchdog && parentWin.AndroidWatchdog.markLoaded) {
-              parentWin.AndroidWatchdog.markLoaded();
-            }
-          } catch (e) {
-            // 監視インターフェース未登録(Web版・旧ビルド)では何もしない
-          }
-        })();
-        </script>
-        """,
-        height=0,
-    )
 
 
 # 2026-07-11追記(CEO報告「毎回ラジオ画面/ログイン画面に戻る」対応):
