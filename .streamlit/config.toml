@@ -7,3 +7,8 @@
 # `toris_collection/static/` 配下のファイルが `/app/static/...` で配信される。
 [server]
 enableStaticServing = true
+# 2026-07-13 重大インシデント対応: Android(Capacitor WebView)からのWebSocket接続が
+# check_origin()のOrigin許可判定(enableCORS既定True)で拒否され、起動直後に白紙で
+# 固まる不具合が発生。本アプリは外部に公開APIを持たない単一オリジン構成(Renderの
+# このURLのみから配信)のため、CORSを無効化してもセキュリティ上の低下は無い。
+enableCORS = false

@@ -1960,6 +1960,15 @@ def _inject_splash_hide():
     (`_inject_native_share_button()` と同じ判定・同じtry/exceptパターン)。
     毎回のrerunで呼ばれるが、`hide()` は既に非表示のスプラッシュに対して
     呼んでも安全(冪等)なため、二重呼び出し防止の特別なガードは設けていない。
+
+    2026-07-13追記(重大インシデント対応・保険): この「本編が実際に描画された」
+    タイミングで、`MainActivity.java` が登録したネイティブ側の監視インターフェース
+    `window.AndroidWatchdog.markLoaded()` にも合図を送る。WebSocket接続不能等で
+    本編が一切描画されないまま固まった場合、ネイティブ側が一定時間後に自動で
+    `WebView.reload()` する保険のトリガーとして使う(詳細は `MainActivity.java`
+    のコメント参照)。Web版・このインターフェース未登録のビルドでは
+    `window.AndroidWatchdog` 自体が存在しないため、既存のtry/exceptで無害に
+    スキップされる。
     """
     components.html(
         """
@@ -1975,6 +1984,14 @@ def _inject_splash_hide():
             }
           } catch (e) {
             // プラグイン未導入・Capacitor非搭載環境等で失敗しても本編には影響させない
+          }
+          try {
+            var parentWin = window.parent;
+            if (parentWin.AndroidWatchdog && parentWin.AndroidWatchdog.markLoaded) {
+              parentWin.AndroidWatchdog.markLoaded();
+            }
+          } catch (e) {
+            // 監視インターフェース未登録(Web版・旧ビルド)では何もしない
           }
         })();
         </script>
