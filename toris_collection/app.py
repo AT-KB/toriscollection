@@ -2649,12 +2649,22 @@ _inject_splash_hide()
 # ---------- Tab: Home ----------
 with tab_home:
     # 儀式終了時に保存された近距離観察の知らせ(ダイアログ非対応環境のフォールバック)
+    # 2026-07-14追記(CEO指示): 「鳥に会えました」だけでは簡素すぎるため、
+    # 図鑑への新規登録(初めて会った鳥)とリピート(再訪)を分けて表示する
+    # (_obs_dialog・_welcome_dialog と同じ first/repeat の判定軸に揃える)。
     _flash = st.session_state.pop("ritual_flash", None)
     if _flash:
-        _names = "、".join(f["name"] for f in _flash)
-        st.success(
-            "🪶 今朝、" + _names + " に会えました。🎙 ラジオの顔ぶれに加わりました。"
-        )
+        _first_names = [f["name"] for f in _flash if f.get("first")]
+        _repeat_names = [f["name"] for f in _flash if not f.get("first")]
+        if _first_names:
+            st.success(
+                "🪶 " + "、".join(_first_names) + " に会えました!"
+                "図鑑に詳細なアイコンが登録され、ラジオにも加わります。"
+            )
+        if _repeat_names:
+            st.success(
+                "🪶 " + "、".join(_repeat_names) + " にまた会えました。図鑑の観察記録が増えます。"
+            )
 
     # 広告リワード(実SDK視聴後)の結果通知(app._handle_ad_reward_result 参照)
     _ad_flash = st.session_state.pop("ad_reward_flash", None)
