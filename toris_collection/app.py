@@ -2161,6 +2161,31 @@ st.markdown(
 # session_state の読み書きと描画だけを行う。
 
 
+def _confirm_biome_change(new_biome: str) -> None:
+    """土地を `new_biome` に切り替える(植物・滞在鳥はリセット)。
+
+    「🏞️ 庭の様子」タブの『✓ ◯◯に移る』ボタンと、チュートリアルのステップ0
+    (2026-07-13追記: 案A・企画部提案)の両方から呼ばれる共通処理。
+    """
+    st.session_state.biome = new_biome
+    st.session_state.residents = set()
+    st.session_state.planted = []
+    st.session_state.absence_events = []
+    st.session_state.disturbance_events = []
+    st.session_state.last_arrivals_info = {}
+    # 庭アイテムは物理的な道具なので、土地を移ると一緒には持っていけない。
+    # (1日1回の権利=日付ゲートは消費済みのまま。翌日また選べる)
+    st.session_state.garden_item_placement = None
+    tid = st.session_state.current_tester_id
+    _sheets_safe(sc.remove_all_plantings, tid)
+    _sheets_safe(
+        sc.save_field_state, tid, new_biome,
+        current_temperature(new_biome, st.session_state.month),
+        f"month_{st.session_state.month}", []
+    )
+    _sheets_safe(sc.log_access, tid, "home", "biome_changed", new_biome)
+
+
 def _tutorial_finish():
     st.session_state.tutorial_done = True
 
@@ -2201,6 +2226,16 @@ def render_tutorial_banner():
     col_next, col_skip = st.columns([1, 1])
     with col_next:
         if st.button(content["next_label"], key="tutorial_next_btn", use_container_width=True):
+            if step == 0:
+                # 2026-07-13追記(案A・企画部提案): このボタンを「次へ」という
+                # 汎用のページ送りではなく「この土地でいく」という実際の行為に
+                # する。土地選択タブ(biome_candidate)で候補を変えていた場合は
+                # ここで初めて反映する(候補を選んだのに未確定のまま次へ進んで
+                # しまう分かりにくさの解消も兼ねる)。候補が現在地と同じ・
+                # まだ選択widgetが描画されていない場合は何もしない(安全)。
+                candidate = st.session_state.get("biome_candidate", st.session_state.biome)
+                if candidate in BIOMES and candidate != st.session_state.biome:
+                    _confirm_biome_change(candidate)
             _tutorial_next()
             st.rerun()
     with col_skip:
@@ -2783,23 +2818,7 @@ with tab_home:
                 f"✓ {BIOMES[new_biome]['name']} に移る",
                 type="primary", use_container_width=True,
             ):
-                st.session_state.biome = new_biome
-                st.session_state.residents = set()
-                st.session_state.planted = []
-                st.session_state.absence_events = []
-                st.session_state.disturbance_events = []
-                st.session_state.last_arrivals_info = {}
-                # 庭アイテムは物理的な道具なので、土地を移ると一緒には持っていけない。
-                # (1日1回の権利=日付ゲートは消費済みのまま。翌日また選べる)
-                st.session_state.garden_item_placement = None
-                tid = st.session_state.current_tester_id
-                _sheets_safe(sc.remove_all_plantings, tid)
-                _sheets_safe(
-                    sc.save_field_state, tid, new_biome,
-                    current_temperature(new_biome, st.session_state.month),
-                    f"month_{st.session_state.month}", []
-                )
-                _sheets_safe(sc.log_access, tid, "home", "biome_changed", new_biome)
+                _confirm_biome_change(new_biome)
                 st.rerun()
 
         st.markdown(
