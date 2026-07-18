@@ -17,6 +17,8 @@ disturbance.py - 撹乱(かくらん)の生態モデル
 """
 from __future__ import annotations
 
+from i18n import t, get_lang
+
 # 撹乱タイプ
 #   severity: 1イベントで植物が倒れる確率の係数(× 各植物の感受性)
 DISTURBANCES = {
@@ -87,8 +89,10 @@ def apply_disturbance(planted: list[str], event: dict, plants_data: dict, rng) -
 def disturbance_story(event: dict, removed_names: list[str]) -> str:
     """撹乱を1文で語る。倒れた植物は純減し、自動では植え直さない。"""
     icon = event.get("icon", "🌪")
-    label = event.get("label", "嵐")
+    label = t(event.get("label", "嵐"))
     if removed_names:
-        lost = "・".join(removed_names)
-        return f"{icon} {label}が庭を通り過ぎ、{lost}が倒れた。"
-    return f"{icon} {label}が庭を通り過ぎたが、植物は持ちこたえた。"
+        lost = ("、" if get_lang() == "ja" else ", ").join(removed_names)
+        return t("{icon} {label}が庭を通り過ぎ、{lost}が倒れた。",
+                 icon=icon, label=label, lost=lost)
+    return t("{icon} {label}が庭を通り過ぎたが、植物は持ちこたえた。",
+             icon=icon, label=label)

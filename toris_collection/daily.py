@@ -18,6 +18,8 @@ daily.py - 今日の庭(Wordle 型・1日1回・全員共通の入口)
 from __future__ import annotations
 from datetime import date
 
+from i18n import t, get_lang
+
 
 def daily_seed(today: date | None = None) -> int:
     """日付から決定的な整数シードを作る(全ユーザー共通)。"""
@@ -77,7 +79,10 @@ def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
     if not bid:
         return
     bird = birds_data[bid]
-    name = bird.get("name", bid)
+    if get_lang() == "en" and bird.get("english"):
+        name = bird["english"]
+    else:
+        name = bird.get("name", bid)
     color = bird.get("color", "#7ba87b")
     met = is_met(bid, observed)
 
@@ -87,22 +92,22 @@ def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
         import ecology
         g = ecology.guild(bid, birds_data)
         _, glabel = ecology.GUILD_LABELS.get(g, ecology.GUILD_LABELS["other"])
-        eco = f"{glabel}仲間。"
+        eco = t("{glabel}仲間。", glabel=glabel)
     except Exception:
         eco = ""
 
     where = biome_label or biome_id
     if met:
-        invite = "🎙 あなたのラジオでも、今日はきっと鳴いています。"
+        invite = t("🎙 あなたのラジオでも、今日はきっと鳴いています。")
     else:
-        invite = "まだ会っていません。会いに行くと、ラジオに加わります。"
+        invite = t("まだ会っていません。会いに行くと、ラジオに加わります。")
 
     card_html = (
         f'<div style="background:linear-gradient(180deg,#fcfaf3,#f4f0e2);'
         f'border-left:4px solid {color};border-radius:10px;'
         f'padding:10px 14px;margin:2px 0 12px;">'
         f'<div style="font-size:0.78em;color:#a08a50;letter-spacing:0.05em;">'
-        f'🌅 今日の庭 — {where}</div>'
+        f'{t("🌅 今日の庭 — {where}", where=where)}</div>'
         f'<div style="font-size:1.05em;color:#3a4a2a;font-weight:600;margin:2px 0;">'
         f'{name}</div>'
         f'<div style="font-size:0.84em;color:#6a7a5a;">{eco}{invite}</div>'

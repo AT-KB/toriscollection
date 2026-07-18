@@ -17,7 +17,8 @@ TypedDict で定義したスキーマが、そのまま
     biome_pref    : str  カンマ区切りのバイオームID (例: kyoto,charlotte)
     rarity        : float 0.0〜1.0 (高いほどレア)
     wariness      : float 0.0〜1.0 (高いほど近づきにくい)
-    description   : str  図鑑の説明文
+    description   : str  図鑑の説明文(日本語)
+    description_en: str  図鑑の説明文(英語・任意。無ければ description にフォールバック)
     eats_plants   : str  カンマ区切りの植物ID (なければ空)
     eats_insects  : str  カンマ区切りの昆虫ID (なければ空)
     temp_fit_min  : int  好む気温の下限 (°C)
@@ -49,6 +50,8 @@ class BirdData(TypedDict):
     rarity: float
     wariness: float
     description: str
+    # 図鑑の説明文(英語)。任意。i18n.describe() が無ければ description にフォールバック。
+    description_en: NotRequired[str]
     eats_plants: list[str]
     eats_insects: list[str]
     temp_fit: tuple[int, int]
@@ -85,3 +88,5 @@ class BiomeData(TypedDict):
     hemisphere: str
     max_plants: int
     description: str
+    # 説明文(英語)。任意。i18n.describe() が無ければ description にフォールバック。
+    description_en: NotRequired[str]

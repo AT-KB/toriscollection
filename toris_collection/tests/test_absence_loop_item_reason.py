@@ -22,6 +22,20 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import absence_loop  # noqa: E402
+import i18n  # noqa: E402
+
+# 既定言語は "en"(EN切替の第1フェーズで確定)。日本語の理由文を検証する
+# これらのテストは、表示言語を "ja" に固定してから確認する
+# (英語表示では鳥名が english になるため、日本語原文とは一致しないのが正しい挙動)。
+# setup/teardown で ja に固定し、終了後 en に戻して他テストへ漏らさない。
+
+
+def setup_function(_func=None):
+    i18n.set_lang("ja")
+
+
+def teardown_function(_func=None):
+    i18n.set_lang("en")
 
 
 def test_real_food_path_ignores_item_hint():
@@ -55,7 +69,9 @@ def test_no_food_path_with_item_hint_is_honest_not_fabricated():
 
 
 if __name__ == "__main__":
+    i18n.set_lang("ja")
     test_real_food_path_ignores_item_hint()
     test_no_food_path_and_no_item_hint_stays_generic()
     test_no_food_path_with_item_hint_is_honest_not_fabricated()
+    i18n.set_lang("en")
     print("OK: すべての生態ログ非汚染テストがパスしました。")

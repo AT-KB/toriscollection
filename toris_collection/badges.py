@@ -13,14 +13,25 @@ badges.py - 「会った日数」の節目バッジ(静かな演出)
 """
 from __future__ import annotations
 
+from i18n import t
+
 # 到達日数が大きいものから順に判定し、最初に条件を満たした1件を採用する。
 # (icon, label, message) — label は図鑑カードの見出しに使う短い呼び名、
-# message はカードに添える一言。
+# message はカードに添える一言。日本語原文を保持し、表示時に t() で言語変換する。
 TIERS = (
     (100, "🏅", "皆勤の友", "すっかり顔なじみです。"),
     (30, "🌿", "常連", "よく会う仲になりました。"),
     (10, "🌱", "おなじみ", "おなじみになってきました。"),
 )
+
+# 図鑑カードに添える一言の全文テンプレート({bird} を含む)。
+# f"{bird_name}とは{message}" と同じ日本語を組み立てつつ、英語では
+# 語順ごと自然な一文に差し替えられるようにする。
+_MESSAGE_TEMPLATES = {
+    100: "{bird}とはすっかり顔なじみです。",
+    30: "{bird}とはよく会う仲になりました。",
+    10: "{bird}とはおなじみになってきました。",
+}
 
 
 def badge_for_days(days: int) -> dict | None:
@@ -35,8 +46,8 @@ def badge_for_days(days: int) -> dict | None:
             return {
                 "threshold": threshold,
                 "icon": icon,
-                "label": label,
-                "message": message,
+                "label": t(label),          # 表示言語に変換した呼び名
+                "message": message,          # 日本語原文(表示は badge_message が組み立てる)
             }
     return None
 
@@ -49,4 +60,5 @@ def badge_message(bird_name: str, days: int) -> str | None:
     badge = badge_for_days(days)
     if not badge:
         return None
-    return f"{badge['icon']} {bird_name}とは{badge['message']}"
+    template = _MESSAGE_TEMPLATES[badge["threshold"]]
+    return f"{badge['icon']} " + t(template, bird=bird_name)

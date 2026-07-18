@@ -18,6 +18,8 @@ from datetime import date, datetime
 
 import streamlit as st
 
+from i18n import t, get_lang
+
 
 # ── 純粋ロジック(I/O なし・テスト可能) ──────────────────────────────
 
@@ -94,6 +96,7 @@ def aggregate_atlas(rows: list, birds_data: dict,
         entry = {
             "bird_id": bid,
             "name": bird.get("name", bid),
+            "english": bird.get("english", ""),
             "gardens": len(slot["gardens"]),
             "sightings": slot["sightings"],
             "recent": recent,
@@ -132,35 +135,35 @@ _BIOME_LABELS = {"kyoto": "🏯 京都", "charlotte": "🌳 シャーロット"}
 
 def render_community_atlas(default_biome: str = "kyoto") -> None:
     """集合アトラス(みんなの庭)を描画する。読み取り専用・匿名・非競争。"""
-    st.markdown("### 🗺 みんなの庭")
-    st.caption(
+    st.markdown(t("### 🗺 みんなの庭"))
+    st.caption(t(
         "みんなの観察が集まって、どの土地にどの声が訪れているかの地図になります。"
         "名前も順位もありません。ただ、世界が誰かに育てられているという記録です。"
-    )
+    ))
 
     atlas = _load_atlas_cached(("v1",))
     gardens = atlas.get("gardens", 0)
     biomes = atlas.get("biomes", {})
 
     if not gardens:
-        st.info(
+        st.info(t(
             "まだみんなの庭の記録がありません。"
             "鳥に会うと、その声がこの地図に静かに加わります。"
-        )
+        ))
         return
 
     st.markdown(
         f'<div style="color:#5a7a5a;font-size:0.9em;margin:2px 0 10px;">'
-        f'🌿 いま <b>{gardens}</b> の庭が、この世界を育てています。</div>',
+        f'{t("🌿 いま <b>{gardens}</b> の庭が、この世界を育てています。", gardens=gardens)}</div>',
         unsafe_allow_html=True,
     )
 
     biome_ids = list(_BIOME_LABELS.keys())
     cur = default_biome if default_biome in biome_ids else biome_ids[0]
     chosen = st.radio(
-        "土地を選ぶ",
+        t("土地を選ぶ"),
         options=biome_ids,
-        format_func=lambda x: _BIOME_LABELS[x],
+        format_func=lambda x: t(_BIOME_LABELS[x]),
         index=biome_ids.index(cur),
         horizontal=True,
         key="community_biome_select",
@@ -169,35 +172,38 @@ def render_community_atlas(default_biome: str = "kyoto") -> None:
 
     species = biomes.get(chosen, [])
     if not species:
-        st.info(f"{_BIOME_LABELS[chosen]}には、まだみんなの庭から訪れた声がありません。")
+        st.info(t("{biome}には、まだみんなの庭から訪れた声がありません。",
+                  biome=t(_BIOME_LABELS[chosen])))
         return
 
+    en = get_lang() == "en"
     max_g = max(e["gardens"] for e in species)
     rows_html = ""
     for e in species[:20]:
         width = int(round(100 * e["gardens"] / max_g)) if max_g else 0
         recent = (
-            '<span style="color:#c8a830;font-size:0.8em;margin-left:6px;">🌟 最近</span>'
+            f'<span style="color:#c8a830;font-size:0.8em;margin-left:6px;">{t("🌟 最近")}</span>'
             if e["recent"] else ""
         )
+        disp = e["english"] if (en and e.get("english")) else e["name"]
         rows_html += (
             f'<div style="display:flex;align-items:center;gap:8px;margin:3px 0;">'
-            f'<span style="min-width:9em;font-size:0.9em;color:#3a5a3a;">{e["name"]}{recent}</span>'
+            f'<span style="min-width:9em;font-size:0.9em;color:#3a5a3a;">{disp}{recent}</span>'
             f'<span style="flex:1;background:#eef2e6;border-radius:6px;height:10px;overflow:hidden;">'
             f'<span style="display:block;height:100%;width:{width}%;background:#9ec27a;"></span></span>'
             f'<span style="min-width:4.5em;text-align:right;color:#6a8a5a;font-size:0.8em;">'
-            f'{e["gardens"]} の庭</span>'
+            f'{t("{n} の庭", n=e["gardens"])}</span>'
             f'</div>'
         )
     st.markdown(
         f'<div style="background:#f3f7ed;border-left:3px solid #b0c890;'
         f'border-radius:8px;padding:10px 14px;margin:6px 0;">'
         f'<div style="font-size:0.8em;color:#7a9a6a;margin-bottom:6px;">'
-        f'{_BIOME_LABELS[chosen]} に、みんなの庭から訪れている声</div>'
+        f'{t("{biome} に、みんなの庭から訪れている声", biome=t(_BIOME_LABELS[chosen]))}</div>'
         f'{rows_html}</div>',
         unsafe_allow_html=True,
     )
-    st.caption(
+    st.caption(t(
         "「N の庭」はその声を迎えた庭の数です。多い少ないは賑わいであって、"
         "競争ではありません。あなたの庭も、この地図の一部です。"
-    )
+    ))

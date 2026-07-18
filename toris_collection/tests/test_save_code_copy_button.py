@@ -69,7 +69,7 @@ def test_fallback_controls_hidden_behind_toggle():
     # への対応。書き出し・直接表示・共有ボタンは常時表示せず、
     # 「うまくいかない場合」チェックボックスの内側だけに配置する。
     src = _read_app_source()
-    toggle_idx = src.index('st.checkbox("うまくいかない場合はこちら"')
+    toggle_idx = src.index('st.checkbox(t("うまくいかない場合はこちら")')
     copy_idx = src.index("_render_save_code_copy_button(_save_code_str)")
     download_idx = src.index('"⬇️ セーブコードを書き出す"')
     code_idx = src.index("st.code(_save_code_str")

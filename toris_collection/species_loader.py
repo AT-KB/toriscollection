@@ -91,6 +91,11 @@ def _load_birds_from_sheets() -> dict[str, BirdData] | None:
                 _fmax = row.get("flock_max")
                 if _fmax not in (None, ""):
                     bird["flock_max"] = int(_fmax)
+                # 英語の説明文(任意列。列が無い/空なら入れず、表示側で description に
+                # フォールバックする。既存シートには列が無いため absent-safe に読む)
+                _den = str(row.get("description_en", "")).strip()
+                if _den:
+                    bird["description_en"] = _den
                 birds[bid] = bird
             except Exception as e:
                 print(f"[species_loader] birds row '{bid}' skip: {e}")

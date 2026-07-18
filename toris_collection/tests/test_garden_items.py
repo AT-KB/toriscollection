@@ -23,9 +23,13 @@ from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import i18n  # noqa: E402
 import data  # noqa: E402
 import garden_items as gi  # noqa: E402
 import ads  # noqa: E402
+
+# 既定言語(EN)= 実際に出荷される表示。トーン検証は出荷言語に対して行う。
+i18n.set_lang("en")
 
 BIRDS = data.BIRDS
 
@@ -93,8 +97,8 @@ def test_bird_bath_has_no_species_target_but_is_available():
 
 def test_unavailable_reason_is_factual_not_punitive():
     reason = gi.unavailable_reason("hummingbird_feeder", "kyoto", BIRDS)
-    assert "ハチドリ" in reason
-    assert "シャーロット" in reason
+    assert "hummingbird" in reason.lower()
+    assert "Charlotte" in reason
 
 
 # ── 配置・有効期限 ──────────────────────────────────────────

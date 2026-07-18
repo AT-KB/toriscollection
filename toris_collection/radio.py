@@ -32,6 +32,14 @@ import streamlit.components.v1 as components
 import ecology
 import flock as flk
 import audio_engine as ae
+from i18n import t, get_lang
+
+
+def _disp_name(bird: dict) -> str:
+    """表示用の鳥名。英語表示では english、無ければ日本語名。"""
+    if get_lang() == "en" and bird.get("english"):
+        return bird["english"]
+    return bird.get("name", "?")
 
 try:
     import xc_client
@@ -174,11 +182,11 @@ def render_radio(
     selected_biome: ユーザーが選んだバイオーム(None = biome_id を使う)
     """
     if xc_client is None or not xc_client.is_enabled():
-        st.info(
+        st.info(t(
             "xeno-canto APIキーが設定されていません。鳴き声機能を有効にするには、"
             "Streamlit Cloud では secrets に `xc_api_key`、環境変数なら `XC_API_KEY`、"
             "ローカルなら `xc_api_key.txt` のいずれかでキーを設定してください。"
-        )
+        ))
         return
 
     season = current_app_season()
@@ -186,7 +194,7 @@ def render_radio(
     weeks_left = weeks_until_next_season()
 
     # ── バイオーム選択 ──────────────────────────────────────────
-    biome_labels = {"kyoto": "🏯 京都", "charlotte": "🌳 シャーロット"}
+    biome_labels = {"kyoto": t("🏯 京都"), "charlotte": t("🌳 シャーロット")}
     biome_ids = list(biome_labels.keys())
     current_biome = selected_biome or biome_id
     if current_biome not in biome_ids:
@@ -209,15 +217,15 @@ def render_radio(
     col_biome, col_time = st.columns([2, 1])
     with col_biome:
         chosen = st.radio(
-            "庭を選ぶ",
+            t("庭を選ぶ"),
             options=biome_ids,
             format_func=lambda x: biome_labels[x],
             index=default_idx,
             horizontal=True,
             key=_widget_key,
             label_visibility="collapsed",
-            help="今、庭で選んでいる土地に自動的に合わせます。過去にコレクション"
-                 "した別の土地の顔ぶれを聴きたい時だけ、ここで一時的に切り替えられます。",
+            help=t("今、庭で選んでいる土地に自動的に合わせます。過去にコレクション"
+                   "した別の土地の顔ぶれを聴きたい時だけ、ここで一時的に切り替えられます。"),
         )
     with col_time:
         # 既定は「今の時刻」= 端末のローカル時刻に追従(JS の new Date() で判定)。
@@ -228,18 +236,19 @@ def render_radio(
         # 雰囲気(🌅🌞🌆🌙)で表すようにした。裏側の「実時刻に応じて鳴き方が
         # 変わる」仕組み自体(use_real_time)は変更していない。
         time_options = [
-            "🕒 今の時間のまま", "🌅 朝の庭", "🌞 昼の庭", "🌆 夕方の庭", "🌙 夜の庭",
+            t("🕒 今の時間のまま"), t("🌅 朝の庭"), t("🌞 昼の庭"),
+            t("🌆 夕方の庭"), t("🌙 夜の庭"),
         ]
         time_hours  = [None, 6, 12, 17, 22]
         t_idx = st.selectbox(
-            "鳴く時間帯",
+            t("鳴く時間帯"),
             options=range(len(time_options)),
             format_func=lambda i: time_options[i],
             index=0,
             key=f"{key_prefix}_time_select",
-            help="既定はこの端末の今の時間に合わせて鳴きます"
-                 "(朝はさえずり、夜は静かに)。試しに別の時間帯の雰囲気を"
-                 "聴くこともできます。",
+            help=t("既定はこの端末の今の時間に合わせて鳴きます"
+                   "(朝はさえずり、夜は静かに)。試しに別の時間帯の雰囲気を"
+                   "聴くこともできます。"),
         )
     use_real_time = time_hours[t_idx] is None
     sim_hour = 12 if use_real_time else time_hours[t_idx]
@@ -252,11 +261,11 @@ def render_radio(
     # 2026-07-09追記(P2修正): ボタン表記に説明文が同居して分かりにくい、との
     # 指摘を受け、表記は「ヒーリングBGMスイッチ」に簡略化(説明は help に集約)。
     bgm_mode = st.toggle(
-        "🎧 ヒーリングBGMスイッチ",
+        t("🎧 ヒーリングBGMスイッチ"),
         value=False,
         key=f"{key_prefix}_bgm_toggle",
-        help="鳥の声は控えめになり、環境音がやわらかく主役になります。"
-             "作業や就寝のお供に。",
+        help=t("鳥の声は控えめになり、環境音がやわらかく主役になります。"
+               "作業や就寝のお供に。"),
     )
 
     # ── バイオームの観察済み鳥を絞り込む ──────────────────────
@@ -270,7 +279,8 @@ def render_radio(
     ]
 
     if not observed_in_biome:
-        st.info(f"{biome_labels[chosen]}で鳥に出会うと、ここで声が聴けるようになります。")
+        st.info(t("{biome}で鳥に出会うと、ここで声が聴けるようになります。",
+                  biome=biome_labels[chosen]))
         return
 
     # 季節内・外に分ける
@@ -282,7 +292,8 @@ def render_radio(
     if not in_season:
         # 全員季節外: チップで「いつ戻るか」を見せる
         _render_bird_chips(in_season, out_season, observed, birds_data, season)
-        st.info(f"今の季節({season_meta['jp']})に鳴ける鳥がいません。他の季節にまた来てください。")
+        st.info(t("今の季節({season})に鳴ける鳥がいません。他の季節にまた来てください。",
+                  season=t(season_meta['jp'])))
         return
 
     _ready_key = f"{key_prefix}_ready"
@@ -295,10 +306,10 @@ def render_radio(
         total_observed = len(observed_in_biome)
         st.markdown(
             f'<div style="color:#5a7a5a;font-size:0.85em;">'
-            f'🗂 コレクション {total_observed} 羽 · 今の季節に {len(in_season)} 羽が鳴ける</div>',
+            f'{t("🗂 コレクション {total} 羽 · 今の季節に {n} 羽が鳴ける", total=total_observed, n=len(in_season))}</div>',
             unsafe_allow_html=True,
         )
-        if st.button("🎙 ラジオを始める", key=f"{key_prefix}_start_btn"):
+        if st.button(t("🎙 ラジオを始める"), key=f"{key_prefix}_start_btn"):
             st.session_state[_ready_key] = True
             st.rerun()
         return
@@ -321,7 +332,7 @@ def render_radio(
     candidates = [(bid, birds_data[bid]) for bid in lineup + backups[:3]]
 
     birds: list[dict] = []
-    with st.spinner("声を集めています…"):
+    with st.spinner(t("声を集めています…")):
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
             futures = {ex.submit(_fetch_radio_audio, c): c[0] for c in candidates}
             for future in concurrent.futures.as_completed(futures):
@@ -331,7 +342,7 @@ def render_radio(
                     cnt  = observed.get(bid, {}).get("count", 1)
                     birds.append({
                         "id":     bid,
-                        "name":   bird.get("name", bid),
+                        "name":   _disp_name(bird),
                         "color":  bird.get("color", "#888"),
                         "b64s":   b64s,
                         "sprite": _radio_sprite_b64(bid),
@@ -348,12 +359,12 @@ def render_radio(
             xc_client.is_nc_only(birds_data[bid].get("scientific", ""))
             for bid in lineup + backups[:3]
         ):
-            st.info(
+            st.info(t(
                 "🔒 今日の顔ぶれの声はNC(非商用)音源のため、録音準備中です。"
                 "図鑑や庭での観察はこれまでどおり楽しめます。"
-            )
+            ))
         else:
-            st.info("音源を取得できませんでした。")
+            st.info(t("音源を取得できませんでした。"))
         return
 
     # 顔ぶれの並び(lineup)順に整える。先頭が今日の「主役」。
@@ -396,17 +407,17 @@ def _render_bird_chips(
         chips_html += (
             f'<span style="background:#e8f0e0;border:1px solid #b0c890;'
             f'border-radius:16px;padding:3px 10px;font-size:0.82em;color:#3a5a3a;">'
-            f'{bird.get("name","?")} <span style="color:#7ab040;font-size:0.75em">{bar}</span></span>'
+            f'{_disp_name(bird)} <span style="color:#7ab040;font-size:0.75em">{bar}</span></span>'
         )
     for bid in out_season:
         bird   = birds_data.get(bid, {})
         s_list = BIRD_SEASONS.get(bid, _YEAR_ROUND)
-        next_s = next((s for s in _SEASON_ORDER if s in s_list), "春")
-        next_label = _SEASON_META.get(next_s, {}).get("jp", "春")
+        next_s = next((s for s in _SEASON_ORDER if s in s_list), "spring")
+        next_label = t(_SEASON_META.get(next_s, {}).get("jp", "春"))
         chips_html += (
             f'<span style="background:#f0f0ec;border:1px solid #ccc;'
             f'border-radius:16px;padding:3px 10px;font-size:0.82em;color:#aaa;">'
-            f'{bird.get("name","?")} <span style="font-size:0.75em">{next_label}に来る</span></span>'
+            f'{_disp_name(bird)} <span style="font-size:0.75em">{t("{season}に来る", season=next_label)}</span></span>'
         )
     chips_html += "</div>"
     st.markdown(chips_html, unsafe_allow_html=True)
@@ -437,14 +448,14 @@ def _is_fresh(bid: str, observed: dict, fresh_ids: set) -> bool:
 
 def _render_new_arrivals(names: list[str]) -> None:
     """会いに行った鳥がラジオに加わったことを祝うバナー(ループの payoff)。"""
-    label = "・".join(names)
+    label = ("・" if get_lang() == "ja" else ", ").join(names)
     st.markdown(
         f'<div style="background:#fbf6e8;border-left:3px solid #c8a830;'
         f'border-radius:8px;padding:8px 12px;margin:8px 0;">'
         f'<div style="font-size:0.84em;color:#a07f20;">'
-        f'🌟 <b>{label}</b> が新しく加わりました'
+        f'{t("🌟 <b>{label}</b> が新しく加わりました", label=label)}'
         f'<span style="color:#c0a850;font-weight:400;">'
-        f' — 会いに行った鳥が、ラジオの顔ぶれに増えています。</span>'
+        f'{t(" — 会いに行った鳥が、ラジオの顔ぶれに増えています。")}</span>'
         f'</div></div>',
         unsafe_allow_html=True,
     )
@@ -459,9 +470,10 @@ def _render_connections(groups: list[dict], birds_data: dict, story: str = "") -
     """
     if not groups and not story:
         return
+    _join = "・" if get_lang() == "ja" else ", "
     rows = ""
     for g in groups[:3]:
-        names = "・".join(birds_data.get(b, {}).get("name", b) for b in g["birds"])
+        names = _join.join(_disp_name(birds_data.get(b, {})) for b in g["birds"])
         rows += (
             f'<div style="display:flex;align-items:baseline;gap:8px;'
             f'margin:3px 0;font-size:0.84em;color:#3a5a3a;">'
@@ -470,12 +482,12 @@ def _render_connections(groups: list[dict], birds_data: dict, story: str = "") -
             f'<span style="font-weight:500;">{names}</span>'
             f'</div>'
         )
-    caption = story or "同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます"
+    caption = story or t("同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます")
     st.markdown(
         f'<div style="background:#f3f7ed;border-left:3px solid #b0c890;'
         f'border-radius:8px;padding:8px 12px;margin:8px 0;">'
         f'<div style="font-size:0.78em;color:#7a9a6a;margin-bottom:4px;">'
-        f'🔗 今日の顔ぶれ &nbsp;<span style="color:#a8b89a;font-weight:400;">'
+        f'{t("🔗 今日の顔ぶれ")} &nbsp;<span style="color:#a8b89a;font-weight:400;">'
         f'— {caption}</span></div>'
         f'{rows}</div>',
         unsafe_allow_html=True,
@@ -493,7 +505,12 @@ def _render_radio_iframe(
 
     n = len(birds)
     total_indiv = sum(b.get("flock", 1) for b in birds)  # 群れ込みの総個体数
-    count_label = f"{total_indiv}羽 ({n}種)" if total_indiv > n else f"{n}羽"
+    count_label = (t("{total}羽 ({n}種)", total=total_indiv, n=n)
+                   if total_indiv > n else t("{n}羽", n=n))
+    lbl_start = t("🎙 ラジオを始める")
+    lbl_stop = t("■ 止める")
+    season_jp = t(season_meta["jp"])
+    radio_title = t("{season}の庭のラジオ", season=season_jp)
     birds_meta = [
         {"id": b["id"], "name": b["name"], "nv": b["nv"],
          "vt": b["vt"], "depth": b["depth"], "flock": b.get("flock", 1)}
@@ -568,9 +585,9 @@ def _render_radio_iframe(
 
     <div id="ra_wrap">
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-        <button id="ra_btn">🎙 ラジオを始める</button>
+        <button id="ra_btn">{lbl_start}</button>
         <div style="color:#5a7a5a;font-size:0.9em;font-weight:500;">
-          {season_meta["icon"]} {season_meta["jp"]}の庭のラジオ &nbsp;·&nbsp;
+          {season_meta["icon"]} {radio_title} &nbsp;·&nbsp;
           <span style="font-weight:400;">{count_label}</span>
         </div>
       </div>
@@ -845,7 +862,7 @@ def _render_radio_iframe(
                 if (el) el.play().catch(()=>{{}});
             }});
             running = true;
-            btn.textContent = '■ 止める';
+            btn.textContent = '{lbl_stop}';
             btn.style.background = '#b8c8a0';
             rafId = requestAnimationFrame(gateTick);
         }}
@@ -855,14 +872,14 @@ def _render_radio_iframe(
             nodes.forEach(nd => nd.els.forEach(el => {{ try {{ el.pause(); }} catch(e){{}} }}));
             if (ctx) ctx.suspend();
             running = false;
-            btn.textContent = '🎙 ラジオを始める';
+            btn.textContent = '{lbl_start}';
             btn.style.background = '#cfd9b8';
             for (let i = 0; i < n; i++) updateChip(i, false);
         }}
 
         btn.addEventListener('click', () => {{
             if (running) stop();
-            else if (ctx) {{ ctx.resume(); nodes.forEach(nd => {{ const el = nd.els[nd.cur]; if (el) el.play().catch(()=>{{}}); }}); running=true; btn.textContent='■ 止める'; btn.style.background='#b8c8a0'; rafId=requestAnimationFrame(gateTick); }}
+            else if (ctx) {{ ctx.resume(); nodes.forEach(nd => {{ const el = nd.els[nd.cur]; if (el) el.play().catch(()=>{{}}); }}); running=true; btn.textContent='{lbl_stop}'; btn.style.background='#b8c8a0'; rafId=requestAnimationFrame(gateTick); }}
             else start();
         }});
     }})();

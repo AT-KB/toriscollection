@@ -116,6 +116,8 @@ from __future__ import annotations
 import uuid
 from datetime import date
 
+from i18n import t
+
 
 def _today_str(today=None) -> str:
     """日付から 'YYYY-MM-DD' 文字列を作る(全ユーザー・全端末で同じ形式)。"""
@@ -498,10 +500,10 @@ def render_pending_ad_loader(session_state, pending_key: str, key_prefix: str = 
     import streamlit as st
     import streamlit.components.v1 as components
 
-    st.caption(
+    st.caption(t(
         "🎬 広告を読み込んでいます……見終わると自動で戻ります"
         "(10秒ほど始まらない場合は自動的に終了します)。"
-    )
+    ))
     unit_id = _load_admob_rewarded_unit_id()
     is_testing = unit_id == _ADMOB_TEST_REWARDED_UNIT_ID
     js = (
@@ -511,7 +513,7 @@ def render_pending_ad_loader(session_state, pending_key: str, key_prefix: str = 
         .replace("__IS_TESTING__", "true" if is_testing else "false")
     )
     components.html(js, height=0)
-    if st.button("キャンセルする", key=f"{key_prefix}_{pending_key}_cancel_btn"):
+    if st.button(t("キャンセルする"), key=f"{key_prefix}_{pending_key}_cancel_btn"):
         session_state.pop(pending_key, None)
         st.rerun()
     return True
@@ -531,9 +533,9 @@ def render_banner_placeholder(session_state, key_prefix: str = "ads") -> None:
     st.markdown(
         "<div style='margin-top:22px;padding:10px 16px;border-radius:8px;"
         "background:#f4f2ec;border:1px dashed #cfc7b0;text-align:center;'>"
-        "<span style='color:#9a9078;font-size:0.82em;'>🌾 広告スペース(準備中)</span>"
+        f"<span style='color:#9a9078;font-size:0.82em;'>{t('🌾 広告スペース(準備中)')}</span>"
         "<div style='font-size:0.76em;color:#b0a890;margin-top:2px;'>"
-        "実際の広告はまだ配信していません・ラジオ再生中は表示しません"
+        f"{t('実際の広告はまだ配信していません・ラジオ再生中は表示しません')}"
         "</div></div>",
         unsafe_allow_html=True,
     )
@@ -572,18 +574,19 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
 
     flag_key = "garden_item_claimed_date"
     pending_key = "ads_pending_garden_item"
-    with st.expander("🎁 応援広告(庭に道具をひとつ)", expanded=False):
+    with st.expander(t("🎁 応援広告(庭に道具をひとつ)"), expanded=False):
         active = session_state.get("garden_item_placement")
         if gi.is_active(active):
             item = gi.ITEMS.get(active.get("item_id"), {})
             hrs = gi.hours_remaining(active)
-            st.caption(
-                f"{item.get('emoji', '')} 今は「{item.get('name', '')}」を"
-                f"置いています(あと{hrs:.1f}時間)。"
-            )
+            st.caption(t(
+                "{emoji} 今は「{name}」を置いています(あと{hrs}時間)。",
+                emoji=item.get('emoji', ''), name=t(item.get('name', '')),
+                hrs=f"{hrs:.1f}",
+            ))
             return
         if has_claimed_today(session_state, flag_key):
-            st.caption("✓ 今日はもう受け取りました。また明日。")
+            st.caption(t("✓ 今日はもう受け取りました。また明日。"))
             return
 
         if render_pending_ad_loader(session_state, pending_key, key_prefix=key_prefix):
@@ -593,16 +596,16 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
             item_id for item_id in gi.ITEM_ORDER
             if gi.is_available(item_id, biome_id, birds_data)
         ]
-        st.caption(
+        st.caption(t(
             "見ると、アメリカの裏庭インテリアショップから、ランダムで道具を"
             "1つもらえます。庭に6時間だけ置けるおまけです。見なくても庭の"
             "進み方はいつもどおりです。"
-        )
+        ))
         if not available_items:
-            st.caption("今のこの庭では、まだ選べる道具がありません。")
+            st.caption(t("今のこの庭では、まだ選べる道具がありません。"))
             return
         if st.button(
-            "▶ 広告を見て、道具をもらう",
+            t("▶ 広告を見て、道具をもらう"),
             key=f"{key_prefix}_item_random_btn",
             use_container_width=True,
         ):

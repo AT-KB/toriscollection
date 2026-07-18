@@ -13,7 +13,11 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import i18n  # noqa: E402
 import tutorial  # noqa: E402
+
+# 既定言語(EN)= 実際に出荷される表示。トーン検証は出荷言語に対して行う。
+i18n.set_lang("en")
 
 
 def test_resolve_step_stays_at_land_step_without_action():
@@ -55,22 +59,23 @@ def test_is_done_only_at_or_past_total_steps():
 
 def test_step_content_step0_mentions_land():
     content = tutorial.step_content(0, "京都(温帯)")
-    assert "土地を選び" in content["title"]
+    assert "land" in content["title"].lower()
+    # バイオーム名は引数としてそのまま本文に差し込まれる(言語非依存)
     assert "京都(温帯)" in content["body"]
     assert content["next_label"]
 
 
 def test_step_content_step1_mentions_planting():
     content = tutorial.step_content(1, "京都(温帯)")
-    assert "植物を植え" in content["title"]
-    assert "植える" in content["body"]
+    assert "plant" in content["title"].lower()
+    assert "plant" in content["body"].lower()
 
 
 def test_step_content_final_step_has_finish_label_not_skip():
     content = tutorial.step_content(2, "京都(温帯)")
-    assert "はじめる" in content["next_label"]
-    # 強制ブロックの煽り文句(数字カウントダウン等)を持たない
-    assert "しないと" not in content["body"]
+    assert "Begin" in content["next_label"]
+    # 強制ブロックの煽り文句(急かす・数字カウントダウン等)を持たない
+    assert "must" not in content["body"].lower()
 
 
 def test_step_content_out_of_range_clamped():

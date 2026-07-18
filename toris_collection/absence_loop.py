@@ -18,6 +18,14 @@ from engine import calculate_arrival_probability, run_turn
 import mementos as mem
 import disturbance as dist
 import garden_items
+from i18n import t, get_lang
+
+
+def _bird_name(bird):
+    """表示用の鳥名。英語表示では english、無ければ日本語名。"""
+    if get_lang() == "en" and bird.get("english"):
+        return bird["english"]
+    return bird.get("name", "")
 
 
 def parse_iso(s):
@@ -69,12 +77,13 @@ def build_reason_text(bird_id: str, info: dict, item_hint: str | None = None):
       よりも、正直に「アイテムに誘われた」と言う(捏造しない・原則4)。
     """
     bird = BIRDS[bird_id]
-    bird_name = bird["name"]
+    bird_name = _bird_name(bird)
     paths = info.get("incoming_paths") or []
     if not paths:
         if item_hint:
-            return (f"{bird_name}が、{item_hint}に誘われて立ち寄りました。", "", "")
-        return (f"{bird_name}が立ち寄りました。", "", "")
+            return (t("{bird_name}が、{item_hint}に誘われて立ち寄りました。",
+                      bird_name=bird_name, item_hint=item_hint), "", "")
+        return (t("{bird_name}が立ち寄りました。", bird_name=bird_name), "", "")
 
     # 一番重みの大きい食物経路を採用
     paths_sorted = sorted(paths, key=lambda x: x[2], reverse=True)
@@ -83,16 +92,18 @@ def build_reason_text(bird_id: str, info: dict, item_hint: str | None = None):
     if kind == "plant" and pred_id in PLANTS:
         plant = PLANTS[pred_id]
         return (
-            f"{bird_name}が来ました。{plant['name']}に惹かれて立ち寄ったようです。",
+            t("{bird_name}が来ました。{plant}に惹かれて立ち寄ったようです。",
+              bird_name=bird_name, plant=plant['name']),
             pred_id, "",
         )
     if kind == "insect" and pred_id in INSECTS:
         insect = INSECTS[pred_id]
         return (
-            f"{bird_name}が来ました。{insect['name']}を狙って立ち寄ったようです。",
+            t("{bird_name}が来ました。{insect}を狙って立ち寄ったようです。",
+              bird_name=bird_name, insect=insect['name']),
             "", pred_id,
         )
-    return (f"{bird_name}が立ち寄りました。", "", "")
+    return (t("{bird_name}が立ち寄りました。", bird_name=bird_name), "", "")
 
 
 def evolve_state(planted, biome, month, last_access_at, current_time,
@@ -220,14 +231,14 @@ def humanize_delta(arrived: datetime, now: datetime) -> str:
         return ""
     seconds = (now - arrived).total_seconds()
     if seconds < 0:
-        return "まもなく"
+        return t("まもなく")
     if seconds < 60:
-        return "今しがた"
+        return t("今しがた")
     if seconds < 3600:
-        return f"{int(seconds // 60)}分前"
+        return t("{n}分前", n=int(seconds // 60))
     if seconds < 86400:
-        return f"{int(seconds // 3600)}時間前"
-    return f"{int(seconds // 86400)}日前"
+        return t("{n}時間前", n=int(seconds // 3600))
+    return t("{n}日前", n=int(seconds // 86400))
 
 
 def summarize_events(events):
@@ -238,6 +249,6 @@ def summarize_events(events):
     species = {e["bird_id"] for e in events}
     if len(species) == 1:
         bid = next(iter(species))
-        name = BIRDS.get(bid, {}).get("name", bid)
-        return f"{name}が{n}回立ち寄りました"
-    return f"{n}件の立ち寄り({len(species)}種)"
+        name = _bird_name(BIRDS.get(bid, {})) or bid
+        return t("{name}が{n}回立ち寄りました", name=name, n=n)
+    return t("{n}件の立ち寄り({s}種)", n=n, s=len(species))

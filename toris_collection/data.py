@@ -12,21 +12,25 @@ Toris Collection - 種と相互作用のシードデータ (v3)
 BIOMES = {
     "kyoto": {
         "name": "京都",
+        "name_en": "Kyoto",
         "lat": 35.0, "lon": 135.8,
         "temp_mean": 14,
         "precip_mean": 1500,
         "hemisphere": "north",
         "max_plants": 4,
         "description": "四季がはっきりした温帯モンスーン。里山と二次林が広がり、植物・昆虫・鳥の多様性が高い。",
+        "description_en": "A temperate monsoon land of four distinct seasons. Its satoyama foothills and secondary woods teem with plants, insects, and birds.",
     },
     "charlotte": {
         "name": "シャーロット",
+        "name_en": "Charlotte",
         "lat": 35.2, "lon": -80.8,
         "temp_mean": 16,
         "precip_mean": 1100,
         "hemisphere": "north",
         "max_plants": 4,
         "description": "北米東部の温帯湿潤林。落葉広葉樹とマツが混じり、鮮やかな色彩の鳥が多い。",
+        "description_en": "The humid temperate forest of the eastern United States. Broadleaf trees mingle with pines, home to many brightly colored birds.",
     },
 }
 
@@ -208,6 +212,7 @@ BIRDS = {
         "temp_fit": (0, 28), "biome_pref": ["kyoto"],
         "rarity": 0.3,
         "description": "白黒ネクタイ模様が特徴。都市部から森まで幅広く生息する身近な鳥。",
+        "description_en": "Known for its black necktie marking. A familiar visitor, at home everywhere from city parks to deep woods.",
     },
     "suzume": {
         "name": "スズメ", "scientific": "Passer montanus", "english": "Eurasian Tree Sparrow", "color": "#a07040",
@@ -215,6 +220,7 @@ BIRDS = {
         "temp_fit": (0, 30), "biome_pref": ["kyoto"],
         "rarity": 0.2,
         "description": "人里の代表種。イネ科植物と人の営みに密接に結びついている。",
+        "description_en": "The classic bird of villages, its life woven closely into rice fields and the ways of people.",
     },
     "mejiro": {
         "name": "メジロ", "scientific": "Zosterops japonicus", "english": "Japanese White-eye", "color": "#9ab846",
@@ -223,6 +229,7 @@ BIRDS = {
         "temp_fit": (5, 28), "biome_pref": ["kyoto"],
         "rarity": 0.35,
         "description": "目の周りの白いリングが特徴。花の蜜と果実を好む。",
+        "description_en": "Named for the white ring around each eye. It loves flower nectar and ripe fruit.",
     },
     "hiyodori": {
         "name": "ヒヨドリ", "scientific": "Hypsipetes amaurotis", "english": "Brown-eared Bulbul", "color": "#7a7a7a",
@@ -231,6 +238,7 @@ BIRDS = {
         "temp_fit": (0, 28), "biome_pref": ["kyoto"],
         "rarity": 0.3,
         "description": "大声で賑やか。果実を好み、種子散布者として重要。",
+        "description_en": "Loud and lively. A lover of fruit, and an important spreader of seeds.",
     },
     "uguisu": {
         "name": "ウグイス", "scientific": "Horornis diphone", "english": "Japanese Bush Warbler", "color": "#8a9452",
@@ -238,6 +246,7 @@ BIRDS = {
         "temp_fit": (5, 28), "biome_pref": ["kyoto"],
         "rarity": 0.5,
         "description": "春告鳥。藪の中で美しく囀るが姿を見せることは少ない。",
+        "description_en": "The herald of spring. It sings beautifully from the thickets, yet rarely shows itself.",
     },
     "kogera": {
         "name": "コゲラ", "scientific": "Dendrocopos kizuki", "english": "Japanese Pygmy Woodpecker", "color": "#6a5a4a",
@@ -245,6 +254,7 @@ BIRDS = {
         "temp_fit": (-5, 25), "biome_pref": ["kyoto"],
         "rarity": 0.5,
         "description": "日本最小のキツツキ。枯れ木を叩いて虫を探す。",
+        "description_en": "Japan's smallest woodpecker. It taps at dead wood in search of insects.",
     },
     "yamagara": {
         "name": "ヤマガラ", "scientific": "Sittiparus varius", "english": "Varied Tit", "color": "#b06030",
@@ -253,6 +263,7 @@ BIRDS = {
         "temp_fit": (-2, 25), "biome_pref": ["kyoto"],
         "rarity": 0.4,
         "description": "ドングリやエゴノキの実を蓄える習性。人懐っこい性格で知られる。",
+        "description_en": "It stores away acorns and snowbell seeds, and is known for its friendly, trusting nature.",
     },
     "kibitaki": {
         "name": "キビタキ", "scientific": "Ficedula narcissina", "english": "Narcissus Flycatcher", "color": "#e8b820",
@@ -260,6 +271,7 @@ BIRDS = {
         "temp_fit": (12, 24), "biome_pref": ["kyoto"],
         "rarity": 0.75,
         "description": "黄色と黒の夏鳥。林冠で朗らかに囀る。冬は南方へ渡る。",
+        "description_en": "A yellow-and-black summer visitor. It sings brightly in the canopy, then heads south for winter.",
     },
     "tsubame": {
         "name": "ツバメ", "scientific": "Hirundo rustica", "english": "Barn Swallow", "color": "#1a2a4a",
@@ -267,6 +279,7 @@ BIRDS = {
         "temp_fit": (14, 28), "biome_pref": ["kyoto"],
         "rarity": 0.45,
         "description": "春に渡来する夏鳥。飛翔しながら空中の昆虫を捕食する。",
+        "description_en": "A summer visitor arriving in spring. It catches insects on the wing as it flies.",
     },
     "kawasemi": {
         "name": "カワセミ", "scientific": "Alcedo atthis", "english": "Common Kingfisher", "color": "#1a7ac8",
@@ -274,6 +287,7 @@ BIRDS = {
         "temp_fit": (0, 28), "biome_pref": ["kyoto"],
         "rarity": 0.65,
         "description": "宝石のような青い背。水場が必須。飛び込んで魚や水生昆虫を捕る。",
+        "description_en": "A back of jewel-like blue. It needs water close by, diving in to catch fish and water insects.",
     },
     "ikaru": {
         "name": "イカル", "scientific": "Eophona personata", "english": "Japanese Grosbeak", "color": "#c0a040",
@@ -282,6 +296,7 @@ BIRDS = {
         "temp_fit": (-2, 22), "biome_pref": ["kyoto"],
         "rarity": 0.65,
         "description": "太い黄色いくちばしで堅い種子を割る。",
+        "description_en": "It cracks hard seeds with its thick yellow bill.",
     },
     "kawarahiwa": {
         "name": "カワラヒワ", "scientific": "Chloris sinica", "english": "Oriental Greenfinch", "color": "#b8a040",
@@ -290,6 +305,7 @@ BIRDS = {
         "temp_fit": (-2, 28), "biome_pref": ["kyoto"],
         "rarity": 0.4,
         "description": "黄色い翼斑が目立つ。種子食でススキ原や河川敷を好む。",
+        "description_en": "Marked by bright yellow wing patches. A seed-eater fond of silver-grass fields and riverbanks.",
     },
     "enaga": {
         "name": "エナガ", "scientific": "Aegithalos caudatus", "english": "Long-tailed Tit", "color": "#d4d4d4",
@@ -298,6 +314,7 @@ BIRDS = {
         "temp_fit": (-5, 24), "biome_pref": ["kyoto"],
         "rarity": 0.55,
         "description": "丸い体に長い尾。雪だるまのような姿で群れで動く。",
+        "description_en": "A round little body with a long tail. Snowman-like, it moves about in busy flocks.",
     },
     "kakesu": {
         "name": "カケス", "scientific": "Garrulus glandarius", "english": "Eurasian Jay", "color": "#a87878",
@@ -306,6 +323,7 @@ BIRDS = {
         "temp_fit": (-5, 24), "biome_pref": ["kyoto"],
         "rarity": 0.55,
         "description": "ドングリを地面に隠す習性で、ナラ類の森を育てる賢い鳥。",
+        "description_en": "A clever bird that buries acorns in the ground, and so helps the oak woods grow.",
     },
 
     # ----- シャーロット -----
@@ -317,6 +335,7 @@ BIRDS = {
         "temp_fit": (-5, 30), "biome_pref": ["charlotte"],
         "rarity": 0.3,
         "description": "ノースカロライナ州の州鳥。鮮やかな赤い羽と黒い顔が印象的。",
+        "description_en": "The state bird of North Carolina. Striking, with brilliant red plumage and a black face.",
     },
     "blue_jay": {
         "name": "アオカケス", "scientific": "Cyanocitta cristata", "english": "Blue Jay",
@@ -326,6 +345,7 @@ BIRDS = {
         "temp_fit": (-5, 28), "biome_pref": ["charlotte"],
         "rarity": 0.35,
         "description": "鮮やかな青と白の羽。賢く、ドングリを蓄える習性で知られる。",
+        "description_en": "Vivid blue and white. A clever bird, known for hoarding acorns.",
     },
     "eastern_bluebird": {
         "name": "ルリツグミ", "scientific": "Sialia sialis", "english": "Eastern Bluebird",
@@ -335,6 +355,7 @@ BIRDS = {
         "temp_fit": (0, 28), "biome_pref": ["charlotte"],
         "rarity": 0.5,
         "description": "深い青と橙の羽。開けた草地で昆虫を狙う。",
+        "description_en": "Deep blue with an orange breast. It watches for insects over open meadows.",
     },
     "american_robin": {
         "name": "コマツグミ", "scientific": "Turdus migratorius", "english": "American Robin",
@@ -344,6 +365,7 @@ BIRDS = {
         "temp_fit": (-5, 28), "biome_pref": ["charlotte"],
         "rarity": 0.3,
         "description": "胸の橙が特徴。北米で最もよく見られるツグミ類。",
+        "description_en": "Known for its orange breast. The most familiar thrush across North America.",
     },
     "carolina_wren": {
         "name": "カロライナミソサザイ", "scientific": "Thryothorus ludovicianus", "english": "Carolina Wren",
@@ -352,6 +374,7 @@ BIRDS = {
         "temp_fit": (0, 30), "biome_pref": ["charlotte"],
         "rarity": 0.45,
         "description": "「ティーケトル」と聞こえる元気な囀り。藪を好み、年中見られる。",
+        "description_en": "Its lively song sounds like 'tea-kettle, tea-kettle.' Fond of thickets, and seen all year round.",
     },
     "pileated_woodpecker": {
         "name": "エボシクマゲラ", "scientific": "Dryocopus pileatus", "english": "Pileated Woodpecker",
@@ -360,6 +383,7 @@ BIRDS = {
         "temp_fit": (-5, 26), "biome_pref": ["charlotte"],
         "rarity": 0.7,
         "description": "鮮やかな赤い冠羽の大型キツツキ。森の古木で大きな穴を開ける。",
+        "description_en": "A large woodpecker with a bright red crest. It carves great holes in the forest's old trees.",
     },
     "ruby_throated_hummingbird": {
         "name": "ルビーノドハチドリ", "scientific": "Archilochus colubris", "english": "Ruby-throated Hummingbird",
@@ -369,6 +393,7 @@ BIRDS = {
         "temp_fit": (12, 28), "biome_pref": ["charlotte"],
         "rarity": 0.7,
         "description": "翼を毎秒50回以上はばたかせる小さなハチドリ。夏に北米東部で繁殖する。",
+        "description_en": "A tiny hummingbird whose wings beat over fifty times a second. It breeds in the eastern woods each summer.",
     },
     "mourning_dove": {
         "name": "ナゲキバト", "scientific": "Zenaida macroura", "english": "Mourning Dove",
@@ -378,6 +403,7 @@ BIRDS = {
         "temp_fit": (-2, 30), "biome_pref": ["charlotte"],
         "rarity": 0.35,
         "description": "ベージュ色の落ち着いた羽。「クー」という哀しげな鳴き声で知られる。",
+        "description_en": "Soft, muted beige plumage. Known for its low, mournful coo.",
     },
     "tufted_titmouse": {
         "name": "エボシガラ", "scientific": "Baeolophus bicolor", "english": "Tufted Titmouse",
@@ -387,6 +413,7 @@ BIRDS = {
         "temp_fit": (-5, 28), "biome_pref": ["charlotte"],
         "rarity": 0.4,
         "description": "灰色の冠羽が特徴。シジュウカラ科の北米代表種。",
+        "description_en": "Marked by a small grey crest. North America's signature member of the tit family.",
     },
     "american_goldfinch": {
         "name": "オウゴンヒワ", "scientific": "Spinus tristis", "english": "American Goldfinch",
@@ -396,6 +423,7 @@ BIRDS = {
         "temp_fit": (-5, 28), "biome_pref": ["charlotte"],
         "rarity": 0.5,
         "description": "夏は鮮やかな黄色。種子食で、果実樹の周辺で群れる。",
+        "description_en": "Brilliant yellow in summer. A seed-eater that gathers around fruiting trees.",
     },
     "downy_woodpecker": {
         "name": "セジロコゲラ", "scientific": "Dryobates pubescens", "english": "Downy Woodpecker",
@@ -405,6 +433,7 @@ BIRDS = {
         "temp_fit": (-8, 28), "biome_pref": ["charlotte"],
         "rarity": 0.45,
         "description": "北米最小のキツツキ。住宅街の餌台にもよく現れる。",
+        "description_en": "North America's smallest woodpecker. A frequent guest at backyard feeders.",
     },
     # ── シャーロット追加(スプライトは既存を流用、後追いで補充) ──
     "carolina_chickadee": {
@@ -415,6 +444,7 @@ BIRDS = {
         "temp_fit": (-8, 30), "biome_pref": ["charlotte"],
         "rarity": 0.3,
         "description": "小さく人なつこいコガラ。餌台の常連で、ヒマワリの種を好む。",
+        "description_en": "A tiny, friendly chickadee. A feeder regular with a taste for sunflower seeds.",
     },
     "house_finch": {
         "name": "メキシコマシコ", "scientific": "Haemorhous mexicanus", "english": "House Finch",
@@ -424,6 +454,7 @@ BIRDS = {
         "temp_fit": (-4, 34), "biome_pref": ["charlotte"],
         "rarity": 0.3,
         "description": "住宅街に多い赤みがかった小鳥。種子と果実を好み、群れで来る。",
+        "description_en": "A rosy little bird common around homes. It loves seeds and fruit, and comes in flocks.",
     },
     "red_bellied_woodpecker": {
         "name": "ズアカアメリカコゲラ", "scientific": "Melanerpes carolinus", "english": "Red-bellied Woodpecker",
@@ -433,6 +464,7 @@ BIRDS = {
         "temp_fit": (-6, 32), "biome_pref": ["charlotte"],
         "rarity": 0.45,
         "description": "頭の赤いキツツキ。ドングリや樹皮の虫、餌台の種まで幅広く食べる。",
+        "description_en": "A red-capped woodpecker. It eats widely — acorns, bark insects, even feeder seed.",
     },
     "brown_thrasher": {
         "name": "チャイロツグミモドキ", "scientific": "Toxostoma rufum", "english": "Brown Thrasher",
@@ -442,6 +474,7 @@ BIRDS = {
         "temp_fit": (-4, 33), "biome_pref": ["charlotte"],
         "rarity": 0.55,
         "description": "茂みで落ち葉をかき分け虫を探す。警戒心が強く、姿を見せると珍しい。",
+        "description_en": "It rummages through leaf litter in the brush for insects. Wary by nature, so a rare sight.",
         "wariness": 0.6,
     },
     "song_sparrow": {
@@ -452,6 +485,7 @@ BIRDS = {
         "temp_fit": (-8, 30), "biome_pref": ["charlotte"],
         "rarity": 0.35,
         "description": "やぶ際でよくさえずるスズメの仲間。種子と小さな虫を食べる。",
+        "description_en": "A sparrow that sings often at the edge of thickets. It eats seeds and small insects.",
         "wariness": 0.45,
     },
     "cedar_waxwing": {
@@ -462,6 +496,7 @@ BIRDS = {
         "temp_fit": (-8, 28), "biome_pref": ["charlotte"],
         "rarity": 0.6,
         "description": "液果を追って群れで移動する。エンピツビャクシンの実を特に好む。",
+        "description_en": "It travels in flocks in search of berries, with a special love for red cedar fruit.",
         "wariness": 0.5,
     },
     # ── 京都追加(里山の常連・冬鳥。スプライトは既存を流用、後追いで補充) ──
@@ -473,6 +508,7 @@ BIRDS = {
         "temp_fit": (-4, 30), "biome_pref": ["kyoto"],
         "rarity": 0.3,
         "description": "「デデッポッポー」と鳴く里のハト。地面で種子や木の実を拾う。",
+        "description_en": "A country dove with a soft, rolling coo. It gathers seeds and nuts from the ground.",
         "wariness": 0.35,
     },
     "hibari": {
@@ -483,6 +519,7 @@ BIRDS = {
         "temp_fit": (-2, 30), "biome_pref": ["kyoto"],
         "rarity": 0.45,
         "description": "草地から舞い上がりさえずる。田畑の種子と虫を食べる。",
+        "description_en": "It rises singing from the grasslands. It feeds on the seeds and insects of the fields.",
         "wariness": 0.45,
     },
     "mozu": {
@@ -493,6 +530,7 @@ BIRDS = {
         "temp_fit": (-4, 28), "biome_pref": ["kyoto"],
         "rarity": 0.5,
         "description": "小さな猛禽のような小鳥。大きな虫を捕らえ、はやにえを作る。",
+        "description_en": "A small bird with the air of a little raptor. It catches large insects and leaves them impaled as a larder.",
         "wariness": 0.55,
     },
     "jou_bitaki": {
@@ -503,6 +541,7 @@ BIRDS = {
         "temp_fit": (-8, 18), "biome_pref": ["kyoto"],
         "rarity": 0.45,
         "description": "冬に渡ってくるオレンジ色の小鳥。「ヒッ、ヒッ」と鳴き人を恐れない。",
+        "description_en": "An orange little bird that arrives for winter. It calls a soft 'hit, hit' and shows little fear of people.",
         "wariness": 0.25,
     },
     "shirohara": {
@@ -513,6 +552,7 @@ BIRDS = {
         "temp_fit": (-8, 18), "biome_pref": ["kyoto"],
         "rarity": 0.5,
         "description": "冬の林床で落ち葉をかき分ける地味なツグミ。木の実と虫を食べる。",
+        "description_en": "A quiet thrush that turns over leaves on the winter forest floor. It eats berries and insects.",
         "wariness": 0.55,
     },
     "aoji": {
@@ -523,6 +563,7 @@ BIRDS = {
         "temp_fit": (-8, 20), "biome_pref": ["kyoto"],
         "rarity": 0.5,
         "description": "冬にやぶ際で種子をついばむ。緑がかった地味なホオジロの仲間。",
+        "description_en": "It pecks at seeds along the thicket's edge in winter. A quiet, greenish member of the bunting family.",
         "wariness": 0.5,
     },
 }

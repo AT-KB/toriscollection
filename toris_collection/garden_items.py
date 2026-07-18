@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from i18n import t
+
 # 1回の配置が効果を持つ時間
 DURATION_HOURS = 6
 
@@ -186,12 +188,13 @@ def unavailable_reason(item_id: str, biome_id: str, birds_data: dict) -> str:
     if not item:
         return ""
     if item_id == "hummingbird_feeder":
-        return (
-            f"{item['emoji']} {item['name']} — "
-            "この庭にはハチドリが生息していないため使えません"
-            "(シャーロットの庭で使えます)。"
+        return t(
+            "{emoji} {name} — この庭にはハチドリが生息していないため使えません"
+            "(シャーロットの庭で使えます)。",
+            emoji=item['emoji'], name=t(item['name']),
         )
-    return f"{item['emoji']} {item['name']} — 今のこの庭では対象になる鳥がいません。"
+    return t("{emoji} {name} — 今のこの庭では対象になる鳥がいません。",
+             emoji=item['emoji'], name=t(item['name']))
 
 
 def place_item(item_id: str, now: datetime | None = None) -> dict:

@@ -48,6 +48,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 from species_loader import PLANTS as _PLANTS
 import audio_engine as ae
+from i18n import t, get_lang
+
+
+def _disp_name(bird: dict) -> str:
+    """表示用の鳥名。英語表示では english、無ければ日本語名。"""
+    if get_lang() == "en" and bird.get("english"):
+        return bird["english"]
+    return bird.get("name", "?")
 
 try:
     import xc_client
@@ -122,13 +130,13 @@ def _hex_to_color_label(hex_color: str) -> str:
 
 def _bird_hint(bird_id: str, bird: dict, biome_id: str) -> str:
     """「サクラにとまっていた赤い鳥」形式のヒント文を生成(bird_id で決定的に固定)。"""
-    col = _hex_to_color_label(bird.get("color", "#888"))
+    col = t(_hex_to_color_label(bird.get("color", "#888")))
     plants = [p for p in bird.get("eats_plants", []) if p in _PLANTS]
     if plants:
         idx = hash(bird_id + biome_id) % len(plants)
         plant_name = _PLANTS[plants[idx]]["name"]
-        return f"{plant_name}にとまっていた{col}鳥"
-    return f"{col}鳥"
+        return t("{plant}にとまっていた{col}鳥", plant=plant_name, col=col)
+    return t("{col}鳥", col=col)
 
 
 @st.cache_data(show_spinner=False)
@@ -196,11 +204,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     _done_for = st.session_state.get("ritual_done_for_residents")
     if _done_for is not None and _done_for == frozenset(resident_ids):
         st.markdown(
-            """<div style="background:linear-gradient(180deg,#f7faf2,#eef4e6);
+            f"""<div style="background:linear-gradient(180deg,#f7faf2,#eef4e6);
             padding:14px 20px;border-radius:12px;border-left:4px solid #b7c7a3;
             margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
             <div style="color:#6b7a63;font-size:0.95em;">
-                🌙 今日はもう十分に耳を澄ませました。新しい鳥が来たら、また会いに行けます。</div>
+                {t("🌙 今日はもう十分に耳を澄ませました。新しい鳥が来たら、また会いに行けます。")}</div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -214,11 +222,11 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             padding:14px 20px;border-radius:12px;border-left:4px solid #7ba87b;
             margin-bottom:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
             <div style="color:#5a7a5a;font-size:0.95em;font-weight:500;">
-                ♪ 鳥に会いに行く ({n}羽)</div>
+                {t("♪ 鳥に会いに行く ({n}羽)", n=n)}</div>
             </div>""",
             unsafe_allow_html=True,
         )
-        if st.button("♪ 耳を澄ます", key="ritual_init_btn"):
+        if st.button(t("♪ 耳を澄ます"), key="ritual_init_btn"):
             st.session_state.ritual_ready = True
             st.rerun()
         return
@@ -231,7 +239,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
     ][:_MAX_BIRDS * 2]
 
     birds = []
-    with st.spinner("鳥の声を呼び込んでいます…"):
+    with st.spinner(t("鳥の声を呼び込んでいます…")):
         with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_BIRDS) as ex:
             futures = {ex.submit(_fetch_bird_audio, c): c[0] for c in candidates}
             for future in concurrent.futures.as_completed(futures):
@@ -240,7 +248,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                     bird = birds_data[bid]
                     birds.append({
                         "id":       bid,
-                        "name":     bird.get("name", bid),
+                        "name":     _disp_name(bird),
                         "hint":     _bird_hint(bid, bird, biome_id),
                         "color":    bird.get("color", "#888"),
                         "wariness": float(bird.get("wariness", 0.5)),
@@ -252,10 +260,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         if xc_client.COMMERCIAL_ONLY and any(
             xc_client.is_nc_only(b.get("scientific", "")) for _, b in candidates
         ):
-            st.info(
+            st.info(t(
                 "🔒 ここにいる鳥の声はNC(非商用)音源のため、録音準備中です。"
                 "図鑑や庭での観察はこれまでどおり楽しめます。"
-            )
+            ))
         st.session_state.ritual_ready = False
         return
 
@@ -423,6 +431,13 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
 
     has_ambient_js = "true" if ambient_b64 else "false"
 
+    # 儀式UI内の表示ラベル(JS内・HTML内に埋め込むため事前に翻訳しておく)
+    lbl_listen = t("♪ 耳を澄ます")
+    lbl_finish = t("■ 終わる")
+    title_meet = t("♪ 鳥に会いに行く ({n}羽)", n=n)
+    met_tmpl = t("🪶 %HINT%、%NAME% に出会えた！")
+    gone_tmpl = t("🕊 %HINT% は庭の向こうへ去った")
+
     html = f"""
     {ambient_tag}
     {audio_tags}
@@ -467,10 +482,10 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
                 background: #cfd9b8; color: #3a5a3a; border: none;
                 padding: 12px 22px; border-radius: 8px; cursor: pointer;
                 font-size: 1em; font-weight: 600; min-width: 140px;
-            ">♪ 耳を澄ます</button>
+            ">{lbl_listen}</button>
             <div style="flex-grow: 1;">
                 <div style="color: #5a7a5a; font-size: 0.95em; font-weight: 500;">
-                    ♪ 鳥に会いに行く ({n}羽)
+                    {title_meet}
                 </div>
             </div>
         </div>
@@ -843,7 +858,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             // テキスト: hint + 名前、フェードインして残す
             const line = document.createElement('div');
             line.style.cssText = 'animation:rite_met_in 0.5s ease-out;';
-            line.textContent = '🪶 ' + BIRDS[i].hint + '、' + BIRDS[i].name + ' に出会えた！';
+            line.textContent = '{met_tmpl}'.replace('%HINT%', BIRDS[i].hint).replace('%NAME%', BIRDS[i].name);
             metEl.appendChild(line);
             // 鳥スプライトをキラッと光らせる
             const sp = sprites[i];
@@ -859,7 +874,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         }}
 
         function markGone(i) {{
-            goneEl.textContent = '🕊 ' + BIRDS[i].hint + ' は庭の向こうへ去った';
+            goneEl.textContent = '{gone_tmpl}'.replace('%HINT%', BIRDS[i].hint);
             goneEl.style.opacity = '1';
             if (goneTimer) clearTimeout(goneTimer);
             goneTimer = setTimeout(function() {{ goneEl.style.opacity = '0'; }}, 7000);
@@ -968,7 +983,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
         function startRunning() {{
             timer = setInterval(step, STEP_MS);
             running = true;
-            btn.textContent = '■ 終わる';
+            btn.textContent = '{lbl_finish}';
             btn.style.background = '#b8c8a0';
             if (rafId) cancelAnimationFrame(rafId);
             rafId = requestAnimationFrame(gateTick);
@@ -1019,7 +1034,7 @@ def render_ritual(resident_ids, biome_id: str, birds_data: dict):
             nodes.forEach(nd => nd.els.forEach(el => {{ try {{ el.pause(); }} catch(e) {{}} }}));
             if (ctx) ctx.suspend();
             running = false;
-            btn.textContent = '♪ 耳を澄ます';
+            btn.textContent = '{lbl_listen}';
             btn.style.background = '#cfd9b8';
             saveObservations();
         }}

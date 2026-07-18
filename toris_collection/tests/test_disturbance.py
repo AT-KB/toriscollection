@@ -11,7 +11,11 @@ import random
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import i18n  # noqa: E402
 import disturbance as dist  # noqa: E402
+
+# 既定言語(EN)= 実際に出荷される表示。トーン検証は出荷言語に対して行う。
+i18n.set_lang("en")
 
 
 # テスト用の植物データ(感受性・遷移役割つき)
@@ -66,11 +70,11 @@ def test_disturbance_story_branches():
     ev = {"icon": "🌀", "label": "嵐"}
     # 倒れた植物があれば純減として語る(自動の植え直し・芽吹きは語らない)
     s1 = dist.disturbance_story(ev, ["ナラ"])
-    assert "倒れた" in s1
-    assert "芽吹" not in s1 and "新しい芽" not in s1
-    # 何も倒れなければ「持ちこたえた」
+    assert "knocked down" in s1.lower()
+    assert "sprout" not in s1.lower() and "new bud" not in s1.lower()
+    # 何も倒れなければ「持ちこたえた」= held on
     s2 = dist.disturbance_story(ev, [])
-    assert "持ちこたえた" in s2
+    assert "held on" in s2.lower()
 
 
 def _run():

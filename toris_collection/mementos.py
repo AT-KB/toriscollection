@@ -16,6 +16,15 @@ Toris Collection - 落とし物(Mementos)システム
   合計約16.5%、訪問6回に1回程度の獲得頻度。
 """
 
+from i18n import t, get_lang
+
+
+def _bird_display_name(bird):
+    """表示用の鳥名。英語表示では english、無ければ日本語名にフォールバック。"""
+    if get_lang() == "en" and bird.get("english"):
+        return bird["english"]
+    return bird["name"]
+
 
 # ============================================================
 # 羽冠を持つ鳥(隠しアイテム対象)
@@ -146,23 +155,23 @@ def memento_display(memento_id, BIRDS, PLANTS, BIOMES):
         biome = BIOMES.get(biome_id, {})
         biome_name = biome.get("name", biome_id).split("(")[0]
         if cat == "twig":
-            return ("🌿", f"{biome_name}の小枝(旧)", "古い形式の記録", "#8a6a4a")
+            return ("🌿", t("{biome}の小枝(旧)", biome=biome_name), t("古い形式の記録"), "#8a6a4a")
         if cat == "nut":
-            return ("🌰", f"{biome_name}の木の実(旧)", "古い形式の記録", "#8a5a3a")
+            return ("🌰", t("{biome}の木の実(旧)", biome=biome_name), t("古い形式の記録"), "#8a5a3a")
 
     # 旧形式: seed:bird_id / nut:bird_id (廃止カテゴリ)
     if cat == "seed":
         bird_id = memento_target(memento_id)
         bird = BIRDS.get(bird_id)
         if bird:
-            return ("🌱", f"{bird['name']}の種(旧)", "現在は廃止された形式", "#7a9a4a")
-        return ("🌱", "種(旧)", "", "#7a9a4a")
+            return ("🌱", t("{bird}の種(旧)", bird=_bird_display_name(bird)), t("現在は廃止された形式"), "#7a9a4a")
+        return ("🌱", t("種(旧)"), "", "#7a9a4a")
     if cat == "nut":
         bird_id = memento_target(memento_id)
         bird = BIRDS.get(bird_id)
         if bird:
-            return ("🌰", f"{bird['name']}の木の実(旧)", "現在は廃止された形式", "#8a5a3a")
-        return ("🌰", "木の実(旧)", "", "#8a5a3a")
+            return ("🌰", t("{bird}の木の実(旧)", bird=_bird_display_name(bird)), t("現在は廃止された形式"), "#8a5a3a")
+        return ("🌰", t("木の実(旧)"), "", "#8a5a3a")
 
     # 新形式: kind:bird_id
     if cat in _CAT_META:
@@ -170,8 +179,8 @@ def memento_display(memento_id, BIRDS, PLANTS, BIOMES):
         bird_id = memento_target(memento_id)
         bird = BIRDS.get(bird_id)
         if not bird:
-            return (meta["icon"], f"未知の{meta['label']}", "", "#888")
-        bird_name = bird["name"]
+            return (meta["icon"], t("未知の{label}", label=t(meta["label"])), "", "#888")
+        bird_name = _bird_display_name(bird)
         sci = bird.get("scientific", "")
         bird_color = bird.get("color", "#888")
         if meta["tone"] in ("bird", "bird_gold"):
@@ -180,8 +189,8 @@ def memento_display(memento_id, BIRDS, PLANTS, BIOMES):
             color = _TONE_COLORS.get(meta["tone"], "#888")
         return (
             meta["icon"],
-            meta["name_template"].format(bird=bird_name),
-            meta["desc_template"].format(bird=bird_name, sci=sci),
+            t(meta["name_template"], bird=bird_name),
+            t(meta["desc_template"], bird=bird_name, sci=sci),
             color,
         )
 
