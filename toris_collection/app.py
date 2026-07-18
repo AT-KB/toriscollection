@@ -3217,12 +3217,23 @@ with tab_sim:
 
         # 結果を文章ベースで表示
         biome_short = _biome_display_name(BIOMES[sim_biome])
+        # 注: f-string 式の中でバックスラッシュを使うと Python 3.11 系で SyntaxError に
+        # なるため、色付き <b> への置換はここで別文として組み立てる(style はシングル
+        # クォートでエスケープ不要)。
+        _bird_bold_open = f"<b style='color:{bird_color};'>"
+        _sim_intro = (
+            t('今の <b>{biome}</b> の生態系に <b>{icon} {plant}</b> を導入すると、<b2>{bird}</b2> が来る確率は…',
+              biome=biome_short, icon=plant.get('icon', '🌱'),
+              plant=_plant_display_name(plant), bird=_bird_display_name(bird))
+            .replace('<b2>', _bird_bold_open)
+            .replace('</b2>', '</b>')
+        )
         st.markdown(
             f"<div style='padding:20px; margin-top:10px; "
             f"background:linear-gradient(135deg, #fafcf2 0%, #f0f5e6 100%); "
             f"border-radius:12px; border-left:5px solid {bird_color};'>"
             f"<div style='font-size:1.0em; color:#3a4a3a; line-height:1.7;'>"
-            f"{t('今の <b>{biome}</b> の生態系に <b>{icon} {plant}</b> を導入すると、<b2>{bird}</b2> が来る確率は…', biome=biome_short, icon=plant.get('icon', '🌱'), plant=_plant_display_name(plant), bird=_bird_display_name(bird)).replace('<b2>', f'<b style=\"color:{bird_color};\">').replace('</b2>', '</b>')}"
+            f"{_sim_intro}"
             f"</div>"
             f"<div style='font-size:1.4em; margin-top:14px; "
             f"color:#3a4a3a; text-align:center;'>"
