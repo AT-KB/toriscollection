@@ -419,7 +419,16 @@ TRANSLATIONS: dict[str, str] = {
     '「🌱 植える」タブから、土地に合う植物を選んで植えてみましょう。植物が昆虫を呼び、植物と昆虫が鳥を呼び寄せます。1つ植えると、ここが自動で次のステップに進みます。': 'From the "🌱 Plant" tab, choose a plant that suits your land and try planting it. Plants call insects, and plants and insects together draw in the birds. Once you plant one, this moves on to the next step automatically.',
     '次へ →': 'Next →',
     # ── daily.py(今日の庭) ──
-    '{glabel}仲間。': 'A companion that {glabel}.',
+    '{glabel}仲間。': 'A companion with a taste for {glabel}.',
+    # ── radio「今日の顔ぶれ」の生態ナラティブ(ecology.lineup_story の kind ごと) ──
+    '今日は{glabel}仲間が中心。同じ環境で採餌の層を少しずつ分け合い、一緒に動きます。':
+        'Today the cast mostly shares a taste for {glabel} — in the same surroundings they '
+        'quietly share out the foraging and move together.',
+    'ギルドはさまざまですが、似た気候帯を好む鳥どうし。同じ季節の庭で顔を合わせます。':
+        'Their ways of foraging differ, but these are birds that favor a similar climate. '
+        'They meet in the garden of the same season.',
+    '同じ庭の環境を手がかりに集まった顔ぶれです。':
+        'A cast gathered by the cues of the same garden.',
     # 季節名(radio.py _SEASON_META['jp'] を t() 経由で表示)
     '春': 'Spring',
     '夏': 'Summer',

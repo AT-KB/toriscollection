@@ -461,12 +461,28 @@ def _render_new_arrivals(names: list[str]) -> None:
     )
 
 
-def _render_connections(groups: list[dict], birds_data: dict, story: str = "") -> None:
+def _lineup_story_text(story: dict) -> str:
+    """ecology.lineup_story の構造化結果(kind/guild)を、現在の言語の一文に変換する。
+    文言生成・翻訳は表示側(ここ)が担う(ecology.py は i18n 非依存)。"""
+    if not story:
+        return ""
+    kind = story.get("kind")
+    if kind == "guild":
+        return t("今日は{glabel}仲間が中心。同じ環境で採餌の層を少しずつ分け合い、一緒に動きます。",
+                 glabel=ecology.guild_label(story.get("guild", "other"), get_lang()))
+    if kind == "climate":
+        return t("ギルドはさまざまですが、似た気候帯を好む鳥どうし。同じ季節の庭で顔を合わせます。")
+    if kind == "mixed":
+        return t("同じ庭の環境を手がかりに集まった顔ぶれです。")
+    return ""
+
+
+def _render_connections(groups: list[dict], birds_data: dict, story: dict | None = None) -> None:
     """今日の顔ぶれの「関係」を採餌ギルドごとに見せ、なぜ一緒かを一文で語る。
 
     共起の科学的な駆動要因は「同じ環境を好み、採餌のしかたが近いこと」。
     なので食物の奪い合い(競争)ではなく、同じ採餌ギルドの仲間としてまとめる。
-    story は今日の顔ぶれ固有の説明(ecology.lineup_story)。
+    story は今日の顔ぶれ固有の説明(ecology.lineup_story の構造化結果)。
     """
     if not groups and not story:
         return
@@ -474,15 +490,16 @@ def _render_connections(groups: list[dict], birds_data: dict, story: str = "") -
     rows = ""
     for g in groups[:3]:
         names = _join.join(_disp_name(birds_data.get(b, {})) for b in g["birds"])
+        _glabel = ecology.guild_label(g["guild"], get_lang())
         rows += (
             f'<div style="display:flex;align-items:baseline;gap:8px;'
             f'margin:3px 0;font-size:0.84em;color:#3a5a3a;">'
             f'<span style="font-size:1.05em;">{g["icon"]}</span>'
-            f'<span style="color:#6a8a5a;min-width:8em;">{g["label"]}</span>'
+            f'<span style="color:#6a8a5a;min-width:8em;">{_glabel}</span>'
             f'<span style="font-weight:500;">{names}</span>'
             f'</div>'
         )
-    caption = story or t("同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます")
+    caption = _lineup_story_text(story) or t("同じ環境を好み、採餌のしかたが近い鳥ほど一緒に現れます")
     st.markdown(
         f'<div style="background:#f3f7ed;border-left:3px solid #b0c890;'
         f'border-radius:8px;padding:8px 12px;margin:8px 0;">'

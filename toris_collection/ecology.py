@@ -27,12 +27,21 @@ food web は data.py に符号化されている(PLANTS/INSECTS/BIRDS)。
 from __future__ import annotations
 
 # 採餌ギルド(同じギルド=同じ「採餌のしかた」の仲間。共起の正の駆動要因)
+# タプルは (emoji, 日本語ラベル, 英語ラベル)。英語は名詞句にしておき、
+# 表示側のテンプレート("A companion with a taste for {x}." 等)に自然に収まるようにする。
+# ここは i18n 非依存(両言語を静的データとして持つだけ)。言語選択は表示側が行う。
 GUILD_LABELS = {
-    "insectivore": ("🐛", "虫を追う"),
-    "herbivore":   ("🍇", "木の実・花の蜜を好む"),
-    "omnivore":    ("🍃", "なんでも食べる"),
-    "other":       ("🐦", "その他"),
+    "insectivore": ("🐛", "虫を追う", "insects"),
+    "herbivore":   ("🍇", "木の実・花の蜜を好む", "berries and nectar"),
+    "omnivore":    ("🍃", "なんでも食べる", "a bit of everything"),
+    "other":       ("🐦", "その他", "its own ways"),
 }
+
+
+def guild_label(guild_key: str, lang: str = "ja") -> str:
+    """採餌ギルドの表示ラベル。lang=="en" で英語、それ以外は日本語。"""
+    tup = GUILD_LABELS.get(guild_key, GUILD_LABELS["other"])
+    return tup[2] if lang == "en" else tup[1]
 
 
 def guild(bird_id: str, birds_data: dict) -> str:
@@ -144,16 +153,17 @@ def pick_lineup(candidate_ids: list[str], birds_data: dict, k: int, rng,
     return chosen
 
 
-def lineup_story(bird_ids: list[str], birds_data: dict) -> str:
-    """今日の顔ぶれが「なぜ一緒にいるか」を1文で説明する(表示用)。
+def lineup_story(bird_ids: list[str], birds_data: dict) -> dict:
+    """今日の顔ぶれが「なぜ一緒にいるか」の種類を返す(文言生成は表示側)。
 
     共起モデルの駆動要因(同じ採餌ギルド / 気候ニッチの重なり)から導く。
     種固有の逸話(「冬に混群を作る」等)は検証できないので作らない。
-    モデルが言える範囲だけを、嘘なく言語化する。
+    モデルが言える範囲だけを返す。戻り値: {"kind": "guild"/"climate"/"mixed", ["guild": key]}
+    または {}(語れることがない = 2種未満)。i18n 非依存。
     """
     ids = [b for b in bird_ids if b in birds_data]
     if len(ids) < 2:
-        return ""
+        return {}
 
     from collections import Counter
     guilds = Counter(guild(b, birds_data) for b in ids)
@@ -162,19 +172,13 @@ def lineup_story(bird_ids: list[str], birds_data: dict) -> str:
     pairs = [(ids[i], ids[j]) for i in range(len(ids)) for j in range(i + 1, len(ids))]
     clim = sum(climate_overlap(a, b, birds_data) for a, b in pairs) / len(pairs)
 
-    # 顔ぶれの主因に応じて文を組む
+    # 顔ぶれの主因に応じて「どの文か」を返す(文言生成・翻訳は表示側 = radio.py)。
+    # i18n 非依存を保つため、ここでは種類(kind)とギルドキーだけを返す。
     if top_n >= 2 and top_n >= len(ids) * 0.6:
-        _, label = GUILD_LABELS.get(top_guild, GUILD_LABELS["other"])
-        return (
-            f"今日は{label}仲間が中心。"
-            "同じ環境で採餌の層を少しずつ分け合い、一緒に動きます。"
-        )
+        return {"kind": "guild", "guild": top_guild}
     if clim >= 0.45:
-        return (
-            "ギルドはさまざまですが、似た気候帯を好む鳥どうし。"
-            "同じ季節の庭で顔を合わせます。"
-        )
-    return "同じ庭の環境を手がかりに集まった顔ぶれです。"
+        return {"kind": "climate"}
+    return {"kind": "mixed"}
 
 
 def guild_groups(bird_ids: list[str], birds_data: dict) -> list[dict]:
@@ -191,7 +195,7 @@ def guild_groups(bird_ids: list[str], birds_data: dict) -> list[dict]:
     for g, members in by_guild.items():
         if len(members) < 2:
             continue
-        icon, label = GUILD_LABELS.get(g, GUILD_LABELS["other"])
+        icon, label, _ = GUILD_LABELS.get(g, GUILD_LABELS["other"])
         groups.append({"guild": g, "icon": icon, "label": label, "birds": members})
     groups.sort(key=lambda x: -len(x["birds"]))
     return groups
