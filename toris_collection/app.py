@@ -61,6 +61,24 @@ def _insect_display_name(insect: dict) -> str:
     return insect.get("name", "")
 
 
+def _net_node_label(node_id: str, kind: str, fallback: str = "") -> str:
+    """ネットワーク図のノード表示名。英語表示では種の english を使い、無ければ
+    fallback(日本語ラベル)へ。ノード id は種 id なので BIRDS/PLANTS/INSECTS で引ける。"""
+    if kind == "bird":
+        e = BIRDS.get(node_id)
+        if e:
+            return _bird_display_name(e)
+    elif kind == "plant":
+        e = PLANTS.get(node_id)
+        if e:
+            return _plant_display_name(e)
+    elif kind == "insect":
+        e = INSECTS.get(node_id)
+        if e:
+            return _insect_display_name(e)
+    return fallback or node_id
+
+
 # ============================================================
 # Sprite 管理(ドット絵対応)
 # sprites/birds/{bird_id}.png を読み込み、なければ None を返す。
@@ -3929,7 +3947,7 @@ with tab_network:
             kind_label = {"plant": t("植物"), "insect": t("昆虫"), "bird": t("鳥")}.get(n_kind, "")
             st.caption(
                 t("💡 今のハブ種: **{label}** ({kind}, {n}本のつながり)",
-                  label=n_label, kind=kind_label, n=n_deg)
+                  label=_net_node_label(n_id, n_kind, n_label), kind=kind_label, n=n_deg)
             )
 
         # 凡例
@@ -4024,8 +4042,8 @@ with tab_network:
 
         for n, (x, y) in pos.items():
             if n not in labeled: continue
-            label = G_net.nodes[n].get("label", n)
             kind = G_net.nodes[n].get("kind")
+            label = _net_node_label(n, kind, G_net.nodes[n].get("label", n))
             _, r, _, _ = node_style(n)
 
             if kind == "plant":

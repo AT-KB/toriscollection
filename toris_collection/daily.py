@@ -91,7 +91,16 @@ def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
     try:
         import ecology
         g = ecology.guild(bid, birds_data)
-        _, glabel = ecology.GUILD_LABELS.get(g, ecology.GUILD_LABELS["other"])
+        _, glabel_ja = ecology.GUILD_LABELS.get(g, ecology.GUILD_LABELS["other"])
+        # 採餌ギルドの英語表現(ecology.py は i18n 非依存のため、表示側で言語を選ぶ。
+        # ギルド"キー"で引くので日本語ラベル文字列の衝突を避けられる)
+        _guild_en = {
+            "insectivore": "chases insects",
+            "herbivore": "loves berries and nectar",
+            "omnivore": "eats a bit of everything",
+            "other": "keeps to its own ways",
+        }
+        glabel = _guild_en.get(g, glabel_ja) if get_lang() == "en" else glabel_ja
         eco = t("{glabel}仲間。", glabel=glabel)
     except Exception:
         eco = ""

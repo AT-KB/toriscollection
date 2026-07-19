@@ -419,7 +419,12 @@ TRANSLATIONS: dict[str, str] = {
     '「🌱 植える」タブから、土地に合う植物を選んで植えてみましょう。植物が昆虫を呼び、植物と昆虫が鳥を呼び寄せます。1つ植えると、ここが自動で次のステップに進みます。': 'From the "🌱 Plant" tab, choose a plant that suits your land and try planting it. Plants call insects, and plants and insects together draw in the birds. Once you plant one, this moves on to the next step automatically.',
     '次へ →': 'Next →',
     # ── daily.py(今日の庭) ──
-    '{glabel}仲間。': '{glabel} companion.',
+    '{glabel}仲間。': 'A companion that {glabel}.',
+    # 季節名(radio.py _SEASON_META['jp'] を t() 経由で表示)
+    '春': 'Spring',
+    '夏': 'Summer',
+    '秋': 'Autumn',
+    '冬': 'Winter',
     '🎙 あなたのラジオでも、今日はきっと鳴いています。': "🎙 It's surely singing on your radio today, too.",
     'まだ会っていません。会いに行くと、ラジオに加わります。': "You haven't met it yet. Go meet it, and it joins your radio.",
     '🌅 今日の庭 — {where}': "🌅 Today's garden — {where}",
