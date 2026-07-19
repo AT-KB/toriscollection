@@ -1637,7 +1637,7 @@ def _evolve_since_last_visit(tester_id, last_at, now):
     _hours_away = (now - last_at).total_seconds() / 3600
     _departures = []
     for _bid in evo.get("departures", []):
-        _nm = BIRDS.get(_bid, {}).get("name", _bid)
+        _nm = _bird_display_name(BIRDS.get(_bid, {"name": _bid}))
         if _nm not in _departures:
             _departures.append(_nm)
     if _welcome_arrivals or _departures or new_mementos:
@@ -2641,7 +2641,8 @@ if hasattr(st, "dialog"):
                     unsafe_allow_html=True,
                 )
             with cols[1]:
-                st.markdown(f"**{f['name']}**")
+                _f_name = _bird_display_name(BIRDS.get(f["id"], f))
+                st.markdown(f"**{_f_name}**")
                 if f.get("first"):
                     st.markdown(t("✨ *はじめまして! 新しく図鑑に登録されました*"))
                 else:
@@ -2665,10 +2666,11 @@ if hasattr(st, "dialog"):
                     unsafe_allow_html=True,
                 )
             with cols[1]:
+                _a_name = _bird_display_name(BIRDS.get(a["id"], a))
                 if a.get("first"):
-                    st.markdown(t("✨ はじめまして、**{name}**! 新しく図鑑に登録されました", name=a['name']))
+                    st.markdown(t("✨ はじめまして、**{name}**! 新しく図鑑に登録されました", name=_a_name))
                 else:
-                    st.markdown(t("**{name}** が来ていました", name=a['name']))
+                    st.markdown(t("**{name}** が来ていました", name=_a_name))
         deps = data.get("departures", [])
         if deps:
             _dep_join = "、" if i18n.get_lang() == "ja" else ", "
@@ -2721,8 +2723,8 @@ with tab_home:
     # (_obs_dialog・_welcome_dialog と同じ first/repeat の判定軸に揃える)。
     _flash = st.session_state.pop("ritual_flash", None)
     if _flash:
-        _first_names = [f["name"] for f in _flash if f.get("first")]
-        _repeat_names = [f["name"] for f in _flash if not f.get("first")]
+        _first_names = [_bird_display_name(BIRDS.get(f["id"], f)) for f in _flash if f.get("first")]
+        _repeat_names = [_bird_display_name(BIRDS.get(f["id"], f)) for f in _flash if not f.get("first")]
         _njoin = "、" if i18n.get_lang() == "ja" else ", "
         if _first_names:
             st.success(t(
