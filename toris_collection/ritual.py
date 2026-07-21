@@ -48,7 +48,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from species_loader import PLANTS as _PLANTS
 import audio_engine as ae
-from i18n import t, get_lang
+from i18n import t, get_lang, disp
 
 
 def _disp_name(bird: dict) -> str:
@@ -134,7 +134,7 @@ def _bird_hint(bird_id: str, bird: dict, biome_id: str) -> str:
     plants = [p for p in bird.get("eats_plants", []) if p in _PLANTS]
     if plants:
         idx = hash(bird_id + biome_id) % len(plants)
-        plant_name = _PLANTS[plants[idx]]["name"]
+        plant_name = disp(_PLANTS[plants[idx]])
         return t("{plant}にとまっていた{col}鳥", plant=plant_name, col=col)
     return t("{col}鳥", col=col)
 

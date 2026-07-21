@@ -18,7 +18,7 @@ from engine import calculate_arrival_probability, run_turn
 import mementos as mem
 import disturbance as dist
 import garden_items
-from i18n import t, get_lang
+from i18n import t, get_lang, disp
 
 
 def _bird_name(bird):
@@ -93,14 +93,14 @@ def build_reason_text(bird_id: str, info: dict, item_hint: str | None = None):
         plant = PLANTS[pred_id]
         return (
             t("{bird_name}が来ました。{plant}に惹かれて立ち寄ったようです。",
-              bird_name=bird_name, plant=plant['name']),
+              bird_name=bird_name, plant=disp(plant)),
             pred_id, "",
         )
     if kind == "insect" and pred_id in INSECTS:
         insect = INSECTS[pred_id]
         return (
             t("{bird_name}が来ました。{insect}を狙って立ち寄ったようです。",
-              bird_name=bird_name, insect=insect['name']),
+              bird_name=bird_name, insect=disp(insect)),
             "", pred_id,
         )
     return (t("{bird_name}が立ち寄りました。", bird_name=bird_name), "", "")
@@ -166,7 +166,7 @@ def evolve_state(planted, biome, month, last_access_at, current_time,
                 if pid in planted_work:
                     planted_work.remove(pid)
             if removed:
-                removed_names = [PLANTS.get(p, {}).get("name", p) for p in removed]
+                removed_names = [disp(PLANTS.get(p, {"name": p})) for p in removed]
                 result["disturbances"].append({
                     "type": event["type"],
                     "label": event["label"],

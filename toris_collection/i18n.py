@@ -71,6 +71,19 @@ def t(ja: str, **kwargs) -> str:
     return text
 
 
+def disp(entity: dict) -> str:
+    """種など(鳥/植物/昆虫)の表示名。英語表示では english、無ければ日本語 name。
+
+    t() テンプレートに種名を差し込むときは、生の name ではなく必ずこれを通す
+    (でないと英語表示に日本語名が漏れる。過去の漏れ: 季節/ギルド/ネットワーク/
+    ポップアップ/儀式/撹乱)。app.py の _*_display_name と同じ考え方の共通版。"""
+    if get_lang() == "en":
+        en = entity.get("english")
+        if en:
+            return en
+    return entity.get("name", "")
+
+
 def describe(entity: dict) -> str:
     """種(鳥・バイオーム等)の説明文を現在の言語で返す。
 
@@ -434,6 +447,12 @@ TRANSLATIONS: dict[str, str] = {
     '夏': 'Summer',
     '秋': 'Autumn',
     '冬': 'Winter',
+    # 鳥の色ラベル(ritual._hex_to_color_label → t() で表示。「A {col} bird」等)
+    '白い': 'white', '灰色の': 'grey', '黒い': 'black', '赤い': 'red',
+    '橙色の': 'orange', '黄色い': 'yellow', '緑の': 'green', '青緑の': 'teal',
+    '青い': 'blue', '紫の': 'purple', 'ピンクの': 'pink', '小さな': 'little',
+    # 撹乱ラベル(disturbance.DISTURBANCES → t() で表示)
+    '嵐': 'Storm', '落雷': 'Lightning', '伐採': 'Felling',
     '🎙 あなたのラジオでも、今日はきっと鳴いています。': "🎙 It's surely singing on your radio today, too.",
     'まだ会っていません。会いに行くと、ラジオに加わります。': "You haven't met it yet. Go meet it, and it joins your radio.",
     '🌅 今日の庭 — {where}': "🌅 Today's garden — {where}",
