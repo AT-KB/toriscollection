@@ -9,3 +9,7 @@ toris_collection/credentials.json
 toris_collection/xc_api_key.txt
 .streamlit/secrets.toml
 *.pem
+landing/media/raw/
+landing/media/radio_src/
+landing/media/vchk_*.png
+marketing/phase-s/素材/_*.png

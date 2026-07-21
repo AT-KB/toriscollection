@@ -1,0 +1,567 @@
+<!--
+  Toris Collection — launch landing page (content body only).
+  Full deployable index.html and the artifact preview are generated from this
+  file by build.py, which inlines the images (__ICON__ / __PLATE__) as data URIs.
+  Palette: sage paper + foliage green, a single goldfinch-amber spark.
+-->
+<style>
+  :root {
+    --paper:   #ecf1e3;
+    --paper-2: #e2e9d3;
+    --ink:     #263021;
+    --ink-soft:#556150;
+    --moss:    #5f7d55;
+    --moss-deep:#3f5c37;
+    --bark:    #6f5636;   /* twig / bark accent */
+    --amber:   #bd7a2c;
+    --amber-ink:#3a2708;
+    --line:    #d3dbc2;
+    --plate:   #f6f8ee;   /* specimen plate — deliberately cream in both themes */
+    --plate-ink:#3a4432;
+    --deep:    #1f2c17;   /* quiet dark band */
+    --deep-ink:#e9eede;
+    --shadow:  0 1px 2px rgba(43,53,39,.05), 0 12px 34px -18px rgba(43,53,39,.30);
+    --radius:  16px;
+    --font-display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --font-body:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --maxw: 62rem;
+    --measure: 34rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:   #12170f;
+      --paper-2: #1a2114;
+      --ink:     #e8ede1;
+      --ink-soft:#a4ae98;
+      --moss:    #9fc292;
+      --moss-deep:#c3d9b8;
+      --bark:    #b6926a;
+      --amber:   #e0a75f;
+      --amber-ink:#241703;
+      --line:    #29331f;
+      --deep:    #0c110a;
+      --deep-ink:#e9eede;
+      --shadow:  0 1px 2px rgba(0,0,0,.30), 0 16px 40px -20px rgba(0,0,0,.65);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper:#ecf1e3; --paper-2:#e2e9d3; --ink:#263021; --ink-soft:#556150;
+    --moss:#5f7d55; --moss-deep:#3f5c37; --bark:#6f5636; --amber:#bd7a2c; --amber-ink:#3a2708;
+    --line:#d3dbc2; --deep:#1f2c17; --deep-ink:#e9eede;
+    --shadow:0 1px 2px rgba(43,53,39,.05),0 12px 34px -18px rgba(43,53,39,.30);
+  }
+  :root[data-theme="dark"] {
+    --paper:#12170f; --paper-2:#1a2114; --ink:#e8ede1; --ink-soft:#a4ae98;
+    --moss:#9fc292; --moss-deep:#c3d9b8; --bark:#b6926a; --amber:#e0a75f; --amber-ink:#241703;
+    --line:#29331f; --deep:#0c110a; --deep-ink:#e9eede;
+    --shadow:0 1px 2px rgba(0,0,0,.30),0 16px 40px -20px rgba(0,0,0,.65);
+  }
+
+  *,*::before,*::after { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); font-size:1.06rem; line-height:1.65;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap { max-width:var(--maxw); margin:0 auto; padding:0 1.4rem; }
+  a { color:var(--moss-deep); text-underline-offset:3px; text-decoration-thickness:1px; }
+  img { max-width:100%; display:block; }
+  h1,h2,h3 { font-family:var(--font-display); font-weight:600; text-wrap:balance; line-height:1.12; }
+  p { margin:0; }
+
+  .eyebrow {
+    font-size:.74rem; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink-soft); font-weight:600; margin:0;
+    display:inline-flex; align-items:center; gap:.6em;
+  }
+  .eyebrow::before {
+    content:""; width:.42em; height:.42em; border-radius:50%;
+    background:var(--amber); display:inline-block; flex:none;
+  }
+
+  /* ---- top bar ---- */
+  .topbar { padding:1.15rem 0; }
+  .topbar .wrap { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+  .brand { display:flex; align-items:center; gap:.6rem; font-family:var(--font-display);
+           font-weight:600; font-size:1.16rem; letter-spacing:.01em; color:var(--ink); }
+  .brand img { width:34px; height:34px; image-rendering:pixelated; }
+  .brand .hash { color:var(--moss); }
+  .btn {
+    --bg:var(--amber); --fg:var(--amber-ink);
+    display:inline-flex; align-items:center; gap:.5em; justify-content:center;
+    background:var(--bg); color:var(--fg); font-family:var(--font-body);
+    font-weight:650; font-size:.98rem; border:none; cursor:pointer;
+    padding:.72em 1.25em; border-radius:999px; text-decoration:none;
+    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    box-shadow:0 1px 0 rgba(0,0,0,.04);
+  }
+  .btn:hover { transform:translateY(-1px); filter:brightness(1.03); box-shadow:var(--shadow); }
+  .btn.ghost { --bg:transparent; --fg:var(--ink); border:1px solid var(--line); font-weight:600; }
+  .btn.small { padding:.55em 1em; font-size:.9rem; }
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline:2.5px solid var(--moss); outline-offset:3px; border-radius:6px;
+  }
+
+  /* ---- hero ---- */
+  .hero { padding:2.2rem 0 3.4rem; }
+  .hero .wrap { display:grid; gap:2.4rem; align-items:center; }
+  @media (min-width:820px){ .hero .wrap { grid-template-columns:1.15fr .85fr; gap:3rem; } }
+  .hero h1 { font-size:clamp(2.5rem,6vw,4rem); margin:.5rem 0 0; letter-spacing:-.01em; }
+  .hero h1 .soft { color:var(--moss-deep); font-style:italic; }
+  .hero .lede { margin-top:1.15rem; color:var(--ink-soft); font-size:1.12rem;
+                max-width:var(--measure); }
+  .hero-art { display:flex; justify-content:center; }
+  .hero-art .perch { position:relative; width:min(300px,72vw); aspect-ratio:1; }
+  .hero-art .halo {
+    position:absolute; inset:6%; border-radius:50%;
+    background:radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--moss) 26%, transparent), transparent 68%);
+  }
+  .hero-art img {
+    position:relative; width:100%; height:100%; object-fit:contain;
+    image-rendering:pixelated;
+    filter:drop-shadow(0 18px 26px rgba(43,53,39,.22));
+    animation:bob 5.5s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100%{transform:translateY(0) rotate(-.4deg);} 50%{transform:translateY(-12px) rotate(.4deg);} }
+
+  /* ---- signup ---- */
+  .signup { margin-top:1.9rem; max-width:var(--measure); }
+  .signup form { display:flex; gap:.55rem; flex-wrap:wrap; }
+  .signup input[type=email] {
+    flex:1 1 12rem; min-width:0; font:inherit; color:var(--ink);
+    background:var(--paper-2); border:1px solid var(--line); border-radius:999px;
+    padding:.72em 1.1em;
+  }
+  .signup input::placeholder { color:var(--ink-soft); opacity:.8; }
+  .signup .note { margin-top:.85rem; font-size:.86rem; color:var(--ink-soft); }
+  .signup .note b { color:var(--ink); font-weight:600; }
+  .form-msg { margin-top:.7rem; font-size:.92rem; color:var(--moss-deep); min-height:1.2em; }
+
+  /* ---- generic section ---- */
+  section { padding:3.6rem 0; }
+  .section-head { max-width:var(--measure); margin-bottom:2rem; }
+  .section-head h2 { font-size:clamp(1.7rem,3.4vw,2.35rem); margin:.5rem 0 0; }
+  .section-head p { margin-top:.7rem; color:var(--ink-soft); }
+
+  /* ---- steps ---- */
+  .steps { display:grid; gap:1.1rem; }
+  @media (min-width:760px){ .steps { grid-template-columns:repeat(3,1fr); } }
+  .step {
+    background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:1.5rem 1.4rem; box-shadow:var(--shadow);
+  }
+  .step .n {
+    font-family:var(--font-display); font-size:.92rem; color:var(--amber);
+    letter-spacing:.02em; font-weight:600;
+  }
+  .step h3 { font-size:1.28rem; margin:.35rem 0 .55rem; }
+  .step p { color:var(--ink-soft); font-size:.99rem; }
+
+  /* ---- specimen plate ---- */
+  .plate-band { background:var(--deep); color:var(--deep-ink); }
+  .plate-band .eyebrow, .plate-band .section-head p { color:color-mix(in srgb,var(--deep-ink) 72%, transparent); }
+  .plate-band h2 { color:var(--deep-ink); }
+  .plate-band .section-head { margin-inline:auto; text-align:center; }
+  .plate {
+    background:var(--plate); border-radius:20px; padding:1.6rem;
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.6); max-width:44rem; margin:0 auto;
+    border:1px solid rgba(0,0,0,.06);
+  }
+  .plate img { image-rendering:pixelated; border-radius:8px; width:100%; }
+  .plate .cap {
+    display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+    margin-top:1rem; color:var(--plate-ink); font-family:var(--font-display);
+    font-size:.92rem; font-style:italic;
+  }
+  .plate .cap span:last-child { font-style:normal; letter-spacing:.14em;
+    text-transform:uppercase; font-size:.72rem; opacity:.7; }
+
+  /* ---- promises ---- */
+  .promises { display:grid; gap:0; border-top:1px solid var(--line); }
+  .promise {
+    display:grid; gap:.3rem 1.4rem; padding:1.5rem 0; border-bottom:1px solid var(--line);
+  }
+  @media (min-width:720px){ .promise { grid-template-columns:15rem 1fr; align-items:baseline; } }
+  .promise h3 { font-size:1.24rem; color:var(--ink); }
+  .promise p { color:var(--ink-soft); max-width:38rem; }
+
+  /* ---- real things ---- */
+  .real .wrap { display:grid; gap:1.4rem; }
+  @media (min-width:720px){ .real .wrap { grid-template-columns:1fr 1fr; } }
+  .real .card {
+    background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:1.5rem 1.5rem; box-shadow:var(--shadow);
+  }
+  .real .card h3 { font-size:1.15rem; margin:0 0 .5rem; }
+  .real .card p { color:var(--ink-soft); font-size:.98rem; }
+  .real .card a { font-weight:600; }
+
+  /* ---- footer ---- */
+  footer { padding:3.4rem 0 3rem; border-top:1px solid var(--line); }
+  footer .cta-row { display:flex; flex-wrap:wrap; gap:1rem; align-items:center;
+    justify-content:space-between; }
+  footer h2 { font-size:clamp(1.5rem,3vw,2rem); }
+  footer .meta { margin-top:2.4rem; display:flex; flex-wrap:wrap; gap:.4rem 1.4rem;
+    color:var(--ink-soft); font-size:.86rem; align-items:center; }
+  footer .meta .dot { width:5px;height:5px;border-radius:50%;background:var(--moss);display:inline-block; }
+  .store-soon {
+    display:inline-flex; align-items:center; gap:.55em; font-size:.9rem; color:var(--ink-soft);
+    border:1px dashed var(--line); border-radius:999px; padding:.5em 1em; margin-top:1rem;
+  }
+
+  /* ---- screenshots (see it in motion) ---- */
+  .shots .grid { display:grid; gap:1.6rem; align-items:start; }
+  @media (min-width:760px){ .shots .grid { grid-template-columns:1fr 1fr; } }
+  .shot figure { margin:0; }
+  .frame {
+    background:var(--paper-2); border:1px solid var(--line); border-radius:22px;
+    padding:.6rem; box-shadow:var(--shadow); overflow:hidden;
+  }
+  .frame img { display:block; width:100%; border-radius:16px; }
+  .shot figcaption { margin-top:.9rem; color:var(--ink-soft); font-size:.96rem; max-width:34rem; }
+  .shot figcaption b { color:var(--ink); font-weight:600; }
+  .shot.wide { grid-column:1 / -1; }
+  .shot.wide .frame { background:var(--plate); }
+  .shot.wide figcaption { margin-inline:auto; text-align:center; }
+  .frame.vid { position:relative; padding:0; background:#f6f8ee; }
+  .frame.vid video { display:block; width:100%; height:auto; border-radius:16px; }
+  .snd {
+    position:absolute; right:.85rem; bottom:.85rem;
+    display:inline-flex; align-items:center; gap:.45em;
+    background:var(--amber); color:var(--amber-ink); border:none; cursor:pointer;
+    font-family:var(--font-body); font-weight:650; font-size:.9rem;
+    padding:.5em .9em; border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,.25);
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .snd:hover { transform:translateY(-1px); filter:brightness(1.03); }
+  .snd.on { background:var(--moss-deep); color:#fff; }
+  .shot.phone .frame { max-width:21rem; margin:0 auto; background:var(--paper-2); }
+  .shot.phone figcaption { max-width:26rem; margin-inline:auto; text-align:center; }
+  .credit { margin-top:1.6rem; font-size:.82rem; color:var(--ink-soft); text-align:center; }
+  .credit a { color:var(--moss-deep); }
+  .credit i { font-style:italic; }
+
+  /* your own radio — audio player */
+  .radio-player {
+    margin-top:1.8rem; display:flex; align-items:center; gap:1.1rem; flex-wrap:wrap;
+    background:var(--deep); color:var(--deep-ink); border-radius:var(--radius);
+    padding:1.3rem 1.4rem; box-shadow:var(--shadow);
+  }
+  .rp-btn {
+    flex:none; display:inline-flex; align-items:center; gap:.5em;
+    background:var(--amber); color:var(--amber-ink); border:none; cursor:pointer;
+    font-family:var(--font-body); font-weight:700; font-size:1rem;
+    padding:.8em 1.3em; border-radius:999px; box-shadow:0 2px 12px rgba(0,0,0,.3);
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .rp-btn:hover { transform:translateY(-1px); filter:brightness(1.04); }
+  .rp-btn.playing { background:var(--moss); color:#12210f; }
+  .rp-text { flex:1 1 16rem; min-width:0; }
+  .rp-title { margin:0; font-family:var(--font-display); font-size:1.12rem; }
+  .rp-title b { color:var(--amber); font-weight:600; }
+  .rp-sub { margin:.35rem 0 0; font-size:.9rem;
+    color:color-mix(in srgb, var(--deep-ink) 74%, transparent); }
+
+  /* reveal */
+  .reveal { opacity:0; transform:translateY(16px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity:1; transform:none; transition:none; }
+    .hero-art img { animation:none; }
+    * { scroll-behavior:auto; }
+  }
+</style>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><img src="__ICON__" alt="" /> Toris&nbsp;Collection</div>
+    <a class="btn ghost small" href="#waitlist">Become a monitor</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-copy">
+        <p class="eyebrow">A passive, healing bird radio you grow yourself · now recruiting monitors</p>
+        <h1>Grow a tiny ecosystem.<br />The birds come — and become your&nbsp;<span class="soft">radio.</span></h1>
+        <p class="lede">
+          Toris Collection is a quiet app about tending a small biome in the palm of your
+          hand. Plant a little, let time pass, and real birds arrive to sing. Every bird
+          you meet joins a gentle radio that is yours alone — healing sound with your own
+          birds singing over it, fuller each time you meet a new one. No chores, no rushing.
+          You just listen. It's in closed testing now, and we're looking for a few gentle monitors.
+        </p>
+
+        <div class="signup" id="waitlist">
+          <a class="btn" href="https://docs.google.com/forms/d/18VdH3JVA-9JNuzToWZ4z19X7zwJbCjXKYOGkCm4MoNA/viewform"
+             target="_blank" rel="noopener">Become a monitor →</a>
+          <p class="note">
+            Opens a short form (about 20 seconds). Ask us to add you to the Android
+            closed test, or just to let you know when it opens. One quiet message —
+            nothing else.
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="perch">
+          <span class="halo"></span>
+          <img src="__ICON__" alt="" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">How it unfolds</p>
+        <h2>Three small things. The rest becomes your radio.</h2>
+        <p>Nothing here asks for your attention. The ecosystem keeps its own time,
+           even while the app is closed.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="n">01 — Plant</div>
+          <h3>Choose a land, plant a little</h3>
+          <p>Pick Kyoto or Charlotte, each with its own climate and birds. Plants call
+             insects; plants and insects together call the birds.</p>
+        </div>
+        <div class="step reveal">
+          <div class="n">02 — Step away</div>
+          <h3>Let time pass</h3>
+          <p>Close the app and live your day. The food web keeps moving. When you come
+             back, a new bird may have arrived while you were gone.</p>
+        </div>
+        <div class="step reveal">
+          <div class="n">03 — Listen</div>
+          <h3>Your radio grows</h3>
+          <p>Every bird you meet joins your garden radio — real recordings singing back
+             and forth over soft, healing sound. The more birds you collect, the fuller
+             it plays. It never shrinks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="shots">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">See it in motion</p>
+        <h2>See your radio come to life</h2>
+        <p>Real screens from the app — the web your garden weaves, the moment a bird
+           arrives, and the radio you build from the birds you meet.</p>
+      </div>
+      <div class="grid">
+        <div class="shot wide reveal">
+          <figure>
+            <div class="frame vid">
+              <video id="showcase" src="__VIDEO__" autoplay muted loop playsinline preload="auto"></video>
+            </div>
+            <figcaption><b>The living web.</b> Plants call insects; insects and plants call
+              birds. The network shows the real food web your garden has woven — greens are
+              the plants you grew, browns the birds that came.</figcaption>
+          </figure>
+        </div>
+        <div class="shot wide phone reveal">
+          <figure>
+            <div class="frame"><img src="__SHOT_MEETING__" alt="An in-app popup: several pixel-art birds came by while you were away, one newly met, keepsakes waiting, and a note that a new voice has joined your radio." /></div>
+            <figcaption><b>The moment you meet.</b> Birds arrive while you're away. Meet one
+              and it joins your field guide — and your radio — for good. A new voice joins
+              the cast every time.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="radio-player reveal" aria-label="Your own garden radio">
+        <button id="radioBtn" class="rp-btn" type="button" aria-pressed="false">▶ Play this garden's radio</button>
+        <div class="rp-text">
+          <p class="rp-title">A Charlotte garden with five birds — <b>your own radio.</b></p>
+          <p class="rp-sub">Soft, healing sound with your birds singing over it. It grows
+            as you collect, and softens at night. Tap to listen.</p>
+        </div>
+        <audio id="radioAudio" src="__AUDIO__" preload="none" loop></audio>
+      </div>
+
+      <p class="credit reveal">This radio, via <a href="https://xeno-canto.org" target="_blank" rel="noopener">xeno-canto</a>:
+        <b>Northern Cardinal</b> (<a href="https://xeno-canto.org/797998" target="_blank" rel="noopener">#797998</a>)
+        and <b>Carolina Chickadee</b> (<a href="https://xeno-canto.org/870687" target="_blank" rel="noopener">#870687</a>),
+        both recorded by Steve;
+        <b>Song Sparrow</b> (<a href="https://xeno-canto.org/1005250" target="_blank" rel="noopener">#1005250</a>) by Ryan Douglas;
+        <b>American Robin</b> (<a href="https://xeno-canto.org/570791" target="_blank" rel="noopener">#570791</a>) by Doug Hynes —
+        all <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC&nbsp;BY-SA&nbsp;4.0</a>;
+        and <b>Blue Jay</b> (<a href="https://xeno-canto.org/924514" target="_blank" rel="noopener">#924514</a>,
+        <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>).
+        This mix is shared under CC BY-SA 4.0. The healing bed is generated — no recording, no license needed.</p>
+    </div>
+  </section>
+
+  <section class="plate-band">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The cast</p>
+        <h2>A little chorus that grows as you listen</h2>
+        <p>Every bird you meet is drawn in its own chunky pixel form and kept in your
+           field guide — always there to visit, even after it leaves the garden. New
+           species are being added all the time, so the cast keeps growing.</p>
+      </div>
+      <figure class="plate reveal" style="margin:0;">
+        <img src="__PLATE__" alt="A grid of nine pixel-art birds in different colors: a blue jay, a goldfinch, mockingbirds, a cardinal and more." />
+        <figcaption class="cap">
+          <span>Plate I — a few of the residents</span>
+          <span>Kyoto · Charlotte</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="promises-band">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Quiet promises</p>
+        <h2>The things we will never do to you</h2>
+        <p>Toris Collection is built on a few rules we won't break, whatever else changes.</p>
+      </div>
+      <div class="promises">
+        <div class="promise reveal">
+          <h3>We never rush you</h3>
+          <p>No stamina, no timers, no daily obligations. Come and go as you like — the
+             garden waits without guilt.</p>
+        </div>
+        <div class="promise reveal">
+          <h3>Nothing punishes you</h3>
+          <p>A storm may thin your garden, but your collection never shrinks. The birds
+             you've met, and the days you've spent together, are kept.</p>
+        </div>
+        <div class="promise reveal">
+          <h3>Your radio is always free</h3>
+          <p>Listening and calm are never behind a paywall. Paid extras are only color and
+             bridges to the real world — never the sound itself.</p>
+        </div>
+        <div class="promise reveal">
+          <h3>True to real ecology</h3>
+          <p>Which bird comes, and why, follows a real food web built from open
+             interaction data. No invented reasons.</p>
+        </div>
+        <div class="promise reveal">
+          <h3>Cuteness, first</h3>
+          <p>The moment a bird arrives, its call, its pixel art — protected above
+             everything else.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="real">
+    <div class="wrap">
+      <div class="section-head reveal" style="grid-column:1 / -1;">
+        <p class="eyebrow">Made of real things</p>
+        <h2>Real songs, a real web of life</h2>
+      </div>
+      <div class="card reveal">
+        <h3>Real recordings</h3>
+        <p>The calls you hear are field recordings from
+           <a href="https://xeno-canto.org" target="_blank" rel="noopener">xeno-canto</a>,
+           a community archive of wild bird sound from around the world.</p>
+      </div>
+      <div class="card reveal">
+        <h3>Real relationships</h3>
+        <p>Who eats what, who follows whom — the food web is seeded from
+           <a href="https://www.globalbioticinteractions.org" target="_blank" rel="noopener">GloBI</a>
+           (Global Biotic Interactions), built on real records.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="real" aria-labelledby="monitors">
+    <div class="wrap">
+      <div class="section-head reveal" id="monitors" style="grid-column:1 / -1;">
+        <p class="eyebrow">For monitors</p>
+        <h2>Come test it while it's still quiet</h2>
+        <p>We're inviting a small group to live with the app early and tell us how it
+           feels. No forms to fill in daily — just use it the way you'd want to.</p>
+      </div>
+      <div class="card reveal">
+        <h3>What you get</h3>
+        <p>Early access on Android, a field guide that keeps growing with new birds,
+           and a direct line to shape the calm, unhurried feel of the app.</p>
+      </div>
+      <div class="card reveal">
+        <h3>What we ask</h3>
+        <p>Open it now and then, listen, and share what felt good or off. That's all —
+           and the birdsong is always free, tester or not.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer id="footer">
+    <div class="wrap">
+      <div class="cta-row">
+        <h2>Be there when your radio sings its first bird.</h2>
+        <a class="btn" href="#waitlist">Become a monitor</a>
+      </div>
+      <div class="store-soon">🐦 Coming soon to Google Play · Android closed test open now</div>
+      <div class="meta">
+        <span>© 2026 Toris Collection</span>
+        <span class="dot"></span>
+        <a href="https://docs.google.com/forms/d/18VdH3JVA-9JNuzToWZ4z19X7zwJbCjXKYOGkCm4MoNA/viewform" target="_blank" rel="noopener">Join the closed test</a>
+        <span class="dot"></span>
+        <span>Made quietly, for listeners.</span>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<script>
+  // Gentle scroll reveal
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window) ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(function (e) { e.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+    els.forEach(function (e) { io.observe(e); });
+  })();
+
+  // Signup is a Google Form (link), so no JS handler is needed here.
+
+  // The showcase video stays muted (it's a silent screen capture). Sound lives in the
+  // dedicated radio player below, so the audio is clearly "your own radio," not a stray call.
+  (function () {
+    var vid = document.getElementById('showcase');
+    if (vid) { vid.muted = true; vid.play().catch(function () {}); }
+  })();
+
+  // Your own garden radio: tap to play/pause the healing bed + your birds.
+  (function () {
+    var audio = document.getElementById('radioAudio');
+    var btn = document.getElementById('radioBtn');
+    if (!audio || !btn) return;
+    function setPlaying(on) {
+      btn.classList.toggle('playing', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '⏸ Your radio is playing' : '▶ Play this garden’s radio';
+    }
+    btn.addEventListener('click', function () {
+      if (audio.paused) {
+        audio.play().then(function () { setPlaying(true); })
+                    .catch(function () { setPlaying(false); });
+      } else {
+        audio.pause();
+        setPlaying(false);
+      }
+    });
+    audio.addEventListener('ended', function () { setPlaying(false); });
+    audio.addEventListener('pause', function () { setPlaying(false); });
+    audio.addEventListener('play',  function () { setPlaying(true); });
+  })();
+</script>

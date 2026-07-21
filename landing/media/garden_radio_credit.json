@@ -1,0 +1,47 @@
+[
+ {
+  "file": "C:\\Users\\kubok\\OneDrive\\Desktop\\Agent\\toriscollection\\landing\\media\\radio_src\\Northern_Cardinal.mp3",
+  "en": "Northern Cardinal",
+  "sci": "Cardinalis cardinalis",
+  "xc_id": "797998",
+  "rec": "steve",
+  "lic": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "url": "https://xeno-canto.org/797998"
+ },
+ {
+  "file": "C:\\Users\\kubok\\OneDrive\\Desktop\\Agent\\toriscollection\\landing\\media\\radio_src\\Carolina_Chickadee.mp3",
+  "en": "Carolina Chickadee",
+  "sci": "Poecile carolinensis",
+  "xc_id": "870687",
+  "rec": "steve",
+  "lic": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "url": "https://xeno-canto.org/870687"
+ },
+ {
+  "file": "C:\\Users\\kubok\\OneDrive\\Desktop\\Agent\\toriscollection\\landing\\media\\radio_src\\Blue_Jay.mp3",
+  "en": "Blue Jay",
+  "sci": "Cyanocitta cristata",
+  "xc_id": "924514",
+  "rec": "Anonymous",
+  "lic": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "url": "https://xeno-canto.org/924514"
+ },
+ {
+  "file": "C:\\Users\\kubok\\OneDrive\\Desktop\\Agent\\toriscollection\\landing\\media\\radio_src\\Song_Sparrow.mp3",
+  "en": "Song Sparrow",
+  "sci": "Melospiza melodia",
+  "xc_id": "1005250",
+  "rec": "Ryan Douglas",
+  "lic": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "url": "https://xeno-canto.org/1005250"
+ },
+ {
+  "file": "C:\\Users\\kubok\\OneDrive\\Desktop\\Agent\\toriscollection\\landing\\media\\radio_src\\American_Robin.mp3",
+  "en": "American Robin",
+  "sci": "Turdus migratorius",
+  "xc_id": "570791",
+  "rec": "Doug Hynes",
+  "lic": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "url": "https://xeno-canto.org/570791"
+ }
+]
