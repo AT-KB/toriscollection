@@ -239,6 +239,9 @@
   .snd.on { background:var(--moss-deep); color:#fff; }
   .shot.phone .frame { max-width:21rem; margin:0 auto; background:var(--paper-2); }
   .shot.phone figcaption { max-width:26rem; margin-inline:auto; text-align:center; }
+  .chapters { margin:.85rem 0 0; text-align:center; font-family:var(--font-body);
+    font-size:.82rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
+  .chapters b { color:var(--moss-deep); font-weight:600; }
   .credit { margin-top:1.6rem; font-size:.82rem; color:var(--ink-soft); text-align:center; }
   .credit a { color:var(--moss-deep); }
   .credit i { font-style:italic; }
@@ -360,10 +363,14 @@
           <figure>
             <div class="frame vid">
               <video id="showcase" src="__VIDEO__" autoplay muted loop playsinline preload="auto"></video>
+              <button id="sndBtn" class="snd" type="button" aria-pressed="false"
+                      style="top:.85rem; bottom:auto;">🔊 Play with sound</button>
             </div>
-            <figcaption><b>The living web.</b> Plants call insects; insects and plants call
-              birds. The network shows the real food web your garden has woven — greens are
-              the plants you grew, browns the birds that came.</figcaption>
+            <p class="chapters"><b>Plant</b> · <b>Gather</b> · <b>Slip away</b> · <b>Meet</b> · <b>Listen</b></p>
+            <figcaption><b>The whole loop, in your hand.</b> Plant something and wait. While you're
+              away, birds gather; some slip away, and sometimes you meet one. Every bird you meet
+              joins your garden radio — real footage from the app, with its real sound. Tap the
+              speaker to play it with sound.</figcaption>
           </figure>
         </div>
         <div class="shot wide phone reveal">
@@ -376,26 +383,9 @@
         </div>
       </div>
 
-      <div class="radio-player reveal" aria-label="Your own garden radio">
-        <button id="radioBtn" class="rp-btn" type="button" aria-pressed="false">▶ Play this garden's radio</button>
-        <div class="rp-text">
-          <p class="rp-title">A Charlotte garden with five birds — <b>your own radio.</b></p>
-          <p class="rp-sub">Soft, healing sound with your birds singing over it. It grows
-            as you collect, and softens at night. Tap to listen.</p>
-        </div>
-        <audio id="radioAudio" src="__AUDIO__" preload="none" loop></audio>
-      </div>
-
-      <p class="credit reveal">This radio, via <a href="https://xeno-canto.org" target="_blank" rel="noopener">xeno-canto</a>:
-        <b>Northern Cardinal</b> (<a href="https://xeno-canto.org/797998" target="_blank" rel="noopener">#797998</a>)
-        and <b>Carolina Chickadee</b> (<a href="https://xeno-canto.org/870687" target="_blank" rel="noopener">#870687</a>),
-        both recorded by Steve;
-        <b>Song Sparrow</b> (<a href="https://xeno-canto.org/1005250" target="_blank" rel="noopener">#1005250</a>) by Ryan Douglas;
-        <b>American Robin</b> (<a href="https://xeno-canto.org/570791" target="_blank" rel="noopener">#570791</a>) by Doug Hynes —
-        all <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC&nbsp;BY-SA&nbsp;4.0</a>;
-        and <b>Blue Jay</b> (<a href="https://xeno-canto.org/924514" target="_blank" rel="noopener">#924514</a>,
-        <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0</a>).
-        This mix is shared under CC BY-SA 4.0. The healing bed is generated — no recording, no license needed.</p>
+      <p class="credit reveal">The sound in this clip is the app's own garden radio — field
+        recordings via <a href="https://xeno-canto.org" target="_blank" rel="noopener">xeno-canto</a>,
+        used under their Creative Commons licenses, with each recordist credited inside the app.</p>
     </div>
   </section>
 
@@ -534,34 +524,26 @@
 
   // Signup is a Google Form (link), so no JS handler is needed here.
 
-  // The showcase video stays muted (it's a silent screen capture). Sound lives in the
-  // dedicated radio player below, so the audio is clearly "your own radio," not a stray call.
+  // Showcase video: real app footage that autoplays muted (browser policy). Tap the
+  // speaker to hear the app's real sound (unmute + restart from the top).
   (function () {
     var vid = document.getElementById('showcase');
-    if (vid) { vid.muted = true; vid.play().catch(function () {}); }
-  })();
-
-  // Your own garden radio: tap to play/pause the healing bed + your birds.
-  (function () {
-    var audio = document.getElementById('radioAudio');
-    var btn = document.getElementById('radioBtn');
-    if (!audio || !btn) return;
-    function setPlaying(on) {
-      btn.classList.toggle('playing', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.textContent = on ? '⏸ Your radio is playing' : '▶ Play this garden’s radio';
-    }
+    var btn = document.getElementById('sndBtn');
+    if (!vid) return;
+    vid.muted = true; vid.play().catch(function () {});
+    if (!btn) return;
     btn.addEventListener('click', function () {
-      if (audio.paused) {
-        audio.play().then(function () { setPlaying(true); })
-                    .catch(function () { setPlaying(false); });
+      if (vid.muted) {
+        vid.muted = false;
+        try { vid.currentTime = 0; } catch (e) {}
+        vid.play();
+        btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true');
+        btn.textContent = '🔊 Sound off';
       } else {
-        audio.pause();
-        setPlaying(false);
+        vid.muted = true;
+        btn.classList.remove('on'); btn.setAttribute('aria-pressed', 'false');
+        btn.textContent = '🔊 Play with sound';
       }
     });
-    audio.addEventListener('ended', function () { setPlaying(false); });
-    audio.addEventListener('pause', function () { setPlaying(false); });
-    audio.addEventListener('play',  function () { setPlaying(true); });
   })();
 </script>

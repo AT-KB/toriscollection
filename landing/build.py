@@ -31,8 +31,7 @@ body = (body
         .replace("__PLATE__", data_uri(PLATE))
         .replace("__SHOT_WELCOME__", data_uri(os.path.join(MEDIA, "shot_welcome.png")))
         .replace("__SHOT_MEETING__", data_uri(os.path.join(MEDIA, "shot_meeting.png")))
-        .replace("__VIDEO__", data_uri(os.path.join(MEDIA, "showcase.mp4"), "video/mp4"))
-        .replace("__AUDIO__", data_uri(os.path.join(MEDIA, "garden_radio.mp3"), "audio/mpeg")))
+        .replace("__VIDEO__", data_uri(os.path.join(MEDIA, "showcase.mp4"), "video/mp4")))
 
 # artifact.html = body only (Artifact injects <head>/<body>)
 open(os.path.join(HERE, "artifact.html"), "w", encoding="utf-8").write(body)
