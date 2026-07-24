@@ -14,3 +14,7 @@ landing/media/radio_src/
 landing/media/vchk_*.png
 marketing/phase-s/素材/_*.png
 外部素材/
+
+# TikTok Poster ツールの秘密情報(絶対にコミットしない)
+tools/tiktok_poster/.env
+tools/tiktok_poster/token.json
