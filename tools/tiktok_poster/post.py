@@ -21,6 +21,7 @@ CLI:
 標準ライブラリ中心。HTTP は requests があれば使い、無ければ urllib で実装する。
 """
 
+import hashlib
 import json
 import os
 import secrets
@@ -299,12 +300,20 @@ class _CallbackHandler(BaseHTTPRequestHandler):
 
 def cmd_auth(client_key, client_secret):
     state = secrets.token_urlsafe(24)
+    # TikTok は desktop 認可に PKCE を必須とする。
+    # 重要: TikTok は code_challenge を「SHA256 の hex エンコード」で要求する
+    # (標準 PKCE の base64url ではない)。code_challenge_method は S256 のみ対応。
+    # code_verifier は毎回新規生成([A-Za-z0-9-_]・43-128字)。
+    code_verifier = secrets.token_urlsafe(60)
+    code_challenge = hashlib.sha256(code_verifier.encode("ascii")).hexdigest()
     params = {
         "client_key": client_key,
         "scope": SCOPE,
         "response_type": "code",
         "redirect_uri": REDIRECT_URI,
         "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
     url = AUTHORIZE_URL + "?" + urllib.parse.urlencode(params)
 
@@ -353,6 +362,7 @@ def cmd_auth(client_key, client_secret):
             "code": code,
             "grant_type": "authorization_code",
             "redirect_uri": REDIRECT_URI,
+            "code_verifier": code_verifier,
         },
     )
     if not isinstance(payload, dict) or "access_token" not in payload:
