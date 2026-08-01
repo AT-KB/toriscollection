@@ -27,6 +27,9 @@ data.py は直接インポートしない。
 """
 from __future__ import annotations
 
+import os
+import time
+
 from data_types import BirdData, PlantData, InsectData, BiomeData
 
 # ── シードデータ(フォールバック) ──────────────────────────────────
@@ -187,9 +190,43 @@ def _load_insects_from_sheets() -> dict[str, InsectData] | None:
 # 起動時に一度だけ評価される。Sheets が使えればそちら、なければシード。
 
 def _load_all() -> tuple[dict, dict, dict, dict]:
-    birds   = _load_birds_from_sheets()
-    plants  = _load_plants_from_sheets()
-    insects = _load_insects_from_sheets()
+    # 起動高速化(2026-08-01): 従来は Sheets を鳥→植物→昆虫の順に**直列**取得しており、
+    # プロセス起動のたびに 3 回のネットワーク往復が積み上がっていた(コールド起動が重い一因)。
+    # ここを (1) 3 シートを**並列**取得 (2) 合計待ち時間に**上限(既定6秒)**を設け、超過分は
+    # シードにフォールバック、へ変更する。Sheets が速いときは従来通り取り込み、遅延/ハング時も
+    # 起動を止めない。上限は環境変数 SPECIES_SHEETS_TIMEOUT で調整可(0 で Sheets を完全スキップ)。
+    t0 = time.time()
+    birds = plants = insects = None
+    try:
+        deadline_s = float(os.environ.get("SPECIES_SHEETS_TIMEOUT", "6"))
+    except (TypeError, ValueError):
+        deadline_s = 6.0
+
+    if deadline_s > 0:
+        from concurrent.futures import ThreadPoolExecutor
+        # with を使うと __exit__ が全スレッド完了まで待つ(=タイムアウトが無意味になる)ため、
+        # 明示的に生成し、最後に wait=False で切り離す(遅い Sheets 呼び出しは裏で終わり破棄)。
+        ex = ThreadPoolExecutor(max_workers=3)
+        try:
+            fb = ex.submit(_load_birds_from_sheets)
+            fp = ex.submit(_load_plants_from_sheets)
+            fi = ex.submit(_load_insects_from_sheets)
+            end = time.time() + deadline_s
+
+            def _get(fut):
+                remaining = end - time.time()
+                if remaining <= 0:
+                    return None
+                try:
+                    return fut.result(timeout=remaining)
+                except Exception:
+                    return None
+
+            birds = _get(fb)
+            plants = _get(fp)
+            insects = _get(fi)
+        finally:
+            ex.shutdown(wait=False)
 
     if birds:
         print(f"[species_loader] Sheets から鳥データをロード: {len(birds)} 種")
@@ -207,6 +244,9 @@ def _load_all() -> tuple[dict, dict, dict, dict]:
     else:
         insects = dict(_SEED_INSECTS)
 
+    # 起動コストの可視化: Render のログでこの秒数を見れば、Sheets 取得が起動を
+    # どれだけ食っているかが一目で分かる(上限は SPECIES_SHEETS_TIMEOUT)。
+    print(f"[species_loader] _load_all 完了: {time.time() - t0:.2f}s (上限 {deadline_s:.0f}s)")
     return birds, plants, insects, dict(_SEED_BIOMES)
 
 
