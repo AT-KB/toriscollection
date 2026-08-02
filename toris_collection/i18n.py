@@ -256,6 +256,7 @@ TRANSLATIONS: dict[str, str] = {
     '🎙 庭のラジオ': '🎙 Garden radio',
     '今は{season}': "It's {season} now",
     'あと{n}週で次の季節へ': '{n} weeks until the next season',
+    'あと1週で次の季節へ': '1 week until the next season',
     '土地の収容力: {now} / {max} 種': 'Land capacity: {now} / {max} species',
     '{biome}は最大 {max} 種まで植えられます': 'You can plant up to {max} species in {biome}',
     '🔍 計算の内訳': '🔍 Behind the numbers',

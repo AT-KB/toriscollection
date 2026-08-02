@@ -403,7 +403,9 @@ def _render_bird_chips(
     for bid in in_season:
         bird = birds_data.get(bid, {})
         cnt  = observed.get(bid, {}).get("count", 0)
-        bar  = "▮" * min(cnt, 5) + "▯" * max(0, 5 - cnt)
+        # ●/○ は WebView の標準フォントに広く含まれ、端末で豆腐(□)にならない
+        # (以前の ▮/▯ = U+25AE/25AF は Android WebView のフォントに無く豆腐化していた)。
+        bar  = "●" * min(cnt, 5) + "○" * max(0, 5 - cnt)
         chips_html += (
             f'<span style="background:#e8f0e0;border:1px solid #b0c890;'
             f'border-radius:16px;padding:3px 10px;font-size:0.82em;color:#3a5a3a;">'

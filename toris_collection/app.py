@@ -2988,11 +2988,16 @@ with tab_radio:
     _radio_season = current_app_season()
     _radio_meta   = _SEASON_META[_radio_season]
     _weeks_left   = weeks_until_next_season()
+    # 英語で "1 weeks" にならないよう、残り1週は単数形の文言に分岐する。
+    _season_countdown = (
+        t('あと1週で次の季節へ') if _weeks_left == 1
+        else t('あと{n}週で次の季節へ', n=_weeks_left)
+    )
     st.markdown(
         f"### {t('🎙 庭のラジオ')} &nbsp; "
         f"<span style='font-size:0.75em;font-weight:400;color:#7a9a6a;'>"
         f"{_radio_meta['icon']} {t('今は{season}', season=t(_radio_meta['jp']))} &nbsp;·&nbsp; "
-        f"{t('あと{n}週で次の季節へ', n=_weeks_left)}</span>",
+        f"{_season_countdown}</span>",
         unsafe_allow_html=True,
     )
     st.markdown(

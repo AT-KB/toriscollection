@@ -111,7 +111,7 @@ def render_todays_garden(biome_id: str, birds_data: dict, observed: dict,
         f'{t("🌅 今日の庭 — {where}", where=where)}</div>'
         f'<div style="font-size:1.05em;color:#3a4a2a;font-weight:600;margin:2px 0;">'
         f'{name}</div>'
-        f'<div style="font-size:0.84em;color:#6a7a5a;">{eco}{invite}</div>'
+        f'<div style="font-size:0.84em;color:#6a7a5a;">{eco} {invite}</div>'
         f'</div>'
     )
 
