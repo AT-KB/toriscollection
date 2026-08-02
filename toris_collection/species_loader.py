@@ -19,11 +19,21 @@ data.py は直接インポートしない。
   4. アプリを再起動すると新しい種が反映される
   5. シードの35種 (data.py) はシートが空の場合のフォールバックとして残る
 
-【シードとの関係】
-  - Sheets にシートが存在しない場合 → data.py のシードをそのまま使う
-  - Sheets にシートが存在しデータがある場合 → Sheets のデータのみを使う
-    (シードを上書きするのではなくシードを置き換える。
-     シードに戻したい場合はシートを削除するかシートを空にする)
+【シードとの関係(オール・オア・ナッシング)】
+  - 起動時、species_birds / species_plants / species_insects の3枚を並列取得する。
+  - **3枚すべてが取得できたときだけ** Sheets のデータを採用する
+    (シードを上書きするのではなくシードを置き換える)。
+  - **1枚でも欠けた場合(未作成・空・タイムアウト・エラー)は、混在を避けるため
+    3種すべてをシードにフォールバックする**。これは「新しい鳥(Sheets)+古い植物/昆虫
+    (シード)」のような非整合な生態系(食物経路が繋がらず鳥が来にくい)を防ぐため。
+    一部だけ成功した場合は警告ログを出す。
+  - シードに戻したい場合はシートを削除するかシートを空にする。
+
+【起動時のロード手順(_load_all)】
+  1. プリウォーム: 認証+spreadsheetオープンを一度だけ直列で温める(authorizeの多重化=
+     429リスクを回避)。sheets_client 側の Lock と合わせて1回に収める。
+  2. ファンアウト: 温め後、3枚のワークシート読み出しだけを並列取得する。
+  3. 合計待ち時間に上限(既定6秒, 環境変数 SPECIES_SHEETS_TIMEOUT)。超過分はシードへ。
 """
 from __future__ import annotations
 
@@ -192,9 +202,18 @@ def _load_insects_from_sheets() -> dict[str, InsectData] | None:
 def _load_all() -> tuple[dict, dict, dict, dict]:
     # 起動高速化(2026-08-01): 従来は Sheets を鳥→植物→昆虫の順に**直列**取得しており、
     # プロセス起動のたびに 3 回のネットワーク往復が積み上がっていた(コールド起動が重い一因)。
-    # ここを (1) 3 シートを**並列**取得 (2) 合計待ち時間に**上限(既定6秒)**を設け、超過分は
-    # シードにフォールバック、へ変更する。Sheets が速いときは従来通り取り込み、遅延/ハング時も
-    # 起動を止めない。上限は環境変数 SPECIES_SHEETS_TIMEOUT で調整可(0 で Sheets を完全スキップ)。
+    #
+    # 構成(2026-08-02 改修):
+    #   1. プリウォーム: 認証(authorize)+ spreadsheet オープン(open_by_key)を
+    #      **一度だけ直列**で温める。従来はファンアウトした 3 スレッドが各々これを
+    #      走らせうる遅延初期化で、起動直後に authorize が最大 3 重化(429リスク・
+    #      並列化の効果を相殺)していた。sheets_client 側の Lock と合わせて 1 回に収める。
+    #   2. ファンアウト: 温め後、**3 枚のワークシート読み出しだけ**を並列取得する。
+    #   3. 合計待ち時間に**上限(既定6秒)**。超過分はシードにフォールバックし起動を止めない。
+    #      上限は環境変数 SPECIES_SHEETS_TIMEOUT で調整可(0 で Sheets を完全スキップ)。
+    #   4. オール・オア・ナッシング: 3 枚すべて成功したときだけ Sheets を採用する。
+    #      1 枚でも欠けたら「新しい鳥(Sheets)+古い植物/昆虫(シード)」のような
+    #      非整合な生態系(食物経路が繋がらず鳥が来にくい)を避けるため、全体をシードへ。
     t0 = time.time()
     birds = plants = insects = None
     try:
@@ -204,45 +223,64 @@ def _load_all() -> tuple[dict, dict, dict, dict]:
 
     if deadline_s > 0:
         from concurrent.futures import ThreadPoolExecutor
+        end = time.time() + deadline_s
         # with を使うと __exit__ が全スレッド完了まで待つ(=タイムアウトが無意味になる)ため、
         # 明示的に生成し、最後に wait=False で切り離す(遅い Sheets 呼び出しは裏で終わり破棄)。
         ex = ThreadPoolExecutor(max_workers=3)
         try:
-            fb = ex.submit(_load_birds_from_sheets)
-            fp = ex.submit(_load_plants_from_sheets)
-            fi = ex.submit(_load_insects_from_sheets)
-            end = time.time() + deadline_s
+            # --- プリウォーム(認証+spreadsheet オープンを一度だけ) ---
+            # 認証がハングしても残り予算(deadline)を超えないよう、ワーカーで実行して
+            # タイムアウト付きで待つ。温まらなければ Sheets は諦めてシードへ。
+            def _prewarm():
+                import sheets_client
+                sheets_client.get_spreadsheet()
+                return True
 
-            def _get(fut):
-                remaining = end - time.time()
-                if remaining <= 0:
-                    return None
-                try:
-                    return fut.result(timeout=remaining)
-                except Exception:
-                    return None
+            warmed = False
+            try:
+                fw = ex.submit(_prewarm)
+                warmed = bool(fw.result(timeout=max(0.0, end - time.time())))
+            except Exception:
+                warmed = False
 
-            birds = _get(fb)
-            plants = _get(fp)
-            insects = _get(fi)
+            if warmed:
+                # --- ファンアウト: 3 枚のワークシート読みだけを並列化 ---
+                fb = ex.submit(_load_birds_from_sheets)
+                fp = ex.submit(_load_plants_from_sheets)
+                fi = ex.submit(_load_insects_from_sheets)
+
+                def _get(fut):
+                    remaining = end - time.time()
+                    if remaining <= 0:
+                        return None
+                    try:
+                        return fut.result(timeout=remaining)
+                    except Exception:
+                        return None
+
+                birds = _get(fb)
+                plants = _get(fp)
+                insects = _get(fi)
         finally:
             ex.shutdown(wait=False)
 
-    if birds:
+    # --- オール・オア・ナッシング判定 ---
+    if birds and plants and insects:
         print(f"[species_loader] Sheets から鳥データをロード: {len(birds)} 種")
-    else:
-        birds = dict(_SEED_BIRDS)
-        print(f"[species_loader] シードデータを使用: {len(birds)} 種")
-
-    if plants:
         print(f"[species_loader] Sheets から植物データをロード: {len(plants)} 種")
-    else:
-        plants = dict(_SEED_PLANTS)
-
-    if insects:
         print(f"[species_loader] Sheets から昆虫データをロード: {len(insects)} 種")
     else:
+        if birds or plants or insects:
+            # 一部だけ成功 = 混在しかけた。警告して全体をシードへ揃える。
+            print(
+                "[species_loader] 警告: Sheets が3枚揃わず "
+                f"(birds={bool(birds)} plants={bool(plants)} insects={bool(insects)})、"
+                "生態系の混在を避けるため全体をシードにフォールバック"
+            )
+        birds = dict(_SEED_BIRDS)
+        plants = dict(_SEED_PLANTS)
         insects = dict(_SEED_INSECTS)
+        print(f"[species_loader] シードデータを使用: {len(birds)} 種")
 
     # 起動コストの可視化: Render のログでこの秒数を見れば、Sheets 取得が起動を
     # どれだけ食っているかが一目で分かる(上限は SPECIES_SHEETS_TIMEOUT)。

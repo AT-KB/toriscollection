@@ -337,6 +337,8 @@ TRANSLATIONS: dict[str, str] = {
     '会った日数 {d}日': 'Met on {d} days',
     '- GloBI補正済PageRank: **{v}** (生態的な重要度スコアを使用)': '- GloBI-adjusted PageRank: **{v}** (using the ecological importance score)',
     '- 食物経路: {paths}': '- Food paths: {paths}',
+    '{bird}が直接食べる': '{bird} eats it directly',
+    '{insect}を呼ぶため ({bird}が{insect}を食べる)': 'To attract {insect} ({bird} eats {insect})',
     '✓ 食物条件は満たされています。あとは時間とレア度次第。': '✓ The food conditions are met. The rest is up to time and rarity.',
     '🪶 まだ {bird} の羽根は手に入っていません。': "🪶 You don't have {bird}'s feather yet.",
     '{owned} / {total} 種 ({pct}%)': '{owned} / {total} species ({pct}%)',
@@ -345,6 +347,10 @@ TRANSLATIONS: dict[str, str] = {
     '今の <b>{biome}</b> の生態系に <b>{icon} {plant}</b> を導入すると、<b2>{bird}</b2> が来る確率は…': "If you add <b>{icon} {plant}</b> to <b>{biome}</b>'s current ecosystem, <b2>{bird}</b2>'s chance of visiting becomes…",
     '{plant}を植える': 'Plant {plant}',
     'これまで出会った土地:': "Lands you've visited so far:",
+    # ── ネイティブ共有ボタン(Android版のみ表示) ──
+    '🐦 共有する': '🐦 Share',
+    '手のひらの庭に鳥がやってくる、癒しアプリ「Toris Collection」': 'Birds come to a garden in your palm — the calming app "Toris Collection"',
+    '共有する': 'Share',
     # ── radio.py(庭のラジオ) ──
     '🎙 ラジオを始める': '🎙 Start the radio',
     '■ 止める': '■ Stop',

@@ -9,6 +9,7 @@ Toris Collection - Google Sheets バックエンド
 適切にハンドリング)。アプリの基本動作を Sheets 障害で止めないため。
 """
 import json
+import threading
 from datetime import datetime
 
 import gspread
@@ -28,6 +29,11 @@ SCOPES = [
 _client_cache = None
 _spreadsheet_cache = None
 _worksheet_cache = {}
+# 起動時、species_loader が 3 枚のシートを並列取得する。ロック無しの遅延初期化だと
+# 3 スレッドが各々 authorize()+open_by_key() を走らせうる(429リスク)。
+# ロックで認証・spreadsheet オープンを 1 回に収める。
+_client_lock = threading.Lock()
+_spreadsheet_lock = threading.Lock()
 
 
 def _load_credentials():
@@ -45,14 +51,20 @@ def _load_credentials():
 def get_client():
     global _client_cache
     if _client_cache is None:
-        _client_cache = gspread.authorize(_load_credentials())
+        with _client_lock:
+            # ロック取得までに他スレッドが初期化済みなら再利用(二重 authorize 防止)。
+            if _client_cache is None:
+                _client_cache = gspread.authorize(_load_credentials())
     return _client_cache
 
 
 def get_spreadsheet():
     global _spreadsheet_cache
     if _spreadsheet_cache is None:
-        _spreadsheet_cache = get_client().open_by_key(SPREADSHEET_ID)
+        with _spreadsheet_lock:
+            # ロック取得までに他スレッドが初期化済みなら再利用(二重 open_by_key 防止)。
+            if _spreadsheet_cache is None:
+                _spreadsheet_cache = get_client().open_by_key(SPREADSHEET_ID)
     return _spreadsheet_cache
 
 

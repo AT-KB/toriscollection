@@ -108,7 +108,10 @@ def suggest_for_bird(target_bird_id, planted_plants, biome_id, month):
 
     Returns: dict with
       - "current_prob": 現状の出現確率
-      - "suggestions": [{"plant_id", "reason", "directness"}] のリスト
+      - "suggestions": リスト。各要素は構造化データで、表示文言は含まない
+        (i18n漏れ防止のため app.py 側で t() + 表示名ヘルパーに渡して描画する):
+          {"plant_id", "reason_kind"("direct"|"indirect"), "bird_id",
+           "directness", ("insect_id" は indirect のみ)}
       - "has_food_path": 既に食物経路があるか
     """
     if target_bird_id not in BIRDS:
@@ -139,7 +142,10 @@ def suggest_for_bird(target_bird_id, planted_plants, biome_id, month):
             seen_plants.add(p_id)
             suggestions.append({
                 "plant_id": p_id,
-                "reason": f"{bird['name']}が直接食べる",
+                # 表示文言はここで組み立てず、構造化データのみ返す
+                # (i18n漏れ防止: app.py 側で t() + 表示名ヘルパーで描画)。
+                "reason_kind": "direct",
+                "bird_id": target_bird_id,
                 "directness": "direct",
             })
 
@@ -168,8 +174,11 @@ def suggest_for_bird(target_bird_id, planted_plants, biome_id, month):
                 seen_plants.add(p_id)
                 suggestions.append({
                     "plant_id": p_id,
-                    "reason": f"{insect['name']}を呼ぶため "
-                              f"({bird['name']}が{insect['name']}を食べる)",
+                    # 表示文言はここで組み立てず、構造化データのみ返す
+                    # (i18n漏れ防止: app.py 側で t() + 表示名ヘルパーで描画)。
+                    "reason_kind": "indirect",
+                    "bird_id": target_bird_id,
+                    "insect_id": i_id,
                     "directness": "indirect",
                 })
                 break

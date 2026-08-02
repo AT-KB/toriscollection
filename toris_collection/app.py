@@ -661,8 +661,15 @@ def _inject_native_share_button():
     `android_app/`(Capacitorプロジェクト、npm install・cap sync 済み)側に
     導入されている必要がある。
     """
-    components.html(
-        """
+    # 共有UIの文言は現在の言語で組み立てる(EN画面に日本語を出さない)。
+    # JSリテラルへは json.dumps で安全に埋め込む(f-string式内にバックスラッシュを
+    # 持ち込まず、ensure_ascii のユニコードエスケープで 3.11 でも安全)。
+    _btn_label = json.dumps(t("🐦 共有する"))
+    _share_text = json.dumps(
+        t("手のひらの庭に鳥がやってくる、癒しアプリ「Toris Collection」")
+    )
+    _dialog_title = json.dumps(t("共有する"))
+    _share_js = """
         <script>
         (function () {
           try {
@@ -676,7 +683,7 @@ def _inject_native_share_button():
             }
             var btn = doc.createElement('button');
             btn.id = 'toris-native-share-btn';
-            btn.textContent = '🐦 共有する';
+            btn.textContent = __BTN_LABEL__;
             btn.style.cssText = [
               'position:fixed', 'right:14px', 'bottom:14px', 'z-index:9999',
               'background:#7ba87b', 'color:#fff', 'border:none',
@@ -688,9 +695,9 @@ def _inject_native_share_button():
                 if (win.Capacitor.Plugins && win.Capacitor.Plugins.Share) {
                   win.Capacitor.Plugins.Share.share({
                     title: 'Toris Collection',
-                    text: '手のひらの庭に鳥がやってくる、癒しアプリ「Toris Collection」',
+                    text: __SHARE_TEXT__,
                     url: 'https://toris-collection.onrender.com/',
-                    dialogTitle: '共有する'
+                    dialogTitle: __DIALOG_TITLE__
                   });
                 }
               } catch (e) {
@@ -703,9 +710,14 @@ def _inject_native_share_button():
           }
         })();
         </script>
-        """,
-        height=0,
+        """
+    _share_js = (
+        _share_js
+        .replace("__BTN_LABEL__", _btn_label)
+        .replace("__SHARE_TEXT__", _share_text)
+        .replace("__DIALOG_TITLE__", _dialog_title)
     )
+    components.html(_share_js, height=0)
 
 
 _inject_native_share_button()
@@ -3517,8 +3529,11 @@ with tab_birds:
                             v=f"{info['centrality_used']:.2e}",
                         ))
                     if info["incoming_paths"]:
-                        paths = "、".join(
-                            f"{p[1]}({p[2]:.2f})" for p in info["incoming_paths"]
+                        # p = (kind, node_id, weight)。内部IDではなく表示名を出す。
+                        sep = "、" if i18n.get_lang() == "ja" else ", "
+                        paths = sep.join(
+                            f"{_net_node_label(p[1], p[0], fallback=p[1])}({p[2]:.2f})"
+                            for p in info["incoming_paths"]
                         )
                         st.write(t("- 食物経路: {paths}", paths=paths))
 
@@ -3546,6 +3561,26 @@ with tab_birds:
                         )
                         delta_str = f"+{delta*100:.1f}%" if delta > 0.001 else "—"
                         tag = "🌟" if s["directness"] == "direct" else "🔗"
+                        # 理由文は engine では組み立てず、ここで t() + 表示名で描画
+                        # (EN画面への日本語漏れ防止)。
+                        if s.get("reason_kind") == "direct":
+                            reason_txt = t(
+                                "{bird}が直接食べる",
+                                bird=_bird_display_name(bird),
+                            )
+                        elif s.get("reason_kind") == "indirect":
+                            _ins = INSECTS.get(s.get("insect_id"))
+                            _ins_name = (
+                                _insect_display_name(_ins) if _ins
+                                else s.get("insect_id", "")
+                            )
+                            reason_txt = t(
+                                "{insect}を呼ぶため ({bird}が{insect}を食べる)",
+                                insect=_ins_name,
+                                bird=_bird_display_name(bird),
+                            )
+                        else:
+                            reason_txt = ""
                         st.markdown(
                             f"<div style='padding:8px 12px; margin:4px 0; "
                             f"background:#f5f7e8; border-left:3px solid #88a858; "
@@ -3554,7 +3589,7 @@ with tab_birds:
                             f"<div style='flex-grow:1;'>"
                             f"<b>{tag} {pl.get('icon', '🌱')} {t('{plant}を植える', plant=_plant_display_name(pl))}</b>"
                             f"<span style='color:#888; font-size:0.82em; "
-                            f"margin-left:6px;'>{s['reason']}</span></div>"
+                            f"margin-left:6px;'>{reason_txt}</span></div>"
                             f"<div style='font-size:0.85em; color:{delta_color}; "
                             f"font-weight:600; white-space:nowrap;'>"
                             f"{cur_prob*100:.1f}% → {sim_prob*100:.1f}% "
