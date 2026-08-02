@@ -191,7 +191,15 @@ public class MainActivity extends BridgeActivity {
             }
             ImageView overlay = new ImageView(this);
             overlay.setImageResource(splashId);
-            overlay.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            // FIT_CENTER: 画像全体を必ず画面内に収める(縦横比を保ったまま縮小)。
+            // 以前は CENTER_CROP で画面高さに合わせて拡大していたため、縦長画面
+            // (例 1080x2424 ≒ 20:9)では横1280pxの splash.png の左右が見切れ、
+            // 「Getting the garden ready」の先頭G・末尾yなどテキスト両端が切れていた
+            // (実機 Pixel 9a/Android 16 で確認)。FIT_CENTER なら上下(または左右)に
+            // 余白ができるが、オーバーレイ地色をセージ(SAGE、splash.png の地色と一致)で
+            // 塗ってあるため余白もセージで埋まり、黒帯/白帯は視覚的に出ず、テキストは
+            // どの画面比率でも全文が切れずに表示される。
+            overlay.setScaleType(ImageView.ScaleType.FIT_CENTER);
             overlay.setBackgroundColor(SAGE);
             // 背後のWebViewへ誤タップが抜けないようにする(表示中は操作を吸収)。
             overlay.setClickable(true);
