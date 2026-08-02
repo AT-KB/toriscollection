@@ -1,0 +1,236 @@
+[
+ {
+  "raptor_sci": "Accipiter cooperii",
+  "raptor_label": "クーパーハイタカ / Cooper's Hawk",
+  "biome": "charlotte",
+  "n_preysOn": 133,
+  "n_eats": 108,
+  "roster_prey_hits": [
+   {
+    "bird_id": "northern_cardinal",
+    "en": "Northern Cardinal",
+    "sci": "Cardinalis cardinalis",
+    "globi_match": "Cardinalis cardinalis",
+    "level": "species"
+   },
+   {
+    "bird_id": "blue_jay",
+    "en": "Blue Jay",
+    "sci": "Cyanocitta cristata",
+    "globi_match": "Cyanocitta cristata",
+    "level": "species"
+   },
+   {
+    "bird_id": "american_robin",
+    "en": "American Robin",
+    "sci": "Turdus migratorius",
+    "globi_match": "Turdus migratorius",
+    "level": "species"
+   },
+   {
+    "bird_id": "carolina_wren",
+    "en": "Carolina Wren",
+    "sci": "Thryothorus ludovicianus",
+    "globi_match": "Thryothorus ludovicianus",
+    "level": "species"
+   },
+   {
+    "bird_id": "mourning_dove",
+    "en": "Mourning Dove",
+    "sci": "Zenaida macroura",
+    "globi_match": "Zenaida",
+    "level": "species"
+   },
+   {
+    "bird_id": "tufted_titmouse",
+    "en": "Tufted Titmouse",
+    "sci": "Baeolophus bicolor",
+    "globi_match": "Baeolophus bicolor",
+    "level": "species"
+   },
+   {
+    "bird_id": "american_goldfinch",
+    "en": "American Goldfinch",
+    "sci": "Spinus tristis",
+    "globi_match": "Spinus psaltria",
+    "level": "genus"
+   },
+   {
+    "bird_id": "house_finch",
+    "en": "House Finch",
+    "sci": "Haemorhous mexicanus",
+    "globi_match": "Haemorhous mexicanus",
+    "level": "species"
+   },
+   {
+    "bird_id": "red_bellied_woodpecker",
+    "en": "Red-bellied Woodpecker",
+    "sci": "Melanerpes carolinus",
+    "globi_match": "Melanerpes aurifrons",
+    "level": "genus"
+   },
+   {
+    "bird_id": "brown_thrasher",
+    "en": "Brown Thrasher",
+    "sci": "Toxostoma rufum",
+    "globi_match": "Toxostoma curvirostre",
+    "level": "genus"
+   },
+   {
+    "bird_id": "song_sparrow",
+    "en": "Song Sparrow",
+    "sci": "Melospiza melodia",
+    "globi_match": "Melospiza",
+    "level": "species"
+   }
+  ],
+  "sample_preysOn": [
+   "Acanthoparyphium",
+   "Acanthotrema hancocki",
+   "Actitis macularius",
+   "Actitus macularia",
+   "Agapornis roseicollis",
+   "Agelaius phoeniceus",
+   "Aix sponsa",
+   "Ammospermophilus leucurus",
+   "Anatidae",
+   "Anaxyrus americanus",
+   "Athene cunicularia",
+   "Athene cunicularia hypugaea",
+   "Austrobiharzia",
+   "Aves",
+   "Baeolophus bicolor",
+   "Bucephala clangula",
+   "Calidris alpina",
+   "Calidris mauri",
+   "Calidris minutilla",
+   "Cardinalis cardinalis",
+   "Catatropis johnstoni",
+   "Chaetura vauxi",
+   "Cistothorus palustris",
+   "Cloacitrema michiganensis",
+   "Colaptes auratus"
+  ]
+ },
+ {
+  "raptor_sci": "Buteo jamaicensis",
+  "raptor_label": "アカオノスリ / Red-tailed Hawk",
+  "biome": "charlotte",
+  "n_preysOn": 136,
+  "n_eats": 193,
+  "roster_prey_hits": [
+   {
+    "bird_id": "blue_jay",
+    "en": "Blue Jay",
+    "sci": "Cyanocitta cristata",
+    "globi_match": "Cyanocitta cristata",
+    "level": "species"
+   },
+   {
+    "bird_id": "eastern_bluebird",
+    "en": "Eastern Bluebird",
+    "sci": "Sialia sialis",
+    "globi_match": "Sialia currucoides",
+    "level": "genus"
+   },
+   {
+    "bird_id": "american_robin",
+    "en": "American Robin",
+    "sci": "Turdus migratorius",
+    "globi_match": "Turdus migratorius",
+    "level": "species"
+   },
+   {
+    "bird_id": "mourning_dove",
+    "en": "Mourning Dove",
+    "sci": "Zenaida macroura",
+    "globi_match": "Zenaida",
+    "level": "species"
+   },
+   {
+    "bird_id": "downy_woodpecker",
+    "en": "Downy Woodpecker",
+    "sci": "Dryobates pubescens",
+    "globi_match": "Dryobates scalaris",
+    "level": "genus"
+   },
+   {
+    "bird_id": "carolina_chickadee",
+    "en": "Carolina Chickadee",
+    "sci": "Poecile carolinensis",
+    "globi_match": "Poecile atricapillus",
+    "level": "genus"
+   },
+   {
+    "bird_id": "red_bellied_woodpecker",
+    "en": "Red-bellied Woodpecker",
+    "sci": "Melanerpes carolinus",
+    "globi_match": "Melanerpes formicivorus",
+    "level": "genus"
+   },
+   {
+    "bird_id": "brown_thrasher",
+    "en": "Brown Thrasher",
+    "sci": "Toxostoma rufum",
+    "globi_match": "Toxostoma bendirei",
+    "level": "genus"
+   },
+   {
+    "bird_id": "song_sparrow",
+    "en": "Song Sparrow",
+    "sci": "Melospiza melodia",
+    "globi_match": "Melospiza",
+    "level": "species"
+   }
+  ],
+  "sample_preysOn": [
+   "Accipitridae",
+   "Aegolius acadicus",
+   "Agelaius phoeniceus",
+   "Anas platyrhynchos",
+   "Anatidae",
+   "Anaxyrus americanus",
+   "Anura",
+   "Aphelocoma californica",
+   "Ardeidae",
+   "Asio flammeus",
+   "Aves",
+   "Blarina shermani",
+   "Bonasa umbellus",
+   "Carnivora",
+   "Charadriiformes",
+   "Chiroptera",
+   "Colaptes auratus",
+   "Coleoptera",
+   "Coluber constrictor mormon",
+   "Colubridae",
+   "Columba livia",
+   "Columba livia domestica",
+   "Columbidae",
+   "Columbiformes",
+   "Corvus"
+  ]
+ },
+ {
+  "raptor_sci": "Accipiter gularis",
+  "raptor_label": "ツミ / Japanese Sparrowhawk",
+  "biome": "kyoto",
+  "n_preysOn": 4,
+  "n_eats": 4,
+  "roster_prey_hits": [
+   {
+    "bird_id": "suzume",
+    "en": "Eurasian Tree Sparrow",
+    "sci": "Passer montanus",
+    "globi_match": "Passer montanus",
+    "level": "species"
+   }
+  ],
+  "sample_preysOn": [
+   "Acridotheres javanicus",
+   "Passer montanus",
+   "Treron vernans",
+   "Vertebrata"
+  ]
+ }
+]

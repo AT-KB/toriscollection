@@ -18,3 +18,4 @@ marketing/phase-s/素材/_*.png
 # TikTok Poster ツールの秘密情報(絶対にコミットしない)
 tools/tiktok_poster/.env
 tools/tiktok_poster/token.json
+toris_collection/.globi_cache/
