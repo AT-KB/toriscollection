@@ -4,9 +4,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -101,17 +104,48 @@ public class MainActivity extends BridgeActivity {
     /** 序盤フェーズを過ぎた後のリロード間隔(5分)。 */
     private static final long BACKOFF_INTERVAL_MS = 5 * 60_000L;
 
+    /**
+     * Toris Collection のセージ色(#ecf1e3)。システムスプラッシュの地色・
+     * WebViewの地色・自前オーバーレイの地色を、すべてこの一色で揃えることで、
+     * アイコンをタップした瞬間から本編が描画されるまで色が途切れないようにする。
+     */
+    private static final int SAGE = 0xFFECF1E3;
+
+    /**
+     * 2026-08 起動見た目の刷新で追加。安心メッセージ入りの全画面ロード画面
+     * (splash.png)を、システムスプラッシュの後に自前オーバーレイとして重ねて出す。
+     * これは本編が描画された合図(`markLoaded()`)で即座に外れるが、万一その合図が
+     * 一度も来ない場合の保険として、この上限時間でオーバーレイだけは外す
+     * (WebView地色はセージのまま、watchdog は別途リロードを継続)。watchdog の
+     * 初回リロード(90秒)に一度チャンスを与えてから外れるよう、それより長くする。
+     * 通常は本編描画時に即座に外れるため、ウォーム起動が固定待ちになることはない。
+     */
+    private static final long OVERLAY_SAFETY_TIMEOUT_MS = 100_000L;
+
     private final AtomicBoolean contentLoaded = new AtomicBoolean(false);
     private final AtomicInteger reloadAttempts = new AtomicInteger(0);
     private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
     private Runnable watchdogRunnable;
 
+    /** 安心メッセージ入りの全画面ロード画面(splash.png)を描く自前オーバーレイ。 */
+    private View birdOverlay;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Android 12+ のシステムスプラッシュ(セージ地 + 鳥アイコン、styles.xml の
+        // AppTheme.NoActionBarLaunch)を正しくセットアップし、最初のフレーム描画後に
+        // 自動で消えるようにする。androidx 規約により super.onCreate() より前に呼ぶ。
+        // Capacitor の SplashScreen プラグインは launchShowDuration:0 で起動時スプラッシュを
+        // 無効化してあるため、ここでの installSplashScreen が二重にならない。
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
 
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
         if (webView != null) {
+            // コールドスタート中、本編が描画されるまで WebView 自体の地色が素の白に
+            // ならないようセージにする(白画面のちらつき防止・二重の保険)。
+            webView.setBackgroundColor(SAGE);
             webView.addJavascriptInterface(new WatchdogBridge(), "AndroidWatchdog");
             stripWebViewMarkerFromUserAgent(webView);
             // 2026-07-13 実機ログで直接確認(仮説6): 接続実機のlogcatに
@@ -128,7 +162,77 @@ public class MainActivity extends BridgeActivity {
             webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
 
+        showBirdOverlay();
         scheduleWatchdogCheck(WATCHDOG_TIMEOUT_MS);
+    }
+
+    /**
+     * 安心メッセージ入りの全画面ロード画面(セージ地 + 鳥 + 「First launch can take
+     * up to 30 seconds」)を、WebViewの上に重ねて表示する。
+     *
+     * なぜシステムスプラッシュだけでは足りないか: Android 12+ のシステム
+     * スプラッシュ(styles.xml)は「背景色 + 中央アイコン」しか描けず、テキストも
+     * 長時間の保持もできない。一方 server.url でリモートを直読みする構成のため、
+     * Renderのコールドスタート(数十秒)中はどうしても待ち時間が生じる。そこで
+     * システムスプラッシュが最初のフレームで自動的に消えた直後、その裏に既に
+     * 用意してあるこのオーバーレイ(splash.png)が現れ、本編が実際に描画される
+     * 合図(`markLoaded()`)が来た瞬間に外れる。両者ともセージ地のため境目は
+     * 目立たず、タップ〜本編まで色・鳥が途切れない。
+     */
+    private void showBirdOverlay() {
+        try {
+            ViewGroup content = findViewById(android.R.id.content);
+            if (content == null) {
+                return;
+            }
+            int splashId = getResources().getIdentifier("splash", "drawable", getPackageName());
+            if (splashId == 0) {
+                return;
+            }
+            ImageView overlay = new ImageView(this);
+            overlay.setImageResource(splashId);
+            overlay.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            overlay.setBackgroundColor(SAGE);
+            // 背後のWebViewへ誤タップが抜けないようにする(表示中は操作を吸収)。
+            overlay.setClickable(true);
+            content.addView(
+                overlay,
+                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            );
+            birdOverlay = overlay;
+            // 保険(OVERLAY_SAFETY_TIMEOUT_MS のコメント参照)。
+            watchdogHandler.postDelayed(this::hideBirdOverlay, OVERLAY_SAFETY_TIMEOUT_MS);
+        } catch (Exception e) {
+            // オーバーレイ生成に失敗しても本編には一切影響させない。
+        }
+    }
+
+    /** 全画面ロード画面のオーバーレイを、軽くフェードアウトして取り除く(冪等)。 */
+    private void hideBirdOverlay() {
+        final View overlay = birdOverlay;
+        if (overlay == null) {
+            return;
+        }
+        birdOverlay = null;
+        try {
+            overlay
+                .animate()
+                .alpha(0f)
+                .setDuration(250)
+                .withEndAction(() -> {
+                    try {
+                        ViewGroup parent = (ViewGroup) overlay.getParent();
+                        if (parent != null) {
+                            parent.removeView(overlay);
+                        }
+                    } catch (Exception e) {
+                        // 取り外し失敗は無害(次のActivity破棄で解放される)。
+                    }
+                })
+                .start();
+        } catch (Exception e) {
+            // アニメーション不可の環境でも、少なくとも参照は手放してある。
+        }
     }
 
     @Override
@@ -199,6 +303,10 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void markLoaded() {
             contentLoaded.set(true);
+            // 本編が実際に描画された合図。全画面ロード画面のオーバーレイを外す
+            // (JSブリッジは別スレッドで呼ばれるため、UIスレッドへポストする)。
+            // ウォーム起動ではこの合図が数秒で来るため、固定待ちにはならない。
+            watchdogHandler.post(MainActivity.this::hideBirdOverlay);
         }
     }
 }

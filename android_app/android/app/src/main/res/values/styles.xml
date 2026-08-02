@@ -13,10 +13,30 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- システムスプラッシュが消えてから本編が描画されるまでの一瞬に
+             素の白が挟まらないよう、ウィンドウ背景をセージにする(WebView自体の
+             背景色も MainActivity でセージに設定して二重で白を防ぐ)。 -->
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 
 
+    <!--
+      2026-08 起動見た目の刷新。
+      旧実装は `android:background=@drawable/splash`(全画面画像)だったが、
+      親 `Theme.SplashScreen`(Android 12+ の新スプラッシュAPI)は全画面画像を
+      無視し「背景色 + 中央アイコン」しか描かない。しかも背景色・アイコンが
+      未設定だったため、デフォルトの暗い背景 + デフォルトのランチャーアイコン
+      (青い X)が出ていた(実機 Pixel 9a / Android 16 で確認)。
+      新APIの正しい属性(androidx.core:core-splashscreen 提供)で
+      セージ地 + 鳥アイコンを指定し、起動直後からブランドの見た目にする。
+      安心メッセージ入りの全画面ロード画面(splash.png)は、このシステム
+      スプラッシュの後に MainActivity が自前オーバーレイとして重ねて出す
+      (テキスト・長時間保持はシステムスプラッシュでは不可のため)。
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_bird</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/splash_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

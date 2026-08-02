@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- アプリアイコン(アダプティブ)の背景色。Toris Collection のセージ色。
+         旧: #FFFFFF(白)。2026-08 起動見た目の刷新で、デフォルトの
+         プレースホルダー(青い X)からセージ地+鳥のアイコンに差し替えた。 -->
+    <color name="ic_launcher_background">#ecf1e3</color>
+    <!-- Android 12+ システムスプラッシュの背景色(セージ)。styles.xml の
+         AppTheme.NoActionBarLaunch から参照。splash.png の地色と一致させ、
+         起動直後〜本編描画まで色が途切れないようにする。 -->
+    <color name="splash_background">#ecf1e3</color>
 </resources>
