@@ -35,11 +35,33 @@ SUB = (74, 92, 66, 255)                 # やや薄い緑(サブ/クレジット
 FONT_TITLE = "C:/Windows/Fonts/georgiab.ttf"   # セリフ太字(タイトル/鳥名)
 FONT_BODY = "C:/Windows/Fonts/segoeui.ttf"     # サンセリフ(サブ/CTA)
 
-BIRD = os.path.join(ROOT, "android_app", "android", "app", "src", "main",
-                    "res", "drawable-xxxhdpi", "splash_bird.png")
+_BIRD_SRC = os.path.join(ROOT, "android_app", "android", "app", "src", "main",
+                         "res", "drawable-xxxhdpi", "splash_bird.png")
 BIRDCALL = os.path.join(ROOT, "landing", "media", "birdcall.mp3")
 GARDEN = os.path.join(ROOT, "landing", "media", "garden_radio.mp3")
-SAGE_HEX = "0xECF1E3"
+SAGE_RGB = (236, 241, 227)
+
+
+def _make_bird_on_sage():
+    """鳥をセージ地に合成した正方PNG。背景(同色セージPNG)と同じ色経路にすることで、
+    lavfi色ソースとPNGのYUV変換差で出ていた鳥背後の薄い矩形(seam)を解消する。"""
+    bird = Image.open(_BIRD_SRC).convert("RGBA")
+    side = max(bird.size)
+    canvas = Image.new("RGBA", (side, side), SAGE_RGB + (255,))
+    canvas.alpha_composite(bird, ((side - bird.width) // 2, (side - bird.height) // 2))
+    p = os.path.join(TMP, "bird_on_sage.png")
+    canvas.save(p)
+    return p
+
+
+def _make_sage_base():
+    p = os.path.join(TMP, "sage_base.png")
+    Image.new("RGB", (W, H), SAGE_RGB).save(p)
+    return p
+
+
+BIRD = _make_bird_on_sage()
+SAGE_BASE = _make_sage_base()
 
 
 def _font(path, size):
@@ -99,16 +121,15 @@ def make_credit(name, text, size=30):
 
 def build(out_name, audio_path, audio_filter, ov_list, frames):
     out_path = os.path.join(OUT_DIR, out_name)
-    # 入力: [0]=セージ地(lavfi), [1]=audio, [2]=鳥, [3..]=字幕/クレジット PNG
+    # 入力: [0]=セージ地(PNG), [1]=audio, [2]=鳥(セージ合成), [3..]=字幕/クレジット PNG
     cmd = [FFMPEG, "-y",
-           "-f", "lavfi", "-t", "15", "-i",
-           f"color=c={SAGE_HEX}:s=1080x1920:r=30",
+           "-loop", "1", "-t", "15", "-i", SAGE_BASE,
            "-i", audio_path,
            "-loop", "1", "-i", BIRD]
     for png, _, _ in ov_list:
         cmd += ["-loop", "1", "-i", png]
 
-    fc = ["[0:v]format=rgba[base]",
+    fc = ["[0:v]fps=30,format=rgba[base]",
           "[2:v]scale=470:-1[bird]",
           # 鳥をゆっくり上下に揺らす(生きている感じ)
           "[base][bird]overlay=x=(W-w)/2:y='(H*0.20)+16*sin(2*t)'[bg]"]
