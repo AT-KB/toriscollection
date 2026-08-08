@@ -292,6 +292,27 @@ TRANSLATIONS: dict[str, str] = {
     '会った日数 {d}日・常連': 'Met on {d} days · Regular',
     '**適温域:** {lo}〜{hi}℃': '**Comfort range:** {lo}–{hi}℃',
     '**好む環境:** {biomes}': '**Prefers:** {biomes}',
+
+    # ── 図鑑プロフィール(好きなもの/好きな場所/こわいもの) ──
+    # 「こわいもの」は脅かす言葉にしない。実際の天敵をそっと添えるだけ。
+    '好きなもの': 'Favourites',
+    '好きな場所': 'Home',
+    # 「Watches out for」は列幅からはみ出して値の位置がずれるので短く。
+    'こわいもの': 'Wary of',
+    '(近縁のなかまの記録から)': '(from records of close relatives)',
+    # 天敵カテゴリ(predators.CATEGORY_LABELS)。GloBI の実データを分類でまとめたもの。
+    'タカのなかま': 'Hawks',
+    'フクロウのなかま': 'Owls',
+    'ハヤブサのなかま': 'Falcons',
+    'ヘビ': 'Snakes',
+    'カラスのなかま': 'Crows and jays',
+    'モズのなかま': 'Shrikes',
+    'ネコ': 'Cats',
+    'アライグマ': 'Raccoons',
+    'イタチのなかま': 'Weasels',
+    'キツネのなかま': 'Foxes',
+    'リスのなかま': 'Squirrels',
+    'ネズミのなかま': 'Mice and rats',
     '食物経路がつながっている鳥の数': 'Number of birds linked by a food path',
     '植えた植物(入力)': 'Plants grown (input)',
     '来た鳥(出力)': 'Birds that came (output)',
