@@ -61,6 +61,34 @@ def _insect_display_name(insect: dict) -> str:
     return insect.get("name", "")
 
 
+def render_bird_profile_html(bird_id: str, bird: dict) -> str | None:
+    """図鑑の「プロフィール」(好きなもの/好きな場所/こわいもの)の HTML を返す。
+
+    行の中身(実データの取り出し・t() による文言化)は bird_profile.py に集約してあり、
+    ここは**HTML に包むだけ**。そうしておくと Streamlit 無しでテストでき、
+    EN 画面への日本語漏れを機械的に検出できる。
+    データが無い行は出さない。全部無ければ None(=何も描かない)。
+    """
+    import bird_profile
+
+    rows = bird_profile.rows(bird_id, bird, PLANTS, INSECTS, BIOMES)
+    if not rows:
+        return None
+
+    body = "".join(
+        f"<div style='display:flex; gap:10px; padding:3px 0; line-height:1.6;'>"
+        f"<div style='flex:0 0 auto;'>{emoji}</div>"
+        f"<div style='flex:0 0 6.5em; color:#6a7a6a;'>{label}</div>"
+        f"<div style='flex:1 1 auto; color:#2a3a2a;'>{value}</div>"
+        f"</div>"
+        for emoji, label, value in rows
+    )
+    return (
+        f"<div style='margin:4px 0 12px; padding:10px 14px; background:#f7faf3; "
+        f"border-radius:10px; font-size:0.92em;'>{body}</div>"
+    )
+
+
 def _net_node_label(node_id: str, kind: str, fallback: str = "") -> str:
     """ネットワーク図のノード表示名。英語表示では種の english を使い、無ければ
     fallback(日本語ラベル)へ。ノード id は種 id なので BIRDS/PLANTS/INSECTS で引ける。"""
@@ -3468,6 +3496,13 @@ with tab_birds:
                 # 観察済みの鳥の鳴き声を図鑑で聴ける(儀式で近づいた報酬)
                 render_bird_audio(b_id, bird)
                 st.write(i18n.describe(bird))
+
+                # プロフィール(好きなもの/好きな場所/こわいもの)。
+                # すべて実データ由来(食性・biome_pref・GloBI の捕食記録)。
+                # 図鑑の読み物であって、到来率や記録には一切影響しない(原則2)。
+                _profile_html = render_bird_profile_html(b_id, bird)
+                if _profile_html:
+                    st.markdown(_profile_html, unsafe_allow_html=True)
 
                 # 外部リンク: 名前で Google画像検索 / Wikipedia を開く
                 import urllib.parse as _urlparse
