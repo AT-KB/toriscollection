@@ -216,17 +216,18 @@ def render_radio(
 
     col_biome, col_time = st.columns([2, 1])
     with col_biome:
-        chosen = st.radio(
+        chosen = st.segmented_control(
             t("庭を選ぶ"),
             options=biome_ids,
             format_func=lambda x: biome_labels[x],
-            index=default_idx,
-            horizontal=True,
+            default=biome_ids[default_idx],
             key=_widget_key,
             label_visibility="collapsed",
             help=t("今、庭で選んでいる土地に自動的に合わせます。過去にコレクション"
                    "した別の土地の顔ぶれを聴きたい時だけ、ここで一時的に切り替えられます。"),
         )
+        # segmented_control は選択解除で None を返すので、現在地に落とす。
+        chosen = chosen or current_biome
     with col_time:
         # 既定は「今の時刻」= 端末のローカル時刻に追従(JS の new Date() で判定)。
         # これがラジオの核(実時刻ラジオ=朝はさえずり、夜は静か)。

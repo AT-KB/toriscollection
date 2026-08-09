@@ -1376,16 +1376,17 @@ def render_login_screen():
     else:
         _inject_local_restore_check()
 
-    start_mode = st.radio(
+    start_mode = st.segmented_control(
         t("はじめかた"),
         options=["new", "restore"],
         format_func=lambda c: {
             "new": t("🌱 新規スタート"),
             "restore": t("📥 セーブコードを読み込んで再開"),
         }[c],
+        default="new",
         label_visibility="collapsed",
         key="_start_mode_choice",
-    )
+    ) or "new"
 
     if start_mode == "new":
         if st.button(t("▶ はじめる"), type="primary", use_container_width=True):
@@ -2343,14 +2344,13 @@ with st.sidebar:
     _lang_options = ["en", "ja"]
     _lang_labels = {"en": "English", "ja": "日本語"}
     _cur_lang = i18n.get_lang()
-    _chosen_lang = st.radio(
+    _chosen_lang = st.segmented_control(
         "Language / 言語",
         options=_lang_options,
         format_func=lambda x: _lang_labels[x],
-        index=_lang_options.index(_cur_lang) if _cur_lang in _lang_options else 0,
-        horizontal=True,
+        default=_cur_lang if _cur_lang in _lang_options else _lang_options[0],
         key="lang_select",
-    )
+    ) or _cur_lang
     if _chosen_lang != _cur_lang:
         i18n.set_lang(_chosen_lang)
         st.rerun()
@@ -2743,9 +2743,15 @@ else:
 # 移行したため、複数ユーザー間の集合集計に必要なサーバー側データが得られない。
 # community.py 自体は削除せず残置(将来、匿名集計の仕組みを別途用意した時点で
 # 復活を検討する)。
-tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = st.tabs(
-    [t("🎙 ラジオ"), t("🏞️ 庭の様子"), t("🌱 植える"), t("🧪 シミュ"), t("📖 図鑑"),
-     t("🎁 落とし物"), t("🕸️ ネットワーク"), t("❓ 使い方")]
+# 「🧪 シミュ」「🎁 落とし物」は非表示(CEO 2026-08-09「画面が busy すぎる。
+# タブを何個か隠そう」)。コードは削除せず残置し、下の該当ブロックを
+# `if False:` にしてある。戻すときは、ここにラベルと変数を戻したうえで
+# `if False:  # with tab_sim:` を `with tab_sim:` に戻す。
+# なお Streamlit はタブの中身を選択中でなくても毎回描画するため、隠すことは
+# 画面の情報量だけでなく、1リクエストあたりの処理量の削減にもなる。
+tab_radio, tab_home, tab_plant, tab_birds, tab_network, tab_help = st.tabs(
+    [t("🎙 ラジオ"), t("🏞️ 庭の様子"), t("🌱 植える"), t("📖 図鑑"),
+     t("🕸️ ネットワーク"), t("❓ 使い方")]
 )
 # タブ選択状態を、儀式/広告/自動復元のフルリロードをまたいで維持する
 # (_inject_active_tab_persistence() 参照。タブ構成・コアループ自体は不変)。
@@ -2918,14 +2924,14 @@ with tab_home:
     with col1:
         st.markdown(t("### 🏞️ 土地を選ぶ"))
         # 候補を選ぶ → 「ここに移る」ボタンで確定する2段階
-        new_biome = st.radio(
+        new_biome = st.segmented_control(
             t("バイオーム"),
             options=list(BIOMES.keys()),
             format_func=lambda b: _biome_display_name(BIOMES[b]),
-            index=list(BIOMES.keys()).index(st.session_state.biome),
+            default=st.session_state.biome,
             label_visibility="collapsed",
             key="biome_candidate",
-        )
+        ) or st.session_state.biome
         # 候補の説明を表示
         st.caption(i18n.describe(BIOMES[new_biome]))
 
@@ -2980,15 +2986,19 @@ with tab_home:
                             f"<br><span style='color:#7a8a5a; font-size:0.88em; "
                             f"font-style:italic;'>♪ {_reason}</span>"
                         )
+                # 名前の行だけを常に出し、学名・説明・声はプルダウンに畳む
+                # (CEO 2026-08-09「名前行だけで、あとはプルダウンとかでもいい」)。
+                # 4羽並ぶと説明文で画面が埋まっていたため。
                 st.markdown(
-                    f"<div class='{cls}'>"
-                    f"{color_dot}<b>{_bird_display_name(bird)}</b>{new_label} "
-                    f"<span style='color:#888; font-size:0.85em;'><i>{bird['scientific']}</i></span><br>"
-                    f"<span style='color:#555; font-size:0.9em;'>{i18n.describe(bird)}</span>"
+                    f"<div class='{cls}' style='margin-bottom:0;'>"
+                    f"{color_dot}<b>{_bird_display_name(bird)}</b>{new_label}"
                     f"{reason_html}"
                     f"</div>", unsafe_allow_html=True
                 )
-                render_bird_audio(b_id, bird, key_prefix="home_")
+                with st.expander(t("くわしく"), expanded=False):
+                    st.caption(f"_{bird['scientific']}_")
+                    st.write(i18n.describe(bird))
+                    render_bird_audio(b_id, bird, key_prefix="home_")
 
     # 広告スペース(ホーム下部・静かなバナー1枚のプレースホルダー)。
     # ラジオ再生中(radio_readyがTrue)は非表示にする。実SDKは未接続(ads.py参照)。
@@ -3028,13 +3038,8 @@ with tab_radio:
         f"{_season_countdown}</span>",
         unsafe_allow_html=True,
     )
-    st.markdown(
-        t("ここはあなたのコレクション。一度会った鳥は、庭を離れても、ここではいつでも会える。"
-          "会った鳥が増えるほどキャストは豊かになり、よく会った鳥は群れで鳴く。"),
-        help=t("嵐や伐採で庭の植物が倒れても、ここで鳴く鳥は減りません。"
-               "渡り鳥は季節が外れると一時的に引っ込みます。"
-               "よく観察した鳥ほど近くで・群れで聞こえます。"),
-    )
+    # ラジオの説明文は「使い方」タブへ移した(CEO 2026-08-09「Garden Radio の
+    # 説明は要らない、HowTo に移して」)。画面は音を聴く場所に専念させる。
     if st.session_state.get("current_tester_id"):
         # 図鑑(訪問記録 discovered)の鳥もラジオで鳴ける。
         # 儀式での近距離観察(observed)があれば、その回数で「近さ」が決まる。
@@ -3046,7 +3051,10 @@ with tab_radio:
             st.session_state.biome, BIRDS, _radio_obs,
             biome_label=_biome_display_name(BIOMES.get(st.session_state.biome, {})),
             sprite_html_fn=render_bird_sprite_html,
-            audio_render_fn=lambda bid, bd: render_bird_audio(bid, bd, key_prefix="today_"),
+            # 「今日の庭」に鳴き声プレーヤーは出さない(CEO 2026-08-09)。
+            # すぐ下がラジオ本体なので、同じ画面に再生ボタンが2種類並んで
+            # うるさくなっていた。声はラジオと図鑑で聴ける。
+            audio_render_fn=None,
         )
         render_radio(
             biome_id=st.session_state.biome,
@@ -3117,7 +3125,9 @@ with tab_plant:
             sci = plant.get("scientific", "")
             en = plant.get("english", "")
             sci_line = f"_{sci}_" + (f" / {en}" if en else "")
-            st.caption(f"{sci_line}  \n" + t("適温: {lo}-{hi}℃", lo=plant['temp_fit'][0], hi=plant['temp_fit'][1]))
+            # 適温域は表示しない(CEO 2026-08-09「植物の Comfort Range は要らない」)。
+            # 内部では引き続き到来確率の計算に使っている。
+            st.caption(sci_line)
 
     st.markdown("---")
     st.markdown(t("### 🌿 植えた植物"))
@@ -3166,7 +3176,9 @@ with tab_plant:
 
 
 # ---------- Tab: Simulator (鳥×植物の確率シミュ) ----------
-with tab_sim:
+# 非表示(CEO 2026-08-09)。企画部の「シミュ・ラボは棚上げ」方針とも整合する。
+# 戻すときは st.tabs() にラベルを戻し、下を `with tab_sim:` に戻す。
+if False:  # with tab_sim:
     st.markdown(t("### 🧪 シミュレーター"))
     st.caption(t(
         "「この土地に、この植物を植えたら、この鳥の出現確率がどう変わるか」を試せます。"
@@ -3346,18 +3358,21 @@ with tab_birds:
 
     cols_top = st.columns([2, 3])
     with cols_top[0]:
-        filter_mode = st.radio(
+        # ○のラジオではなく、押せるボタン(セグメント)にする
+        # (CEO 2026-08-09「チェック風ではなくボタン風のほうがいい」)。
+        # segmented_control は選択解除で None を返しうるので、既定値で受ける。
+        filter_mode = st.segmented_control(
             t("表示"), ["all", "found", "unfound"],
             format_func=lambda k: {"all": t("全種"), "found": t("発見済みのみ"),
                                    "unfound": t("未発見のみ")}[k],
-            horizontal=True, label_visibility="collapsed",
-        )
+            default="all", label_visibility="collapsed", key="dex_filter_mode",
+        ) or "all"
     with cols_top[1]:
-        view_mode_dex = st.radio(
+        view_mode_dex = st.segmented_control(
             t("並び"), ["region", "rarity"],
             format_func=lambda k: {"region": t("地域別"), "rarity": t("レア度順")}[k],
-            horizontal=True, label_visibility="collapsed",
-        )
+            default="region", label_visibility="collapsed", key="dex_view_mode",
+        ) or "region"
 
     G_now, _ = build_network(
         st.session_state.planted, st.session_state.biome, st.session_state.month
@@ -3766,7 +3781,10 @@ with tab_birds:
 
 
 # ---------- Tab: Mementos (落とし物) ----------
-with tab_mementos:
+# 非表示(CEO 2026-08-09)。落とし物の付与・保存自体は動いたままなので、
+# 再表示すればそれまでの分もそのまま出る。
+# 戻すときは st.tabs() にラベルを戻し、下を `with tab_mementos:` に戻す。
+if False:  # with tab_mementos:
     st.markdown(t("### 🎁 鳥たちの落とし物"))
     st.caption(t("鳥が立ち寄ったとき、ときどき小さな宝物を残していくことがあります。"))
 
@@ -4214,8 +4232,7 @@ with tab_help:
         3. **しばらく待つ**: アプリを閉じている間にも、生態系は時間とともに動きます。次に開いたとき、新しい鳥が来ているかもしれません。
         4. **鳥を眺める・聴く**: フィールドに来た鳥たちのキャストを聴いたり、図鑑で詳細を確認したりできます。
            はじめて出会った鳥・久しぶりに来た鳥は、ポップアップでお知らせします。
-        5. **落とし物を集める**: 鳥はときどき羽根や小枝などの宝物を残します。集めるごとに図鑑が充実します。
-        6. **庭のラジオを聴く**: 図鑑に載った鳥たちが掛け合いで鳴くアンビエントラジオ。出会った鳥が多いほどキャストが豊かになります。季節は1週間ごとに巡り、渡り鳥はいない季節はラジオから消えます。
+        5. **庭のラジオを聴く**: ここはあなたのコレクションです。一度会った鳥は、庭を離れてもラジオではいつでも会えます。会った鳥が増えるほどキャストは豊かになり、よく会った鳥は群れで鳴きます。嵐や伐採で庭の植物が倒れても、ラジオで鳴く鳥は減りません。季節は1週間ごとに巡り、渡り鳥はいない季節は一時的に引っ込みます。
         """))
 
     with st.expander(t("🐦 鳥に出会えた時"), expanded=True):

@@ -40,7 +40,7 @@ def test_active_tab_persistence_function_exists():
 
 def test_active_tab_persistence_is_called_right_after_tabs_definition():
     src = _read_source()
-    tabs_idx = src.index("tab_radio, tab_home, tab_plant, tab_sim, tab_birds, tab_mementos, tab_network, tab_help = st.tabs(")
+    tabs_idx = src.index("tab_radio, tab_home, tab_plant, tab_birds, tab_network, tab_help = st.tabs(")
     # 関数定義自体("def _inject_active_tab_persistence():")にも同じ文字列が
     # 部分一致してしまうため、最後(=呼び出し箇所)を rindex で拾う
     call_idx = src.rindex("_inject_active_tab_persistence()")
@@ -63,14 +63,24 @@ def test_saves_and_restores_via_parent_local_storage():
     assert "window.parent.localStorage.getItem" in src
 
 
-def test_does_not_touch_tabs_widget_construction():
-    # タブの本数・ラベル・並び順(コアループ)は変更していないこと。
-    # EN/JA 切替対応で各ラベルは t(...) でラップされたが、日本語原文・並び順は不変。
+def test_tabs_widget_construction_is_the_intended_set():
+    # タブの本数・ラベル・並び順が、意図した構成のままであること。
+    # 2026-08-09: CEO指示「画面が busy すぎる。タブを何個か隠そう」により
+    # 「🧪 シミュ」「🎁 落とし物」を非表示にした(コードは app.py に残置)。
+    # うっかり増減しないよう、期待値をここで固定しておく。
     src = _read_source()
     assert (
-        '[t("🎙 ラジオ"), t("🏞️ 庭の様子"), t("🌱 植える"), t("🧪 シミュ"), t("📖 図鑑"),\n'
-        '     t("🎁 落とし物"), t("🕸️ ネットワーク"), t("❓ 使い方")]'
+        '[t("🎙 ラジオ"), t("🏞️ 庭の様子"), t("🌱 植える"), t("📖 図鑑"),\n'
+        '     t("🕸️ ネットワーク"), t("❓ 使い方")]'
     ) in src
+
+
+def test_hidden_tabs_are_disabled_not_deleted():
+    # 隠したタブは削除ではなく `if False:` で無効化してあること
+    # (戻すときに差分を追わなくて済むようにするため)。
+    src = _read_source()
+    assert "if False:  # with tab_sim:" in src
+    assert "if False:  # with tab_mementos:" in src
 
 
 def test_restore_polls_for_tab_dom_and_gives_up_gracefully():
