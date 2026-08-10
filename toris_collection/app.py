@@ -1729,7 +1729,9 @@ def _sheets_safe(fn, *args, **kwargs):
     except FileNotFoundError:
         pass
     except Exception as e:
-        st.warning(f"Sheets同期に失敗(処理は続行されます): {e}", icon="⚠️")
+        # ユーザーに見える文言なので英語で出す(アプリは英語のみ)。
+        # 中身は内部同期の失敗で、遊ぶうえでは支障がないため小さく添えるだけにする。
+        st.caption("Sync is taking a break — your garden is unaffected.")
 
 
 def _accumulate_eco_log(events):
@@ -2454,9 +2456,16 @@ with st.sidebar:
         st.rerun()
 
     # ===== 開発・テスト用 =====
-    # 本番リリース時にはこのブロックごと削除する想定
-    st.markdown("---")
-    with st.expander("🧪 開発テスト用", expanded=False):
+    # 「本番リリース時にはこのブロックごと削除する想定」と書いたまま、製品版公開
+    # (2026-08-10)まで表示されたままになっていた。実機で発見。
+    # 中身は「時間の早送り」「鳴き声ライセンス監査」「GloBI プレビュー」の3つで、
+    #   - 誰でも時間を飛ばせる = 原則1(受動的である)に反する
+    #   - 文言が日本語のまま = 英語のみのアプリに日本語が出る
+    #   - 開発用の内部ツールが一般ユーザーに見えている
+    # ため、フラグで隠す。削除ではなく残すのは、開発時に使うため。
+    # ※ SHOW_DEV_TOOLS を True に戻すと、expander に包まれない形で出る。
+    SHOW_DEV_TOOLS = False
+    if SHOW_DEV_TOOLS:  # 旧: with st.expander("🧪 開発テスト用", expanded=False):
         st.caption(
             "現実時間の経過を待たずに、生態系の進化を即座にシミュレーションします。"
             "クローズドテスト中の動作確認用。"
