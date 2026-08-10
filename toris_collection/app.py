@@ -2372,9 +2372,8 @@ with st.sidebar:
     st.metric(t("図鑑登録種数"), f"{len(st.session_state.discovered)} / {len(BIRDS)}")
     st.metric(t("現在滞在中"), t("{n} 羽", n=len(st.session_state.residents)))
     st.metric(t("植えた植物"), t("{n} 種", n=len(st.session_state.planted)))
-    _total_mementos = len(mem.all_possible_mementos(BIRDS, PLANTS))
-    _owned_mementos = len(st.session_state.get("mementos_set", set()))
-    st.metric(t("落とし物"), f"{_owned_mementos} / {_total_mementos}")
+    # 落とし物の件数は表示しない(2026-08-09 にタブを非表示にしたため、
+    # 開けない画面の数だけを見せることになっていた)。付与・保存は動いたまま。
 
     st.markdown("---")
     with st.expander(t("💾 セーブコード(バックアップ)"), expanded=False):
@@ -2716,8 +2715,7 @@ if hasattr(st, "dialog"):
         if deps:
             _dep_join = "、" if i18n.get_lang() == "ja" else ", "
             st.caption(t("🕊 {names} は旅立っていきました", names=_dep_join.join(deps[:5])))
-        if data.get("n_mementos"):
-            st.caption(t("🎁 新しい落とし物が {n} 個あります", n=data['n_mementos']))
+        # 落とし物の知らせは出さない(見に行く画面が無いため)。
         # 復帰フックは軸(ラジオ)へ向ける: 留守中に来た鳥はラジオに加わっている。
         if arrivals:
             st.success(t("🎙 新しい声がラジオの顔ぶれに加わりました。聴きに行けます。"))
@@ -2840,8 +2838,8 @@ with tab_home:
             unsafe_allow_html=True
         )
 
-        # 新しい落とし物のサマリバナー
-        if _new_mems:
+        # 新しい落とし物のサマリバナーは出さない(見に行く画面が無いため)。
+        if False and _new_mems:
             new_icons = []
             for mr in _new_mems[:8]:  # 最大8個まで
                 ic, _, _, _ = mem.memento_display(
@@ -3666,7 +3664,8 @@ with tab_birds:
                     m for m in st.session_state.get("mementos", [])
                     if m.get("via_bird_id") == b_id
                 ]
-                if _from_this_bird or any(p in _owned_set_dex for p in possible):
+                # 図鑑の落とし物欄も出さない(落とし物タブ非表示に合わせる)。
+                if False:
                     st.markdown(t("**🎁 この鳥にまつわる落とし物**"))
                     # 入手済みのうち、この鳥由来のもの
                     seen_ids = set()
@@ -4283,7 +4282,9 @@ with tab_help:
         各サイクルでは滞在中の鳥について退去判定、その後新規到着判定(1サイクル最大1羽、滞在最大4羽)が走ります。
         """))
 
-    with st.expander(t("🎁 落とし物のしくみ"), expanded=False):
+    # 落とし物の説明も出さない(タブ非表示に合わせる)。
+    # 戻すときは `with st.expander(t("🎁 落とし物のしくみ"), expanded=False):` へ。
+    if False:
         st.markdown(t("""
         鳥が立ち寄ったとき、低確率で3カテゴリのいずれか1つを落とします。
         すべての鳥が同じ「小枝」「羽根」の2種類を持ち、一部の鳥だけが特別な「羽冠」も持ちます。

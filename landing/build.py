@@ -9,6 +9,12 @@ Reads page.html (content body with __ICON__ / __PLATE__ tokens) and produces:
 
 Images are embedded as base64 data URIs so the result is a single self-contained
 file — trivial to host (one file + CNAME).
+
+`app-ads.txt` はこのスクリプトが生成するものではなく、手で置いた固定ファイル。
+AdMob がアプリを確認するために `https://<ドメイン>/app-ads.txt` を直接クロールするので、
+サイトのルートに素のまま公開されている必要がある(ビルドで加工してはいけない)。
+中身の pub-ID は AdMob アカウント固有。ドメインは Google Play の掲載情報にある
+ウェブサイトと一致していなければ確認が通らない。
 """
 import base64, os
 
