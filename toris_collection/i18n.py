@@ -25,9 +25,23 @@ _DEFAULT_LANG = "en"
 _fallback_lang = _DEFAULT_LANG
 
 
+def _in_streamlit_runtime() -> bool:
+    """本物の Streamlit サーバー上で動いているか(= session_state が効くか)。
+
+    テストやスクリプト実行では `import streamlit` 自体は成功し、
+    `streamlit.runtime.exists()` も True になりうるため、どちらでも判定できない。
+    「いま実際にユーザーのスクリプト実行の中にいるか」= ScriptRunContext の有無で見る。
+    """
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        return get_script_run_ctx() is not None
+    except Exception:
+        return False
+
+
 def get_lang() -> str:
     """現在の表示言語を返す。Streamlit の session_state を優先し、
-    使えなければ set_lang() で設定したモジュール既定値(初期値 "en")。"""
+    使えなければモジュール既定値(初期値 "en")。"""
     try:
         import streamlit as st
         lang = st.session_state.get("lang")
@@ -39,16 +53,26 @@ def get_lang() -> str:
 
 
 def set_lang(lang: str) -> None:
-    """表示言語を設定する。"en" / "ja" 以外は無視する。"""
+    """表示言語を設定する。"en" / "ja" 以外は無視する。
+
+    **サーバー上では、選択はそのユーザーのセッションに閉じる。**
+    以前はここで無条件にモジュールグローバル `_fallback_lang` を書き換えていたため、
+    誰か1人が日本語に切り替えると、同じサーバープロセスに来た**新規ユーザー全員**の
+    既定言語まで日本語になっていた(2026-08-10 に本番で発覚。既定は en のはずが
+    日本語で表示されていた)。グローバルを触るのは、Streamlit ランタイムが無い
+    環境(テスト・スクリプト)に限る。
+    """
     global _fallback_lang
     if lang not in _LANGS:
         return
+    if _in_streamlit_runtime():
+        try:
+            import streamlit as st
+            st.session_state["lang"] = lang
+            return
+        except Exception:
+            pass
     _fallback_lang = lang
-    try:
-        import streamlit as st
-        st.session_state["lang"] = lang
-    except Exception:
-        pass
 
 
 def t(ja: str, **kwargs) -> str:

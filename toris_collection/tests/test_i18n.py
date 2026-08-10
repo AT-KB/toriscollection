@@ -158,3 +158,47 @@ def _run():
 
 if __name__ == "__main__":
     _run()
+
+
+def test_set_lang_does_not_leak_across_sessions_on_server():
+    """サーバー上では、言語の選択を他ユーザーへ漏らさないこと(2026-08-10 の本番不具合)。
+
+    以前は set_lang() が無条件にモジュールグローバルを書き換えていたため、
+    誰か1人が日本語にすると新規ユーザー全員の既定まで日本語になっていた。
+    ランタイムがあると見なせる状況では、グローバルを触らないことを確かめる。
+    """
+    import i18n as _i18n
+
+    orig_runtime = _i18n._in_streamlit_runtime
+    orig_fallback = _i18n._fallback_lang
+    try:
+        _i18n._fallback_lang = "en"
+        _i18n._in_streamlit_runtime = lambda: True   # サーバー上のふり
+        _i18n.set_lang("ja")
+        assert _i18n._fallback_lang == "en", (
+            "サーバー上で set_lang がモジュール既定を書き換えている"
+            "(他ユーザーの既定言語まで変わってしまう)"
+        )
+    finally:
+        _i18n._in_streamlit_runtime = orig_runtime
+        _i18n._fallback_lang = orig_fallback
+        # session_state 側に書き込まれていたら、後続テストへ持ち越さない
+        try:
+            import streamlit as st
+            st.session_state.pop("lang", None)
+        except Exception:
+            pass
+
+
+def test_set_lang_still_works_without_runtime():
+    """テスト等(ランタイム無し)では、これまでどおりモジュール既定で切り替わること。"""
+    import i18n as _i18n
+
+    orig = _i18n._fallback_lang
+    try:
+        _i18n.set_lang("ja")
+        assert _i18n.get_lang() == "ja"
+        _i18n.set_lang("en")
+        assert _i18n.get_lang() == "en"
+    finally:
+        _i18n._fallback_lang = orig
