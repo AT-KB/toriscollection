@@ -39,6 +39,18 @@ body = (body
         .replace("__SHOT_MEETING__", data_uri(os.path.join(MEDIA, "shot_meeting.png")))
         .replace("__VIDEO__", data_uri(os.path.join(MEDIA, "showcase.mp4"), "video/mp4")))
 
+# 「何ができるか」を見せる実画面(やること順)。ストア掲載用に実機で撮ったものを
+# Web 用に 540x960 / JPEG へ落としたもの(6枚で約290KB。原寸PNGだと約2MBになる)。
+for token, fname in (
+    ("__S_PLANT__",   "s_plant.jpg"),
+    ("__S_GARDEN__",  "s_garden.jpg"),
+    ("__S_BIRD__",    "s_bird.jpg"),
+    ("__S_PROFILE__", "s_profile.jpg"),
+    ("__S_RADIO__",   "s_radio.jpg"),
+    ("__S_NETWORK__", "s_network.jpg"),
+):
+    body = body.replace(token, data_uri(os.path.join(MEDIA, fname), "image/jpeg"))
+
 # artifact.html = body only (Artifact injects <head>/<body>)
 open(os.path.join(HERE, "artifact.html"), "w", encoding="utf-8").write(body)
 
@@ -49,11 +61,11 @@ HEAD = f"""<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Toris Collection — grow a tiny ecosystem, the birds come and sing</title>
-<meta name="description" content="A passive, healing bird companion. Tend a small biome in your hand; real birds arrive to sing. No rushing, no chores — just listen. Coming soon." />
+<meta name="description" content="A free Android app about a small garden that fills with real birds. Plant a little, let time pass, and every bird you meet joins a radio of real recorded songs. No chores, no rushing." />
 <link rel="icon" href="{FAVICON}" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Toris Collection" />
-<meta property="og:description" content="Grow a tiny ecosystem. The birds come, and sing. A passive, healing bird companion — coming soon." />
+<meta property="og:description" content="A free Android app about a small garden that fills with real birds — and their real songs." />
 <meta property="og:url" content="https://{DOMAIN}/" />
 <meta name="twitter:card" content="summary_large_image" />
 <style>html{{background:#f3f5ee}}@media(prefers-color-scheme:dark){{html{{background:#151a12}}}}</style>
