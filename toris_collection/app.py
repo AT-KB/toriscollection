@@ -2339,21 +2339,13 @@ render_tutorial_banner()
 
 # ============= Sidebar =============
 with st.sidebar:
-    # 言語切替(EN / 日本語)。既定は en。選択で i18n.set_lang を呼び、
-    # st.session_state["lang"] に保持される。
-    _lang_options = ["en", "ja"]
-    _lang_labels = {"en": "English", "ja": "日本語"}
-    _cur_lang = i18n.get_lang()
-    _chosen_lang = st.segmented_control(
-        "Language / 言語",
-        options=_lang_options,
-        format_func=lambda x: _lang_labels[x],
-        default=_cur_lang if _cur_lang in _lang_options else _lang_options[0],
-        key="lang_select",
-    ) or _cur_lang
-    if _chosen_lang != _cur_lang:
-        i18n.set_lang(_chosen_lang)
-        st.rerun()
+    # 言語切替は廃止(CEO 2026-08-10「もう日本語は不要」)。表示は英語で固定する。
+    # ストアの掲載情報も英語のみなので、ここで切り替えられる意味がなくなった。
+    # i18n.t() の仕組み自体は残す(日本語原文をキーに英訳を引く土台であり、
+    # 日本語原文がコード内に残ることが仕様のバックアップも兼ねているため)。
+    # 以前 日本語を選んでいたセッションが残っている場合に備え、明示的に戻す。
+    if st.session_state.get("lang") != "en":
+        st.session_state["lang"] = "en"
 
     # この端末だけのローカル識別子(サーバーには送らない。ログイン概念はない)
     tid = st.session_state.get("current_tester_id", "(未初期化)")
@@ -3103,7 +3095,8 @@ with tab_plant:
             icon="🌾"
         )
 
-    st.info(t("🧪 確率変化(鳥×植物)は「シミュ」タブで確認できます。"))
+    # 「シミュ」タブへの案内は削除(2026-08-09 にタブを非表示にしたため、
+    # 行き先の無い案内になっていた)。
 
     cols = st.columns(3)
     for i, (pid, plant) in enumerate(available.items()):
