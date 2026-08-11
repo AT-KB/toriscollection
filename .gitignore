@@ -19,3 +19,6 @@ marketing/phase-s/素材/_*.png
 tools/tiktok_poster/.env
 tools/tiktok_poster/token.json
 toris_collection/.globi_cache/
+
+# 動画ビルドの中間フレーム(1本あたり240枚。成果物はmp4だけでよい)
+tools/video_build/_*/
