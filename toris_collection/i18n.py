@@ -339,7 +339,7 @@ TRANSLATIONS: dict[str, str] = {
 
     # ── 目覚まし(alarm_ui.py) ──
     # 「起こす」より「庭が目を覚ます」トーンで。急かさない(原則1)。
-    '⏰ 鳥の声で起きる': '⏰ Wake to birdsong',
+    '⏰ 鳥の声と起きたい': '⏰ Wake with the birds',
     '選んだ鳥のさえずりが、5分かけて少しずつ大きくなり、途中でほかの鳥も加わります。いきなり大きな音では起こしません。':
         'Your bird starts almost too quiet to hear, and grows over five minutes. '
         'Others join in along the way. Nothing ever jolts you awake.',

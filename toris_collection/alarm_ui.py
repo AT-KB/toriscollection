@@ -36,7 +36,7 @@ ALARM_BIRDS: list[tuple[str, str]] = [
 
 def render_alarm(key_prefix: str = "alarm") -> None:
     """目覚ましの設定UIを描画する。"""
-    with st.expander(t("⏰ 鳥の声で起きる"), expanded=False):
+    with st.expander(t("⏰ 鳥の声と起きたい"), expanded=False):
         st.caption(t(
             "選んだ鳥のさえずりが、5分かけて少しずつ大きくなり、"
             "途中でほかの鳥も加わります。いきなり大きな音では起こしません。"
