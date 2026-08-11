@@ -52,8 +52,13 @@ except Exception:
     freesound_client = None  # type: ignore
 
 _SPRITE_DIR = Path(__file__).parent / "designbird"
-_MAX_RADIO_BIRDS = 6   # ritual より多め(呼応がメインなので多すぎず)
-_COMPONENT_HEIGHT = 340
+# ラジオで同時に鳴く種の上限。
+# 2026-08-11: 6 -> 3 に変更(CEO「ラジオもランダムで選んで3種類くらいに抑えたい」)。
+# 6種だと同時に鳴きすぎて、1羽ずつの声が聞き分けられず、庭の静けさとも合わなかった。
+# 選び方(pick_lineup)と群れサイズ(flock)のロジックは変えていない。
+_MAX_RADIO_BIRDS = 3
+# 環境音タイル(2行分)とスライダーを足したぶん高くしている(2026-08-11)
+_COMPONENT_HEIGHT = 470
 
 # ── アプリ内季節 ───────────────────────────────────────────────
 # 2025-03-01 を春の始まりとして、2週ごとに季節が進む(8週サイクル)。
@@ -529,6 +534,11 @@ def _render_radio_iframe(
                    if total_indiv > n else t("{n}羽", n=n))
     lbl_start = t("🎙 ラジオを始める")
     lbl_stop = t("■ 止める")
+    # 環境音タイルのラベル(絵は HTML 側の絵文字)
+    lbl_pad = t("やわらか")
+    lbl_wind = t("風")
+    lbl_rain = t("雨")
+    lbl_chime = t("風鈴")
     season_jp = t(season_meta["jp"])
     radio_title = t("{season}の庭のラジオ", season=season_jp)
     birds_meta = [
@@ -601,6 +611,23 @@ def _render_radio_iframe(
       #ra_chips {{ display:flex;flex-wrap:wrap;gap:6px;margin-top:10px; }}
       .ra_active {{ opacity:1 !important; background:#e0f0d0 !important;
                    border-color:#8ab860 !important; }}
+
+      /* ── 環境音の選択(タイル式) ──
+         2026-08-11: 「ヒーリングBGMのオン/オフ」だけでは何が変わるのか
+         分からない、という指摘への対応。どの音を重ねるかを絵で選べるようにし、
+         音量を1本のスライダーにまとめた。iframe の中に置いているのは、
+         Streamlit 側に置くと切り替えのたびに再実行されてラジオが止まるため。 */
+      #amb_grid {{ display:grid; grid-template-columns:repeat(4,1fr);
+                   gap:8px; margin-top:12px; }}
+      .amb {{ background:#eef3e4; border:1px solid #cfdcc0; border-radius:10px;
+              padding:8px 4px; text-align:center; cursor:pointer;
+              user-select:none; transition:background .15s, border-color .15s; }}
+      .amb .ic {{ font-size:1.35em; line-height:1.2; }}
+      .amb .lb {{ font-size:0.72em; color:#5a7a5a; margin-top:2px; }}
+      .amb.on {{ background:#d8ecc4; border-color:#7ba87b; }}
+      .amb.on .lb {{ color:#2f4a2a; font-weight:600; }}
+      #amb_row {{ display:flex; align-items:center; gap:10px; margin-top:10px; }}
+      #amb_vol {{ flex:1; accent-color:#7ba87b; }}
     </style>
 
     <div id="ra_wrap">
@@ -612,6 +639,17 @@ def _render_radio_iframe(
         </div>
       </div>
       <div id="ra_chips">{sprite_divs}</div>
+
+      <div id="amb_grid">
+        <div class="amb" data-k="pad"><div class="ic">🎵</div><div class="lb">{lbl_pad}</div></div>
+        <div class="amb" data-k="wind"><div class="ic">🍃</div><div class="lb">{lbl_wind}</div></div>
+        <div class="amb" data-k="rain"><div class="ic">🌧</div><div class="lb">{lbl_rain}</div></div>
+        <div class="amb" data-k="chime"><div class="ic">🎐</div><div class="lb">{lbl_chime}</div></div>
+      </div>
+      <div id="amb_row">
+        <span style="font-size:1.1em;">🔈</span>
+        <input id="amb_vol" type="range" min="0" max="100" value="45" />
+      </div>
     </div>
 
     <script>
@@ -649,6 +687,28 @@ def _render_radio_iframe(
         let ctx = null, master = null, reverb = null;
         let running = false, rafId = null;
         const nodes = [];
+
+        // 環境音の層(タイルで出し入れする)。buildAmbient() が中身を入れる。
+        const AMB = {{ pad: null, wind: null, rain: null, chime: null }};
+        // 風・雨をまとめる母線。スライダーはここと chime/pad をまとめて上下させる。
+        let ambBus = null;
+        // タイルの状態。既定は「やわらか」だけ ON(いままでの音に近い)。
+        const ambOn = {{ pad: true, wind: false, rain: false, chime: false }};
+        let ambVol = 0.45;
+
+        // 各層の「全開時」の音量。合成音なので控えめに揃える。
+        const AMB_MAX = {{ pad: 0.12, wind: 0.05, rain: 0.05, chime: 0.5 }};
+
+        function applyAmbience() {{
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            Object.keys(AMB).forEach(function(k) {{
+                const node = AMB[k];
+                if (!node) return;
+                const target = ambOn[k] ? AMB_MAX[k] * ambVol * 2 : 0;
+                try {{ node.gain.setTargetAtTime(target, now, 0.6); }} catch (e) {{}}
+            }});
+        }}
 
         // AGC の状態(鳥ごとのピーク追従)
         const peakRMS   = [];
@@ -693,6 +753,10 @@ def _render_radio_iframe(
         {ae.MAKE_NOISE_BUFFER_JS}
 
         function buildAmbient() {{
+            // 風・雨の共通母線(ここを通してから master へ)
+            ambBus = ctx.createGain(); ambBus.gain.value = 1.0;
+            ambBus.connect(master);
+
             const ambEl = document.getElementById('ra_ambient');
             if (HAS_AMBIENT && ambEl) {{
                 const src = ctx.createMediaElementSource(ambEl);
@@ -728,13 +792,54 @@ def _render_radio_iframe(
                 }});
             }});
             padBus.gain.setTargetAtTime(BGM ? 0.11 : 0.06, t, 5.0);  // BGMはパッドを主役に
-            // ごく弱い低い風(ザーザー感が出ない範囲で“自然”をひとさじ)
+            AMB.pad = padBus;
+
+            // ── 以下、タイルで選べる環境音の層 ──
+            // それぞれ独立した gain を持たせ、タイルの ON/OFF で出し入れする。
+            // 素材ファイルは持たず、すべてこの場で合成する(APK も通信も増やさない)。
+
+            // 風: 低く抑えたノイズ。ザーザー感が出ない範囲。
             const wind = ctx.createBufferSource(); wind.buffer = makeNoiseBuffer(true); wind.loop=true;
             const wlp  = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=280;
             const wg   = ctx.createGain(); wg.gain.value=0;
-            wind.connect(wlp); wlp.connect(wg); wg.connect(master);
+            wind.connect(wlp); wlp.connect(wg); wg.connect(ambBus);
             wind.start();
-            wg.gain.setTargetAtTime(0.03, t, 3.0);
+            AMB.wind = wg;
+
+            // 雨: 風より高い帯域を残したノイズ。粒立ちが出るよう軽く揺らす。
+            const rain = ctx.createBufferSource(); rain.buffer = makeNoiseBuffer(false); rain.loop=true;
+            const rhp  = ctx.createBiquadFilter(); rhp.type='highpass'; rhp.frequency.value=900;
+            const rlp  = ctx.createBiquadFilter(); rlp.type='lowpass';  rlp.frequency.value=7000;
+            const rg   = ctx.createGain(); rg.gain.value=0;
+            rain.connect(rhp); rhp.connect(rlp); rlp.connect(rg); rg.connect(ambBus);
+            const rmod = ctx.createOscillator(); rmod.frequency.value = 0.13;
+            const rmodG = ctx.createGain(); rmodG.gain.value = 0.10;
+            rmod.connect(rmodG); rmodG.connect(rg.gain); rmod.start();
+            rain.start();
+            AMB.rain = rg;
+
+            // 風鈴: 高い倍音のベルを、まばらに鳴らす。五音音階なので濁らない。
+            const chimeG = ctx.createGain(); chimeG.gain.value = 0;
+            chimeG.connect(master); chimeG.connect(reverb);
+            AMB.chime = chimeG;
+            const CH_NOTES = [1046.5, 1174.7, 1396.9, 1568.0, 1864.7];  // C6 D6 F6 G6 A#6
+            (function ring() {{
+                // 鳴っていない時は次の予約だけして音は出さない(無駄な発振を避ける)
+                if (chimeG.gain.value > 0.0005) {{
+                    const now = ctx.currentTime;
+                    const o = ctx.createOscillator();
+                    o.type = 'sine';
+                    o.frequency.value = CH_NOTES[(Math.random()*CH_NOTES.length)|0];
+                    const g = ctx.createGain(); g.gain.value = 0;
+                    o.connect(g); g.connect(chimeG);
+                    g.gain.setValueAtTime(0, now);
+                    g.gain.linearRampToValueAtTime(0.16, now + 0.01);   // 撥音
+                    g.gain.exponentialRampToValueAtTime(0.0008, now + 3.2);  // 長い余韻
+                    o.start(now); o.stop(now + 3.4);
+                }}
+                setTimeout(ring, 1400 + Math.random() * 3200);
+            }})();
+
             return padBus;
         }}
 
@@ -867,6 +972,7 @@ def _render_radio_iframe(
             const rvRet = ctx.createGain(); rvRet.gain.value=0.9;
             reverb.connect(rvRet); rvRet.connect(master);
             buildAmbient();
+            applyAmbience();   // タイルの現在の選択を、鳴り始めた音に反映する
 
             for (let i = 0; i < n; i++) {{
                 peakRMS.push(0.01);
@@ -902,6 +1008,25 @@ def _render_radio_iframe(
             else if (ctx) {{ ctx.resume(); nodes.forEach(nd => {{ const el = nd.els[nd.cur]; if (el) el.play().catch(()=>{{}}); }}); running=true; btn.textContent='{lbl_stop}'; btn.style.background='#b8c8a0'; rafId=requestAnimationFrame(gateTick); }}
             else start();
         }});
+
+        // ── 環境音タイルとスライダー ──
+        // ラジオが鳴っていない間でも選択だけは変えられる(始めた時に反映される)。
+        document.querySelectorAll('.amb').forEach(function(el) {{
+            const k = el.getAttribute('data-k');
+            if (ambOn[k]) el.classList.add('on');
+            el.addEventListener('click', function() {{
+                ambOn[k] = !ambOn[k];
+                el.classList.toggle('on', ambOn[k]);
+                applyAmbience();
+            }});
+        }});
+        const volEl = document.getElementById('amb_vol');
+        if (volEl) {{
+            volEl.addEventListener('input', function() {{
+                ambVol = (parseInt(volEl.value, 10) || 0) / 100;
+                applyAmbience();
+            }});
+        }}
     }})();
     </script>
     """
