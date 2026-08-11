@@ -1,72 +1,45 @@
 ---
-title: プライバシーポリシー — Toris Collection
+title: Privacy Policy — Toris Collection
 ---
 
-# プライバシーポリシー — Toris Collection
+# Toris Collection
 
-最終更新日: 2026-07-07
+**[Get the app on Google Play](https://play.google.com/store/apps/details?id=com.toriscollection.app)**
+· **[torriscollection.com](https://torriscollection.com)**
 
-> このページは `toris_collection/PRIVACY_POLICY.md` の内容をGitHub Pagesで
-> 公開するためのミラーです。内容の正本(編集の起点)は
-> [`toris_collection/PRIVACY_POLICY.md`](https://github.com/AT-KB/toriscollection/blob/main/toris_collection/PRIVACY_POLICY.md)
-> です。今後の改定時は両方のファイルを同時に更新してください。
+---
 
-## このアプリについて
+## Privacy Policy
 
-Toris Collection(以下「本アプリ」)は、手のひらで小さな生態系(バイオーム)を育てると
-鳥がやってきて鳴く、受動的な癒しアプリです。本ポリシーは、本アプリの利用にあたり
-どのような情報が扱われるかを説明します。
+The full, current privacy policy lives here:
 
-## 収集する個人情報について
+### → **[torriscollection.com/privacy.html](https://torriscollection.com/privacy.html)**
 
-**本アプリは、ユーザーの進行データ(育てた庭・図鑑・会った日数・落とし物など)を
-運営者のサーバーに保存しません。** これらのデータは、お使いの端末のブラウザ内にのみ
-保存されます。
+Terms of use: **[torriscollection.com/terms.html](https://torriscollection.com/terms.html)**
 
-- 氏名・メールアドレス・電話番号などの登録は不要です(アカウント・ログインの仕組みが
-  ありません)。
-- 進行データを他の端末へ引き継ぎたい場合は、アプリ内の「セーブコード」機能を使って
-  ご自身で書き出し・保管してください。セーブコードは運営者のサーバーには送信されません。
-- ブラウザのデータ(キャッシュ・保存領域)を消去する、別の端末・別のブラウザで開く等の
-  場合、進行データは引き継がれません。この点はアプリ内でも案内しています。
+Questions: [rokkyofarm@gmail.com](mailto:rokkyofarm@gmail.com)
 
-## サーバーを経由する通信について
+---
 
-本アプリの一部機能(鳥の鳴き声・環境音の再生)は、以下の外部サービスから音声データを
-取得するために、運営者のサーバー(Streamlit Community Cloud上で稼働)を経由します。
-この通信は「どの種の鳴き声を再生するか」を扱うものであり、ユーザー個人を特定する情報を
-これらのサービスに送信するものではありません。
+## The short version
 
-- **xeno-canto**(野鳥の鳴き声データベース): https://xeno-canto.org
-- **Freesound**(環境音データベース、利用する場合): https://freesound.org
-- **GloBI**(生物の相互作用データベース、種の関係性の参照用): https://www.globalbioticinteractions.org
+- **We don't put your garden on our servers.** Your progress (field guide, days met, notes)
+  is saved in the browser storage on your own device. There is no account and no sign-in.
+- **No name, no email, no phone number** is required to play.
+- **Bird songs are always free.** Listening is never behind a paywall.
+- If you want to move your progress to another device, use the app's **save code** feature
+  and keep it yourself. Save codes are not sent to us.
+- Clearing your browser storage, or opening the app from a different device or browser,
+  will not carry your progress over. The app says so too.
 
-## ホスティング事業者について
+Bird recordings come from [xeno-canto](https://xeno-canto.org) under their Creative Commons
+licenses, with each recordist credited inside the app. Feeding relationships come from
+[GloBI (Global Biotic Interactions)](https://www.globalbioticinteractions.org).
 
-本アプリは Streamlit Community Cloud(Snowflake, Inc. が提供)上でホスティングされています。
-一般的なWebサーバーの運用上、アクセス時のIPアドレスや標準的なアクセスログが
-ホスティング事業者側で記録される場合がありますが、これは本アプリ運営者が個別に
-収集・利用するものではありません。詳細は Streamlit / Snowflake のプライバシーポリシーを
-ご参照ください。
+---
 
-## 広告・トラッキングについて
-
-現時点(本ポリシー最終更新時点)で、本アプリは広告を表示せず、利用状況を追跡する
-アクセス解析ツール等も導入していません。将来、広告表示やサポーター向け課金機能を
-追加する場合は、本ポリシーを更新のうえ、変更点を明示します。
-
-## お子様のご利用について
-
-本アプリは個人情報の入力・収集を必要としないため、お子様にもご利用いただけます。
-特別な年齢確認の仕組みはありません。
-
-## お問い合わせ
-
-本ポリシーに関するお問い合わせは、以下のGitHubリポジトリのIssueページまでご連絡ください。
-
-> https://github.com/AT-KB/toriscollection/issues
-
-## 改定について
-
-本ポリシーは、機能追加(広告・課金・アカウント機能の導入等)に伴い改定される場合があります。
-改定時は最終更新日を更新し、内容を見直します。
+<sub>
+This page exists because it is registered as the app's privacy policy URL on Google Play.
+The canonical documents are the ones on torriscollection.com — if the two ever disagree,
+those are correct. Source: <a href="https://github.com/AT-KB/toriscollection">AT-KB/toriscollection</a>.
+</sub>
