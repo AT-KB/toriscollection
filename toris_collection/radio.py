@@ -696,8 +696,11 @@ def _render_radio_iframe(
         const ambOn = {{ pad: true, wind: false, rain: false, chime: false }};
         let ambVol = 0.45;
 
-        // 各層の「全開時」の音量。合成音なので控えめに揃える。
-        const AMB_MAX = {{ pad: 0.12, wind: 0.05, rain: 0.05, chime: 0.5 }};
+        // 各層の「全開時」の音量。
+        // 2026-08-11: 当初 rain/wind を 0.05 にしていたが、既定スライダー位置(45%)だと
+        // 実効 0.045 で、スマホのスピーカーでは**オンにしても分からなかった**。
+        // 「オン/オフで実感できること」がこのUIの目的なので、はっきり聞こえる値にした。
+        const AMB_MAX = {{ pad: 0.18, wind: 0.22, rain: 0.30, chime: 0.55 }};
 
         function applyAmbience() {{
             if (!ctx) return;

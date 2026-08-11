@@ -2908,6 +2908,8 @@ with tab_home:
 
     # フィールドの様子(全幅で表示)
     st.markdown(t("### 🌳 フィールドの様子"))
+    # ラジオ側と対にした一行。「いま来ている / 会った鳥ぜんぶ」の対比で役割を分ける。
+    st.caption(t("いま庭に来ている鳥です。植物を植えると、来る顔ぶれが変わります。"))
     render_field_view(
         st.session_state.planted,
         st.session_state.residents,
@@ -3031,14 +3033,18 @@ with tab_radio:
         else t('あと{n}週で次の季節へ', n=_weeks_left)
     )
     st.markdown(
+        # 2026-08-11: 「庭とラジオの違いが初見で分からない」への対応。
+        # 見出しの真下に、この画面が何であるかを一行だけ置く。長い説明は使い方タブへ。
         f"### {t('🎙 庭のラジオ')} &nbsp; "
         f"<span style='font-size:0.75em;font-weight:400;color:#7a9a6a;'>"
         f"{_radio_meta['icon']} {t('今は{season}', season=t(_radio_meta['jp']))} &nbsp;·&nbsp; "
         f"{_season_countdown}</span>",
         unsafe_allow_html=True,
     )
-    # ラジオの説明文は「使い方」タブへ移した(CEO 2026-08-09「Garden Radio の
-    # 説明は要らない、HowTo に移して」)。画面は音を聴く場所に専念させる。
+    # 2026-08-09: 長い説明文は「使い方」タブへ移した。
+    # 2026-08-11: ただし「庭とラジオの違いが初見で分からない」という指摘を受け、
+    # **一行だけ**戻す。説明ではなく、この画面の役割を名乗るための行。
+    st.caption(t("会ったことのある鳥が鳴く場所です。庭を離れた鳥もここにいます。"))
     if st.session_state.get("current_tester_id"):
         # 図鑑(訪問記録 discovered)の鳥もラジオで鳴ける。
         # 儀式での近距離観察(observed)があれば、その回数で「近さ」が決まる。

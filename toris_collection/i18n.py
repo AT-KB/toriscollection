@@ -322,6 +322,13 @@ TRANSLATIONS: dict[str, str] = {
     # 庭の在留リスト: 名前行だけ出して、中身はここに畳む
     'くわしく': 'Details',
 
+    # ── 庭とラジオの役割を名乗る一行(2026-08-11) ──
+    # 「庭とラジオの違いが初見で分からない」への対応。対にして読ませる。
+    '会ったことのある鳥が鳴く場所です。庭を離れた鳥もここにいます。':
+        'Every bird you have ever met sings here — even the ones that left the garden.',
+    'いま庭に来ている鳥です。植物を植えると、来る顔ぶれが変わります。':
+        'The birds visiting right now. What you plant changes who comes.',
+
     # ── 環境音タイル(radio.py) ──
     # 「ヒーリングBGMのオン/オフ」が何を変えるのか分からない、という指摘への対応。
     # どの音を重ねるかを絵で選ぶ形にした。
