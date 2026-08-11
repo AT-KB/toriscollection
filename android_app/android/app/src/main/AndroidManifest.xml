@@ -43,6 +43,22 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id"/>
+
+        <!--
+          鳴き声で起こす目覚まし(2026-08-11・MVP)。
+          WebView の中では作れないため(アプリを閉じていても鳴る必要がある)、
+          ネイティブ側に置いている。音源は APK 同梱で、サーバーには依存しない
+          (Render のコールドスタート約22秒では朝に間に合わないため)。
+        -->
+        <receiver
+            android:name=".BirdAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <service
+            android:name=".BirdAlarmService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 
     <!-- Permissions -->
@@ -55,4 +71,22 @@
       リワード広告が「白画面→即終了」する不具合の調査で発覚)。
     -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <!--
+      目覚まし(2026-08-11)に必要な権限。
+      - USE_EXACT_ALARM: Android 13+ で「目覚まし時計」用途なら、ユーザーに
+        追加の許可を求めずに正確な時刻で鳴らせる(この用途に該当する)。
+      - SCHEDULE_EXACT_ALARM: Android 12 向け。こちらはユーザー許可が要るため、
+        BirdAlarmBridge が canScheduleExactAlarms() で確認し、駄目なら
+        設定画面へ誘導する。
+      - POST_NOTIFICATIONS: 鳴っている間の通知(フォアグラウンドサービスに必須)。
+      - FOREGROUND_SERVICE_MEDIA_PLAYBACK: Android 14+ で用途の明示が必要。
+      - WAKE_LOCK は既に上で宣言済み(SDK 由来)。
+    -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 </manifest>

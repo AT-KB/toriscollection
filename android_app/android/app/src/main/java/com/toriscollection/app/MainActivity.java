@@ -147,6 +147,10 @@ public class MainActivity extends BridgeActivity {
             // ならないようセージにする(白画面のちらつき防止・二重の保険)。
             webView.setBackgroundColor(SAGE);
             webView.addJavascriptInterface(new WatchdogBridge(), "AndroidWatchdog");
+            // 鳴き声で起こす目覚まし(2026-08-11)。Web 側(radio.py)から
+            // window.AndroidAlarm.setAlarm(...) で呼ぶ。Web 版(通常ブラウザ)には
+            // このオブジェクト自体が存在しないため、Web 側は try/catch で素通りする。
+            webView.addJavascriptInterface(new BirdAlarmBridge(this), "AndroidAlarm");
             stripWebViewMarkerFromUserAgent(webView);
             // 2026-07-13 実機ログで直接確認(仮説6): 接続実機のlogcatに
             // "cc/tiles/tile_manager.cc:1008 WARNING: tile memory limits exceeded,

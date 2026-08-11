@@ -322,6 +322,23 @@ TRANSLATIONS: dict[str, str] = {
     # 庭の在留リスト: 名前行だけ出して、中身はここに畳む
     'くわしく': 'Details',
 
+    # ── 目覚まし(alarm_ui.py) ──
+    # 「起こす」より「庭が目を覚ます」トーンで。急かさない(原則1)。
+    '⏰ 鳥の声で起きる': '⏰ Wake to birdsong',
+    '選んだ鳥のさえずりが、5分かけて少しずつ大きくなり、途中でほかの鳥も加わります。いきなり大きな音では起こしません。':
+        'Your bird starts almost too quiet to hear, and grows over five minutes. '
+        'Others join in along the way. Nothing ever jolts you awake.',
+    '時': 'Hour',
+    '分': 'Minute',
+    '最初に鳴く鳥': 'First to sing',
+    'さえずり(song)の録音だけを選べるようにしています。耳障りな地鳴きで起こさないためです。':
+        'Only true songs are offered here — never the harsh calls. '
+        'Sharp sounds make waking worse.',
+    '⏰ この時刻にセット': '⏰ Set for this time',
+    '解除する': 'Turn off',
+    '※ Android アプリ版でのみ動きます。ブラウザ版では設定しても鳴りません。':
+        'Works in the Android app only. In a browser this will not ring.',
+
     '好きなもの': 'Favourites',
     '好きな場所': 'Home',
     # 「Watches out for」は列幅からはみ出して値の位置がずれるので短く。

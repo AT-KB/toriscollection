@@ -3060,6 +3060,11 @@ with tab_radio:
             observed=_radio_obs,
             birds_data=BIRDS,
         )
+        # 「鳥の声で起きる」目覚まし(2026-08-11)。設定を渡すだけで、実際に鳴らすのは
+        # ネイティブ側(BirdAlarmService)。アプリを閉じていても鳴る必要があるため。
+        # ラジオの下に置くのは、ここが「声を聴く場所」だから。
+        import alarm_ui
+        alarm_ui.render_alarm()
     else:
         st.info(t("庭をはじめると、あなたが出会った鳥たちの声が聴けます。"))
 
