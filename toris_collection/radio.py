@@ -21,6 +21,7 @@
 from __future__ import annotations
 import json
 import base64
+import hashlib
 import random
 import concurrent.futures
 from datetime import date, datetime
@@ -152,11 +153,17 @@ def _ambience_layers() -> dict[str, str]:
       - CC0 が見つからないと**ライセンス未指定で探し直す**分岐があり、広告つき(=商用)の
         本アプリでは事故になりうる
     いまは選び抜いた4つを同梱し、`/app/static/ambience/` から配る。
+
+    URL には中身のハッシュを付ける。素材を差し替えたとき、URL が同じままだと
+    **ブラウザが前の音をキャッシュから出してしまい、更新が届かない**
+    (実際 2026-08-11 に素材を入れ替えている)。
     """
     out: dict[str, str] = {}
     for k in _AMBIENCE_KEYS:
-        if (_AMBIENCE_DIR / f"amb_{k}.mp3").exists():
-            out[k] = f"/app/static/ambience/amb_{k}.mp3"
+        p = _AMBIENCE_DIR / f"amb_{k}.mp3"
+        if p.exists():
+            v = hashlib.md5(p.read_bytes()).hexdigest()[:8]
+            out[k] = f"/app/static/ambience/amb_{k}.mp3?v={v}"
     return out
 
 

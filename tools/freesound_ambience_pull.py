@@ -31,6 +31,7 @@ Freesound のテキスト検索は語の AND 検索ではなく、関連度で�
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.parse
@@ -49,19 +50,31 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..",
 # 鳥の声そのものが主役なので、環境音に生き物を混ぜると主役がぼやける。
 # 同じ理由で、鳥や虫が入っている録音は候補から外している
 # (例: 482255 "Wind_Tree_Forest_Summer" は説明に Bees, Birds とあるため不採用)。
+# 2026-08-11 差し替え(CEO の試聴): 「波はもう少しザーッとした波打ち際感がいい」
+# 「Wind はガサガサしていて気持ち悪い」「1つ1つが短い、特に Wind。継ぎ目が
+# 分かりやすすぎる」。短い素材は繰り返しが早く来るぶん継ぎ目が目立つので、
+# **長いものに入れ替え**、さらに継ぎ目そのものを畳んで消す(loopify)。
+# trim は長すぎる素材を切る秒数(通信量のため)。None なら切らない。
 PICKS = {
-    # 雨: イギリスで録った小雨。「気を散らす雫を取り除き、継ぎ目なくループ化した」と
-    #     作者が明記している。雷・その他の物音が入っていない。
-    "rain":   595717,
-    # 風: 木の葉が風に鳴る音(Point Pleasant Park)。★5.0/42件と評価が高く、
-    #     鳥や虫が入らない。「強風」の録音は庭の穏やかさに合わないので採らない。
-    "wind":   378725,
-    # 小川: Nox_Sound のループ素材。小さな流れで、川というより庭先の水音に近い。
-    "stream": 548373,
-    # 波: 岸に寄せる穏やかな水音。作者がループ化済み。砕ける波(crashing)の録音は
-    #     音が強すぎて鳥の声を潰すので採らない。
-    "waves":  260263,
+    # 雨: 作者がループ用に録った雨。前の素材(595717)は 22.5秒しかなく、
+    #     繰り返しが早かった。
+    "rain":   {"id": 584945, "trim": None},   # 73s "Rain Loop 1"
+    # 風: 松林を渡る light wind。前の素材(378725)は落ち葉が転がる音で
+    #     「ガサガサして気持ち悪い」。松は葉が細く、擦れる音が滑らかになる。
+    #     予備案: 181801 "breeze.wav"(65s・★4.9/160件と評価数が桁違い)。
+    #     こちらが合わなければ差し替える。
+    "wind":   {"id": 715696, "trim": 120},    # 216s -> 120s
+    # 小川: 岩を回る小さな流れ。前の素材(548373)は 30秒。
+    "stream": {"id": 819768, "trim": None},   # 87s
+    # 波: 小石の浜に打ち寄せ、引き波で小石が転がる音。作者いわく
+    #     "more articulation of the pebbles rolling in the backwash"。
+    #     これが「ザーッとした波打ち際感」に当たる。前の素材(260263)は
+    #     船着き場に water がぴちゃぴちゃ当たる音で、波打ち際ではなかった。
+    "waves":  {"id": 277480, "trim": 120},    # 187s -> 120s
 }
+
+# 継ぎ目を消すためのクロスフェード秒数。詳しくは loopify() を参照。
+LOOP_XFADE = 4.0
 
 # `--search` で候補を出すときの検索語(採用そのものには使わない)
 SEARCH_QUERIES = {
@@ -72,7 +85,7 @@ SEARCH_QUERIES = {
 }
 
 # 長すぎる素材はアプリが重くなるので、この範囲のものから選ぶ(秒)
-DUR_MIN, DUR_MAX = 15, 150
+DUR_MIN, DUR_MAX = 60, 240
 
 CC0_URL = "creativecommons.org/publicdomain/zero"
 
@@ -147,18 +160,89 @@ def _loudnorm_filter(ff: str, src: str) -> str:
         return base
 
 
-def normalize(src: str, dest: str) -> bool:
-    """音量を揃えつつモノラル 96kbps に落とす。失敗したら元のまま使う。"""
+def duration_of(ff: str, path: str) -> float:
+    """秒数を返す(ffmpeg の出力から読む。ffprobe は同梱されていない)。"""
+    r = subprocess.run([ff, "-hide_banner", "-i", path, "-f", "null", "-"],
+                       capture_output=True, text=True)
+    m = re.findall(r"time=(\d+):(\d+):(\d+\.\d+)", r.stderr)
+    if not m:
+        return 0.0
+    h, mi, s = m[-1]
+    return int(h) * 3600 + int(mi) * 60 + float(s)
+
+
+def loopify(ff: str, src: str, dest: str, xfade: float) -> bool:
+    """**継ぎ目の無いループ**にする。
+
+    CEO 指摘「つなぎ目が分かりやすすぎる」への対応。素材を長くするだけでは、
+    一周したところで波形が飛ぶ事実は変わらない。そこで音そのものを畳む。
+
+    長さ D の録音を、頭 A=[0, D-X] と尻尾 B=[D-X, D] に分け、
+    **A の頭 X 秒に、B をクロスフェードで重ねたもの**(長さ D-X)を出力する。
+      - 重なる X 秒は、A がフェードイン・B がフェードアウトして滑らかに混ざる
+      - 出力の終わり(=A の終わり、元の D-X 地点)と、出力の頭(=B の頭、これも
+        元の D-X 地点)は、元の録音では**まさに同じ場所**なので、繰り返しても
+        段差が出ない
+    結果、どこにも継ぎ目の無い輪になる。
+
+    `acrossfade` フィルタでも同じことができるはずだが、この ffmpeg では
+    出力が空になった(asplit を挟んでも同じ)。ので afade + amix で自分で組む。
+    """
+    dur = duration_of(ff, src)
+    if dur < xfade * 3:
+        print(f"  (短すぎるので継ぎ目の処理を飛ばす: {dur:.1f}s)")
+        return False
+    head_end = dur - xfade
+    fc = (f"[0:a]asplit=2[s0][s1];"
+          f"[s0]atrim=0:{head_end:.3f},asetpts=N/SR/TB,"
+          f"afade=t=in:st=0:d={xfade}[a];"
+          f"[s1]atrim={head_end:.3f}:{dur:.3f},asetpts=N/SR/TB,"
+          f"afade=t=out:st=0:d={xfade}[b];"
+          f"[a][b]amix=inputs=2:duration=first:normalize=0[out]")
+    r = subprocess.run(
+        [ff, "-y", "-loglevel", "error", "-i", src,
+         "-filter_complex", fc, "-map", "[out]", dest],
+        capture_output=True, text=True,
+    )
+    if r.returncode != 0 or not os.path.exists(dest):
+        print(f"  継ぎ目の処理に失敗(そのまま使う): {r.stderr[-200:]}")
+        return False
+    return True
+
+
+def normalize(src: str, dest: str, trim: int | None) -> bool:
+    """継ぎ目を消し、音量を揃え、モノラル 96kbps に落とす。
+
+    失敗したら元のまま使う(音が出ないより、粗くても出るほうがよい)。
+    """
     ff = _ffmpeg()
     if not ff:
         print("  (ffmpeg が無いので変換を飛ばす。音量差と容量はそのまま)")
         return False
+
+    work = dest + ".work.wav"
+    # ① 長さを切り、先にモノラルにする(音量を測る前にやることが重要。理由は FF_MONO)
+    cut = ["-t", str(trim)] if trim else []
     r = subprocess.run(
-        [ff, "-y", "-loglevel", "error", "-i", src,
-         "-ac", "1", "-ar", "44100", "-af", _loudnorm_filter(ff, src),
-         "-b:a", FF_BITRATE, dest],
+        [ff, "-y", "-loglevel", "error", "-i", src] + cut +
+        ["-af", FF_MONO, work], capture_output=True, text=True)
+    if r.returncode != 0:
+        print(f"  切り出しに失敗: {r.stderr[-200:]}")
+        return False
+
+    # ② 継ぎ目を畳む
+    looped = dest + ".loop.wav"
+    src2 = looped if loopify(ff, work, looped, LOOP_XFADE) else work
+
+    # ③ 音量を揃えて mp3 に
+    r = subprocess.run(
+        [ff, "-y", "-loglevel", "error", "-i", src2,
+         "-af", _loudnorm_filter(ff, src2), "-b:a", FF_BITRATE, dest],
         capture_output=True, text=True,
     )
+    for p in (work, looped):
+        if os.path.exists(p):
+            os.remove(p)
     if r.returncode != 0 or not os.path.exists(dest):
         print(f"  変換失敗(元のまま使う): {r.stderr[-200:]}")
         return False
@@ -199,7 +283,8 @@ def do_search() -> None:
             print("  CC0 の候補が見つからなかった")
             continue
         for h in hits[:6]:
-            mark = "★採用中" if h["id"] == PICKS.get(key) else "       "
+            cur = (PICKS.get(key) or {}).get("id")
+            mark = "★採用中" if h["id"] == cur else "       "
             print(f"  {mark} [{h['id']:>9}] {h.get('avg_rating', 0):.1f}"
                   f"({h.get('num_ratings', 0):>3})  {h['duration']:>5.1f}s  "
                   f"{h['name'][:46]}")
@@ -224,7 +309,8 @@ def main() -> None:
         os.makedirs(OUT_DIR, exist_ok=True)
     credits = []
 
-    for key, sound_id in PICKS.items():
+    for key, pick in PICKS.items():
+        sound_id, trim = pick["id"], pick["trim"]
         print(f"\n=== {key} (freesound #{sound_id}) ===")
         try:
             snd = fetch_sound(sound_id)
@@ -260,13 +346,15 @@ def main() -> None:
             continue
         with open(raw, "wb") as f:
             f.write(data)
-        if normalize(raw, dest):
+        if normalize(raw, dest, trim):
             os.remove(raw)
         else:
             os.replace(raw, dest)
         size = os.path.getsize(dest)
+        out_dur = duration_of(_ffmpeg(), dest) if _ffmpeg() else 0.0
         print(f"  saved: {os.path.basename(dest)} "
-              f"({len(data) // 1024}KB -> {size // 1024}KB)")
+              f"({len(data) // 1024}KB -> {size // 1024}KB, "
+              f"{snd['duration']:.0f}s -> {out_dur:.0f}s)")
         credits.append({
             "layer": key, "freesound_id": snd["id"], "name": snd["name"],
             "user": snd.get("username"), "license": lic,
