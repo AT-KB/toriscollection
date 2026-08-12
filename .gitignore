@@ -5,8 +5,11 @@ __pycache__/
 # 認証情報・APIキー(絶対にコミットしない)
 credentials.json
 xc_api_key.txt
+freesound_api_key.txt
 toris_collection/credentials.json
 toris_collection/xc_api_key.txt
+toris_collection/freesound_api_key.txt
+toris_collection/.freesound_cache/
 .streamlit/secrets.toml
 *.pem
 landing/media/raw/

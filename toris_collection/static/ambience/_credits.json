@@ -1,0 +1,38 @@
+[
+ {
+  "layer": "rain",
+  "freesound_id": 595717,
+  "name": "Soft Rain Loop",
+  "user": "_lynks",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 22.5,
+  "url": "https://freesound.org/s/595717/"
+ },
+ {
+  "layer": "wind",
+  "freesound_id": 378725,
+  "name": "Leaves Rustling in Wind - Zoom H6.wav",
+  "user": "lunchmoney",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 36.1,
+  "url": "https://freesound.org/s/378725/"
+ },
+ {
+  "layer": "stream",
+  "freesound_id": 548373,
+  "name": "Ambiance_Stream_Calm_Loop_Stereo.wav",
+  "user": "Nox_Sound",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 29.9,
+  "url": "https://freesound.org/s/548373/"
+ },
+ {
+  "layer": "waves",
+  "freesound_id": 260263,
+  "name": "WavesOnTheShore.wav",
+  "user": "richardemoore",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 45.0,
+  "url": "https://freesound.org/s/260263/"
+ }
+]

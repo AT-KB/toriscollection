@@ -46,11 +46,6 @@ try:
 except Exception:
     xc_client = None  # type: ignore
 
-try:
-    import freesound_client
-except Exception:
-    freesound_client = None  # type: ignore
-
 _SPRITE_DIR = Path(__file__).parent / "designbird"
 # ラジオで同時に鳴く種の上限。
 # 2026-08-11: 6 -> 3 に変更(CEO「ラジオもランダムで選んで3種類くらいに抑えたい」)。
@@ -138,14 +133,31 @@ def _radio_audio_variants(scientific_name: str,
     return out
 
 
+# 環境音タイルの並び順。`static/ambience/amb_<key>.mp3` を指す。
+# 素材は tools/freesound_ambience_pull.py が Freesound から取ってくる(CC0のみ)。
+# 2026-08-11(CEO): **自然音のみ**。動物・虫・楽器のタイルは作らない
+# (鳥の声そのものが主役なので、環境音に生き物を混ぜると主役がぼやける)。
+_AMBIENCE_KEYS = ("rain", "wind", "stream", "waves")
+_AMBIENCE_DIR = Path(__file__).parent / "static" / "ambience"
+
+
 @st.cache_data(show_spinner=False)
-def _radio_ambient_b64() -> str | None:
-    if freesound_client is None or not freesound_client.is_enabled():
-        return None
-    path = freesound_client.get_ambient_path()
-    if path and path.exists():
-        return base64.b64encode(path.read_bytes()).decode("ascii")
-    return None
+def _ambience_layers() -> dict[str, str]:
+    """存在する環境音レイヤーの {キー: 配信URL} を返す。
+
+    以前は起動のたびに Freesound API を叩いて森の環境音を1つ落としていたが、
+    やめた(2026-08-11)。理由は3つ:
+      - 検索結果は毎回変わり、**鳥入りの録音**を引くことがあった(鳥は主役なので二重になる)
+      - 起動時の外部通信は、ただでさえ遅いコールドスタート(実測22.7秒)をさらに遅くする
+      - CC0 が見つからないと**ライセンス未指定で探し直す**分岐があり、広告つき(=商用)の
+        本アプリでは事故になりうる
+    いまは選び抜いた4つを同梱し、`/app/static/ambience/` から配る。
+    """
+    out: dict[str, str] = {}
+    for k in _AMBIENCE_KEYS:
+        if (_AMBIENCE_DIR / f"amb_{k}.mp3").exists():
+            out[k] = f"/app/static/ambience/amb_{k}.mp3"
+    return out
 
 
 @st.cache_data(show_spinner=False)
@@ -535,10 +547,10 @@ def _render_radio_iframe(
     lbl_start = t("🎙 ラジオを始める")
     lbl_stop = t("■ 止める")
     # 環境音タイルのラベル(絵は HTML 側の絵文字)
-    lbl_pad = t("やわらか")
     lbl_wind = t("風")
     lbl_rain = t("雨")
-    lbl_chime = t("風鈴")
+    lbl_stream = t("小川")
+    lbl_waves = t("波")
     season_jp = t(season_meta["jp"])
     radio_title = t("{season}の庭のラジオ", season=season_jp)
     birds_meta = [
@@ -561,16 +573,17 @@ def _render_radio_iframe(
         for v, (b64, _) in enumerate(b["b64s"])
     )
 
-    # 環境音タグ
-    amb_b64 = _radio_ambient_b64()
-    ambient_tag = ""
-    has_ambient = "false"
-    if amb_b64:
-        ambient_tag = (
-            '<audio id="ra_ambient" preload="auto" loop style="display:none">'
-            f'<source src="data:audio/mp3;base64,{amb_b64}" type="audio/mp3"></audio>'
-        )
-        has_ambient = "true"
+    # 環境音タグ(実録音・Freesound CC0)
+    # base64 で埋め込まず `/app/static/` から配る。4層で 1.5MB あり、埋め込むと
+    # HTML が肥大してラジオの起動そのものが遅くなるため。`preload="none"` なので
+    # タイルをオンにした層だけが実際にダウンロードされる。
+    amb_layers = _ambience_layers()
+    ambient_tags = "".join(
+        f'<audio id="ra_amb_{k}" preload="none" loop style="display:none">'
+        f'<source src="{url}" type="audio/mp3"></audio>'
+        for k, url in amb_layers.items()
+    )
+    amb_layers_json = json.dumps(list(amb_layers.keys()))
 
     # スプライト表示 (チップ形式でラジオUI内にも表示)
     sprite_divs = "".join(
@@ -598,7 +611,7 @@ def _render_radio_iframe(
     )
 
     html = f"""
-    {ambient_tag}
+    {ambient_tags}
     {audio_tags}
     <style>
       body {{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }}
@@ -641,14 +654,14 @@ def _render_radio_iframe(
       <div id="ra_chips">{sprite_divs}</div>
 
       <div id="amb_grid">
-        <div class="amb" data-k="pad"><div class="ic">🎵</div><div class="lb">{lbl_pad}</div></div>
-        <div class="amb" data-k="wind"><div class="ic">🍃</div><div class="lb">{lbl_wind}</div></div>
         <div class="amb" data-k="rain"><div class="ic">🌧</div><div class="lb">{lbl_rain}</div></div>
-        <div class="amb" data-k="chime"><div class="ic">🎐</div><div class="lb">{lbl_chime}</div></div>
+        <div class="amb" data-k="wind"><div class="ic">🍃</div><div class="lb">{lbl_wind}</div></div>
+        <div class="amb" data-k="stream"><div class="ic">💧</div><div class="lb">{lbl_stream}</div></div>
+        <div class="amb" data-k="waves"><div class="ic">🌊</div><div class="lb">{lbl_waves}</div></div>
       </div>
       <div id="amb_row">
         <span style="font-size:1.1em;">🔈</span>
-        <input id="amb_vol" type="range" min="0" max="100" value="45" />
+        <input id="amb_vol" type="range" min="0" max="100" value="55" />
       </div>
     </div>
 
@@ -656,7 +669,6 @@ def _render_radio_iframe(
     (function() {{
         const BIRDS = {birds_json};
         const AFFINITY = {affinity_json};
-        const HAS_AMBIENT = {has_ambient};
         const SIM_HOUR = {sim_hour};
         const USE_REAL_TIME = {use_real_time_js};
         const BGM = {bgm_js};   // ヒーリングBGMモード
@@ -688,19 +700,29 @@ def _render_radio_iframe(
         let running = false, rafId = null;
         const nodes = [];
 
-        // 環境音の層(タイルで出し入れする)。buildAmbient() が中身を入れる。
-        const AMB = {{ pad: null, wind: null, rain: null, chime: null }};
-        // 風・雨をまとめる母線。スライダーはここと chime/pad をまとめて上下させる。
+        // タイルで出し入れする層のキー(実録音。素材が無い層はタイルも効かない)
+        const REC_KEYS = {amb_layers_json};
+        // 環境音の層。buildAmbient() が中身を入れる。
+        // pad はタイルを持たない“下地”で、常に薄く鳴っている(いままでの音の続き)。
+        const AMB = {{ pad: null }};
+        const AMB_EL = {{}};          // 録音レイヤーの <audio> 本体
+        const ambPause = {{}};        // フェードアウト後に止めるためのタイマー
+        // 風・雨をまとめる母線。スライダーはここと pad をまとめて上下させる。
         let ambBus = null;
-        // タイルの状態。既定は「やわらか」だけ ON(いままでの音に近い)。
-        const ambOn = {{ pad: true, wind: false, rain: false, chime: false }};
-        let ambVol = 0.45;
+        // タイルの状態。既定はどれもオフ(下地の pad だけが鳴っている)。
+        const ambOn = {{ pad: true }};
+        REC_KEYS.forEach(function(k) {{ AMB[k] = null; ambOn[k] = false; }});
+        let ambVol = 0.55;
 
         // 各層の「全開時」の音量。
-        // 2026-08-11: 当初 rain/wind を 0.05 にしていたが、既定スライダー位置(45%)だと
-        // 実効 0.045 で、スマホのスピーカーでは**オンにしても分からなかった**。
-        // 「オン/オフで実感できること」がこのUIの目的なので、はっきり聞こえる値にした。
-        const AMB_MAX = {{ pad: 0.18, wind: 0.22, rain: 0.30, chime: 0.55 }};
+        // 2026-08-11: 合成音をやめ、Freesound の実録音(CC0)に置き換えた。
+        // 素材は取得時に -23 LUFS へ揃えてあるので、ここの係数は
+        // 「鳥の声に対してどれくらい前に出すか」だけを決めればよい。
+        // 雨と小川は音が詰まっていて鳥を覆いやすいので、少し控えめにする。
+        // pad は BGM モードでは主役なので厚くする(以前は buildAmbient() で
+        // 分けていたが、この関数が上書きしてしまい効いていなかった)。
+        const AMB_MAX = {{ pad: BGM ? 0.42 : 0.30,
+                           rain: 1.00, wind: 1.10, stream: 0.95, waves: 1.05 }};
 
         function applyAmbience() {{
             if (!ctx) return;
@@ -708,8 +730,21 @@ def _render_radio_iframe(
             Object.keys(AMB).forEach(function(k) {{
                 const node = AMB[k];
                 if (!node) return;
-                const target = ambOn[k] ? AMB_MAX[k] * ambVol * 2 : 0;
+                const on = ambOn[k];
+                const target = on ? (AMB_MAX[k] || 0) * ambVol : 0;
                 try {{ node.gain.setTargetAtTime(target, now, 0.6); }} catch (e) {{}}
+                const el = AMB_EL[k];
+                if (!el) return;
+                // 録音は必要になってから読み込む(preload="none")。
+                // 切ったあとも即 pause せず、フェードが終わってから止める。
+                clearTimeout(ambPause[k]);
+                if (on) {{
+                    el.play().catch(function() {{}});
+                }} else {{
+                    ambPause[k] = setTimeout(function() {{
+                        if (!ambOn[k]) {{ try {{ el.pause(); }} catch (e) {{}} }}
+                    }}, 2500);
+                }}
             }});
         }}
 
@@ -753,24 +788,14 @@ def _render_radio_iframe(
         {ae.PICK_VARIANT_JS}
 
         {ae.MAKE_REVERB_IR_JS}
-        {ae.MAKE_NOISE_BUFFER_JS}
+        // ノイズ合成(makeNoiseBuffer)は、環境音を実録音にしたので使わなくなった。
 
         function buildAmbient() {{
             // 風・雨の共通母線(ここを通してから master へ)
             ambBus = ctx.createGain(); ambBus.gain.value = 1.0;
             ambBus.connect(master);
 
-            const ambEl = document.getElementById('ra_ambient');
-            if (HAS_AMBIENT && ambEl) {{
-                const src = ctx.createMediaElementSource(ambEl);
-                const lp  = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=6000;
-                const ag  = ctx.createGain(); ag.gain.value=0;
-                src.connect(lp); lp.connect(ag); ag.connect(master);
-                ambEl.play().catch(()=>{{}});
-                ag.gain.setTargetAtTime(0.28, ctx.currentTime, 3.5);
-                return ag;
-            }}
-            // ── キー無しのときの“ヒーリング”環境音 ──
+            // ── 下地の“ヒーリング”環境音(タイルを持たない層)──
             // ザーザーした雑音は使わず、やわらかな持続音(パッド)を主役に。
             // 完全五度と八度を重ねた濁らない和音を、音ごとに違う速さでそっと揺らす。
             const t = ctx.currentTime;
@@ -797,51 +822,21 @@ def _render_radio_iframe(
             padBus.gain.setTargetAtTime(BGM ? 0.11 : 0.06, t, 5.0);  // BGMはパッドを主役に
             AMB.pad = padBus;
 
-            // ── 以下、タイルで選べる環境音の層 ──
+            // ── 以下、タイルで選べる環境音の層(実録音)──
+            // 2026-08-11: ここは元々ノイズとベルの合成音だった。しかし合成では
+            // 情報量が乏しく、**オンにしても何が変わったか分からない**という指摘を
+            // 受けた(参考にした Bird Sounds は実際の録音を使っている)。音量では
+            // 埋まらない質の差なので、Freesound の CC0 録音に置き換えた。
             // それぞれ独立した gain を持たせ、タイルの ON/OFF で出し入れする。
-            // 素材ファイルは持たず、すべてこの場で合成する(APK も通信も増やさない)。
-
-            // 風: 低く抑えたノイズ。ザーザー感が出ない範囲。
-            const wind = ctx.createBufferSource(); wind.buffer = makeNoiseBuffer(true); wind.loop=true;
-            const wlp  = ctx.createBiquadFilter(); wlp.type='lowpass'; wlp.frequency.value=280;
-            const wg   = ctx.createGain(); wg.gain.value=0;
-            wind.connect(wlp); wlp.connect(wg); wg.connect(ambBus);
-            wind.start();
-            AMB.wind = wg;
-
-            // 雨: 風より高い帯域を残したノイズ。粒立ちが出るよう軽く揺らす。
-            const rain = ctx.createBufferSource(); rain.buffer = makeNoiseBuffer(false); rain.loop=true;
-            const rhp  = ctx.createBiquadFilter(); rhp.type='highpass'; rhp.frequency.value=900;
-            const rlp  = ctx.createBiquadFilter(); rlp.type='lowpass';  rlp.frequency.value=7000;
-            const rg   = ctx.createGain(); rg.gain.value=0;
-            rain.connect(rhp); rhp.connect(rlp); rlp.connect(rg); rg.connect(ambBus);
-            const rmod = ctx.createOscillator(); rmod.frequency.value = 0.13;
-            const rmodG = ctx.createGain(); rmodG.gain.value = 0.10;
-            rmod.connect(rmodG); rmodG.connect(rg.gain); rmod.start();
-            rain.start();
-            AMB.rain = rg;
-
-            // 風鈴: 高い倍音のベルを、まばらに鳴らす。五音音階なので濁らない。
-            const chimeG = ctx.createGain(); chimeG.gain.value = 0;
-            chimeG.connect(master); chimeG.connect(reverb);
-            AMB.chime = chimeG;
-            const CH_NOTES = [1046.5, 1174.7, 1396.9, 1568.0, 1864.7];  // C6 D6 F6 G6 A#6
-            (function ring() {{
-                // 鳴っていない時は次の予約だけして音は出さない(無駄な発振を避ける)
-                if (chimeG.gain.value > 0.0005) {{
-                    const now = ctx.currentTime;
-                    const o = ctx.createOscillator();
-                    o.type = 'sine';
-                    o.frequency.value = CH_NOTES[(Math.random()*CH_NOTES.length)|0];
-                    const g = ctx.createGain(); g.gain.value = 0;
-                    o.connect(g); g.connect(chimeG);
-                    g.gain.setValueAtTime(0, now);
-                    g.gain.linearRampToValueAtTime(0.16, now + 0.01);   // 撥音
-                    g.gain.exponentialRampToValueAtTime(0.0008, now + 3.2);  // 長い余韻
-                    o.start(now); o.stop(now + 3.4);
-                }}
-                setTimeout(ring, 1400 + Math.random() * 3200);
-            }})();
+            REC_KEYS.forEach(function(k) {{
+                const el = document.getElementById('ra_amb_' + k);
+                if (!el) return;
+                const g = ctx.createGain(); g.gain.value = 0;
+                ctx.createMediaElementSource(el).connect(g);
+                g.connect(ambBus);
+                AMB[k] = g;
+                AMB_EL[k] = el;
+            }});
 
             return padBus;
         }}

@@ -98,6 +98,16 @@ def get_ambient_path(query: str = "forest morning birds ambient loop",
     - Freesound の HQ プレビュー(128kbps)を取得・キャッシュ
     - ファイルサイズが _MAX_B64_BYTES を超えそうなら後回し
     """
+    # 同梱の環境音があればそれを使う(2026-08-11)。
+    # 起動のたびに API を叩くのをやめた理由:
+    #   - 検索結果は毎回変わり、既定の検索語には birds が入っていたため
+    #     **鳥入りの録音**を引くことがあった(鳥の声はこのアプリの主役なので二重になる)
+    #   - 起動時の外部通信は、遅いコールドスタート(実測22.7秒)をさらに遅くする
+    # 素材は tools/freesound_ambience_pull.py が CC0 のみを選んで置いている。
+    bundled = Path(__file__).parent / "static" / "ambience" / "amb_wind.mp3"
+    if bundled.exists():
+        return bundled
+
     if not is_enabled():
         return None
 
@@ -116,16 +126,10 @@ def get_ambient_path(query: str = "forest morning birds ambient loop",
         return None
 
     results = data.get("results", [])
-    if not results:
-        # CC0 が見つからなければ Attribution も試す
-        data2 = _api_get("/search/text/", {
-            "query": query,
-            "fields": "id,name,previews,duration,license",
-            "filter": f"duration:[{min_dur} TO {max_dur}]",
-            "sort": "rating_desc",
-            "page_size": 8,
-        })
-        results = (data2 or {}).get("results", [])
+    # 2026-08-11 削除: 以前はここで「CC0 が無ければライセンス指定なしで再検索」して
+    # いた。本アプリは広告つき = 商用なので、CC BY-NC を引くと**そのまま規約違反**に
+    # なる(BY も帰属表示が必要で、無表示のまま同梱すれば違反)。CC0 が見つからない
+    # ときは音を足さない(合成にフォールバックする)のが正しい。
 
     for r in results:
         preview_url = (r.get("previews") or {}).get("preview-hq-mp3")
