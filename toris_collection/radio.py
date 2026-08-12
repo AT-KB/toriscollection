@@ -584,6 +584,8 @@ def _render_radio_iframe(
         for k, url in amb_layers.items()
     )
     amb_layers_json = json.dumps(list(amb_layers.keys()))
+    # スライダーの初期位置。JS 側の ambVol と必ず同じ値にしておくこと。
+    amb_vol_init = 75 if bgm_mode else 55
 
     # スプライト表示 (チップ形式でラジオUI内にも表示)
     sprite_divs = "".join(
@@ -661,7 +663,7 @@ def _render_radio_iframe(
       </div>
       <div id="amb_row">
         <span style="font-size:1.1em;">🔈</span>
-        <input id="amb_vol" type="range" min="0" max="100" value="55" />
+        <input id="amb_vol" type="range" min="0" max="100" value="{amb_vol_init}" />
       </div>
     </div>
 
@@ -703,26 +705,26 @@ def _render_radio_iframe(
         // タイルで出し入れする層のキー(実録音。素材が無い層はタイルも効かない)
         const REC_KEYS = {amb_layers_json};
         // 環境音の層。buildAmbient() が中身を入れる。
-        // pad はタイルを持たない“下地”で、常に薄く鳴っている(いままでの音の続き)。
-        const AMB = {{ pad: null }};
+        const AMB = {{}};
         const AMB_EL = {{}};          // 録音レイヤーの <audio> 本体
         const ambPause = {{}};        // フェードアウト後に止めるためのタイマー
-        // 風・雨をまとめる母線。スライダーはここと pad をまとめて上下させる。
+        // 環境音をまとめる母線。スライダーはここをまとめて上下させる。
         let ambBus = null;
-        // タイルの状態。既定はどれもオフ(下地の pad だけが鳴っている)。
-        const ambOn = {{ pad: true }};
-        REC_KEYS.forEach(function(k) {{ AMB[k] = null; ambOn[k] = false; }});
-        let ambVol = 0.55;
+        // タイルの状態。既定は「風」だけ ON。
+        // 何も鳴っていない静かなラジオより、木の葉のそよぐ庭に鳥が来る方が
+        // 「アメリカの庭をスマホに」に近い。以前はここに合成のパッドを敷いていたが、
+        // ブラウザで作った音だと分かってしまうため、録音そのものを下地にする。
+        const ambOn = {{}};
+        REC_KEYS.forEach(function(k) {{ AMB[k] = null; ambOn[k] = (k === 'wind'); }});
+        // BGM モード(鳥は控えめ)は環境音が主役なので、初期の音量を上げる。
+        let ambVol = BGM ? 0.75 : 0.55;
 
         // 各層の「全開時」の音量。
         // 2026-08-11: 合成音をやめ、Freesound の実録音(CC0)に置き換えた。
         // 素材は取得時に -23 LUFS へ揃えてあるので、ここの係数は
         // 「鳥の声に対してどれくらい前に出すか」だけを決めればよい。
         // 雨と小川は音が詰まっていて鳥を覆いやすいので、少し控えめにする。
-        // pad は BGM モードでは主役なので厚くする(以前は buildAmbient() で
-        // 分けていたが、この関数が上書きしてしまい効いていなかった)。
-        const AMB_MAX = {{ pad: BGM ? 0.42 : 0.30,
-                           rain: 1.00, wind: 1.10, stream: 0.95, waves: 1.05 }};
+        const AMB_MAX = {{ rain: 1.00, wind: 1.10, stream: 0.95, waves: 1.05 }};
 
         function applyAmbience() {{
             if (!ctx) return;
@@ -795,38 +797,12 @@ def _render_radio_iframe(
             ambBus = ctx.createGain(); ambBus.gain.value = 1.0;
             ambBus.connect(master);
 
-            // ── 下地の“ヒーリング”環境音(タイルを持たない層)──
-            // ザーザーした雑音は使わず、やわらかな持続音(パッド)を主役に。
-            // 完全五度と八度を重ねた濁らない和音を、音ごとに違う速さでそっと揺らす。
-            const t = ctx.currentTime;
-            const padBus = ctx.createGain(); padBus.gain.value = 0;
-            const padLP  = ctx.createBiquadFilter();
-            padLP.type='lowpass'; padLP.frequency.value=1200;
-            padBus.connect(padLP); padLP.connect(master); padLP.connect(reverb);
-            const notes = [130.81, 196.00, 261.63, 392.00];  // C3 G3 C4 G4
-            notes.forEach(function(f, idx) {{
-                // わずかにデチューンした2本で温かみ(コーラス効果)
-                [-1, 1].forEach(function(sgn, k) {{
-                    const o = ctx.createOscillator();
-                    o.type = 'sine'; o.frequency.value = f; o.detune.value = sgn * 3.5;
-                    const g = ctx.createGain(); g.gain.value = 0.22;  // 揺れの中心
-                    o.connect(g); g.connect(padBus);
-                    // ゆっくりした音量のうねり(息づかい)。音ごとに速さを変える。
-                    const swl  = ctx.createOscillator();
-                    swl.frequency.value = 0.03 + idx * 0.016 + k * 0.004;
-                    const swlG = ctx.createGain(); swlG.gain.value = 0.18;
-                    swl.connect(swlG); swlG.connect(g.gain);
-                    o.start(); swl.start();
-                }});
-            }});
-            padBus.gain.setTargetAtTime(BGM ? 0.11 : 0.06, t, 5.0);  // BGMはパッドを主役に
-            AMB.pad = padBus;
-
-            // ── 以下、タイルで選べる環境音の層(実録音)──
-            // 2026-08-11: ここは元々ノイズとベルの合成音だった。しかし合成では
-            // 情報量が乏しく、**オンにしても何が変わったか分からない**という指摘を
-            // 受けた(参考にした Bird Sounds は実際の録音を使っている)。音量では
-            // 埋まらない質の差なので、Freesound の CC0 録音に置き換えた。
+            // ── 環境音の層(すべて実録音)──
+            // 2026-08-11: ここは元々ノイズとベルの合成音、加えて常時鳴る合成パッド
+            // (「やわらか」)があった。合成では情報量が乏しく「オンにしても何が
+            // 変わったか分からない」、その後も「ブラウザで生成した音に聞こえる」と
+            // 指摘を受けた(CEO)。音量や係数で埋まる差ではないので、**ブラウザで
+            // 音を作るのをやめ、全部 Freesound の CC0 録音にした**。
             // それぞれ独立した gain を持たせ、タイルの ON/OFF で出し入れする。
             REC_KEYS.forEach(function(k) {{
                 const el = document.getElementById('ra_amb_' + k);
@@ -837,8 +813,6 @@ def _render_radio_iframe(
                 AMB[k] = g;
                 AMB_EL[k] = el;
             }});
-
-            return padBus;
         }}
 
         function buildNode(i) {{
