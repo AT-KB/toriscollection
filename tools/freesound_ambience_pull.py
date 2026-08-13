@@ -76,6 +76,17 @@ PICKS = {
 # 継ぎ目を消すためのクロスフェード秒数。詳しくは loopify() を参照。
 LOOP_XFADE = 4.0
 
+# 採否を決める前に、実際に聴いて比べるための候補(2026-08-13・CEO が上位3つを指定)。
+# 採用が決まったら PICKS へ移す。`--candidates` で `static/ambience/_candidates/` に落ちる。
+CANDIDATES = {
+    # 焚き火: ★4.2 だが評価 143件と桁違いに多い(=多くの人が実際に使って確かめている)
+    "fire":  {"id": 40699, "trim": 120},   # 236s "campfire.wav"
+    # 洞窟の水滴: 評価 388件。水の音は「気分が上向く」効果がいちばん大きい(Buxton 2021)
+    "drips": {"id": 177958, "trim": None},  # 90s "Water Dripping in Cave"
+    # 湖: 波より穏やかな水際。庭の池のような近さ
+    "lake":  {"id": 326097, "trim": None},  # 94s "LakeWaves"
+}
+
 # `--search` で候補を出すときの検索語(採用そのものには使わない)
 SEARCH_QUERIES = {
     "rain":   "rain",
@@ -305,11 +316,15 @@ def main() -> None:
         return
 
     download = "--download" in sys.argv
+    # 採否を決める前に聴き比べるための候補。本番の素材とは別の場所に落とす。
+    candidates = "--candidates" in sys.argv
+    picks = CANDIDATES if candidates else PICKS
+    out_dir = os.path.join(OUT_DIR, "_candidates") if candidates else OUT_DIR
     if download:
-        os.makedirs(OUT_DIR, exist_ok=True)
+        os.makedirs(out_dir, exist_ok=True)
     credits = []
 
-    for key, pick in PICKS.items():
+    for key, pick in picks.items():
         sound_id, trim = pick["id"], pick["trim"]
         print(f"\n=== {key} (freesound #{sound_id}) ===")
         try:
@@ -337,7 +352,7 @@ def main() -> None:
         if not url:
             print("  プレビューURLが無いので飛ばす")
             continue
-        dest = os.path.join(OUT_DIR, f"amb_{key}.mp3")
+        dest = os.path.join(out_dir, f"amb_{key}.mp3")
         raw = dest + ".raw.mp3"
         try:
             data = _get(url, timeout=90)
@@ -363,7 +378,7 @@ def main() -> None:
         })
 
     if download and credits:
-        p = os.path.join(OUT_DIR, "_credits.json")
+        p = os.path.join(out_dir, "_credits.json")
         with open(p, "w", encoding="utf-8") as f:
             json.dump(credits, f, ensure_ascii=False, indent=1)
         print(f"\ncredits: {os.path.abspath(p)}")

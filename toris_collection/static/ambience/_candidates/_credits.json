@@ -1,0 +1,29 @@
+[
+ {
+  "layer": "fire",
+  "freesound_id": 40699,
+  "name": "campfire.wav",
+  "user": "Spandau",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 236.2,
+  "url": "https://freesound.org/s/40699/"
+ },
+ {
+  "layer": "drips",
+  "freesound_id": 177958,
+  "name": "Water Dripping in Cave.wav",
+  "user": "Sclolex",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 89.8,
+  "url": "https://freesound.org/s/177958/"
+ },
+ {
+  "layer": "lake",
+  "freesound_id": 326097,
+  "name": "LakeWavesOct25th2015.WAV",
+  "user": "kvgarlic",
+  "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+  "duration_s": 93.9,
+  "url": "https://freesound.org/s/326097/"
+ }
+]
