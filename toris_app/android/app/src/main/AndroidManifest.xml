@@ -1,0 +1,76 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 目覚まし。Capacitor 版(android_app)と同じ権限一式を宣言する。
+         USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM: 朝の時刻に正確に鳴らすため。
+           Android 12+ ではユーザーの許可が要る(未許可なら AlarmChannel が
+           false を返し、画面から設定へ案内する)。
+         POST_NOTIFICATIONS: Android 13+ で通知を出すのに必要(実行時に要求する)。
+         FOREGROUND_SERVICE_MEDIA_PLAYBACK: 画面が消えていても鳴らし続けるため。
+         WAKE_LOCK: 鳴らし切るまで CPU を眠らせないため。 -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 端末を再起動しても目覚ましを鳴らせるようにするための下準備(受信は今後) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:label="Toris (next)"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- 目覚まし: 発火を受け取る Receiver と、鳴らすフォアグラウンドサービス。
+             再生を Receiver の中でやらないのは、Receiver が数秒で殺されるため。 -->
+        <receiver
+            android:name=".BirdAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.toriscollection.toris_app.ALARM_FIRE" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name=".BirdAlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>
