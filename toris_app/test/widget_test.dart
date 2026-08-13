@@ -6,12 +6,12 @@ import 'package:toris_app/alarm.dart';
 import 'package:toris_app/main.dart';
 
 void main() {
-  testWidgets('画面が立ち上がり、時刻とセットのボタンが出る', (WidgetTester tester) async {
+  testWidgets('画面が立ち上がり、時刻とセットのボタンが出る(表示は英語)', (WidgetTester tester) async {
     await tester.pumpWidget(const TorisApp());
     await tester.pump();
-    expect(find.text('起きる時刻'), findsOneWidget);
-    expect(find.text('この時刻にセット'), findsOneWidget);
-    expect(find.text('解除する'), findsOneWidget);
+    expect(find.text('Wake at'), findsOneWidget);
+    expect(find.text('Set for this time'), findsOneWidget);
+    expect(find.text('Turn off'), findsOneWidget);
   });
 
   testWidgets('選べる鳥は4種で、すべてさえずり', (WidgetTester tester) async {

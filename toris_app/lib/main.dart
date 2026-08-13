@@ -88,18 +88,18 @@ class _AlarmPageState extends State<AlarmPage> {
       final go = await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-          title: const Text('正確な時刻に鳴らす許可が要ります'),
+          title: const Text('Permission needed for exact timing'),
           content: const Text(
-            'Android の設定で「アラームとリマインダー」を許可してください。'
-            '許可がないと、端末が眠っている間に時刻がずれます。',
+            'Allow "Alarms & reminders" in Android settings. '
+            'Without it, the time can drift while your phone sleeps.',
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(c, false),
-                child: const Text('あとで')),
+                child: const Text('Not now')),
             FilledButton(
                 onPressed: () => Navigator.pop(c, true),
-                child: const Text('設定を開く')),
+                child: const Text('Open settings')),
           ],
         ),
       );
@@ -110,7 +110,7 @@ class _AlarmPageState extends State<AlarmPage> {
     await _refresh();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('⏰ ${_time.format(context)} にセットしました')),
+      SnackBar(content: Text('⏰ Set for ${_time.format(context)}')),
     );
   }
 
@@ -119,7 +119,7 @@ class _AlarmPageState extends State<AlarmPage> {
     await _refresh();
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('解除しました')));
+        .showSnackBar(const SnackBar(content: Text('Turned off')));
   }
 
   @override
@@ -128,15 +128,16 @@ class _AlarmPageState extends State<AlarmPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF2),
       appBar: AppBar(
-        title: const Text('鳥の声と起きたい'),
+        title: const Text('⏰ Wake with the birds'),
         backgroundColor: const Color(0xFFCFD9B8),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            '選んだ鳥のさえずりが、5分かけて少しずつ大きくなり、'
-            '途中でほかの鳥も加わります。いきなり大きな音では起こしません。',
+            'Your bird starts almost too quiet to hear, and grows over '
+            'five minutes. Others join in along the way. '
+            'Nothing ever jolts you awake.',
             style: TextStyle(color: Colors.grey.shade700, height: 1.5),
           ),
           const SizedBox(height: 24),
@@ -145,7 +146,7 @@ class _AlarmPageState extends State<AlarmPage> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.schedule),
-              title: const Text('起きる時刻'),
+              title: const Text('Wake at'),
               subtitle: Text(_time.format(context),
                   style: const TextStyle(
                       fontSize: 30, fontWeight: FontWeight.w600)),
@@ -156,10 +157,12 @@ class _AlarmPageState extends State<AlarmPage> {
           const SizedBox(height: 16),
 
           // ── 最初に鳴く鳥 ──
-          const Text('最初に鳴く鳥', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text('First to sing',
+              style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(
-            'さえずりだけを選べるようにしています。耳障りな地鳴きで起こさないためです。',
+            'Only true songs are offered here — never the harsh calls. '
+            'Sharp sounds make waking worse.',
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 8),
@@ -183,14 +186,14 @@ class _AlarmPageState extends State<AlarmPage> {
               color: const Color(0xFFFFF3E0),
               child: ListTile(
                 leading: const Icon(Icons.warning_amber, color: Colors.orange),
-                title: const Text('正確な時刻に鳴らす許可がありません'),
-                subtitle: const Text('このままだと時刻がずれることがあります'),
+                title: const Text('Exact timing is not allowed'),
+                subtitle: const Text('The alarm may drift from the time you set'),
                 trailing: TextButton(
                   onPressed: () async {
                     await Alarm.openExactAlarmSettings();
                     await _refresh();
                   },
-                  child: const Text('設定'),
+                  child: const Text('Settings'),
                 ),
               ),
             ),
@@ -200,14 +203,14 @@ class _AlarmPageState extends State<AlarmPage> {
               child: FilledButton.icon(
                 onPressed: _set,
                 icon: const Icon(Icons.alarm),
-                label: const Text('この時刻にセット'),
+                label: const Text('Set for this time'),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton(
                 onPressed: s?.enabled == true ? _cancel : null,
-                child: const Text('解除する'),
+                child: const Text('Turn off'),
               ),
             ),
           ]),
@@ -219,8 +222,8 @@ class _AlarmPageState extends State<AlarmPage> {
               s == null
                   ? '…'
                   : (s.enabled
-                      ? '⏰ ${s.hhmm} にセットされています'
-                      : 'いまは設定されていません'),
+                      ? '⏰ Set for ${s.hhmm}'
+                      : 'Not set right now'),
               style: const TextStyle(color: Color(0xFF3F5C37)),
             ),
           ),
