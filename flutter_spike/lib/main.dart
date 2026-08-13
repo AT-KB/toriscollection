@@ -67,6 +67,9 @@ const Map<String, String> kAmbience = {
   'wind': 'assets/ambience/wind.mp3',
   'stream': 'assets/ambience/stream.mp3',
   'waves': 'assets/ambience/waves.mp3',
+  'lake': 'assets/ambience/lake.mp3',
+  'fire': 'assets/ambience/fire.mp3',
+  'drips': 'assets/ambience/drips.mp3',
 };
 
 const Map<String, String> kAmbienceLabel = {
@@ -74,6 +77,9 @@ const Map<String, String> kAmbienceLabel = {
   'wind': '🍃 Wind',
   'stream': '💧 Stream',
   'waves': '🌊 Waves',
+  'lake': '🏞 Lake',
+  'fire': '🔥 Fire',
+  'drips': '🕳 Cave',
 };
 
 /// 環境音の「全開時」の音量。素材は -23 LUFS に揃えてあるので、ここは
@@ -83,6 +89,9 @@ const Map<String, double> kAmbMax = {
   'wind': 1.10,
   'stream': 0.95,
   'waves': 1.05,
+  'lake': 1.00,
+  'fire': 0.90,   // 低音が厚いので上げすぎない
+  'drips': 0.70,  // 断続音。敷くのではなく“たまに鳴る点”
 };
 
 class SpikeApp extends StatelessWidget {
@@ -414,19 +423,19 @@ class _RadioPageState extends State<RadioPage> {
             const SizedBox(height: 12),
             const Text('環境音', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Row(
+            // 7種あるので、横に並べきらず折り返す(Row のままだと画面からはみ出す)
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: kAmbience.keys.map((k) {
                 final on = _ambOn[k] == true;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(kAmbienceLabel[k] ?? k),
-                    selected: on,
-                    onSelected: (_) {
-                      setState(() => _ambOn[k] = !on);
-                      _applyAmbience();
-                    },
-                  ),
+                return ChoiceChip(
+                  label: Text(kAmbienceLabel[k] ?? k),
+                  selected: on,
+                  onSelected: (_) {
+                    setState(() => _ambOn[k] = !on);
+                    _applyAmbience();
+                  },
                 );
               }).toList(),
             ),
