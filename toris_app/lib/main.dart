@@ -20,6 +20,8 @@
 /// 切り替え(提案書 §3 ステップ3)のときに製品版の名前へ変える。
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'alarm.dart';
@@ -54,20 +56,38 @@ class _AlarmPageState extends State<AlarmPage> {
   String _bird = alarmBirds.first.key;
   AlarmSetting? _current;
   bool _exactAllowed = true;
+  bool _notifyAllowed = true;
+
+  /// 鳴っている最中かどうか。鳴っていれば画面のいちばん上に「止める」を出す。
+  bool _ringing = false;
+  Timer? _ringWatch;
 
   @override
   void initState() {
     super.initState();
     _refresh();
+    // 鳴り始めたら画面に「止める」を出す。通知を拒否していても止められるように。
+    _ringWatch = Timer.periodic(const Duration(seconds: 2), (_) async {
+      final r = await Alarm.isRinging();
+      if (mounted && r != _ringing) setState(() => _ringing = r);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ringWatch?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
     final s = await Alarm.get();
     final exact = await Alarm.canScheduleExact();
+    final notify = await Alarm.hasNotificationPermission();
     if (!mounted) return;
     setState(() {
       _current = s;
       _exactAllowed = exact;
+      _notifyAllowed = notify;
       if (s.enabled) {
         _time = TimeOfDay(hour: s.hour, minute: s.minute);
         _bird = s.sound;
@@ -81,6 +101,10 @@ class _AlarmPageState extends State<AlarmPage> {
   }
 
   Future<void> _set() async {
+    // 鳴っている最中に「止める」を出すには通知が要る。セットのタイミングで求める。
+    if (!_notifyAllowed) {
+      await Alarm.requestNotificationPermission();
+    }
     final ok = await Alarm.set(_time.hour, _time.minute, _bird);
     if (!mounted) return;
     if (!ok) {
@@ -134,6 +158,24 @@ class _AlarmPageState extends State<AlarmPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // 鳴っている間だけ出る、大きくて迷いようのない停止ボタン。
+          if (_ringing) ...[
+            SizedBox(
+              height: 64,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFB3261E)),
+                onPressed: () async {
+                  await Alarm.stopRinging();
+                  if (mounted) setState(() => _ringing = false);
+                },
+                icon: const Icon(Icons.stop_circle, size: 28),
+                label: const Text('Stop the birds',
+                    style: TextStyle(fontSize: 18)),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
           Text(
             'Your bird starts almost too quiet to hear, and grows over '
             'five minutes. Others join in along the way. '
@@ -180,6 +222,25 @@ class _AlarmPageState extends State<AlarmPage> {
             ),
           ),
           const SizedBox(height: 16),
+
+          if (!_notifyAllowed)
+            Card(
+              color: const Color(0xFFFFF3E0),
+              child: ListTile(
+                leading: const Icon(Icons.notifications_off,
+                    color: Colors.orange),
+                title: const Text('Notifications are turned off'),
+                subtitle:
+                    const Text('You will not see a way to stop the alarm'),
+                trailing: TextButton(
+                  onPressed: () async {
+                    await Alarm.requestNotificationPermission();
+                    await _refresh();
+                  },
+                  child: const Text('Allow'),
+                ),
+              ),
+            ),
 
           if (!_exactAllowed)
             Card(

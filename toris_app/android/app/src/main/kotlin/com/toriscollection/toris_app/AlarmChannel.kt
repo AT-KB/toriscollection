@@ -54,6 +54,16 @@ class AlarmChannel(private val activity: Activity) {
             }
             "get" -> result.success(getAlarm())
             "canScheduleExact" -> result.success(canScheduleExact())
+            "requestNotificationPermission" -> {
+                requestNotificationPermission()
+                result.success(null)
+            }
+            "hasNotificationPermission" -> result.success(hasNotificationPermission())
+            "isRinging" -> result.success(BirdAlarmService.RINGING)
+            "stopRinging" -> {
+                stopRinging()
+                result.success(true)
+            }
             "openExactAlarmSettings" -> {
                 openExactAlarmSettings()
                 result.success(null)
@@ -109,6 +119,39 @@ class AlarmChannel(private val activity: Activity) {
             "minute" to p.getInt(K_MIN, 0),
             "sound" to p.getString(K_SOUND, "northern_cardinal"),
         )
+    }
+
+    /**
+     * 通知の許可があるか(Android 13+)。
+     *
+     * 2026-08-13 実機で発覚: 未許可のままだと `importance=NONE` になり、
+     * 鳴っている最中の通知が出ない = **止める手立てが画面に出ない**。
+     * 音自体は鳴るが、ユーザーから見れば「止められない目覚まし」になる。
+     */
+    private fun hasNotificationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (hasNotificationPermission()) return
+        activity.requestPermissions(
+            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), REQUEST_CODE
+        )
+    }
+
+    /**
+     * 鳴っているアラームを止める。
+     *
+     * 2026-08-13: 通知が拒否されていると「止める」がどこにも出ず、端末を再起動する
+     * しかなくなる(実際に起きた)。画面からも止められる道を必ず用意する。
+     */
+    private fun stopRinging() {
+        val i = Intent(activity, BirdAlarmService::class.java)
+            .setAction(BirdAlarmService.ACTION_STOP)
+        activity.startService(i)
     }
 
     private fun canScheduleExact(): Boolean {

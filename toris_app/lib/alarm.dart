@@ -73,4 +73,20 @@ class Alarm {
 
   static Future<void> openExactAlarmSettings() =>
       _ch.invokeMethod<void>('openExactAlarmSettings');
+
+  /// 通知の許可があるか(Android 13+)。
+  ///
+  /// 無いと、鳴っている最中の通知が出ず、**止める手立てが画面に出ない**。
+  /// 音は鳴るので、ユーザーから見れば「止められない目覚まし」になる。
+  static Future<bool> hasNotificationPermission() async =>
+      await _ch.invokeMethod<bool>('hasNotificationPermission') ?? true;
+
+  static Future<void> requestNotificationPermission() =>
+      _ch.invokeMethod<void>('requestNotificationPermission');
+
+  /// いま鳴っているか。鳴っていれば画面に「止める」を出す。
+  static Future<bool> isRinging() async =>
+      await _ch.invokeMethod<bool>('isRinging') ?? false;
+
+  static Future<void> stopRinging() => _ch.invokeMethod<void>('stopRinging');
 }

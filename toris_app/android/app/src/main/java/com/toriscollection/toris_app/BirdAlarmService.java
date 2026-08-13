@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -64,8 +65,25 @@ public class BirdAlarmService extends Service {
         return null;
     }
 
+    /** 「止める」を受け取るための action。通知のボタンと本文タップの両方から来る。 */
+    public static final String ACTION_STOP = "com.toriscollection.toris_app.ALARM_STOP";
+
+    /** いま鳴っているか。画面に「止める」を出すために Flutter 側から見る。 */
+    public static volatile boolean RINGING = false;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // 2026-08-13 実機で発覚: 止める手段が実質無く、CEO が端末を再起動する羽目に
+        // なった。通知には "Tap to stop" と書いてあるのに、タップしてもアプリが
+        // 開くだけで**鳴り止まなかった**(contentIntent が MainActivity を指していた)。
+        // 目覚ましで「止められない」は最悪の壊れ方なので、止める道を3つ用意する:
+        //   1. 通知の「Stop」ボタン   2. 通知の本文タップ   3. アプリ内のボタン
+        if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
+        RINGING = true;
         startForeground(NOTIF_ID, buildNotification());
 
         // 画面が消えていても鳴らし切るまで CPU を眠らせない。
@@ -121,15 +139,26 @@ public class BirdAlarmService extends Service {
 
     private MediaPlayer makePlayer(int resId) {
         try {
-            MediaPlayer mp = MediaPlayer.create(this, resId);
+            // ⚠ 音の用途(USAGE_ALARM)は**作るときに渡さないと効かない**。
+            // 2026-08-13 実機(Android 16)で発覚: 以前は `MediaPlayer.create(this, resId)`
+            // で作ってから setAudioAttributes() を呼んでいたが、create() は生成と同時に
+            // prepare まで済ませるため、後から属性を変えても反映されない。
+            // その結果アラームが「メディア」として鳴り、OS の audio hardening に
+            // **バックグラウンド再生として全ミュート**された
+            // (dumpsys: usage=USAGE_UNKNOWN / "background playback would be muted")。
+            // 目覚ましが無音で鳴るという最悪の壊れ方なので、属性を渡す方の
+            // create() を使う。
+            AudioAttributes attrs = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            int session = am != null ? am.generateAudioSessionId() : 0;
+            MediaPlayer mp = MediaPlayer.create(this, resId, attrs, session);
             if (mp == null) {
                 return null;
             }
             mp.setLooping(true);
-            mp.setAudioAttributes(new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build());
             // 後から加わる層も、いまのカーブの音量で始める(唐突に大きく出さない)。
             float p = Math.min(1f, (float) elapsed / (float) RAMP_MS);
             float v = START_VOL + (1f - START_VOL) * p;
@@ -168,27 +197,35 @@ public class BirdAlarmService extends Service {
             nm.createNotificationChannel(ch);
         }
 
-        Intent open = new Intent(this, MainActivity.class);
-        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
         }
-        PendingIntent pi = PendingIntent.getActivity(this, 0, open, flags);
+        // 本文をタップしても**止まる**ようにする。文言どおりに動くのが最優先。
+        Intent stop = new Intent(this, BirdAlarmService.class).setAction(ACTION_STOP);
+        PendingIntent piStop = PendingIntent.getService(this, 1, stop, flags);
 
         Notification.Builder b = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 ? new Notification.Builder(this, CHANNEL_ID)
                 : new Notification.Builder(this);
-        return b.setContentTitle("Good morning")
+        b.setContentTitle("Good morning")
                 .setContentText("The garden is waking up. Tap to stop.")
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentIntent(pi)
-                .setOngoing(true)
-                .build();
+                .setContentIntent(piStop)
+                .setOngoing(true);
+        // ロック画面からでも押せるボタン。朝いちばんに探させない。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            b.addAction(new Notification.Action.Builder(
+                    Icon.createWithResource(this,
+                            android.R.drawable.ic_menu_close_clear_cancel),
+                    "Stop", piStop).build());
+        }
+        return b.build();
     }
 
     @Override
     public void onDestroy() {
+        RINGING = false;
         handler.removeCallbacksAndMessages(null);
         for (MediaPlayer mp : players) {
             try {
