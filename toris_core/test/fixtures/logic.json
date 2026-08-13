@@ -1,0 +1,1868 @@
+{
+ "flock": [
+  {
+   "bird": {},
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": 0.0
+   },
+   "cap": 3,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 3
+    },
+    {
+     "count": 8,
+     "size": 3
+    },
+    {
+     "count": 9,
+     "size": 3
+    },
+    {
+     "count": 30,
+     "size": 3
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": 0.39
+   },
+   "cap": 3,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 3
+    },
+    {
+     "count": 8,
+     "size": 3
+    },
+    {
+     "count": 9,
+     "size": 3
+    },
+    {
+     "count": 30,
+     "size": 3
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": 0.4
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": 0.69
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": 0.7
+   },
+   "cap": 1,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 1
+    },
+    {
+     "count": 4,
+     "size": 1
+    },
+    {
+     "count": 5,
+     "size": 1
+    },
+    {
+     "count": 6,
+     "size": 1
+    },
+    {
+     "count": 8,
+     "size": 1
+    },
+    {
+     "count": 9,
+     "size": 1
+    },
+    {
+     "count": 30,
+     "size": 1
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 1
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": 1.0
+   },
+   "cap": 1,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 1
+    },
+    {
+     "count": 4,
+     "size": 1
+    },
+    {
+     "count": 5,
+     "size": 1
+    },
+    {
+     "count": 6,
+     "size": 1
+    },
+    {
+     "count": 8,
+     "size": 1
+    },
+    {
+     "count": 9,
+     "size": 1
+    },
+    {
+     "count": 30,
+     "size": 1
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 1
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": "0.5"
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": "abc"
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": null
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "rarity": ""
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 1
+   },
+   "cap": 1,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 1
+    },
+    {
+     "count": 4,
+     "size": 1
+    },
+    {
+     "count": 5,
+     "size": 1
+    },
+    {
+     "count": 6,
+     "size": 1
+    },
+    {
+     "count": 8,
+     "size": 1
+    },
+    {
+     "count": 9,
+     "size": 1
+    },
+    {
+     "count": 30,
+     "size": 1
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 1
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 2
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 3
+   },
+   "cap": 3,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 3
+    },
+    {
+     "count": 8,
+     "size": 3
+    },
+    {
+     "count": 9,
+     "size": 3
+    },
+    {
+     "count": 30,
+     "size": 3
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 9
+   },
+   "cap": 3,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 3
+    },
+    {
+     "count": 8,
+     "size": 3
+    },
+    {
+     "count": 9,
+     "size": 3
+    },
+    {
+     "count": 30,
+     "size": 3
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 0
+   },
+   "cap": 1,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 1
+    },
+    {
+     "count": 4,
+     "size": 1
+    },
+    {
+     "count": 5,
+     "size": 1
+    },
+    {
+     "count": 6,
+     "size": 1
+    },
+    {
+     "count": 8,
+     "size": 1
+    },
+    {
+     "count": 9,
+     "size": 1
+    },
+    {
+     "count": 30,
+     "size": 1
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 1
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": -5
+   },
+   "cap": 1,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 1
+    },
+    {
+     "count": 4,
+     "size": 1
+    },
+    {
+     "count": 5,
+     "size": 1
+    },
+    {
+     "count": 6,
+     "size": 1
+    },
+    {
+     "count": 8,
+     "size": 1
+    },
+    {
+     "count": 9,
+     "size": 1
+    },
+    {
+     "count": 30,
+     "size": 1
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 1
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": "2"
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": "abc"
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": null
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 2.7
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": 2,
+    "rarity": 0.9
+   },
+   "cap": 2,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 2
+    },
+    {
+     "count": 4,
+     "size": 2
+    },
+    {
+     "count": 5,
+     "size": 2
+    },
+    {
+     "count": 6,
+     "size": 2
+    },
+    {
+     "count": 8,
+     "size": 2
+    },
+    {
+     "count": 9,
+     "size": 2
+    },
+    {
+     "count": 30,
+     "size": 2
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 2
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  },
+  {
+   "bird": {
+    "flock_max": "x",
+    "rarity": 0.9
+   },
+   "cap": 1,
+   "cap_missing": 2,
+   "sizes": [
+    {
+     "count": 0,
+     "size": 1
+    },
+    {
+     "count": 1,
+     "size": 1
+    },
+    {
+     "count": 2,
+     "size": 1
+    },
+    {
+     "count": 3,
+     "size": 1
+    },
+    {
+     "count": 4,
+     "size": 1
+    },
+    {
+     "count": 5,
+     "size": 1
+    },
+    {
+     "count": 6,
+     "size": 1
+    },
+    {
+     "count": 8,
+     "size": 1
+    },
+    {
+     "count": 9,
+     "size": 1
+    },
+    {
+     "count": 30,
+     "size": 1
+    },
+    {
+     "count": -1,
+     "size": 1
+    },
+    {
+     "count": -100,
+     "size": 1
+    },
+    {
+     "count": "3",
+     "size": 1
+    },
+    {
+     "count": "abc",
+     "size": 1
+    },
+    {
+     "count": null,
+     "size": 1
+    },
+    {
+     "count": 2.9,
+     "size": 1
+    },
+    {
+     "count": true,
+     "size": 1
+    }
+   ]
+  }
+ ],
+ "badges": [
+  {
+   "days": 0,
+   "threshold": null,
+   "icon": null,
+   "label": null,
+   "message": null
+  },
+  {
+   "days": 1,
+   "threshold": null,
+   "icon": null,
+   "label": null,
+   "message": null
+  },
+  {
+   "days": 9,
+   "threshold": null,
+   "icon": null,
+   "label": null,
+   "message": null
+  },
+  {
+   "days": 10,
+   "threshold": 10,
+   "icon": "🌱",
+   "label": "おなじみ",
+   "message": "🌱 コマドリとはおなじみになってきました。"
+  },
+  {
+   "days": 11,
+   "threshold": 10,
+   "icon": "🌱",
+   "label": "おなじみ",
+   "message": "🌱 コマドリとはおなじみになってきました。"
+  },
+  {
+   "days": 29,
+   "threshold": 10,
+   "icon": "🌱",
+   "label": "おなじみ",
+   "message": "🌱 コマドリとはおなじみになってきました。"
+  },
+  {
+   "days": 30,
+   "threshold": 30,
+   "icon": "🌿",
+   "label": "常連",
+   "message": "🌿 コマドリとはよく会う仲になりました。"
+  },
+  {
+   "days": 31,
+   "threshold": 30,
+   "icon": "🌿",
+   "label": "常連",
+   "message": "🌿 コマドリとはよく会う仲になりました。"
+  },
+  {
+   "days": 99,
+   "threshold": 30,
+   "icon": "🌿",
+   "label": "常連",
+   "message": "🌿 コマドリとはよく会う仲になりました。"
+  },
+  {
+   "days": 100,
+   "threshold": 100,
+   "icon": "🏅",
+   "label": "皆勤の友",
+   "message": "🏅 コマドリとはすっかり顔なじみです。"
+  },
+  {
+   "days": 101,
+   "threshold": 100,
+   "icon": "🏅",
+   "label": "皆勤の友",
+   "message": "🏅 コマドリとはすっかり顔なじみです。"
+  },
+  {
+   "days": 1000,
+   "threshold": 100,
+   "icon": "🏅",
+   "label": "皆勤の友",
+   "message": "🏅 コマドリとはすっかり顔なじみです。"
+  },
+  {
+   "days": null,
+   "threshold": null,
+   "icon": null,
+   "label": null,
+   "message": null
+  }
+ ]
+}

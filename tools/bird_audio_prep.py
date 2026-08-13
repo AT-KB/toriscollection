@@ -97,8 +97,16 @@ def _loudnorm(ff: str, src: str) -> str:
         return base
 
 
-def prepare(src: str, dest: str) -> bool:
-    """暗騒音を消し、低域を切り、音量を揃えて mp3 にする。"""
+def prepare(src: str, dest: str, stereo: bool = True) -> bool:
+    """暗騒音を消し、低域を切り、音量を揃えて mp3 にする。
+
+    stereo=True で**2チャンネル**にする。モノラルの方が軽いが、SoLoud の
+    freeverb は「2チャンネルの音にしか使えない」と明記されており、モノラルの音に
+    かけると金属的な異音になる(2026-08-13 実機で発生。CEO「キーンって鳴る」)。
+    残響はこの商品の奥行きそのものなので、容量より残響を採る。
+    処理と測定はモノラルで行い、最後に複製して2チャンネルにする
+    (左右に同じものを置く。定位は再生側の pan で作る)。
+    """
     ff = ffmpeg()
     tmp = dest + ".clean.wav"
     chain = (f"aformat=channel_layouts=mono,aresample=44100,"
@@ -109,8 +117,11 @@ def prepare(src: str, dest: str) -> bool:
     if r.returncode != 0:
         print(f"  下ごしらえに失敗: {r.stderr[-200:]}")
         return False
+    af = _loudnorm(ff, tmp)
+    if stereo:
+        af += ",aformat=channel_layouts=stereo"
     r = subprocess.run([ff, "-y", "-loglevel", "error", "-i", tmp,
-                        "-af", _loudnorm(ff, tmp), "-b:a", BITRATE, dest],
+                        "-af", af, "-b:a", BITRATE, dest],
                        capture_output=True, text=True)
     if os.path.exists(tmp):
         os.remove(tmp)

@@ -1,0 +1,141 @@
+{
+ "cases": [
+  {
+   "name": "empty",
+   "state": {},
+   "code": "eNqrVipTsjLUUUpJLElUsqqurQUALBAFWg=="
+  },
+  {
+   "name": "typical",
+   "state": {
+    "biome": "kyoto",
+    "planted": [
+     "sakura",
+     "himawari"
+    ],
+    "planted_at_map": {
+     "sakura": "2026-08-01T10:00:00"
+    },
+    "residents": [
+     "eurasian_jay",
+     "japanese_tit"
+    ],
+    "discovered": [
+     "brown_eared_bulbul",
+     "eurasian_jay",
+     "japanese_tit"
+    ],
+    "bird_days": {
+     "eurasian_jay": 12,
+     "japanese_tit": 3
+    },
+    "mementos": [
+     {
+      "id": "feather",
+      "at": "2026-08-02"
+     }
+    ],
+    "mementos_set": [
+     "acorn",
+     "feather"
+    ],
+    "bird_notes": {
+     "eurasian_jay": "枝の上でじっとしていた"
+    },
+    "observed": {
+     "eurasian_jay": 4
+    },
+    "eco_log": [
+     {
+      "bird": "eurasian_jay",
+      "why": "ドングリを食べに来た",
+      "at": "2026-08-02"
+     },
+     {
+      "bird": "japanese_tit",
+      "why": "毛虫を探しに来た",
+      "at": "2026-08-03"
+     }
+    ],
+    "current_tester_id": "local_51c4923cd2c9",
+    "saved_at": "2026-08-13T09:15:30"
+   },
+   "code": "eNqFks9OGzEQxt9lzkHaP1ARPwe3Clmzu0Nj2F1HtpMoinIw6QUOPXABVFGkov5RkQpSL-3zuIrat2C8NBQiqkpzsf3Nbz5_mhmMQaQ9qNAhiBkUSjcEAg6m2mnowbDG1lEF4iVYPBgZ5LuBanCCRsHuw7tEJxscRsIfmYAsyV5sJNsbSbqTJiKJBfMeGLKqotbZyCSWWoWt3Mcpk_dxiC1Zkk65SK-ULfWYzL2BwuhJKwn5KItRzcUt_yEUylSywqmN1p5oRZqtyUXO9hpq2JyO7mageC7sEboBGYaje_ytDOa7f_XSkosmsdSmZe2qa-Wh1Y6eMQHLdxfBf_35_Tj4T8GfBX8V_OfgT4P_GPzr4C9jZrqwZMYxhfX-TX6lUstav-ocx1lMXUtlMoijwuIoLL6Fw9uw-BIOT35fXQb_I_jr5cWHOOeZ__UegE-CWgGXN29_nV8zavnmfWf5X6i8i6ocGcNZSQ7CkZFduLUusZZbabnZz_Kyyso-N1scdyv1CJHmO0lfpFsi5yWa3wFke_81"
+  },
+  {
+   "name": "unicode",
+   "state": {
+    "biome": "kyoto",
+    "bird_notes": {
+     "x": "ここに🐦がいた\n二行目\t\"引用符\" と \\ 記号"
+    },
+    "discovered": [
+     "ズアオアトリ",
+     "ヨーロッパコマドリ"
+    ]
+   },
+   "code": "eNodjD0KwkAUhK8SXp3GNldxRdSkCGIWTBBFUuw-C4WAigqCYNBCFv8aC0G8zRiS0iOYCMMU8w3fmAbk1GxyW1GLnDG1fdnzyKHuSEaSyt0PO3Lg9T2XnDpBv6CP0OeqeQo-lxewAb_BNzCDl9AP8B48q2jDLo19txnIyAsr_7B0Q63-uXzTxQkqgZpApSL4vJLikOS7u4gEZe9Nvjb59STIgjKWEFZhttn8SXEc_wA-9FvE"
+  },
+  {
+   "name": "numbers",
+   "state": {
+    "bird_days": {
+     "a": 0,
+     "b": 1000000
+    },
+    "observed": {
+     "a": 1
+    },
+    "eco_log": [
+     {
+      "n": 1.5,
+      "ok": true,
+      "none": null,
+      "deep": {
+       "k": [
+        1,
+        2,
+        3
+       ]
+      }
+     }
+    ]
+   },
+   "code": "eNotjUsKwzAQQ--i9VDilmzmKiEEOx5KqbGL84Fi5u6ZhGinJwk17GBHiH714IbwqXGK_r-cxkhHCFboLimhhEXqLvGOnSGZy5TKGzw0ZEOP3mpf8Fo3IeSSBZy3lOxE5HcOLRwcPek1qo6qByV8J9M="
+  }
+ ],
+ "edge": [
+  {
+   "name": "broken",
+   "code": "!!!not base64!!!",
+   "expect": null
+  },
+  {
+   "name": "empty_string",
+   "code": "",
+   "expect": null
+  },
+  {
+   "name": "not_json",
+   "code": "eNrLSM3JyQcABiwCFQ==",
+   "expect": null
+  },
+  {
+   "name": "wrong_version",
+   "code": "eNqrVipTsrK0tNRRSkksSVSyqlZKyszPTVWyUsquzC_JV6qtBQCvjArY",
+   "expect": null
+  },
+  {
+   "name": "legacy_uncompressed",
+   "code": "eyJ2IjoxLCJkYXRhIjp7ImJpb21lIjoia3lvdG8ifX0=",
+   "expect": {
+    "biome": "kyoto"
+   }
+  }
+ ],
+ "set_keys": [
+  "residents",
+  "discovered",
+  "mementos_set"
+ ]
+}

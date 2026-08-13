@@ -96,23 +96,49 @@ class BirdVoice {
 
   double get _peak => kDepthGain[spec.depth] ?? 1.0;
 
+  /// 読み込み時に**音声を1本だけ**作り、以後ずっと使い回す。
+  ///
+  /// 2026-08-13: 最初は「鳴くたびに play() して、休符で止める」形にしていた。
+  /// これは止め損ねが起きると同じ録音が何重にも重なり、少しずつずれた複製が
+  /// 干渉して**金属的な「キーン」**になり、しかも重なるほど大きくなる
+  /// (CEO 試聴「フェード風にキーンってしてめちゃうるさかった」)。
+  /// 数を増やさなければ、そもそも起こらない。鳴く/休むは**音量だけ**で表す。
   Future<void> load() async {
     final s = await SoLoud.instance.loadAsset(spec.asset);
     source = s;
-    // 奥行き = 残響の深さ。近い鳥ほど乾いて、遠い鳥ほど森に溶ける。
-    s.filters.freeverbFilter.activate();
-    s.filters.freeverbFilter.roomSize().value = 0.62;
-    s.filters.freeverbFilter.damp().value = 0.45;
-    s.filters.freeverbFilter.wet().value = kDepthWet[spec.depth] ?? 0.1;
+    handle = SoLoud.instance
+        .play(s, volume: 0, looping: true, paused: true);
+  }
+
+  /// 奥行き = 残響の深さ。近い鳥ほど乾いて、遠い鳥ほど森に溶ける。
+  ///
+  /// **freeverb は2チャンネルの音にしか使えない**(flutter_soloud の注記)。
+  /// 素材をモノラルにしていたときは、ここで金属的な異音になった
+  /// (2026-08-13 実機・CEO「キーン」「金属音」)。残響が深い鳥ほどひどく、
+  /// 「なにか1つ音がおかしい」という聞こえ方になる。素材はステレオで用意すること。
+  void setReverb(bool on) {
+    final s = source;
+    if (s == null) return;
+    try {
+      if (on) {
+        s.filters.freeverbFilter.activate();
+        s.filters.freeverbFilter.roomSize().value = 0.62;
+        s.filters.freeverbFilter.damp().value = 0.45;
+        s.filters.freeverbFilter.wet().value = kDepthWet[spec.depth] ?? 0.1;
+      } else {
+        s.filters.freeverbFilter.deactivate();
+      }
+    } catch (_) {
+      // 既に同じ状態のときは例外になることがある。音を止める理由にはしない。
+    }
   }
 
   /// 鳴き始め。録音の途中から入ることで、毎回おなじフレーズにならないようにする
   /// (現行の pickVariant + 群れのずらしに当たる部分)。
   void _startSinging(void Function() onChange) {
     final s = source;
-    if (s == null) return;
-    final h = SoLoud.instance.play(s, volume: 0, looping: true);
-    handle = h;
+    final h = handle;
+    if (s == null || h == null) return;
     final len = SoLoud.instance.getLength(s);
     if (len.inMilliseconds > 6000) {
       SoLoud.instance.seek(
@@ -128,10 +154,8 @@ class BirdVoice {
     onChange();
     final h = handle;
     if (h == null) return;
+    // 音声は止めない。音量を下げるだけ(止めて作り直すと数が増えていく)。
     SoLoud.instance.fadeVolume(h, 0, const Duration(milliseconds: 900));
-    // フェードが終わってから止める(途中で切ると「ブツッ」と鳴る)
-    SoLoud.instance.scheduleStop(h, const Duration(milliseconds: 1000));
-    handle = null;
   }
 
   double _singDuration() =>
@@ -152,6 +176,11 @@ class BirdVoice {
 
   void run(int n, void Function() onChange) {
     _cycle?.cancel();
+    final h = handle;
+    if (h != null) {
+      SoLoud.instance.setVolume(h, 0);
+      SoLoud.instance.setPause(h, false);
+    }
     // 出だしをずらして、3羽がいっせいに鳴き始めないようにする
     _cycle = Timer(Duration(milliseconds: _rng.nextInt(3000)),
         () => _loop(n, onChange));
@@ -166,12 +195,14 @@ class BirdVoice {
     });
   }
 
+  /// ラジオを止める。音声は捨てず、黙らせて止めておく(次に始めるとき作り直さない)。
   void stop() {
     _cycle?.cancel();
     singing = false;
     final h = handle;
-    if (h != null) SoLoud.instance.stop(h);
-    handle = null;
+    if (h == null) return;
+    SoLoud.instance.setVolume(h, 0);
+    SoLoud.instance.setPause(h, true);
   }
 }
 
@@ -184,15 +215,24 @@ class RadioPage extends StatefulWidget {
 
 class _RadioPageState extends State<RadioPage> {
   final Random _rng = Random();
-  final List<BirdVoice> _voices = [];
+  final List<BirdVoice> _birds = [];
   final Map<String, AudioSource> _ambSrc = {};
   final Map<String, SoundHandle> _ambHandle = {};
+  final Map<String, Timer> _ambPause = {};
   final Map<String, bool> _ambOn = {'wind': true, 'rain': false};
+
+  /// いま鳴っている音声の本数。増え続けていないかを目で見るために出す
+  /// (重なりが「キーン」の正体だったので、再発したらここで分かる)。
+  Timer? _voiceWatch;
+  int _voices = 0;
 
   bool _running = false;
   bool _ready = false;
   double _ambVol = 0.55;
   String _status = '読み込み中…';
+
+  /// 残響のオン/オフ。耳で切り分けられるように画面から切り替えられる。
+  bool _reverb = true;
 
   @override
   void initState() {
@@ -206,11 +246,20 @@ class _RadioPageState extends State<RadioPage> {
       for (final b in kBirds) {
         final v = BirdVoice(b, _rng);
         await v.load();
-        _voices.add(v);
+        v.setReverb(_reverb);
+        _birds.add(v);
       }
       for (final e in kAmbience.entries) {
-        _ambSrc[e.key] = await SoLoud.instance.loadAsset(e.value);
+        final src = await SoLoud.instance.loadAsset(e.value);
+        _ambSrc[e.key] = src;
+        // 鳥と同じ理由で、環境音も音声は1層につき1本だけ作って使い回す。
+        _ambHandle[e.key] =
+            SoLoud.instance.play(src, volume: 0, looping: true, paused: true);
       }
+      _voiceWatch = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _voices = SoLoud.instance.getActiveVoiceCount());
+      });
       setState(() {
         _ready = true;
         _status = '掃除済みの録音3羽 + 環境音2層(SoLoud)';
@@ -220,48 +269,48 @@ class _RadioPageState extends State<RadioPage> {
     }
   }
 
-  Future<void> _toggleRadio() async {
+  void _toggleRadio() {
     if (!_ready) return;
     setState(() => _running = !_running);
-    if (_running) {
-      for (final v in _voices) {
-        v.run(_voices.length, () => setState(() {}));
-      }
-      await _applyAmbience();
-    } else {
-      for (final v in _voices) {
+    for (final v in _birds) {
+      if (_running) {
+        v.run(_birds.length, () => setState(() {}));
+      } else {
         v.stop();
       }
-      for (final h in _ambHandle.values) {
-        SoLoud.instance.stop(h);
-      }
-      _ambHandle.clear();
     }
+    _applyAmbience();
   }
 
-  Future<void> _applyAmbience() async {
+  void _applyAmbience() {
     for (final key in kAmbience.keys) {
+      final h = _ambHandle[key];
+      if (h == null) continue;
       final want = _ambOn[key] == true && _running;
-      final has = _ambHandle[key];
       final vol = (kAmbMax[key] ?? 1.0) * _ambVol;
-      if (want && has == null) {
-        final h =
-            SoLoud.instance.play(_ambSrc[key]!, volume: 0, looping: true);
-        _ambHandle[key] = h;
+      if (want) {
+        SoLoud.instance.setPause(h, false);
         SoLoud.instance.fadeVolume(h, vol, const Duration(milliseconds: 1200));
-      } else if (want && has != null) {
-        SoLoud.instance.setVolume(has, vol);
-      } else if (!want && has != null) {
-        SoLoud.instance.fadeVolume(has, 0, const Duration(milliseconds: 1200));
-        SoLoud.instance.scheduleStop(has, const Duration(milliseconds: 1300));
-        _ambHandle.remove(key);
+      } else {
+        SoLoud.instance.fadeVolume(h, 0, const Duration(milliseconds: 1200));
+        // 止めるのはフェードが終わってから。音声そのものは捨てない。
+        _ambPause[key]?.cancel();
+        _ambPause[key] = Timer(const Duration(milliseconds: 1400), () {
+          if (_ambOn[key] != true || !_running) {
+            SoLoud.instance.setPause(h, true);
+          }
+        });
       }
     }
   }
 
   @override
   void dispose() {
-    for (final v in _voices) {
+    _voiceWatch?.cancel();
+    for (final t in _ambPause.values) {
+      t.cancel();
+    }
+    for (final v in _birds) {
       v.stop();
     }
     // 初期化できていない環境(ネイティブ音声ライブラリの無いテスト実行など)で
@@ -292,10 +341,14 @@ class _RadioPageState extends State<RadioPage> {
               child: Text(_running ? '■ 止める' : '🎙 ラジオを始める'),
             ),
             const SizedBox(height: 6),
-            Text(_status, style: const TextStyle(fontSize: 12)),
+            Text('$_status ・ 鳴っている音声 $_voices 本'
+                '${_voices > 5 ? ' ← 増えすぎ' : ''}',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: _voices > 5 ? Colors.red : null)),
             const SizedBox(height: 18),
             // いま鳴いている鳥が見えるようにする(重なり方を目でも確かめるため)
-            ..._voices.map((v) => Padding(
+            ..._birds.map((v) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   child: Row(children: [
                     Container(
@@ -317,7 +370,26 @@ class _RadioPageState extends State<RadioPage> {
                             fontSize: 11, color: Color(0xFF5A7A5A))),
                   ]),
                 )),
-            const SizedBox(height: 22),
+            const SizedBox(height: 10),
+            // 残響を切って聴き比べられるようにしておく。異音が出たとき、
+            // 残響のせいかどうかをその場で切り分けられる。
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: const Text('残響(奥行き)', style: TextStyle(fontSize: 14)),
+              subtitle: const Text('切ると、加工した録音そのものの音になる',
+                  style: TextStyle(fontSize: 11)),
+              value: _reverb,
+              onChanged: !_ready
+                  ? null
+                  : (v) {
+                      setState(() => _reverb = v);
+                      for (final b in _birds) {
+                        b.setReverb(v);
+                      }
+                    },
+            ),
+            const SizedBox(height: 12),
             const Text('環境音', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
