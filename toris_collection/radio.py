@@ -138,7 +138,8 @@ def _radio_audio_variants(scientific_name: str,
 # 素材は tools/freesound_ambience_pull.py が Freesound から取ってくる(CC0のみ)。
 # 2026-08-11(CEO): **自然音のみ**。動物・虫・楽器のタイルは作らない
 # (鳥の声そのものが主役なので、環境音に生き物を混ぜると主役がぼやける)。
-_AMBIENCE_KEYS = ("rain", "wind", "stream", "waves")
+# 並び順がそのままタイルの並び。水系をまとめ、毛色の違う焚き火・水滴を後ろに置く。
+_AMBIENCE_KEYS = ("rain", "wind", "stream", "waves", "lake", "fire", "drips")
 _AMBIENCE_DIR = Path(__file__).parent / "static" / "ambience"
 
 
@@ -553,11 +554,16 @@ def _render_radio_iframe(
                    if total_indiv > n else t("{n}羽", n=n))
     lbl_start = t("🎙 ラジオを始める")
     lbl_stop = t("■ 止める")
-    # 環境音タイルのラベル(絵は HTML 側の絵文字)
-    lbl_wind = t("風")
-    lbl_rain = t("雨")
-    lbl_stream = t("小川")
-    lbl_waves = t("波")
+    # 環境音タイルのラベルと絵。_AMBIENCE_KEYS と同じキーで引く。
+    amb_ui = {
+        "rain": ("🌧", t("雨")),
+        "wind": ("🍃", t("風")),
+        "stream": ("💧", t("小川")),
+        "waves": ("🌊", t("波")),
+        "lake": ("🏞", t("湖")),
+        "fire": ("🔥", t("焚き火")),
+        "drips": ("🕳", t("洞窟")),
+    }
     season_jp = t(season_meta["jp"])
     radio_title = t("{season}の庭のラジオ", season=season_jp)
     birds_meta = [
@@ -591,6 +597,12 @@ def _render_radio_iframe(
         for k, url in amb_layers.items()
     )
     amb_layers_json = json.dumps(list(amb_layers.keys()))
+    # 素材がある層だけタイルを出す(取得に失敗した層は、押せるのに鳴らない状態になる)
+    amb_tiles = "".join(
+        f'<div class="amb" data-k="{k}"><div class="ic">{amb_ui[k][0]}</div>'
+        f'<div class="lb">{amb_ui[k][1]}</div></div>'
+        for k in amb_layers if k in amb_ui
+    )
     # スライダーの初期位置。JS 側の ambVol と必ず同じ値にしておくこと。
     amb_vol_init = 75 if bgm_mode else 55
 
@@ -662,12 +674,7 @@ def _render_radio_iframe(
       </div>
       <div id="ra_chips">{sprite_divs}</div>
 
-      <div id="amb_grid">
-        <div class="amb" data-k="rain"><div class="ic">🌧</div><div class="lb">{lbl_rain}</div></div>
-        <div class="amb" data-k="wind"><div class="ic">🍃</div><div class="lb">{lbl_wind}</div></div>
-        <div class="amb" data-k="stream"><div class="ic">💧</div><div class="lb">{lbl_stream}</div></div>
-        <div class="amb" data-k="waves"><div class="ic">🌊</div><div class="lb">{lbl_waves}</div></div>
-      </div>
+      <div id="amb_grid">{amb_tiles}</div>
       <div id="amb_row">
         <span style="font-size:1.1em;">🔈</span>
         <input id="amb_vol" type="range" min="0" max="100" value="{amb_vol_init}" />
@@ -731,7 +738,12 @@ def _render_radio_iframe(
         // 素材は取得時に -23 LUFS へ揃えてあるので、ここの係数は
         // 「鳥の声に対してどれくらい前に出すか」だけを決めればよい。
         // 雨と小川は音が詰まっていて鳥を覆いやすいので、少し控えめにする。
-        const AMB_MAX = {{ rain: 1.00, wind: 1.10, stream: 0.95, waves: 1.05 }};
+        // 2026-08-13 追加分は、素材のスペクトルを測って決めている
+        // (tools/spectrum_check.py。詳しくは HANDOFF_2026-08-13 §5)。
+        //   焚き火は低音が厚い(-6.9dB/oct)ので、上げすぎると鳥の下でこもる。
+        //   洞窟の水滴は断続音なので、敷くのではなく“たまに鳴る点”として控えめに。
+        const AMB_MAX = {{ rain: 1.00, wind: 1.10, stream: 0.95, waves: 1.05,
+                           lake: 1.00, fire: 0.90, drips: 0.70 }};
 
         function applyAmbience() {{
             if (!ctx) return;
