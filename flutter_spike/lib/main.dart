@@ -57,14 +57,33 @@ const List<BirdSpec> kBirds = [
       'assets/birds/song_sparrow.mp3', 'b1'),
 ];
 
+/// 環境音。**現行版(Streamlit)と同じ4種・同じ素材**を持つ。
+///
+/// 2026-08-13: ここが古い素材のまま取り残されていた(差し替える前の、36秒の
+/// 落ち葉の風と 22秒の雨)。CEO「風の音が不快、短いし」「ほかの環境音、あったのに」
+/// はこれが原因。スパイクは現行版の素材をそのまま使うこと。
 const Map<String, String> kAmbience = {
-  'wind': 'assets/ambience/wind.mp3',
   'rain': 'assets/ambience/rain.mp3',
+  'wind': 'assets/ambience/wind.mp3',
+  'stream': 'assets/ambience/stream.mp3',
+  'waves': 'assets/ambience/waves.mp3',
+};
+
+const Map<String, String> kAmbienceLabel = {
+  'rain': '🌧 Rain',
+  'wind': '🍃 Wind',
+  'stream': '💧 Stream',
+  'waves': '🌊 Waves',
 };
 
 /// 環境音の「全開時」の音量。素材は -23 LUFS に揃えてあるので、ここは
-/// 鳥に対する前後関係だけを決める(現行 radio.py の AMB_MAX と同じ考え方)。
-const Map<String, double> kAmbMax = {'wind': 1.10, 'rain': 1.00};
+/// 鳥に対する前後関係だけを決める(現行 radio.py の AMB_MAX と同じ値)。
+const Map<String, double> kAmbMax = {
+  'rain': 1.00,
+  'wind': 1.10,
+  'stream': 0.95,
+  'waves': 1.05,
+};
 
 class SpikeApp extends StatelessWidget {
   const SpikeApp({super.key});
@@ -219,7 +238,10 @@ class _RadioPageState extends State<RadioPage> {
   final Map<String, AudioSource> _ambSrc = {};
   final Map<String, SoundHandle> _ambHandle = {};
   final Map<String, Timer> _ambPause = {};
-  final Map<String, bool> _ambOn = {'wind': true, 'rain': false};
+  // 既定は現行版と同じく「風」だけオン。
+  final Map<String, bool> _ambOn = {
+    for (final k in kAmbience.keys) k: k == 'wind',
+  };
 
   /// いま鳴っている音声の本数。増え続けていないかを目で見るために出す
   /// (重なりが「キーン」の正体だったので、再発したらここで分かる)。
@@ -398,7 +420,7 @@ class _RadioPageState extends State<RadioPage> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
-                    label: Text(k == 'wind' ? '🍃 Wind' : '🌧 Rain'),
+                    label: Text(kAmbienceLabel[k] ?? k),
                     selected: on,
                     onSelected: (_) {
                       setState(() => _ambOn[k] = !on);
