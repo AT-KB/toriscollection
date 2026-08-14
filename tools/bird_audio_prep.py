@@ -44,6 +44,11 @@ HIGHPASS_HZ = 500
 DENOISE_NF = -28
 
 
+# ffmpeg の出力には録音者名など非ASCIIが混ざる。Windows の既定(cp932)で
+# 読もうとすると UnicodeDecodeError で落ちるので、必ず utf-8 で受ける
+# (2026-08-14: 実際に1種の取得がここで失敗し、壊れたファイルが残った)。
+
+
 def ffmpeg() -> str:
     import imageio_ffmpeg
     return imageio_ffmpeg.get_ffmpeg_exe()
@@ -87,7 +92,7 @@ def _loudnorm(ff: str, src: str) -> str:
     base = (f"loudnorm=I={TARGET_I}:TP={TARGET_TP}:LRA={TARGET_LRA}")
     r = subprocess.run(
         [ff, "-hide_banner", "-i", src, "-af", base + ":print_format=json",
-         "-f", "null", "-"], capture_output=True, text=True)
+         "-f", "null", "-"], capture_output=True, text=True, encoding="utf-8", errors="replace")
     try:
         m = json.loads(r.stderr[r.stderr.rindex("{"):r.stderr.rindex("}") + 1])
         return (f"{base}:measured_I={m['input_i']}:measured_TP={m['input_tp']}"
@@ -113,7 +118,7 @@ def prepare(src: str, dest: str, stereo: bool = True) -> bool:
              f"highpass=f={HIGHPASS_HZ},"
              f"afftdn=nf={DENOISE_NF}:nt=w")
     r = subprocess.run([ff, "-y", "-loglevel", "error", "-i", src,
-                        "-af", chain, tmp], capture_output=True, text=True)
+                        "-af", chain, tmp], capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         print(f"  下ごしらえに失敗: {r.stderr[-200:]}")
         return False
@@ -122,13 +127,61 @@ def prepare(src: str, dest: str, stereo: bool = True) -> bool:
         af += ",aformat=channel_layouts=stereo"
     r = subprocess.run([ff, "-y", "-loglevel", "error", "-i", tmp,
                         "-af", af, "-b:a", BITRATE, dest],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
     if os.path.exists(tmp):
         os.remove(tmp)
     if r.returncode != 0:
         print(f"  仕上げに失敗: {r.stderr[-200:]}")
         return False
     return True
+
+
+def measure_lufs(path: str) -> float | None:
+    """仕上がりの音量(LUFS)を測る。"""
+    r = subprocess.run([ffmpeg(), "-hide_banner", "-i", path,
+                        "-af", "ebur128=framelog=quiet", "-f", "null", "-"],
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace")
+    import re as _re
+    m = _re.search(r"^\s*I:\s*(-?[\d.]+) LUFS", r.stderr, _re.M)
+    return float(m.group(1)) if m else None
+
+
+def retarget(path: str, tol: float = 0.5, rounds: int = 4) -> float | None:
+    """仕上がりを測り、目標に**収束するまで**音量を当て直す。
+
+    loudnorm は鳴きが疎な録音(キツツキ等)で目標に届かない。実測でコゲラが
+    -22.6 LUFS(目標より 3.2dB 小さい)になり、他と並べて明らかに小さかった。
+
+    ただし**差分を1回当てるだけでは合わない**。LUFS はゲート付きの測定なので、
+    持ち上げると今までゲートに落ちていた小さな音が測定に入り、測定値が
+    かけた分より大きく動く(実際 -22.6 に +3.6dB して -17.4 まで飛んだ)。
+    なので「測る→当てる」を数回繰り返して寄せる。
+    """
+    cur = measure_lufs(path)
+    if cur is None:
+        return None
+    for _ in range(rounds):
+        delta = TARGET_I - cur
+        if abs(delta) < tol:
+            break
+        tmp = path + ".trim.mp3"
+        # 頭打ち(alimiter)を通して割れを防ぐ。**level=disabled が必須**:
+        # 既定(level 有効)だと出力を limit まで自動で持ち上げてしまい、
+        # せっかく下げたぶんが戻る(実測: -1.6dB 下げても測定値が変わらなかった)。
+        af = (f"volume={delta:+.2f}dB,"
+              f"alimiter=limit={10 ** (TARGET_TP / 20):.3f}:level=disabled")
+        r = subprocess.run([ffmpeg(), "-y", "-loglevel", "error", "-i", path,
+                            "-af", af, "-b:a", BITRATE, tmp],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace")
+        if r.returncode != 0 or not os.path.exists(tmp):
+            break
+        os.replace(tmp, path)
+        cur = measure_lufs(path)
+        if cur is None:
+            break
+    return cur
 
 
 def main() -> None:
