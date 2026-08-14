@@ -34,6 +34,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_soloud: ^4.1.7
+  toris_core:
+    path: ../toris_core
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +59,14 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # 鳥の鳴き声(36種)と環境音(7層)。すべて APK に同梱する。
+  # 実行時に取りに行かないのが移行の狙いのひとつ(現行は Render の
+  # コールドスタート実測22.7秒を毎回踏む)。出典とライセンスは
+  # 各ディレクトリの _credits.json に1件ずつ記録してある。
+  assets:
+    - assets/birds/
+    - assets/ambience/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

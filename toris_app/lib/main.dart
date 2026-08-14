@@ -7,12 +7,16 @@
 /// 触れるたび同じ壁が来る。判断の根拠は
 /// `toris_collection/docs/team/proposals/2026-08-11_技術方針_Flutter移行の判断.md`。
 ///
-/// ## いまの段階(A案: 目的直行)
-/// 移行の目的そのもの — **目覚ましと通知** — を最初に成立させる。
-/// 図鑑・庭・ラジオは現行版が動いているので後回し。
-/// 鳴らすネイティブ側(`BirdAlarmService` ほか)は Capacitor 版からそのまま移した
-/// (Capacitor にも WebView にも依存していなかった)。置き換えたのは、Web から
-/// 呼ぶための `@JavascriptInterface` を MethodChannel にした部分だけ。
+/// ## いまの段階
+/// 移行の目的そのもの(目覚まし)を先に立て、続いてラジオを移した。
+/// 図鑑・庭・植える・ネットワークはまだ現行版にしかない。全機能の台帳は
+/// `docs/team/proposals/2026-08-13_移行計画_全機能の棚卸し.md`。
+///
+/// ## 守ること
+/// - **表示は英語のみ。** 製品版は 2026-08-09 に日本語表示を落としている。
+///   文言は i18n.py の TRANSLATIONS にある出荷済みの英語を引き写す。
+/// - **セーブコードの互換。** 進行データはサーバーに無く、あの文字列としてのみ
+///   ユーザーの手元にある(`toris_core` で双方向の一致を確認済み)。
 ///
 /// ## パッケージ名について
 /// いまは `com.toriscollection.toris_app`。製品版は `com.toriscollection.app`。
@@ -20,11 +24,10 @@
 /// 切り替え(提案書 §3 ステップ3)のときに製品版の名前へ変える。
 library;
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import 'alarm.dart';
+import 'alarm/alarm_page.dart';
+import 'radio/radio_page.dart';
 
 void main() => runApp(const TorisApp());
 
@@ -39,255 +42,37 @@ class TorisApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF7BA87B)),
         useMaterial3: true,
       ),
-      home: const AlarmPage(),
+      home: const HomeShell(),
     );
   }
 }
 
-class AlarmPage extends StatefulWidget {
-  const AlarmPage({super.key});
+/// タブの骨組み。現行版のタブ構成(ラジオ/庭/植える/図鑑/ネットワーク/使い方)に
+/// 合わせて増やしていく。いまはラジオと目覚ましだけ。
+class HomeShell extends StatefulWidget {
+  const HomeShell({super.key});
 
   @override
-  State<AlarmPage> createState() => _AlarmPageState();
+  State<HomeShell> createState() => _HomeShellState();
 }
 
-class _AlarmPageState extends State<AlarmPage> {
-  TimeOfDay _time = const TimeOfDay(hour: 7, minute: 0);
-  String _bird = alarmBirds.first.key;
-  AlarmSetting? _current;
-  bool _exactAllowed = true;
-  bool _notifyAllowed = true;
+class _HomeShellState extends State<HomeShell> {
+  int _index = 0;
 
-  /// 鳴っている最中かどうか。鳴っていれば画面のいちばん上に「止める」を出す。
-  bool _ringing = false;
-  Timer? _ringWatch;
-
-  @override
-  void initState() {
-    super.initState();
-    _refresh();
-    // 鳴り始めたら画面に「止める」を出す。通知を拒否していても止められるように。
-    _ringWatch = Timer.periodic(const Duration(seconds: 2), (_) async {
-      final r = await Alarm.isRinging();
-      if (mounted && r != _ringing) setState(() => _ringing = r);
-    });
-  }
-
-  @override
-  void dispose() {
-    _ringWatch?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _refresh() async {
-    final s = await Alarm.get();
-    final exact = await Alarm.canScheduleExact();
-    final notify = await Alarm.hasNotificationPermission();
-    if (!mounted) return;
-    setState(() {
-      _current = s;
-      _exactAllowed = exact;
-      _notifyAllowed = notify;
-      if (s.enabled) {
-        _time = TimeOfDay(hour: s.hour, minute: s.minute);
-        _bird = s.sound;
-      }
-    });
-  }
-
-  Future<void> _pickTime() async {
-    final t = await showTimePicker(context: context, initialTime: _time);
-    if (t != null) setState(() => _time = t);
-  }
-
-  Future<void> _set() async {
-    // 鳴っている最中に「止める」を出すには通知が要る。セットのタイミングで求める。
-    if (!_notifyAllowed) {
-      await Alarm.requestNotificationPermission();
-    }
-    final ok = await Alarm.set(_time.hour, _time.minute, _bird);
-    if (!mounted) return;
-    if (!ok) {
-      // Android 12+ で「正確なアラーム」が未許可。設定画面へ案内する。
-      final go = await showDialog<bool>(
-        context: context,
-        builder: (c) => AlertDialog(
-          title: const Text('Permission needed for exact timing'),
-          content: const Text(
-            'Allow "Alarms & reminders" in Android settings. '
-            'Without it, the time can drift while your phone sleeps.',
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(c, false),
-                child: const Text('Not now')),
-            FilledButton(
-                onPressed: () => Navigator.pop(c, true),
-                child: const Text('Open settings')),
-          ],
-        ),
-      );
-      if (go == true) await Alarm.openExactAlarmSettings();
-      await _refresh();
-      return;
-    }
-    await _refresh();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('⏰ Set for ${_time.format(context)}')),
-    );
-  }
-
-  Future<void> _cancel() async {
-    await Alarm.cancel();
-    await _refresh();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Turned off')));
-  }
+  // IndexedStack にしているのは、タブを移ってもラジオを鳴らし続けるため
+  // (作り直すと音が途切れる)。
+  final List<Widget> _pages = const [RadioPage(), AlarmPage()];
 
   @override
   Widget build(BuildContext context) {
-    final s = _current;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF2),
-      appBar: AppBar(
-        title: const Text('⏰ Wake with the birds'),
-        backgroundColor: const Color(0xFFCFD9B8),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          // 鳴っている間だけ出る、大きくて迷いようのない停止ボタン。
-          if (_ringing) ...[
-            SizedBox(
-              height: 64,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFB3261E)),
-                onPressed: () async {
-                  await Alarm.stopRinging();
-                  if (mounted) setState(() => _ringing = false);
-                },
-                icon: const Icon(Icons.stop_circle, size: 28),
-                label: const Text('Stop the birds',
-                    style: TextStyle(fontSize: 18)),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-          Text(
-            'Your bird starts almost too quiet to hear, and grows over '
-            'five minutes. Others join in along the way. '
-            'Nothing ever jolts you awake.',
-            style: TextStyle(color: Colors.grey.shade700, height: 1.5),
-          ),
-          const SizedBox(height: 24),
-
-          // ── 時刻 ──
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.schedule),
-              title: const Text('Wake at'),
-              subtitle: Text(_time.format(context),
-                  style: const TextStyle(
-                      fontSize: 30, fontWeight: FontWeight.w600)),
-              trailing: const Icon(Icons.edit),
-              onTap: _pickTime,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── 最初に鳴く鳥 ──
-          const Text('First to sing',
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(
-            'Only true songs are offered here — never the harsh calls. '
-            'Sharp sounds make waking worse.',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 8),
-          RadioGroup<String>(
-            groupValue: _bird,
-            onChanged: (v) => setState(() => _bird = v!),
-            child: Column(
-              children: alarmBirds
-                  .map((b) => RadioListTile<String>(
-                        value: b.key,
-                        title: Text(b.name),
-                        dense: true,
-                      ))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          if (!_notifyAllowed)
-            Card(
-              color: const Color(0xFFFFF3E0),
-              child: ListTile(
-                leading: const Icon(Icons.notifications_off,
-                    color: Colors.orange),
-                title: const Text('Notifications are turned off'),
-                subtitle:
-                    const Text('You will not see a way to stop the alarm'),
-                trailing: TextButton(
-                  onPressed: () async {
-                    await Alarm.requestNotificationPermission();
-                    await _refresh();
-                  },
-                  child: const Text('Allow'),
-                ),
-              ),
-            ),
-
-          if (!_exactAllowed)
-            Card(
-              color: const Color(0xFFFFF3E0),
-              child: ListTile(
-                leading: const Icon(Icons.warning_amber, color: Colors.orange),
-                title: const Text('Exact timing is not allowed'),
-                subtitle: const Text('The alarm may drift from the time you set'),
-                trailing: TextButton(
-                  onPressed: () async {
-                    await Alarm.openExactAlarmSettings();
-                    await _refresh();
-                  },
-                  child: const Text('Settings'),
-                ),
-              ),
-            ),
-
-          Row(children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _set,
-                icon: const Icon(Icons.alarm),
-                label: const Text('Set for this time'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: s?.enabled == true ? _cancel : null,
-                child: const Text('Turn off'),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 20),
-
-          // ── いまの設定(ネイティブが持っているものをそのまま出す)──
-          Center(
-            child: Text(
-              s == null
-                  ? '…'
-                  : (s.enabled
-                      ? '⏰ Set for ${s.hhmm}'
-                      : 'Not set right now'),
-              style: const TextStyle(color: Color(0xFF3F5C37)),
-            ),
-          ),
+      body: IndexedStack(index: _index, children: _pages),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.mic), label: 'Radio'),
+          NavigationDestination(icon: Icon(Icons.alarm), label: 'Wake'),
         ],
       ),
     );

@@ -1,13 +1,14 @@
 // 目覚まし画面の最低限の確認。
 // 実際に鳴るかは実機でしか分からないので、ここでは「画面が組み上がること」と
 // 「さえずりだけを選ばせていること」を見る。
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:toris_app/alarm.dart';
-import 'package:toris_app/main.dart';
+import 'package:toris_app/alarm/alarm.dart';
+import 'package:toris_app/alarm/alarm_page.dart';
 
 void main() {
   testWidgets('画面が立ち上がり、時刻とセットのボタンが出る(表示は英語)', (WidgetTester tester) async {
-    await tester.pumpWidget(const TorisApp());
+    await tester.pumpWidget(const MaterialApp(home: AlarmPage()));
     await tester.pump();
     expect(find.text('Wake at'), findsOneWidget);
     expect(find.text('Set for this time'), findsOneWidget);
@@ -15,7 +16,7 @@ void main() {
   });
 
   testWidgets('選べる鳥は4種で、すべてさえずり', (WidgetTester tester) async {
-    await tester.pumpWidget(const TorisApp());
+    await tester.pumpWidget(const MaterialApp(home: AlarmPage()));
     await tester.pump();
     for (final b in alarmBirds) {
       expect(find.text(b.name), findsOneWidget);
