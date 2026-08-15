@@ -10,6 +10,7 @@ library;
 
 import 'dart:math';
 
+import 'feeder_chain.dart';
 import 'py_coerce.dart';
 
 /// その土地・月の気温。
@@ -149,6 +150,9 @@ class Arrival {
   final double foodScore;
   final double foodFactor;
   final double rarityFactor;
+
+  /// 猛禽が居るときの抑制。居なければ 1.0。`feeder_chain` 由来。
+  final double waryFactor;
   const Arrival({
     required this.probability,
     required this.tempFit,
@@ -156,6 +160,7 @@ class Arrival {
     required this.foodScore,
     required this.foodFactor,
     required this.rarityFactor,
+    this.waryFactor = 1.0,
   });
 }
 
@@ -166,11 +171,15 @@ class Arrival {
 ///
 /// 中心性(Sony CSL の PageRank 補正)による上書きは**移していない**。
 /// 現行もデータが無ければシードの rarity を使う作りで、そちらに合わせている。
+///
+/// [raptors] に猛禽が居ると、警戒心の強い鳥ほど来にくくなる(`feeder_chain`)。
+/// **省略すれば 1.0 倍**なので、餌台を置いていない庭の確率は今までと変わらない。
 Arrival arrivalProbability({
   required String birdId,
   required FoodWeb web,
   required String biomeId,
   required Map<String, dynamic> birdsData,
+  List<String> raptors = const [],
 }) {
   final bird = (birdsData[birdId] as Map?) ?? const {};
   final tFit = temperatureFit(web.temperature, bird['temp_fit'] as List?);
@@ -185,7 +194,11 @@ Arrival arrivalProbability({
   final rarity = pyFloat(bird['rarity']) ?? 0.5;
   final rarityFactor = (1.0 - rarity * 0.85) * 0.9;
 
-  var prob = tFit * biomeBonus * foodFactor * rarityFactor * 0.5;
+  // 恐怖の景観。猛禽が居なければ 1.0 で、式は今まで通り。
+  final wary =
+      waryArrivalMultiplier(pyFloat(bird['wariness']) ?? 0.5, raptors);
+
+  var prob = tFit * biomeBonus * foodFactor * rarityFactor * 0.5 * wary;
   prob = prob.clamp(0.0, 1.0);
 
   return Arrival(
@@ -195,6 +208,7 @@ Arrival arrivalProbability({
     foodScore: foodScore,
     foodFactor: foodFactor,
     rarityFactor: rarityFactor,
+    waryFactor: wary,
   );
 }
 
@@ -225,9 +239,14 @@ TurnResult runTurn({
   required Map<String, dynamic> birdsData,
   required Map<String, dynamic> biomes,
   required Map<String, dynamic> seasonOffset,
+  List<String> placedFeatures = const [],
   int maxResidents = 4,
   int maxArrivalsPerTurn = 1,
 }) {
+  // 餌台の連鎖。開放型を置くとリスが来て、リスがタカを呼ぶ。
+  // 空なら猛禽は居らず、確率は今まで通り。
+  final raptors = resolveFeeders(placedFeatures, plantedPlants).raptors;
+
   final web = buildFoodWeb(
     plantedPlants: plantedPlants,
     biomeId: biomeId,
@@ -245,7 +264,11 @@ TurnResult runTurn({
 
   for (final bid in residents.toList()) {
     final p = arrivalProbability(
-            birdId: bid, web: web, biomeId: biomeId, birdsData: birdsData)
+            birdId: bid,
+            web: web,
+            biomeId: biomeId,
+            birdsData: birdsData,
+            raptors: raptors)
         .probability;
     final depRate = 0.3 - 0.25 * p;
     if (rng.nextDouble() < depRate) {
@@ -258,7 +281,11 @@ TurnResult runTurn({
   for (final bid in birdsData.keys) {
     if (next.contains(bid)) continue;
     final p = arrivalProbability(
-            birdId: bid, web: web, biomeId: biomeId, birdsData: birdsData)
+            birdId: bid,
+            web: web,
+            biomeId: biomeId,
+            birdsData: birdsData,
+            raptors: raptors)
         .probability;
     if (p > 0) candidates.add(MapEntry(bid, p));
   }
@@ -328,6 +355,7 @@ AbsenceResult evolveWhileAway({
   required Map<String, dynamic> birdsData,
   required Map<String, dynamic> biomes,
   required Map<String, dynamic> seasonOffset,
+  List<String> placedFeatures = const [],
 }) {
   final hours = now.difference(lastSeenAt).inSeconds / 3600.0;
   final ticks = hours <= 0 ? 0 : estimateTickCount(hours);
@@ -361,6 +389,7 @@ AbsenceResult evolveWhileAway({
       birdsData: birdsData,
       biomes: biomes,
       seasonOffset: seasonOffset,
+      placedFeatures: placedFeatures,
     );
     cur = r.residents;
     arrivals.addAll(r.arrivals);

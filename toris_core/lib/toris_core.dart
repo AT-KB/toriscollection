@@ -8,6 +8,7 @@ library;
 
 export 'src/badges.dart';
 export 'src/ecology.dart';
+export 'src/feeder_chain.dart';
 export 'src/engine.dart';
 export 'src/flock.dart';
 export 'src/py_coerce.dart';

@@ -13,6 +13,7 @@ library;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:toris_core/toris_core.dart' as core;
 
 import '../ui/theme.dart';
 import 'garden_state.dart';
@@ -280,6 +281,36 @@ class _GardenPageState extends State<GardenPage>
                   ),
               ],
             ),
+
+          // ── 餌台 ──
+          // 開放型を置くとリスが届き、リスがタカを呼び、臆病な鳥が来にくくなる。
+          // かご型ならリスは届かない。**これが唯一の駆け引き**で、罰ではなく選択。
+          const SizedBox(height: 20),
+          const _Label('Feeder'),
+          Wrap(
+            spacing: 10,
+            children: [
+              for (final f in ['feeder_open', 'feeder_cage'])
+                ChoiceChip(
+                  label: Text(core.kFeeders[f]!['english'] as String),
+                  selected: g.feeders.contains(f),
+                  onSelected: (on) async {
+                    setState(() => g.setFeeder(on ? f : null));
+                    await _save();
+                  },
+                ),
+            ],
+          ),
+          if (g.chain.animals.isNotEmpty || g.chain.raptors.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _Note([
+              for (final a in g.chain.animals)
+                '🐿️ ${core.kAnimals[a]?['english']} is taking the seed.',
+              for (final r in g.chain.raptors)
+                "🦅 ${core.kRaptors[r]?['english']} is watching. "
+                    'Shy birds keep their distance.',
+            ].join('\n')),
+          ],
 
           // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
           if (web.insects.isNotEmpty) ...[

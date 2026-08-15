@@ -45,6 +45,10 @@ class Garden {
   String biomeId;
   final List<String> planted = [];
 
+  /// 置いた餌台。開放型はリスが届き、リスがタカを呼ぶ(`feeder_chain`)。
+  /// かご型ならリスは届かない — これが唯一の駆け引き。
+  final List<String> feeders = [];
+
   /// **近くで出会った回数**(儀式で手前の枝まで来た回数)。
   /// これがラジオの近さ・群れの厚みに効く(現行の観察回数)。
   /// 来訪しただけでは増えない — 会いに行くから馴染む。
@@ -96,6 +100,15 @@ class Garden {
         birdsData: data.birds,
         biomes: data.biomes,
         seasonOffset: data.seasonOffset,
+      );
+
+  /// いまの到来確率の内訳。「なぜ来たか」を出すのに使う。
+  core.Arrival arrivalOf(String birdId) => core.arrivalProbability(
+        birdId: birdId,
+        web: web,
+        biomeId: biomeId,
+        birdsData: data.birds,
+        raptors: chain.raptors,
       );
 
   /// この土地に植えられる植物。
@@ -171,6 +184,16 @@ class Garden {
 
   void remove(String plantId) => planted.remove(plantId);
 
+  /// 餌台を置く / 片づける。餌台は1つだけ(開放型とかご型は同時に置けない —
+  /// 同時に置けると開放型が常に勝ってしまい、選ぶ意味が消える)。
+  void setFeeder(String? feederId) {
+    feeders.clear();
+    if (feederId != null) feeders.add(feederId);
+  }
+
+  /// いまの餌台から解けた連鎖(来ている動物と猛禽)。
+  core.FeederChain get chain => core.resolveFeeders(feeders, planted);
+
   /// **留守のあいだのぶんを進める。** 画面を開いた時に一度だけ呼ぶ。
   ///
   /// 現行の `absence_loop.evolve_state` に当たる。押して進める仕掛けは置かない
@@ -194,6 +217,7 @@ class Garden {
         birdsData: data.birds,
         biomes: data.biomes,
         seasonOffset: data.seasonOffset,
+        placedFeatures: feeders,
       );
       visiting
         ..clear()
@@ -227,10 +251,19 @@ class Garden {
   Map<String, dynamic> toState() => {
         'biome': biomeId,
         'planted': planted,
+        'feeders': feeders,
         'residents': visiting.toSet(),
         'discovered': discovered,
-        'observed': {for (final e in observed.entries) e.key: e.value},
-        'bird_days': {for (final e in birdDays.entries) e.key: e.value},
+        // Python 側は {count: n} の形。読む側は素の数も受けるが、書く形は揃える。
+        'observed': {
+          for (final e in observed.entries) e.key: {'count': e.value}
+        },
+        // Python 側 `_mark_met_today` と同じ形 {days, last}。
+        // last を持たないと、同じ日にアプリを開き直すたびに二重に数えてしまう。
+        'bird_days': {
+          for (final e in birdDays.entries)
+            e.key: {'days': e.value, 'last': lastMetDay[e.key] ?? ''}
+        },
         'saved_at': core.isoSeconds(lastSeenAt ?? DateTime.now()),
       };
 
@@ -239,9 +272,33 @@ class Garden {
     planted
       ..clear()
       ..addAll(((s['planted'] as List?) ?? const []).map((e) => '$e'));
+    feeders
+      ..clear()
+      ..addAll(((s['feeders'] as List?) ?? const []).map((e) => '$e'));
     visiting
       ..clear()
       ..addAll(((s['residents'] as Iterable?) ?? const []).map((e) => '$e'));
+
+    // **図鑑と会った日数は必ず戻す。** 保存はしていたのに読み戻していなかったため、
+    // アプリを閉じるたびに図鑑が白紙に戻っていた(交渉不能の原則2「罰しない」に反する)。
+    discovered
+      ..clear()
+      ..addAll(((s['discovered'] as Iterable?) ?? const []).map((e) => '$e'));
+    birdDays.clear();
+    lastMetDay.clear();
+    final days = s['bird_days'];
+    if (days is Map) {
+      days.forEach((k, v) {
+        // Python は {days, last}。素の数で書かれた古い保存も読めるようにする。
+        if (v is Map) {
+          birdDays['$k'] = (v['days'] as num?)?.toInt() ?? 0;
+          final l = v['last'];
+          if (l is String && l.isNotEmpty) lastMetDay['$k'] = l;
+        } else {
+          birdDays['$k'] = (v as num?)?.toInt() ?? 0;
+        }
+      });
+    }
     // 前回見た時刻。セーブコードの saved_at をそのまま使う
     // (現行も「離れていた時間」をこれで測っている)。
     final at = s['saved_at'];

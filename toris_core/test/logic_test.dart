@@ -165,6 +165,78 @@ void main() {
     expect(checked, 4440, reason: '4440通りを見ているはず');
   });
 
+  test('餌台の連鎖: 288通りで Python 版と一致する', () {
+    // 餌台 → リス → タカ → 警戒心の強い鳥を抑制。
+    // 分岐が細かい(かご型だけならリスは届かない/堅果は地面なので届く)ので総当たり。
+    var checked = 0;
+    for (final c in fx['feeder_chain'] as List) {
+      final feats = (c['features'] as List).map((e) => '$e').toList();
+      final pset = (c['planted'] as List).map((e) => '$e').toList();
+      final label = '餌台=$feats 植えた=$pset';
+
+      expect(availableFoods(feats, pset).toList()..sort(), c['foods'],
+          reason: '$label の食べ物が違う');
+      final r = resolveFeeders(feats, pset);
+      expect(r.animals, c['animals'], reason: '$label の動物が違う');
+      expect(r.raptors, c['raptors'], reason: '$label の猛禽が違う');
+
+      (c['mult'] as Map<String, dynamic>).forEach((w, v) {
+        expect(waryArrivalMultiplier(double.parse(w), r.raptors),
+            closeTo(v as num, 1e-9),
+            reason: '$label 警戒心$w の抑制が違う');
+        checked++;
+      });
+    }
+    expect(checked, 288, reason: '288通りを見ているはず');
+  });
+
+  test('餌台: かご型ならリスは来ず、臆病な鳥も抑えられない', () {
+    // 唯一の駆け引き。かご型を選べばタカは来ない。
+    expect(resolveFeeders(['feeder_cage'], []).animals, isEmpty);
+    expect(resolveFeeders(['feeder_cage'], []).raptors, isEmpty);
+    expect(resolveFeeders(['feeder_open'], []).raptors, ['cooper_hawk']);
+    // 堅果は地面に落ちるので、かご型でもリスは食べられる
+    expect(resolveFeeders(['feeder_cage'], ['white_oak']).animals,
+        ['gray_squirrel']);
+    // 餌台を置かなければ、確率は今まで通り(1.0 倍)
+    expect(waryArrivalMultiplier(1.0, const []), 1.0);
+  });
+
+  test('餌台を置かない庭の到来確率は、今までと1ビットも変わらない', () {
+    // 配線を足したせいで既存の庭が変わっていないことを、実データで確かめる。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final web = buildFoodWeb(
+      plantedPlants: const ['sakura', 'kunugi'],
+      biomeId: 'kyoto',
+      month: 5,
+      plantsData: load('plants'),
+      insectsData: load('insects'),
+      birdsData: birds,
+      biomes: load('biomes'),
+      seasonOffset: load('season_offset'),
+    );
+    for (final bid in birds.keys) {
+      final bare = arrivalProbability(
+          birdId: bid, web: web, biomeId: 'kyoto', birdsData: birds);
+      final withRaptor = arrivalProbability(
+          birdId: bid,
+          web: web,
+          biomeId: 'kyoto',
+          birdsData: birds,
+          raptors: const ['cooper_hawk']);
+      expect(bare.waryFactor, 1.0, reason: '$bid: 猛禽が居なければ 1.0 倍');
+      // 警戒心 0 の鳥は抑制を受けない。それ以外は必ず下がる。
+      final w = pyFloat(birds[bid]['wariness']) ?? 0.5;
+      if (w > 0) {
+        expect(withRaptor.probability, lessThan(bare.probability + 1e-12),
+            reason: '$bid: タカが居れば上がることはない');
+      }
+    }
+  });
+
   test('留守のあいだの進み方: 区切りが Python 版と同じ', () {
     // 急かさない設計の根っこ。**時間は勝手に進む**(原則1「受動的である」)。
     expect(estimateTickCount(0.0), 0);

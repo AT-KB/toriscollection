@@ -60,6 +60,9 @@ SAVE_KEYS = (
     "biome",
     "planted",
     "planted_at_map",
+    # 置いた餌台(feeder_chain.py)。開放型かかご型かで、リス→タカの連鎖が変わる。
+    # 庭の状態の一部なので、端末を替えても引き継げるようにセーブコードに含める。
+    "feeders",
     "residents",
     "discovered",
     "bird_days",

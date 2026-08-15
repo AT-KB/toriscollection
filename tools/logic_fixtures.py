@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "toris_collecti
 import badges  # noqa: E402
 import ecology  # noqa: E402
 import engine  # noqa: E402
+import feeder_chain as fc  # noqa: E402
 import disturbance as dist  # noqa: E402
 import data as seed  # noqa: E402
 import flock  # noqa: E402
@@ -128,6 +129,35 @@ def main() -> None:
                     "temp": round(temp, 12), **web, "probs": probs,
                 })
 
+    # 餌台の連鎖(餌台 → リス → タカ → 警戒鳥の抑制)。
+    # 餌台の置き方 × 植えた組み合わせを**総当たり**で。
+    # ここは分岐が細かい(かご型だけならリスは届かない/堅果は地面なので届く)ので、
+    # 手で書いたテストでは抜ける。
+    feeder_sets = [
+        [], ["feeder_open"], ["feeder_cage"],
+        ["feeder_open", "feeder_cage"], ["nonexistent_feeder"],
+        ["feeder_cage", "nonexistent_feeder"],
+    ]
+    fc_plant_sets = [
+        [], ["sunflower"], ["white_oak"], ["sunflower", "white_oak"],
+        ["sakura"], ["sakura", "sunflower"],
+    ]
+    # 警戒心は 0〜1 の外まで見る(データが汚れていても落ちないこと)
+    wariness_values = [0.0, 0.25, 0.5, 0.55, 0.7, 1.0, -0.3, 1.4]
+
+    feeder_cases = []
+    for feats in feeder_sets:
+        for pset in fc_plant_sets:
+            r = fc.resolve(feats, pset)
+            feeder_cases.append({
+                "features": feats, "planted": pset,
+                "foods": sorted(fc.available_foods(feats, pset)),
+                "animals": r["animals"], "raptors": r["raptors"],
+                "mult": {str(w): round(
+                    fc.wary_arrival_multiplier(w, r["raptors"]), 12)
+                    for w in wariness_values},
+            })
+
     # 撹乱: 乱数列は Python と Dart で違うので、結果そのものは突き合わせられない。
     # 代わりに**定数と判定の境目**を運ぶ(Dart 側は乱数を差し替えて境目を試す)。
     dist_consts = {
@@ -140,8 +170,12 @@ def main() -> None:
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump({"flock": flock_cases, "badges": badge_cases,
                    "ecology": eco, "guilds": guilds, "arrivals": arrivals,
+                   "feeder_chain": feeder_cases,
                    "disturbance": dist_consts}, f,
                   ensure_ascii=False, indent=1)
+    nf = len(feeder_cases) * len(wariness_values)
+    print(f"餌台の連鎖: {len(feeder_cases)} 状況 × 警戒心{len(wariness_values)}通り "
+          f"= {nf} 通り")
     print(f"生態: {len(eco)} 組(37種の全ペア)")
     print(f"到来: {len(arrivals)} 状況 × {len(ids)}種 = {len(arrivals)*len(ids)} 通り")
     n = sum(len(c["sizes"]) for c in flock_cases)

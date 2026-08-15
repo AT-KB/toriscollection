@@ -67,7 +67,9 @@ class _GuidePageState extends State<GuidePage> {
       });
     }
 
-    final found = ids.where(g.discovered.contains).length;
+    final found = ids
+        .where((b) => g.discovered.contains(b) || (g.observed[b] ?? 0) > 0)
+        .length;
 
     return Scaffold(
       appBar: AppBar(title: Text('Guide  $found/${ids.length}')),
@@ -107,8 +109,9 @@ class _Entry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = (g.data.birds[id] as Map?) ?? const {};
-    final discovered = g.discovered.contains(id); // 来訪済み
     final observed = (g.observed[id] ?? 0) > 0; // 近くで出会った
+    // 近くで会えた鳥は、当然「来た鳥」でもある(app.py 図鑑タブと同じ判定)。
+    final discovered = g.discovered.contains(id) || observed;
     final rarity = ((b['rarity'] as num?) ?? 0.5).toDouble();
     final stars = '★' * (1 + (rarity * 5).toInt());
     final days = g.birdDays[id] ?? 0;

@@ -256,24 +256,29 @@
    "why": ""
   },
   "feeder_chain.animals_present": {
-   "dart": "",
-   "status": "todo"
+   "dart": "animalsPresent",
+   "status": "done",
+   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
   },
   "feeder_chain.available_foods": {
-   "dart": "",
-   "status": "todo"
+   "dart": "availableFoods",
+   "status": "done",
+   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
   },
   "feeder_chain.raptors_present": {
-   "dart": "",
-   "status": "todo"
+   "dart": "raptorsPresent",
+   "status": "done",
+   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
   },
   "feeder_chain.resolve": {
-   "dart": "",
-   "status": "todo"
+   "dart": "resolveFeeders",
+   "status": "done",
+   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
   },
   "feeder_chain.wary_arrival_multiplier": {
-   "dart": "",
-   "status": "todo"
+   "dart": "waryArrivalMultiplier",
+   "status": "done",
+   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
   },
   "flock.flock_cap": {
    "dart": "flockCap",
@@ -375,43 +380,53 @@
   },
   "mementos.all_possible_mementos": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.feather_id": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.make_id": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.memento_category": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.memento_display": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.memento_target": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.plume_id": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.possible_mementos_from_bird": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.roll_drop": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "mementos.twig_id": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
   },
   "observation_log.load_observation_counts": {
    "dart": "observed",
@@ -662,19 +677,23 @@
   },
   "tutorial.advance_step": {
    "dart": "",
-   "status": "todo"
+   "status": "todo",
+   "why": "CEO 2026-08-15「もっと固まってからでいい」。保留"
   },
   "tutorial.is_done": {
    "dart": "",
-   "status": "todo"
+   "status": "todo",
+   "why": "CEO 2026-08-15「もっと固まってからでいい」。保留"
   },
   "tutorial.resolve_step": {
    "dart": "",
-   "status": "todo"
+   "status": "todo",
+   "why": "CEO 2026-08-15「もっと固まってからでいい」。保留"
   },
   "tutorial.step_content": {
    "dart": "",
-   "status": "todo"
+   "status": "todo",
+   "why": "CEO 2026-08-15「もっと固まってからでいい」。保留"
   },
   "xc_client.clear_failed_cache": {
    "dart": "",

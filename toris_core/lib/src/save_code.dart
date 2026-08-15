@@ -25,6 +25,8 @@ const List<String> saveKeys = [
   'biome',
   'planted',
   'planted_at_map',
+  // 置いた餌台(feeder_chain)。開放型かかご型かで、リス→タカの連鎖が変わる。
+  'feeders',
   'residents',
   'discovered',
   'bird_days',
