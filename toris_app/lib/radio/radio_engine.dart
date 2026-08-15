@@ -296,6 +296,16 @@ class RadioEngine {
   /// 種データ(食べ物・気候)。共起ネットワークの計算に使う。
   Map<String, dynamic> _birdsData = const {};
 
+  /// 今日の顔ぶれのギルドのまとまり(2羽以上のギルドだけ、多い順)。
+  List<core.GuildGroup> guildGroups = const [];
+
+  /// 「なぜこの顔ぶれか」の一文。語れることが無ければ、共起の一般論を出す。
+  String lineupStory = '';
+
+  /// 鳥ID → 英名(ギルドのまとまりを描くのに使う)。
+  String englishOf(String id) =>
+      (_birdsData[id]?['english'] as String?) ?? id;
+
   Future<void> load({Map<String, int> observed = const {}}) async {
     try {
       await SoLoud.instance.init();
@@ -335,6 +345,10 @@ class RadioEngine {
       ids, _birdsData, kMaxBirds, _rng.nextDouble,
       baseWeight: {for (final id in ids) id: 1.0 + (observed[id] ?? 0) * 0.5},
     );
+    // 「なぜこの顔ぶれか」。共起モデルが言える範囲だけを語る(原則4)。
+    guildGroups = core.guildGroups(chosen, _birdsData);
+    lineupStory = core.lineupStoryText(core.lineupStory(chosen, _birdsData));
+    if (lineupStory.isEmpty) lineupStory = core.kLineupFallback;
     return [for (final id in chosen) byId[id]!];
   }
 

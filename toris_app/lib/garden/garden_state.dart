@@ -114,7 +114,9 @@ class Garden {
   /// 留守のあいだに撹乱で倒れた植物と、その出来事。
   /// 倒れたぶんは**純減**で、自動では植え直さない(現行と同じ)。
   List<String> lastLostPlants = [];
-  List<String> lastDisturbances = [];
+  /// 起きた撹乱そのもの(種類・アイコン・強さ)。**アイコンだけにしない** —
+  /// 嵐/落雷/伐採で言い方が変わるので、種類が要る。
+  List<core.Disturbance> lastDisturbances = [];
 
   Garden(this.data, {this.biomeId = 'kyoto'});
 
@@ -260,7 +262,7 @@ class Garden {
       lastDepartures = r.departures;
       // 撹乱で倒れた植物を反映する。庭は痩せるが、記録は減らさない。
       lastLostPlants = r.lostPlants;
-      lastDisturbances = [for (final d in r.disturbances) d.icon];
+      lastDisturbances = r.disturbances;
       planted
         ..clear()
         ..addAll(r.plantedFinal);

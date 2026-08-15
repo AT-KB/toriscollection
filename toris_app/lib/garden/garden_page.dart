@@ -80,6 +80,14 @@ class _GardenPageState extends State<GardenPage>
         for (final b in g.lastDepartures) _name(g.data.birds, b)
       }.toList(),
       lostPlants: [for (final p in g.lastLostPlants) _name(g.data.plants, p)],
+      // 撹乱は種類ごとに一文で語る。倒れた植物はその文の中に入る。
+      disturbanceStories: [
+        for (final d in g.lastDisturbances)
+          core.disturbanceStory(d.type, d.icon,
+              [for (final p in g.lastLostPlants) _name(g.data.plants, p)])
+      ],
+      summary: core.summarizeEvents(
+          g.lastArrivals, (b) => _name(g.data.birds, b)),
     );
     if (report.worthShowing && mounted) {
       await showWelcomeBackPopup(context, g, report);

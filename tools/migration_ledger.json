@@ -16,8 +16,9 @@
    "why": ""
   },
   "absence_loop.humanize_delta": {
-   "dart": "",
-   "status": "todo"
+   "dart": "humanizeDelta",
+   "status": "done",
+   "why": "CEO 2026-08-16「123やろう」。Just now / min / hr / days ago"
   },
   "absence_loop.parse_iso": {
    "dart": "parseIso",
@@ -25,8 +26,9 @@
    "why": "読めなければ静かに null(例外を投げない)"
   },
   "absence_loop.summarize_events": {
-   "dart": "",
-   "status": "todo"
+   "dart": "summarizeEvents",
+   "status": "done",
+   "why": "CEO 2026-08-16「123やろう」。1種なら名前で、複数種なら件数と種数で"
   },
   "ads.has_claimed_today": {
    "dart": "",
@@ -157,8 +159,9 @@
    "why": ""
   },
   "disturbance.disturbance_story": {
-   "dart": "",
-   "status": "todo"
+   "dart": "disturbanceStory",
+   "status": "done",
+   "why": "CEO 2026-08-16「123やろう」。倒れなかった回も語る"
   },
   "disturbance.plant_sensitivity": {
    "dart": "plantSensitivity",
@@ -211,16 +214,19 @@
    "why": ""
   },
   "ecology.guild_groups": {
-   "dart": "",
-   "status": "todo"
+   "dart": "guildGroups",
+   "status": "done",
+   "why": "CEO 2026-08-16「123やろう」。2羽以上のギルドだけ、多い順。同数は最初に現れた順"
   },
   "ecology.guild_label": {
-   "dart": "",
-   "status": "todo"
+   "dart": "guildLabel",
+   "status": "done",
+   "why": "CEO 2026-08-16「123やろう」。ギルドの表示ラベル(英語)"
   },
   "ecology.lineup_story": {
-   "dart": "",
-   "status": "todo"
+   "dart": "lineupStory",
+   "status": "done",
+   "why": "CEO 2026-08-16「123やろう」。**種類だけ**を返す(i18n 非依存)。文にするのは stories.dart"
   },
   "ecology.pick_lineup": {
    "dart": "pickLineup",

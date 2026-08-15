@@ -22,6 +22,7 @@ import eco_log  # noqa: E402
 import ecology  # noqa: E402
 import engine  # noqa: E402
 import feeder_chain as fc  # noqa: E402
+import radio as radio_mod  # noqa: E402
 import garden_items as gi  # noqa: E402
 import disturbance as dist  # noqa: E402
 import data as seed  # noqa: E402
@@ -162,6 +163,66 @@ def main() -> None:
                     fc.wary_arrival_multiplier(w, r["raptors"]), 12)
                     for w in wariness_values},
             })
+
+    # 画面に出る「一文」。ラジオの顔ぶれ・撹乱・留守の要約。
+    #
+    # ⚠️ ここは**表示側の文**なので、生成時の言語で結果が変わる。en に固定する。
+    i18n.set_lang("en")
+    import itertools as _it
+    from datetime import datetime as _dt, timedelta as _td
+
+    # ① 今日の顔ぶれ(ラジオ)。実データの**全3種組**から 200 通りを拾う。
+    #    ギルドの偏りと気候の重なりで文が3通りに分かれる境目を踏むため。
+    lineup_cases = []
+    _combos = list(_it.combinations(ids, 3))
+    for k in range(0, len(_combos), max(1, len(_combos) // 200)):
+        trio = list(_combos[k])
+        story = ecology.lineup_story(trio, birds)
+        groups = ecology.guild_groups(trio, birds)
+        lineup_cases.append({
+            "birds": trio,
+            "story": story or None,
+            "text": radio_mod._lineup_story_text(story),
+            "groups": [[g["guild"], g["icon"], len(g["birds"]), g["birds"]]
+                       for g in groups],
+        })
+    # 2種未満は語らない
+    lineup_cases.append({"birds": [ids[0]], "story": None,
+                         "text": radio_mod._lineup_story_text({}), "groups": []})
+    lineup_cases.append({"birds": [], "story": None,
+                         "text": radio_mod._lineup_story_text({}), "groups": []})
+    guild_labels = {k: [v[0], v[2]] for k, v in ecology.GUILD_LABELS.items()}
+
+    # ② 撹乱の一文。3種類 × 倒れた/持ちこたえた。
+    story_cases = []
+    for key, meta in dist.DISTURBANCES.items():
+        ev = {"type": key, "icon": meta["icon"], "label": meta["label"]}
+        for removed in ([], ["Cherry"], ["Cherry", "Pine"]):
+            story_cases.append({
+                "type": key, "icon": meta["icon"], "removed": removed,
+                "text": dist.disturbance_story(ev, removed),
+            })
+
+    # ③ 留守の要約と相対時刻。
+    summary_cases = []
+    for evs in ([], [("a",)], [("a",), ("a",)], [("a",), ("b",)],
+                [("a",), ("a",), ("b",)], [("a",), ("b",), ("c",)]):
+        events = [{"bird_id": e[0]} for e in evs]
+        summary_cases.append({
+            "birds": [e["bird_id"] for e in events],
+            "text": absence.summarize_events(events),
+        })
+    _now = _dt(2026, 8, 16, 12, 0, 0)
+    delta_cases = []
+    for sec in [-10, 0, 1, 59, 60, 61, 3599, 3600, 3601, 86399, 86400,
+                86401, 200000, 900000]:
+        delta_cases.append({
+            "sec": sec,
+            "text": absence.humanize_delta(_now - _td(seconds=sec), _now),
+        })
+    away_headline = i18n.t("🌙 不在中の出来事: {summary}", summary="XYZ")
+    see_what = i18n.t("出来事を見る")
+    i18n.set_lang("ja")
 
     # 図鑑のプロフィール(好きなもの / 好きな場所 / こわいもの)。
     #
@@ -408,6 +469,10 @@ def main() -> None:
                    "centrality": cent_cases, "garden_items": item_bundle,
                    "helpers": helper_cases, "simulate": sim_cases,
                    "profiles": profile_cases,
+                   "lineup": lineup_cases, "guild_labels": guild_labels,
+                   "disturbance_story": story_cases,
+                   "summarize": summary_cases, "humanize": delta_cases,
+                   "away_headline": away_headline, "see_what": see_what,
                    "predator_labels": predator_labels,
                    "predator_unknown": unknown_case,
                    "eco_log": eco_log_cases, "founding": founding_cases,
@@ -415,6 +480,8 @@ def main() -> None:
                    "disturbance": dist_consts}, f,
                   ensure_ascii=False, indent=1)
     nf = len(feeder_cases) * len(wariness_values)
+    print(f"顔ぶれの一文: {len(lineup_cases)} 通り / 撹乱: {len(story_cases)} / "
+          f"要約: {len(summary_cases)} / 相対時刻: {len(delta_cases)}")
     print(f"図鑑プロフィール: {len(profile_cases)} 種 / "
           f"天敵の分類 {len(predator_labels)} 種類")
     print(f"食物網の統計と提案: {len(helper_cases)} 状況 / "

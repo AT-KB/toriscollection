@@ -161,15 +161,58 @@ void main() {
       expect(find.textContaining("joined the radio's cast"), findsOneWidget);
     });
 
-    testWidgets('倒れた植物は、ここにだけ出る', (tester) async {
+    testWidgets('撹乱は一文で語る。倒れなかった回も語る', (tester) async {
+      // 倒れた植物は**その文の中**に入る(`disturbance_story` と同じ)。
       await _openWelcome(
           tester,
           const AwayReport(
-              hoursAway: 10,
-              arrivals: [],
-              departures: [],
-              lostPlants: ['Sakura', 'Pine']));
-      expect(find.text('⛈ Lost  Sakura · Pine'), findsOneWidget);
+            hoursAway: 10,
+            arrivals: [],
+            departures: [],
+            lostPlants: ['Sakura', 'Pine'],
+            disturbanceStories: [
+              '🌀 Storm passed through the garden, '
+                  'and Sakura, Pine was knocked down.',
+            ],
+          ));
+      expect(
+          find.text('🌀 Storm passed through the garden, '
+              'and Sakura, Pine was knocked down.'),
+          findsOneWidget);
+
+      await tester.tap(find.text('View the garden'));
+      await tester.pumpAndSettle();
+
+      // 何も倒れなかった回も出す(黙ると、嵐が来たこと自体が無くなる)
+      await _openWelcome(
+          tester,
+          const AwayReport(
+            hoursAway: 10,
+            arrivals: [],
+            departures: [],
+            lostPlants: [],
+            disturbanceStories: [
+              '⚡ Lightning passed through the garden, but the plants held on.',
+            ],
+          ));
+      expect(
+          find.text('⚡ Lightning passed through the garden, '
+              'but the plants held on.'),
+          findsOneWidget);
+    });
+
+    testWidgets('立ち寄りの要約が見出しに出る', (tester) async {
+      await _openWelcome(
+          tester,
+          const AwayReport(
+            hoursAway: 10,
+            arrivals: [MetBird('a', false), MetBird('b', false)],
+            departures: [],
+            lostPlants: [],
+            summary: '2 visits (2 species)',
+          ));
+      expect(find.text('🌙 While you were away: 2 visits (2 species)'),
+          findsOneWidget);
     });
   });
 

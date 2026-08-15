@@ -18,6 +18,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:toris_core/toris_core.dart' as core;
 
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
@@ -42,16 +43,27 @@ class AwayReport {
 
   /// 撹乱で倒れた植物の表示名。
   final List<String> lostPlants;
+
+  /// 起きた撹乱の一文(`disturbance_story`)。倒れなかった回も語る。
+  final List<String> disturbanceStories;
+
+  /// 立ち寄りの要約(`summarize_events`)。無ければ空。
+  final String summary;
   const AwayReport({
     required this.hoursAway,
     required this.arrivals,
     required this.departures,
     required this.lostPlants,
+    this.disturbanceStories = const [],
+    this.summary = '',
   });
 
   /// **何かあった時だけ出す。** 毎回は出さない(Python と同じ条件)。
   bool get worthShowing =>
-      arrivals.isNotEmpty || departures.isNotEmpty || lostPlants.isNotEmpty;
+      arrivals.isNotEmpty ||
+      departures.isNotEmpty ||
+      lostPlants.isNotEmpty ||
+      disturbanceStories.isNotEmpty;
 }
 
 Widget _plate(Garden g, String birdId, double size) {
@@ -143,6 +155,13 @@ Future<void> showWelcomeBackPopup(
             if (lead != null) ...[
               Text(lead,
                   style: const TextStyle(fontSize: 13, color: kSub)),
+              const SizedBox(height: 8),
+            ],
+            // 立ち寄りの要約(1種なら名前で、複数種なら件数と種数で)
+            if (r.summary.isNotEmpty) ...[
+              Text(core.awayHeadline(r.summary),
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: kInk)),
               const SizedBox(height: 12),
             ],
             // 来た鳥は6件まで
@@ -175,11 +194,14 @@ Future<void> showWelcomeBackPopup(
                     '🕊 ${r.departures.take(5).join(', ')} set off on their way',
                     style: const TextStyle(fontSize: 13, color: kSub)),
               ),
-            if (r.lostPlants.isNotEmpty)
+            // 撹乱は**一文で語る**。倒れなかった回も語る — 黙ると、
+            // 嵐が来たこと自体が無かったことになる。
+            for (final story in r.disturbanceStories)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Text('⛈ Lost  ${r.lostPlants.join(' · ')}',
-                    style: const TextStyle(fontSize: 13, color: kSub)),
+                child: Text(story,
+                    style: const TextStyle(
+                        fontSize: 13, height: 1.45, color: kSub)),
               ),
             // 来た鳥がいれば、ラジオへ誘う(会う→聴くの輪を閉じる)。
             if (r.arrivals.isNotEmpty) ...[

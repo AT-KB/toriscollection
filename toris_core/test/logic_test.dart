@@ -237,6 +237,79 @@ void main() {
     }
   });
 
+  test('今日の顔ぶれ: 種類・ギルドのまとまり・一文が Python 版と一致(207通り)', () {
+    // ラジオの「なぜこの3羽が一緒か」。実データの3種組から拾っている。
+    // ギルドの偏り(6割)と気候の重なり(0.45)の境目を踏む。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+
+    // ギルドの表(絵文字と英語)そのもの
+    final gl = (fx['guild_labels'] as Map).cast<String, dynamic>();
+    expect(kGuildLabels.keys.toList(), gl.keys.toList(), reason: 'ギルドのキーか並び');
+    gl.forEach((k, v) {
+      expect(guildIcon(k), (v as List)[0], reason: '$k の絵文字');
+      expect(guildLabel(k), v[1], reason: '$k のラベル');
+    });
+    // 知らないキーは other に落ちる
+    expect(guildLabel('zzz'), guildLabel('other'));
+
+    for (final c in fx['lineup'] as List) {
+      final trio = (c['birds'] as List).map((e) => '$e').toList();
+      final label = trio.join('+');
+
+      final story = lineupStory(trio, birds);
+      final e = c['story'];
+      if (e == null) {
+        expect(story, isNull, reason: '$label は語れることが無いはず');
+      } else {
+        expect(story?.kind, (e as Map)['kind'], reason: '$label の種類');
+        expect(story?.guild, e['guild'], reason: '$label のギルド');
+      }
+      expect(lineupStoryText(story), c['text'], reason: '$label の一文');
+
+      final groups = guildGroups(trio, birds);
+      expect([
+        for (final g in groups) [g.guild, g.icon, g.birds.length, g.birds]
+      ], c['groups'], reason: '$label のギルドのまとまり(順序も)');
+    }
+  });
+
+  test('撹乱の一文: 3種類 × 倒れた/持ちこたえた が Python 版と一致', () {
+    // **倒れなかった時も語る。** 何も出さないと、嵐が来たこと自体が
+    // 無かったことになる。
+    for (final c in fx['disturbance_story'] as List) {
+      final removed = (c['removed'] as List).map((e) => '$e').toList();
+      expect(
+          disturbanceStory(c['type'] as String, c['icon'] as String, removed),
+          c['text'],
+          reason: '${c['type']} / 倒れた ${removed.length} 件');
+    }
+    // Dart 側の呼び名の表が、撹乱の種類を全部持っているか
+    for (final k in kDisturbances.keys) {
+      expect(kDisturbanceLabels.containsKey(k), isTrue,
+          reason: '$k の呼び名が無い');
+    }
+  });
+
+  test('留守の要約と相対時刻が Python 版と一致(境目も)', () {
+    for (final c in fx['summarize'] as List) {
+      final ids = (c['birds'] as List).map((e) => '$e').toList();
+      expect(summarizeEvents(ids, (b) => b), c['text'],
+          reason: '$ids の要約');
+    }
+    final now = DateTime(2026, 8, 16, 12, 0, 0);
+    for (final c in fx['humanize'] as List) {
+      final sec = c['sec'] as int;
+      expect(humanizeDelta(now.subtract(Duration(seconds: sec)), now),
+          c['text'],
+          reason: '$sec 秒前の言い方');
+    }
+    expect(awayHeadline('XYZ'), fx['away_headline']);
+    expect(kSeeWhatHappened, fx['see_what']);
+  });
+
   test('図鑑プロフィール: 37種すべてで Python 版と一致する', () {
     // ⚠️ ここは Dart 側に分類の表を**手で書いて間違えた**ところ。
     // 実データが使う crow/falcon/fox/rodent/weasel が表に無く、逆に

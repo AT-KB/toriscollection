@@ -52402,6 +52402,4362 @@
    "has_data": false
   }
  ],
+ "lineup": [
+  {
+   "birds": [
+    "american_goldfinch",
+    "american_robin",
+    "aoji"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "aoji"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "aoji",
+    "carolina_wren"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "aoji"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "blue_jay",
+    "hibari"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "hibari"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "brown_thrasher",
+    "kawarahiwa"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "kawarahiwa"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "carolina_chickadee",
+    "mozu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "carolina_wren",
+    "suzume"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "downy_woodpecker",
+    "house_finch"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "house_finch"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "eastern_bluebird",
+    "mozu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "enaga",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "hiyodori",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "hiyodori"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "ikaru",
+    "kawasemi"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "ikaru"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "jou_bitaki",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "kawarahiwa",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "kawarahiwa"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "kijibato",
+    "kogera"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "mejiro",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "american_goldfinch",
+      "mejiro"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "northern_cardinal",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch",
+    "shijukara",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "shijukara",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "aoji",
+    "kibitaki"
+   ],
+   "story": {
+    "kind": "mixed"
+   },
+   "text": "A cast gathered by the cues of the same garden.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_robin",
+    "blue_jay",
+    "mozu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "blue_jay"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "brown_thrasher",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "american_robin",
+      "brown_thrasher",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "carolina_wren",
+    "cedar_waxwing"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "american_robin",
+    "cedar_waxwing",
+    "kakesu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "kakesu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "downy_woodpecker",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "downy_woodpecker",
+      "pileated_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "enaga",
+    "hibari"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "hibari"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "hibari",
+    "mozu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "hibari"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "house_finch",
+    "jou_bitaki"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "jou_bitaki"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "ikaru",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "song_sparrow"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "kakesu",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "kakesu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "kawasemi",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "kijibato",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "mourning_dove",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "american_robin",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "pileated_woodpecker",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "pileated_woodpecker",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_robin",
+    "suzume",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "american_robin",
+      "suzume",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "blue_jay",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "mixed"
+   },
+   "text": "A cast gathered by the cues of the same garden.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "aoji",
+    "carolina_chickadee",
+    "downy_woodpecker"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "aoji",
+    "carolina_wren",
+    "kakesu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "aoji",
+    "cedar_waxwing",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "aoji",
+      "cedar_waxwing"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "downy_woodpecker",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "downy_woodpecker",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "enaga",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "aoji",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "hibari",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "mixed"
+   },
+   "text": "A cast gathered by the cues of the same garden.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "aoji",
+    "house_finch",
+    "mozu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "aoji",
+      "house_finch"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "jou_bitaki",
+    "kibitaki"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "aoji",
+    "kawarahiwa",
+    "kawasemi"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "aoji",
+      "kawarahiwa"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "kibitaki",
+    "kogera"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kibitaki",
+      "kogera"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "kogera",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "aoji",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "aoji",
+    "mozu",
+    "red_bellied_woodpecker"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "aoji",
+    "red_bellied_woodpecker",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "brown_thrasher",
+    "carolina_chickadee"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "blue_jay",
+      "brown_thrasher",
+      "carolina_chickadee"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "carolina_chickadee",
+    "hiyodori"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "carolina_chickadee"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "carolina_wren",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "cedar_waxwing",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "eastern_bluebird",
+    "hiyodori"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "eastern_bluebird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "enaga",
+    "mozu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "enaga",
+      "mozu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "hiyodori",
+    "house_finch"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "house_finch"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "house_finch",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "house_finch",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "jou_bitaki",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "jou_bitaki"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "kawarahiwa",
+    "mejiro"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "kawarahiwa",
+      "mejiro"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "kibitaki",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "northern_cardinal"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "kogera",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "mozu",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "song_sparrow"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "blue_jay",
+    "ruby_throated_hummingbird",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "blue_jay",
+      "song_sparrow"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "carolina_chickadee",
+    "enaga"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "carolina_chickadee"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "carolina_wren",
+    "kawasemi"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "carolina_wren",
+      "kawasemi"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "cedar_waxwing",
+    "red_bellied_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "red_bellied_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "eastern_bluebird",
+    "enaga"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "eastern_bluebird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "enaga",
+    "mejiro"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "hibari",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "hibari"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "house_finch",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "jou_bitaki",
+    "kogera"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "jou_bitaki"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "kawarahiwa",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "kawarahiwa",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "kibitaki",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "kogera",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "mozu",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "brown_thrasher",
+    "ruby_throated_hummingbird",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "brown_thrasher",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "carolina_wren",
+    "eastern_bluebird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "carolina_chickadee",
+      "eastern_bluebird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "cedar_waxwing",
+    "kawasemi"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "downy_woodpecker",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "enaga",
+    "house_finch"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "hibari",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "carolina_chickadee",
+      "hibari"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "house_finch",
+    "kawarahiwa"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "house_finch",
+      "kawarahiwa"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "ikaru",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "mixed"
+   },
+   "text": "A cast gathered by the cues of the same garden.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "kakesu",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "carolina_chickadee",
+      "kakesu",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "kawasemi",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "carolina_chickadee",
+      "song_sparrow"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "kijibato",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "carolina_chickadee",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "mourning_dove",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "carolina_chickadee",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "red_bellied_woodpecker",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "carolina_chickadee",
+      "red_bellied_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_chickadee",
+    "suzume",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "carolina_chickadee",
+      "suzume",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "downy_woodpecker",
+    "hibari"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "carolina_wren",
+      "downy_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "eastern_bluebird",
+    "mejiro"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "enaga",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "carolina_wren",
+      "enaga"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "hiyodori",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "mourning_dove"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "ikaru",
+    "kakesu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "jou_bitaki",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "carolina_wren",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "kawarahiwa",
+    "suzume"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "kibitaki",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     3,
+     [
+      "carolina_wren",
+      "kibitaki",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "mejiro",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "mejiro",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "northern_cardinal",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "northern_cardinal",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "carolina_wren",
+    "shijukara",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "shijukara",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "downy_woodpecker",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "cedar_waxwing",
+      "mourning_dove"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "eastern_bluebird",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "eastern_bluebird",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "hibari",
+    "kogera"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "hiyodori",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "cedar_waxwing",
+      "hiyodori"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "ikaru",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     3,
+     [
+      "cedar_waxwing",
+      "ikaru",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "kakesu",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "kakesu",
+      "northern_cardinal"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "kawasemi",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kawasemi",
+      "pileated_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "kijibato",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "cedar_waxwing",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "mourning_dove",
+    "red_bellied_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "cedar_waxwing",
+      "mourning_dove"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "pileated_woodpecker",
+    "suzume"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "cedar_waxwing",
+    "song_sparrow",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "eastern_bluebird",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "eastern_bluebird",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "hibari",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "house_finch",
+    "ikaru"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "house_finch",
+      "ikaru"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "ikaru",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "kakesu",
+    "red_bellied_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "kakesu",
+      "red_bellied_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "kawasemi",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "downy_woodpecker",
+      "kawasemi"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "kijibato",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "downy_woodpecker",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "mourning_dove",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "pileated_woodpecker",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "downy_woodpecker",
+      "pileated_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "downy_woodpecker",
+    "suzume",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "downy_woodpecker",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "hibari",
+    "ikaru"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "eastern_bluebird",
+      "hibari"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "hiyodori",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "ikaru",
+    "kogera"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "kakesu",
+    "kawasemi"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "eastern_bluebird",
+      "kakesu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "kawasemi",
+    "kibitaki"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kawasemi",
+      "kibitaki"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "kijibato",
+    "mozu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "mejiro",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "northern_cardinal",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "eastern_bluebird",
+      "northern_cardinal"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "eastern_bluebird",
+    "shirohara",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "eastern_bluebird",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "hibari",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "hibari",
+      "song_sparrow"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "house_finch",
+    "mejiro"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "house_finch",
+      "mejiro"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "jou_bitaki",
+    "kawarahiwa"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "enaga",
+    "kakesu",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "enaga",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "kawasemi",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "enaga",
+      "kawasemi"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "kogera",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     3,
+     [
+      "enaga",
+      "kogera",
+      "pileated_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "mozu",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "enaga",
+      "mozu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "red_bellied_woodpecker",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "enaga",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "enaga",
+    "tufted_titmouse",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "tufted_titmouse",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hibari",
+    "house_finch",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "hibari",
+    "jou_bitaki",
+    "kogera"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "hibari",
+      "jou_bitaki"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hibari",
+    "kawarahiwa",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "kawarahiwa",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hibari",
+    "kibitaki",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "hibari",
+    "kogera",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "hibari",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hibari",
+    "mozu",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "hibari",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hibari",
+    "ruby_throated_hummingbird",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "hibari",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "house_finch",
+    "kakesu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "house_finch"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "ikaru",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "ikaru"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "kakesu",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "kakesu",
+      "shijukara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "kawasemi",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "kijibato",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "mourning_dove",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "hiyodori",
+      "mourning_dove"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "pileated_woodpecker",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "hiyodori",
+    "suzume",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "house_finch",
+    "jou_bitaki",
+    "mozu"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "house_finch",
+    "kawarahiwa",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     3,
+     [
+      "house_finch",
+      "kawarahiwa",
+      "mourning_dove"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "house_finch",
+    "kibitaki",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kibitaki",
+      "pileated_woodpecker"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "house_finch",
+    "kogera",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kogera",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "house_finch",
+    "mozu",
+    "suzume"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "house_finch",
+    "ruby_throated_hummingbird",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "house_finch",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "ikaru",
+    "jou_bitaki",
+    "kogera"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "ikaru",
+    "kawarahiwa",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     3,
+     [
+      "ikaru",
+      "kawarahiwa",
+      "kijibato"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "ikaru",
+    "kibitaki",
+    "mourning_dove"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "ikaru",
+      "mourning_dove"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "ikaru",
+    "kogera",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "ikaru",
+    "mozu",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "ikaru",
+    "ruby_throated_hummingbird",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "ikaru",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "jou_bitaki",
+    "kakesu",
+    "kibitaki"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "jou_bitaki",
+      "kakesu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "jou_bitaki",
+    "kawasemi",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "jou_bitaki",
+    "kijibato",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "jou_bitaki",
+      "northern_cardinal"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "jou_bitaki",
+    "mejiro",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "jou_bitaki",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "jou_bitaki",
+    "northern_cardinal",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "jou_bitaki",
+      "northern_cardinal",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "jou_bitaki",
+    "shirohara",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "jou_bitaki",
+      "shirohara",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kakesu",
+    "kawasemi",
+    "kijibato"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "kakesu",
+    "kijibato",
+    "northern_cardinal"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "kakesu",
+      "northern_cardinal"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kakesu",
+    "mejiro",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "kakesu",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kakesu",
+    "northern_cardinal",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "kakesu",
+      "northern_cardinal",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kakesu",
+    "shirohara",
+    "tufted_titmouse"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "kakesu",
+      "shirohara",
+      "tufted_titmouse"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawarahiwa",
+    "kibitaki",
+    "mejiro"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "kawarahiwa",
+      "mejiro"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawarahiwa",
+    "kogera",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "kawarahiwa",
+    "mozu",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "kawarahiwa",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawarahiwa",
+    "red_bellied_woodpecker",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "red_bellied_woodpecker",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawasemi",
+    "kibitaki",
+    "kogera"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     3,
+     [
+      "kawasemi",
+      "kibitaki",
+      "kogera"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawasemi",
+    "kogera",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kawasemi",
+      "kogera"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawasemi",
+    "mozu",
+    "red_bellied_woodpecker"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kawasemi",
+      "mozu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kawasemi",
+    "red_bellied_woodpecker",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kawasemi",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kibitaki",
+    "kijibato",
+    "kogera"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kibitaki",
+      "kogera"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kibitaki",
+    "mejiro",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "mixed"
+   },
+   "text": "A cast gathered by the cues of the same garden.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "kibitaki",
+    "northern_cardinal",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "northern_cardinal",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kibitaki",
+    "shijukara",
+    "yamagara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "shijukara",
+      "yamagara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kijibato",
+    "mejiro",
+    "mozu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "kijibato",
+      "mejiro"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kijibato",
+    "northern_cardinal",
+    "pileated_woodpecker"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "kijibato",
+    "shijukara",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "shijukara",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kogera",
+    "mejiro",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kogera",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kogera",
+    "northern_cardinal",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kogera",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "kogera",
+    "shirohara",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "kogera",
+      "tsubame"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "mejiro",
+    "mozu",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "mejiro",
+    "ruby_throated_hummingbird",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "mejiro",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "mourning_dove",
+    "mozu",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "mourning_dove",
+    "ruby_throated_hummingbird",
+    "shijukara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "herbivore"
+   },
+   "text": "Today the cast mostly shares a taste for berries and nectar — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "herbivore",
+     "🍇",
+     2,
+     [
+      "mourning_dove",
+      "ruby_throated_hummingbird"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "mozu",
+    "northern_cardinal",
+    "ruby_throated_hummingbird"
+   ],
+   "story": {
+    "kind": "climate"
+   },
+   "text": "Their ways of foraging differ, but these are birds that favor a similar climate. They meet in the garden of the same season.",
+   "groups": []
+  },
+  {
+   "birds": [
+    "mozu",
+    "shijukara",
+    "suzume"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "shijukara",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "northern_cardinal",
+    "red_bellied_woodpecker",
+    "shirohara"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "northern_cardinal",
+      "red_bellied_woodpecker",
+      "shirohara"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "northern_cardinal",
+    "tsubame",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "tsubame",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "pileated_woodpecker",
+    "song_sparrow",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "insectivore"
+   },
+   "text": "Today the cast mostly shares a taste for insects — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "insectivore",
+     "🐛",
+     2,
+     [
+      "pileated_woodpecker",
+      "uguisu"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "red_bellied_woodpecker",
+    "suzume",
+    "tsubame"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "red_bellied_woodpecker",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "shijukara",
+    "shirohara",
+    "song_sparrow"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     3,
+     [
+      "shijukara",
+      "shirohara",
+      "song_sparrow"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "song_sparrow",
+    "suzume",
+    "uguisu"
+   ],
+   "story": {
+    "kind": "guild",
+    "guild": "omnivore"
+   },
+   "text": "Today the cast mostly shares a taste for a bit of everything — in the same surroundings they quietly share out the foraging and move together.",
+   "groups": [
+    [
+     "omnivore",
+     "🍃",
+     2,
+     [
+      "song_sparrow",
+      "suzume"
+     ]
+    ]
+   ]
+  },
+  {
+   "birds": [
+    "american_goldfinch"
+   ],
+   "story": null,
+   "text": "",
+   "groups": []
+  },
+  {
+   "birds": [],
+   "story": null,
+   "text": "",
+   "groups": []
+  }
+ ],
+ "guild_labels": {
+  "insectivore": [
+   "🐛",
+   "insects"
+  ],
+  "herbivore": [
+   "🍇",
+   "berries and nectar"
+  ],
+  "omnivore": [
+   "🍃",
+   "a bit of everything"
+  ],
+  "other": [
+   "🐦",
+   "its own ways"
+  ]
+ },
+ "disturbance_story": [
+  {
+   "type": "storm",
+   "icon": "🌀",
+   "removed": [],
+   "text": "🌀 Storm passed through the garden, but the plants held on."
+  },
+  {
+   "type": "storm",
+   "icon": "🌀",
+   "removed": [
+    "Cherry"
+   ],
+   "text": "🌀 Storm passed through the garden, and Cherry was knocked down."
+  },
+  {
+   "type": "storm",
+   "icon": "🌀",
+   "removed": [
+    "Cherry",
+    "Pine"
+   ],
+   "text": "🌀 Storm passed through the garden, and Cherry, Pine was knocked down."
+  },
+  {
+   "type": "lightning",
+   "icon": "⚡",
+   "removed": [],
+   "text": "⚡ Lightning passed through the garden, but the plants held on."
+  },
+  {
+   "type": "lightning",
+   "icon": "⚡",
+   "removed": [
+    "Cherry"
+   ],
+   "text": "⚡ Lightning passed through the garden, and Cherry was knocked down."
+  },
+  {
+   "type": "lightning",
+   "icon": "⚡",
+   "removed": [
+    "Cherry",
+    "Pine"
+   ],
+   "text": "⚡ Lightning passed through the garden, and Cherry, Pine was knocked down."
+  },
+  {
+   "type": "logging",
+   "icon": "🪓",
+   "removed": [],
+   "text": "🪓 Felling passed through the garden, but the plants held on."
+  },
+  {
+   "type": "logging",
+   "icon": "🪓",
+   "removed": [
+    "Cherry"
+   ],
+   "text": "🪓 Felling passed through the garden, and Cherry was knocked down."
+  },
+  {
+   "type": "logging",
+   "icon": "🪓",
+   "removed": [
+    "Cherry",
+    "Pine"
+   ],
+   "text": "🪓 Felling passed through the garden, and Cherry, Pine was knocked down."
+  }
+ ],
+ "summarize": [
+  {
+   "birds": [],
+   "text": ""
+  },
+  {
+   "birds": [
+    "a"
+   ],
+   "text": "a stopped by 1 times"
+  },
+  {
+   "birds": [
+    "a",
+    "a"
+   ],
+   "text": "a stopped by 2 times"
+  },
+  {
+   "birds": [
+    "a",
+    "b"
+   ],
+   "text": "2 visits (2 species)"
+  },
+  {
+   "birds": [
+    "a",
+    "a",
+    "b"
+   ],
+   "text": "3 visits (2 species)"
+  },
+  {
+   "birds": [
+    "a",
+    "b",
+    "c"
+   ],
+   "text": "3 visits (3 species)"
+  }
+ ],
+ "humanize": [
+  {
+   "sec": -10,
+   "text": "Moments ago"
+  },
+  {
+   "sec": 0,
+   "text": "Just now"
+  },
+  {
+   "sec": 1,
+   "text": "Just now"
+  },
+  {
+   "sec": 59,
+   "text": "Just now"
+  },
+  {
+   "sec": 60,
+   "text": "1 min ago"
+  },
+  {
+   "sec": 61,
+   "text": "1 min ago"
+  },
+  {
+   "sec": 3599,
+   "text": "59 min ago"
+  },
+  {
+   "sec": 3600,
+   "text": "1 hr ago"
+  },
+  {
+   "sec": 3601,
+   "text": "1 hr ago"
+  },
+  {
+   "sec": 86399,
+   "text": "23 hr ago"
+  },
+  {
+   "sec": 86400,
+   "text": "1 days ago"
+  },
+  {
+   "sec": 86401,
+   "text": "1 days ago"
+  },
+  {
+   "sec": 200000,
+   "text": "2 days ago"
+  },
+  {
+   "sec": 900000,
+   "text": "10 days ago"
+  }
+ ],
+ "away_headline": "🌙 While you were away: XYZ",
+ "see_what": "See what happened",
  "predator_labels": {
   "raptor": "Hawks",
   "owl": "Owls",

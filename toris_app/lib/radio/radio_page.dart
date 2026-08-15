@@ -85,6 +85,34 @@ class _RadioPageState extends State<RadioPage>
           // ── いま鳴いている鳥 ──
           // 近さ(b1/b2/b3)と群れの数は、よく会うほど育つ。
           ...e.birds.map((v) => _BirdRow(v)),
+
+          // ── なぜこの顔ぶれか ──
+          // 採餌ギルドでまとめ、共起モデルが言える範囲だけを一文で語る。
+          // **種固有の逸話は作らない**(検証できないものは書かない・原則4)。
+          if (e.birds.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            // ギルドは「絵文字 + ラベル」を1行目、鳥の名前を2行目に。
+            // 横に並べると折り返して読めなくなる(実機で確認)。
+            for (final g in e.guildGroups.take(3))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${g.icon}  ${g.label}',
+                        style: const TextStyle(fontSize: 11, color: kSub)),
+                    const SizedBox(height: 2),
+                    Text(g.birds.map(e.englishOf).join(' · '),
+                        style: const TextStyle(
+                            fontSize: 13, height: 1.35, color: kInk)),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 4),
+            Text(e.lineupStory,
+                style: const TextStyle(
+                    fontSize: 12, height: 1.5, color: kSub)),
+          ],
           const SizedBox(height: 26),
 
           _SectionLabel('Ambience'),
