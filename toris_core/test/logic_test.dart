@@ -62,6 +62,51 @@ void main() {
     }
   });
 
+  test('生態(共起ネットワーク): 37種の全ペアで Python 版と一致する', () {
+    // 顔ぶれの選び方の根っこ。1組でもズレると、出てくる鳥が変わる。
+    final birds = jsonDecode(File('test/fixtures/birds.json').readAsStringSync())
+        as Map<String, dynamic>;
+
+    (fx['guilds'] as Map<String, dynamic>).forEach((id, g) {
+      expect(guild(id, birds), g, reason: '$id のギルドが違う');
+    });
+
+    var n = 0;
+    for (final c in fx['ecology'] as List) {
+      final a = c['a'] as String, b = c['b'] as String;
+      expect(climateOverlap(a, b, birds), closeTo(c['clim'] as num, 1e-9),
+          reason: '$a×$b の気候の重なりが違う');
+      expect(dietJaccard(a, b, birds), closeTo(c['diet'] as num, 1e-9),
+          reason: '$a×$b の食べ物の重なりが違う');
+      expect(coOccurrence(a, b, birds), closeTo(c['co'] as num, 1e-9),
+          reason: '$a×$b の共起しやすさが違う');
+      n++;
+    }
+    expect(n, 666, reason: '37種の全ペア(666組)を見ているはず');
+  });
+
+  test('顔ぶれの抽選: 重みが効き、同じ鳥を二度選ばない', () {
+    final birds = jsonDecode(File('test/fixtures/birds.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final ids = birds.keys.toList()..sort();
+
+    // 乱数を固定して、選ばれる顔ぶれが決定的になることを見る
+    var i = 0;
+    const seq = [0.1, 0.4, 0.7, 0.2, 0.9, 0.05, 0.6, 0.3];
+    double rnd() => seq[i++ % seq.length];
+
+    final a = pickLineup(ids, birds, 3, rnd);
+    expect(a.length, 3);
+    expect(a.toSet().length, 3, reason: '同じ鳥を二度選んではいけない');
+
+    // 重みを極端にすると、その鳥が種(seed)に選ばれる
+    i = 0;
+    final only = ids.first;
+    final b = pickLineup(ids, birds, 3, rnd,
+        baseWeight: {for (final x in ids) x: x == only ? 10000.0 : 0.0001});
+    expect(b.first, only, reason: '基礎重みが効いていない');
+  });
+
   group('Python の型変換をまねる部分', () {
     test('int(): 小数は0方向へ切り捨て、整数でない文字列は通さない', () {
       expect(pyInt(2), 2);

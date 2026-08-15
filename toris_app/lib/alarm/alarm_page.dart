@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../ui/theme.dart';
 import 'alarm.dart';
 
 class AlarmPage extends StatefulWidget {
@@ -117,11 +118,7 @@ class _AlarmPageState extends State<AlarmPage> {
   Widget build(BuildContext context) {
     final s = _current;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF2),
-      appBar: AppBar(
-        title: const Text('⏰ Wake with the birds'),
-        backgroundColor: const Color(0xFFCFD9B8),
-      ),
+      appBar: AppBar(title: const Text('Wake with the birds')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -143,38 +140,39 @@ class _AlarmPageState extends State<AlarmPage> {
             ),
             const SizedBox(height: 20),
           ],
-          Text(
-            'Your bird starts almost too quiet to hear, and grows over '
-            'five minutes. Others join in along the way. '
-            'Nothing ever jolts you awake.',
-            style: TextStyle(color: Colors.grey.shade700, height: 1.5),
-          ),
-          const SizedBox(height: 24),
+          const PageTitle('Starts almost too quiet to hear, then grows.'),
 
           // ── 時刻 ──
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.schedule),
-              title: const Text('Wake at'),
-              subtitle: Text(_time.format(context),
-                  style: const TextStyle(
-                      fontSize: 30, fontWeight: FontWeight.w600)),
-              trailing: const Icon(Icons.edit),
+            elevation: 0,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18)),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
               onTap: _pickTime,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 22),
+                child: Center(
+                  child: Text(_time.format(context),
+                      style: const TextStyle(
+                          fontSize: 46,
+                          fontWeight: FontWeight.w600,
+                          color: kInk)),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16),
 
           // ── 最初に鳴く鳥 ──
           const Text('First to sing',
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(
-            'Only true songs are offered here — never the harsh calls. '
-            'Sharp sounds make waking worse.',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 8),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: kSub)),
+          const SizedBox(height: 6),
           RadioGroup<String>(
             groupValue: _bird,
             onChanged: (v) => setState(() => _bird = v!),
@@ -226,23 +224,15 @@ class _AlarmPageState extends State<AlarmPage> {
               ),
             ),
 
-          Row(children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _set,
-                icon: const Icon(Icons.alarm),
-                label: const Text('Set for this time'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: s?.enabled == true ? _cancel : null,
-                child: const Text('Turn off'),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: _set,
+            icon: const Icon(Icons.alarm, size: 28),
+            label: const Text('Set'),
+          ),
+          const SizedBox(height: 10),
+          if (s?.enabled == true)
+            TextButton(onPressed: _cancel, child: const Text('Turn off')),
+          const SizedBox(height: 12),
 
           // ── いまの設定(ネイティブが持っているものをそのまま出す)──
           Center(

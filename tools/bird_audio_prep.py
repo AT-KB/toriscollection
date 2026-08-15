@@ -36,9 +36,18 @@ TARGET_TP = -2.0
 TARGET_LRA = 9.0
 BITRATE = "112k"          # 環境音より少し良い。さえずりは高い帯域に情報がある。
 
-# 低域を切る位置。さえずりの基音より下(風・交通・空調のゴロゴロ)を落とす。
-# 現行 radio.py の buildNode() も 820Hz で切っている。同じ考え方。
-HIGHPASS_HZ = 500
+# 低域を切る位置。**現行 radio.py の buildNode() と同じ 820Hz**。
+# 風・交通・空調のゴロゴロを落とす。2026-08-14 まで 500Hz にしていたが、
+# 現行と違う値を勝手に使っていた(意図しない差分)ので合わせた。
+HIGHPASS_HZ = 820
+
+# さえずり帯域の持ち上げ。現行 radio.py の presence フィルタと同じ
+# (peaking / 3500Hz / Q=0.9 / +5dB)。声の存在感を上げる。
+# 現行は再生時にかけているが、全鳥同じ設定なので**素材に焼き込む**。
+# SoLoud の biquad は音源につき1つしか持てず、そちらは奥行きのローパスに使う。
+PRESENCE_HZ = 3500
+PRESENCE_Q = 0.9
+PRESENCE_GAIN_DB = 5.0
 
 # afftdn の効き。強くしすぎると鳴き声の余韻まで削れて不自然になる。
 DENOISE_NF = -28
@@ -116,7 +125,9 @@ def prepare(src: str, dest: str, stereo: bool = True) -> bool:
     tmp = dest + ".clean.wav"
     chain = (f"aformat=channel_layouts=mono,aresample=44100,"
              f"highpass=f={HIGHPASS_HZ},"
-             f"afftdn=nf={DENOISE_NF}:nt=w")
+             f"afftdn=nf={DENOISE_NF}:nt=w,"
+             f"equalizer=f={PRESENCE_HZ}:width_type=q:w={PRESENCE_Q}:"
+             f"g={PRESENCE_GAIN_DB}")
     r = subprocess.run([ff, "-y", "-loglevel", "error", "-i", src,
                         "-af", chain, tmp], capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:

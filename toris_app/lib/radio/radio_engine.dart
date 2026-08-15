@@ -39,6 +39,17 @@ const int kMaxBirds = 3;
 const Map<String, double> kDepthGain = {'b1': 1.12, 'b2': 1.00, 'b3': 0.85};
 const Map<String, double> kDepthWet = {'b1': 0.01, 'b2': 0.09, 'b3': 0.20};
 
+/// 奥行きごとのローパス。遠い鳥ほど高域が減って「奥」に聞こえる。
+/// 現行 radio.py の D[].freq と同じ値。
+const Map<String, double> kDepthFreq = {
+  'b1': 12000, 'b2': 8000, 'b3': 4600,
+};
+
+/// 群れの重ね方(現行 radio.py の群れ処理と同じ)。
+/// 同じ声をわずかにずらして重ね、左右に広げる。音源は増やさない。
+const double kFlockDelayMin = 0.09;
+const double kFlockDelayRange = 0.33;
+
 /// 環境音。並び順がそのままタイルの並び。
 const List<String> kAmbienceKeys = [
   'rain', 'wind', 'stream', 'waves', 'lake', 'fire', 'drips',
@@ -82,6 +93,13 @@ class BirdAsset {
   String get asset => 'assets/birds/$id.mp3';
 }
 
+/// 種データ(食べ物・気候・レア度)。`tools/export_data.py` が書き出したもの。
+/// 判断のロジックは Dart に写すが、**データは写さない**(写し間違いを避ける)。
+Future<Map<String, dynamic>> loadBirdsData() async {
+  final raw = await rootBundle.loadString('assets/data/birds.json');
+  return (jsonDecode(raw) as Map).cast<String, dynamic>();
+}
+
 Future<List<BirdAsset>> loadBirdAssets() async {
   final raw = await rootBundle.loadString('assets/birds/_credits.json');
   final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
@@ -104,12 +122,19 @@ class BirdVoice {
 
   AudioSource? _source;
   SoundHandle? _handle;
+  /// 群れの2羽目以降。同じ音源を少しずらして重ねる。
+  final List<SoundHandle> _flockHandles = [];
+  final List<double> _flockDelays = [];
   Timer? _cycle;
   bool singing = false;
+
+  /// 左右の位置(-1..1)。3羽を均等に散らす。
 
   BirdVoice(this.bird, this.depth, this._rng, {this.flock = 1});
 
   double get _peak => kDepthGain[depth] ?? 1.0;
+
+  double pan = 0.0;
 
   Future<void> load({bool reverb = true}) async {
     final s = await SoLoud.instance.loadAsset(bird.asset);
@@ -120,8 +145,29 @@ class BirdVoice {
       s.filters.freeverbFilter.damp().value = 0.45;
       s.filters.freeverbFilter.wet().value = kDepthWet[depth] ?? 0.1;
     }
+    // 奥行きのローパス。遠い鳥ほど高域を落として奥に置く(現行の filter と同じ)。
+    // ハイパス(820Hz)と存在感EQ(3.5kHz +5dB)は全鳥共通なので素材に焼いてある
+    // — SoLoud は音源につき biquad を1つしか持てないため。
+    s.filters.biquadFilter.activate();
+    s.filters.biquadFilter.type().value = 0; // 0 = LOWPASS
+    s.filters.biquadFilter.frequency().value = kDepthFreq[depth] ?? 4600;
+    s.filters.biquadFilter.resonance().value = 0.7;
+
     _handle = SoLoud.instance.play(s, volume: 0, looping: true, paused: true);
+    SoLoud.instance.setPan(_handle!, pan);
+
+    // 群れ: 2羽目以降を、わずかに遅らせて左右に広げて重ねる。
+    // 後ろの個体ほど小さく(現行の 0.55 - f*0.10)、左右へ ±(10+f*7) ぶん。
+    for (var f = 1; f < flock; f++) {
+      final h = SoLoud.instance.play(s, volume: 0, looping: true, paused: true);
+      _flockHandles.add(h);
+      _flockDelays.add(kFlockDelayMin + _rng.nextDouble() * kFlockDelayRange);
+      final goff = (f.isOdd ? 1 : -1) * (10 + f * 7) / 50.0;
+      SoLoud.instance.setPan(h, (pan + goff).clamp(-1.0, 1.0));
+    }
   }
+
+  double _flockGain(int f) => (0.55 - f * 0.10).clamp(0.0, 1.0);
 
   void _startSinging(void Function() onChange) {
     final s = _source;
@@ -136,6 +182,19 @@ class BirdVoice {
     singing = true;
     onChange();
     SoLoud.instance.fadeVolume(h, _peak * _scale, const Duration(milliseconds: 400));
+
+    // 群れは本体と同じ場所から、決めたぶんだけ遅れて鳴く
+    final posMs = SoLoud.instance.getPosition(h).inMilliseconds;
+    for (var i = 0; i < _flockHandles.length; i++) {
+      final fh = _flockHandles[i];
+      final back = (posMs - (_flockDelays[i] * 1000).round());
+      SoLoud.instance.setPause(fh, false);
+      if (back > 0) {
+        SoLoud.instance.seek(fh, Duration(milliseconds: back));
+      }
+      SoLoud.instance.fadeVolume(fh, _peak * _scale * _flockGain(i + 1),
+          const Duration(milliseconds: 400));
+    }
   }
 
   void _stopSinging(void Function() onChange) {
@@ -145,6 +204,9 @@ class BirdVoice {
     if (h == null) return;
     // 止めずに音量だけ下げる(止めて作り直すと音声が増えていく)。
     SoLoud.instance.fadeVolume(h, 0, const Duration(milliseconds: 900));
+    for (final fh in _flockHandles) {
+      SoLoud.instance.fadeVolume(fh, 0, const Duration(milliseconds: 900));
+    }
   }
 
   double _singDuration() =>
@@ -166,6 +228,9 @@ class BirdVoice {
       SoLoud.instance.setVolume(h, 0);
       SoLoud.instance.setPause(h, false);
     }
+    for (final fh in _flockHandles) {
+      SoLoud.instance.setVolume(fh, 0);
+    }
     // 出だしをずらす。いっせいに鳴き始めると不自然になる。
     _cycle = Timer(Duration(milliseconds: _rng.nextInt(3000)),
         () => _loop(n, onChange));
@@ -184,6 +249,10 @@ class BirdVoice {
   void stop() {
     _cycle?.cancel();
     singing = false;
+    for (final fh in _flockHandles) {
+      SoLoud.instance.setVolume(fh, 0);
+      SoLoud.instance.setPause(fh, true);
+    }
     final h = _handle;
     if (h == null) return;
     SoLoud.instance.setVolume(h, 0);
@@ -224,15 +293,23 @@ class RadioEngine {
   ///
   /// 共起ネットワークによる引き寄せ(ecology.pick_lineup)は、生態エンジンを
   /// 移してから足す。いまは基礎重みのぶんだけを写している。
+  /// 種データ(食べ物・気候)。共起ネットワークの計算に使う。
+  Map<String, dynamic> _birdsData = const {};
+
   Future<void> load({Map<String, int> observed = const {}}) async {
     try {
       await SoLoud.instance.init();
+      _birdsData = await loadBirdsData();
       final all = await loadBirdAssets();
       final lineup = _pickLineup(all, observed);
-      for (final b in lineup) {
+      for (var i = 0; i < lineup.length; i++) {
+        final b = lineup[i];
         final count = observed[b.id] ?? 0;
         final v = BirdVoice(b, obsToDepth(count), _rng,
-            flock: core.flockSize(b.id, count, const {}));
+            flock: core.flockSize(b.id, count, _birdsData));
+        // 左右に均等配置(現行の left = 20 + i/(n-1) * 60 を -1..1 に写す)
+        final t = lineup.length > 1 ? i / (lineup.length - 1) : 0.5;
+        v.pan = ((20 + t * 60) - 50) / 50.0;
         await v.load();
         birds.add(v);
       }
@@ -246,27 +323,19 @@ class RadioEngine {
     }
   }
 
-  /// 観察回数で重み付けした抽選。重み 1.0 + 回数 * 0.5(現行と同じ)。
+  /// 顔ぶれを選ぶ。**共起ネットワーク**に沿って選ぶ(現行 ecology.pick_lineup)。
+  ///
+  /// 種(seed)は基礎重み 1.0 + 観察回数 * 0.5 で選ぶ(よく会う鳥ほど主役に
+  /// 出やすい)。以降は**すでに選ばれた鳥と一緒に見られやすい鳥**を引きやすくする。
+  /// 関係は恣意的に足さず、食べ物と気候の重なりから出す(原則4「生態に誠実」)。
   List<BirdAsset> _pickLineup(List<BirdAsset> all, Map<String, int> observed) {
-    final pool = List<BirdAsset>.from(all);
-    final out = <BirdAsset>[];
-    while (out.length < kMaxBirds && pool.isNotEmpty) {
-      final weights = [
-        for (final b in pool) 1.0 + (observed[b.id] ?? 0) * 0.5
-      ];
-      final total = weights.fold<double>(0, (a, b) => a + b);
-      var r = _rng.nextDouble() * total;
-      var idx = pool.length - 1;
-      for (var i = 0; i < pool.length; i++) {
-        r -= weights[i];
-        if (r <= 0) {
-          idx = i;
-          break;
-        }
-      }
-      out.add(pool.removeAt(idx));
-    }
-    return out;
+    final byId = {for (final b in all) b.id: b};
+    final ids = byId.keys.toList();
+    final chosen = core.pickLineup(
+      ids, _birdsData, kMaxBirds, _rng.nextDouble,
+      baseWeight: {for (final id in ids) id: 1.0 + (observed[id] ?? 0) * 0.5},
+    );
+    return [for (final id in chosen) byId[id]!];
   }
 
   /// 眠りにつくまでの残り。null なら睡眠モードではない。

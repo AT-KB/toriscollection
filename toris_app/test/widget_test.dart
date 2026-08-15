@@ -10,9 +10,10 @@ void main() {
   testWidgets('画面が立ち上がり、時刻とセットのボタンが出る(表示は英語)', (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: AlarmPage()));
     await tester.pump();
-    expect(find.text('Wake at'), findsOneWidget);
-    expect(find.text('Set for this time'), findsOneWidget);
-    expect(find.text('Turn off'), findsOneWidget);
+    // 文字を減らしたので、見るのは「主なボタンが出ているか」だけにする
+    // (CEO 2026-08-14「文字の量を少なくしよう」)。
+    expect(find.text('Set'), findsOneWidget);
+    expect(find.text('First to sing'), findsOneWidget);
   });
 
   testWidgets('選べる鳥は4種で、すべてさえずり', (WidgetTester tester) async {

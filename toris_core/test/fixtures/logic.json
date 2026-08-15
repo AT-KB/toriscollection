@@ -1864,5 +1864,4708 @@
    "label": null,
    "message": null
   }
- ]
+ ],
+ "ecology": [
+  {
+   "a": "american_goldfinch",
+   "b": "american_robin",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.4
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "aoji",
+   "co": 0.694444444444,
+   "clim": 0.694444444444,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "blue_jay",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "brown_thrasher",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "carolina_chickadee",
+   "co": 0.390789473684,
+   "clim": 0.868421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "carolina_wren",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "cedar_waxwing",
+   "co": 0.916666666667,
+   "clim": 0.916666666667,
+   "diet": 0.2
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "downy_woodpecker",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "eastern_bluebird",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.5
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "enaga",
+   "co": 0.395454545455,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "hibari",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "hiyodori",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "house_finch",
+   "co": 0.820512820513,
+   "clim": 0.820512820513,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "ikaru",
+   "co": 0.727272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "jou_bitaki",
+   "co": 0.2875,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "kakesu",
+   "co": 0.395454545455,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "kawarahiwa",
+   "co": 0.909090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "kawasemi",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "kibitaki",
+   "co": 0.163636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "kijibato",
+   "co": 0.914285714286,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "kogera",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "mejiro",
+   "co": 0.69696969697,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "mourning_dove",
+   "co": 0.857142857143,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "mozu",
+   "co": 0.436363636364,
+   "clim": 0.969696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "northern_cardinal",
+   "co": 0.424285714286,
+   "clim": 0.942857142857,
+   "diet": 0.5
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "pileated_woodpecker",
+   "co": 0.422727272727,
+   "clim": 0.939393939394,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "red_bellied_woodpecker",
+   "co": 0.390789473684,
+   "clim": 0.868421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.484848484848,
+   "clim": 0.484848484848,
+   "diet": 0.25
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "shijukara",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "shirohara",
+   "co": 0.2875,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "song_sparrow",
+   "co": 0.390789473684,
+   "clim": 0.868421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "suzume",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "tsubame",
+   "co": 0.190909090909,
+   "clim": 0.424242424242,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "tufted_titmouse",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "uguisu",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "american_goldfinch",
+   "b": "yamagara",
+   "co": 0.368181818182,
+   "clim": 0.818181818182,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "aoji",
+   "co": 0.3125,
+   "clim": 0.694444444444,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "blue_jay",
+   "co": 1.0,
+   "clim": 1.0,
+   "diet": 0.428571428571
+  },
+  {
+   "a": "american_robin",
+   "b": "brown_thrasher",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.111111111111
+  },
+  {
+   "a": "american_robin",
+   "b": "carolina_chickadee",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "american_robin",
+   "b": "carolina_wren",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "american_robin",
+   "b": "cedar_waxwing",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.125
+  },
+  {
+   "a": "american_robin",
+   "b": "downy_woodpecker",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "american_robin",
+   "b": "eastern_bluebird",
+   "co": 0.650505050505,
+   "clim": 0.848484848485,
+   "diet": 0.8
+  },
+  {
+   "a": "american_robin",
+   "b": "enaga",
+   "co": 0.395454545455,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "hibari",
+   "co": 0.857142857143,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "hiyodori",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "house_finch",
+   "co": 0.369230769231,
+   "clim": 0.820512820513,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "ikaru",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "jou_bitaki",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "kakesu",
+   "co": 0.878787878788,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "kawarahiwa",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "kawasemi",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "kibitaki",
+   "co": 0.163636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "kijibato",
+   "co": 0.411428571429,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "kogera",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "mejiro",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "mourning_dove",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "mozu",
+   "co": 0.436363636364,
+   "clim": 0.969696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "northern_cardinal",
+   "co": 0.942857142857,
+   "clim": 0.942857142857,
+   "diet": 0.5
+  },
+  {
+   "a": "american_robin",
+   "b": "pileated_woodpecker",
+   "co": 0.422727272727,
+   "clim": 0.939393939394,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "american_robin",
+   "b": "red_bellied_woodpecker",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.111111111111
+  },
+  {
+   "a": "american_robin",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.218181818182,
+   "clim": 0.484848484848,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "american_robin",
+   "b": "shijukara",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "shirohara",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "song_sparrow",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "suzume",
+   "co": 0.8,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "tsubame",
+   "co": 0.190909090909,
+   "clim": 0.424242424242,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "tufted_titmouse",
+   "co": 1.0,
+   "clim": 1.0,
+   "diet": 0.285714285714
+  },
+  {
+   "a": "american_robin",
+   "b": "uguisu",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "american_robin",
+   "b": "yamagara",
+   "co": 0.818181818182,
+   "clim": 0.818181818182,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "blue_jay",
+   "co": 0.3125,
+   "clim": 0.694444444444,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "brown_thrasher",
+   "co": 0.263414634146,
+   "clim": 0.585365853659,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "carolina_chickadee",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "carolina_wren",
+   "co": 0.236842105263,
+   "clim": 0.526315789474,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "cedar_waxwing",
+   "co": 0.777777777778,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "downy_woodpecker",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "eastern_bluebird",
+   "co": 0.25,
+   "clim": 0.555555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "enaga",
+   "co": 0.3515625,
+   "clim": 0.78125,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "hibari",
+   "co": 0.260526315789,
+   "clim": 0.578947368421,
+   "diet": 0.5
+  },
+  {
+   "a": "aoji",
+   "b": "hiyodori",
+   "co": 0.555555555556,
+   "clim": 0.555555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "house_finch",
+   "co": 0.571428571429,
+   "clim": 0.571428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "ikaru",
+   "co": 0.733333333333,
+   "clim": 0.733333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "jou_bitaki",
+   "co": 0.417857142857,
+   "clim": 0.928571428571,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "aoji",
+   "b": "kakesu",
+   "co": 0.3515625,
+   "clim": 0.78125,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "kawarahiwa",
+   "co": 0.611111111111,
+   "clim": 0.611111111111,
+   "diet": 0.5
+  },
+  {
+   "a": "aoji",
+   "b": "kawasemi",
+   "co": 0.25,
+   "clim": 0.555555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "kibitaki",
+   "co": 0.1125,
+   "clim": 0.25,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "kijibato",
+   "co": 0.631578947368,
+   "clim": 0.631578947368,
+   "diet": 0.2
+  },
+  {
+   "a": "aoji",
+   "b": "kogera",
+   "co": 0.340909090909,
+   "clim": 0.757575757576,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "mejiro",
+   "co": 0.416666666667,
+   "clim": 0.416666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "mourning_dove",
+   "co": 0.578947368421,
+   "clim": 0.578947368421,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "mozu",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "northern_cardinal",
+   "co": 0.296052631579,
+   "clim": 0.657894736842,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "pileated_woodpecker",
+   "co": 0.330882352941,
+   "clim": 0.735294117647,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "red_bellied_woodpecker",
+   "co": 0.2925,
+   "clim": 0.65,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.222222222222,
+   "clim": 0.222222222222,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "shijukara",
+   "co": 0.25,
+   "clim": 0.555555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "shirohara",
+   "co": 0.417857142857,
+   "clim": 0.928571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "song_sparrow",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "suzume",
+   "co": 0.236842105263,
+   "clim": 0.526315789474,
+   "diet": 0.2
+  },
+  {
+   "a": "aoji",
+   "b": "tsubame",
+   "co": 0.075,
+   "clim": 0.166666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "tufted_titmouse",
+   "co": 0.3125,
+   "clim": 0.694444444444,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "uguisu",
+   "co": 0.1875,
+   "clim": 0.416666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "aoji",
+   "b": "yamagara",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "brown_thrasher",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.111111111111
+  },
+  {
+   "a": "blue_jay",
+   "b": "carolina_chickadee",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "blue_jay",
+   "b": "carolina_wren",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "blue_jay",
+   "b": "cedar_waxwing",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "downy_woodpecker",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "blue_jay",
+   "b": "eastern_bluebird",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.285714285714
+  },
+  {
+   "a": "blue_jay",
+   "b": "enaga",
+   "co": 0.395454545455,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "hibari",
+   "co": 0.857142857143,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "hiyodori",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "house_finch",
+   "co": 0.369230769231,
+   "clim": 0.820512820513,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "ikaru",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "jou_bitaki",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "kakesu",
+   "co": 0.878787878788,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "kawarahiwa",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "kawasemi",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "kibitaki",
+   "co": 0.163636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "kijibato",
+   "co": 0.411428571429,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "kogera",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "mejiro",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "mourning_dove",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.4
+  },
+  {
+   "a": "blue_jay",
+   "b": "mozu",
+   "co": 0.436363636364,
+   "clim": 0.969696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "northern_cardinal",
+   "co": 0.942857142857,
+   "clim": 0.942857142857,
+   "diet": 0.125
+  },
+  {
+   "a": "blue_jay",
+   "b": "pileated_woodpecker",
+   "co": 0.422727272727,
+   "clim": 0.939393939394,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "blue_jay",
+   "b": "red_bellied_woodpecker",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.111111111111
+  },
+  {
+   "a": "blue_jay",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.218181818182,
+   "clim": 0.484848484848,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "blue_jay",
+   "b": "shijukara",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "shirohara",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "song_sparrow",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "suzume",
+   "co": 0.8,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "tsubame",
+   "co": 0.190909090909,
+   "clim": 0.424242424242,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "tufted_titmouse",
+   "co": 1.0,
+   "clim": 1.0,
+   "diet": 0.5
+  },
+  {
+   "a": "blue_jay",
+   "b": "uguisu",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "blue_jay",
+   "b": "yamagara",
+   "co": 0.818181818182,
+   "clim": 0.818181818182,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "carolina_chickadee",
+   "co": 0.829268292683,
+   "clim": 0.829268292683,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "carolina_wren",
+   "co": 0.364864864865,
+   "clim": 0.810810810811,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "cedar_waxwing",
+   "co": 0.351219512195,
+   "clim": 0.780487804878,
+   "diet": 0.285714285714
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "downy_woodpecker",
+   "co": 0.351219512195,
+   "clim": 0.780487804878,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "eastern_bluebird",
+   "co": 0.756756756757,
+   "clim": 0.756756756757,
+   "diet": 0.125
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "enaga",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "hibari",
+   "co": 0.864864864865,
+   "clim": 0.864864864865,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "hiyodori",
+   "co": 0.340540540541,
+   "clim": 0.756756756757,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "house_finch",
+   "co": 0.438157894737,
+   "clim": 0.973684210526,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "ikaru",
+   "co": 0.291891891892,
+   "clim": 0.648648648649,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "jou_bitaki",
+   "co": 0.536585365854,
+   "clim": 0.536585365854,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "kakesu",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "kawarahiwa",
+   "co": 0.364864864865,
+   "clim": 0.810810810811,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "kawasemi",
+   "co": 0.340540540541,
+   "clim": 0.756756756757,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "kibitaki",
+   "co": 0.145945945946,
+   "clim": 0.324324324324,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "kijibato",
+   "co": 0.413513513514,
+   "clim": 0.918918918919,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "kogera",
+   "co": 0.343421052632,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "mejiro",
+   "co": 0.27972972973,
+   "clim": 0.621621621622,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "mourning_dove",
+   "co": 0.389189189189,
+   "clim": 0.864864864865,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "mozu",
+   "co": 0.389189189189,
+   "clim": 0.864864864865,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "northern_cardinal",
+   "co": 0.894736842105,
+   "clim": 0.894736842105,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "pileated_woodpecker",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "red_bellied_woodpecker",
+   "co": 0.923076923077,
+   "clim": 0.923076923077,
+   "diet": 0.25
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.194594594595,
+   "clim": 0.432432432432,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "shijukara",
+   "co": 0.756756756757,
+   "clim": 0.756756756757,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "shirohara",
+   "co": 0.536585365854,
+   "clim": 0.536585365854,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "song_sparrow",
+   "co": 0.829268292683,
+   "clim": 0.829268292683,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "suzume",
+   "co": 0.810810810811,
+   "clim": 0.810810810811,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "tsubame",
+   "co": 0.17027027027,
+   "clim": 0.378378378378,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "tufted_titmouse",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.125
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "uguisu",
+   "co": 0.27972972973,
+   "clim": 0.621621621622,
+   "diet": 0.0
+  },
+  {
+   "a": "brown_thrasher",
+   "b": "yamagara",
+   "co": 0.72972972973,
+   "clim": 0.72972972973,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "carolina_wren",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.2
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "cedar_waxwing",
+   "co": 0.426315789474,
+   "clim": 0.947368421053,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "downy_woodpecker",
+   "co": 0.426315789474,
+   "clim": 0.947368421053,
+   "diet": 0.5
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "eastern_bluebird",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.4
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "enaga",
+   "co": 0.343421052632,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "hibari",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "hiyodori",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "house_finch",
+   "co": 0.364285714286,
+   "clim": 0.809523809524,
+   "diet": 0.2
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "ikaru",
+   "co": 0.284210526316,
+   "clim": 0.631578947368,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "jou_bitaki",
+   "co": 0.684210526316,
+   "clim": 0.684210526316,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "kakesu",
+   "co": 0.763157894737,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "kawarahiwa",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "kawasemi",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "kibitaki",
+   "co": 0.142105263158,
+   "clim": 0.315789473684,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "kijibato",
+   "co": 0.402631578947,
+   "clim": 0.894736842105,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "kogera",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "mejiro",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "mourning_dove",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "mozu",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "northern_cardinal",
+   "co": 0.921052631579,
+   "clim": 0.921052631579,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "pileated_woodpecker",
+   "co": 0.367105263158,
+   "clim": 0.815789473684,
+   "diet": 0.25
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "red_bellied_woodpecker",
+   "co": 0.9,
+   "clim": 0.9,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.189473684211,
+   "clim": 0.421052631579,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "shijukara",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "shirohara",
+   "co": 0.684210526316,
+   "clim": 0.684210526316,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "song_sparrow",
+   "co": 1.0,
+   "clim": 1.0,
+   "diet": 0.2
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "suzume",
+   "co": 0.789473684211,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "tsubame",
+   "co": 0.165789473684,
+   "clim": 0.368421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "tufted_titmouse",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.4
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "uguisu",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_chickadee",
+   "b": "yamagara",
+   "co": 0.710526315789,
+   "clim": 0.710526315789,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "cedar_waxwing",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "downy_woodpecker",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.5
+  },
+  {
+   "a": "carolina_wren",
+   "b": "eastern_bluebird",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "carolina_wren",
+   "b": "enaga",
+   "co": 0.685714285714,
+   "clim": 0.685714285714,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "hibari",
+   "co": 0.421875,
+   "clim": 0.9375,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "hiyodori",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "house_finch",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "ikaru",
+   "co": 0.309375,
+   "clim": 0.6875,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "jou_bitaki",
+   "co": 0.213157894737,
+   "clim": 0.473684210526,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "kakesu",
+   "co": 0.308571428571,
+   "clim": 0.685714285714,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "kawarahiwa",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "kawasemi",
+   "co": 0.933333333333,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "kibitaki",
+   "co": 0.4,
+   "clim": 0.4,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "kijibato",
+   "co": 0.397058823529,
+   "clim": 0.882352941176,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "kogera",
+   "co": 0.714285714286,
+   "clim": 0.714285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "mejiro",
+   "co": 0.345,
+   "clim": 0.766666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "mourning_dove",
+   "co": 0.421875,
+   "clim": 0.9375,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "mozu",
+   "co": 0.823529411765,
+   "clim": 0.823529411765,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "northern_cardinal",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "carolina_wren",
+   "b": "pileated_woodpecker",
+   "co": 0.742857142857,
+   "clim": 0.742857142857,
+   "diet": 0.25
+  },
+  {
+   "a": "carolina_wren",
+   "b": "red_bellied_woodpecker",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "carolina_wren",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.24,
+   "clim": 0.533333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "shijukara",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "shirohara",
+   "co": 0.213157894737,
+   "clim": 0.473684210526,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "song_sparrow",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "suzume",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "tsubame",
+   "co": 0.466666666667,
+   "clim": 0.466666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "tufted_titmouse",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "carolina_wren",
+   "b": "uguisu",
+   "co": 0.766666666667,
+   "clim": 0.766666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "carolina_wren",
+   "b": "yamagara",
+   "co": 0.3515625,
+   "clim": 0.78125,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "downy_woodpecker",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "eastern_bluebird",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "enaga",
+   "co": 0.3625,
+   "clim": 0.805555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "hibari",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "hiyodori",
+   "co": 0.777777777778,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "house_finch",
+   "co": 0.761904761905,
+   "clim": 0.761904761905,
+   "diet": 0.4
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "ikaru",
+   "co": 0.666666666667,
+   "clim": 0.666666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "jou_bitaki",
+   "co": 0.325,
+   "clim": 0.722222222222,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "kakesu",
+   "co": 0.3625,
+   "clim": 0.805555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "kawarahiwa",
+   "co": 0.833333333333,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "kawasemi",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "kibitaki",
+   "co": 0.15,
+   "clim": 0.333333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "kijibato",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "kogera",
+   "co": 0.375,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "mejiro",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "mourning_dove",
+   "co": 0.789473684211,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "mozu",
+   "co": 0.4,
+   "clim": 0.888888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "northern_cardinal",
+   "co": 0.390789473684,
+   "clim": 0.868421052632,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "pileated_woodpecker",
+   "co": 0.3875,
+   "clim": 0.861111111111,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "red_bellied_woodpecker",
+   "co": 0.3825,
+   "clim": 0.85,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.444444444444,
+   "clim": 0.444444444444,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "shijukara",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "shirohara",
+   "co": 0.325,
+   "clim": 0.722222222222,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "song_sparrow",
+   "co": 0.426315789474,
+   "clim": 0.947368421053,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "suzume",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "tsubame",
+   "co": 0.175,
+   "clim": 0.388888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "tufted_titmouse",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "uguisu",
+   "co": 0.2875,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "cedar_waxwing",
+   "b": "yamagara",
+   "co": 0.3375,
+   "clim": 0.75,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "eastern_bluebird",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.4
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "enaga",
+   "co": 0.805555555556,
+   "clim": 0.805555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "hibari",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "hiyodori",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "house_finch",
+   "co": 0.342857142857,
+   "clim": 0.761904761905,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "ikaru",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "jou_bitaki",
+   "co": 0.325,
+   "clim": 0.722222222222,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "kakesu",
+   "co": 0.3625,
+   "clim": 0.805555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "kawarahiwa",
+   "co": 0.375,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "kawasemi",
+   "co": 0.777777777778,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "kibitaki",
+   "co": 0.333333333333,
+   "clim": 0.333333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "kijibato",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "kogera",
+   "co": 0.833333333333,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "mejiro",
+   "co": 0.2875,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "mourning_dove",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "mozu",
+   "co": 0.888888888889,
+   "clim": 0.888888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "northern_cardinal",
+   "co": 0.390789473684,
+   "clim": 0.868421052632,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "pileated_woodpecker",
+   "co": 0.861111111111,
+   "clim": 0.861111111111,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "red_bellied_woodpecker",
+   "co": 0.3825,
+   "clim": 0.85,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.2,
+   "clim": 0.444444444444,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "shijukara",
+   "co": 0.35,
+   "clim": 0.777777777778,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "shirohara",
+   "co": 0.325,
+   "clim": 0.722222222222,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "song_sparrow",
+   "co": 0.426315789474,
+   "clim": 0.947368421053,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "suzume",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "tsubame",
+   "co": 0.388888888889,
+   "clim": 0.388888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "tufted_titmouse",
+   "co": 0.4125,
+   "clim": 0.916666666667,
+   "diet": 0.4
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "uguisu",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "downy_woodpecker",
+   "b": "yamagara",
+   "co": 0.3375,
+   "clim": 0.75,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "enaga",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "hibari",
+   "co": 0.875,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "hiyodori",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "house_finch",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "ikaru",
+   "co": 0.33,
+   "clim": 0.733333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "jou_bitaki",
+   "co": 0.5,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "kakesu",
+   "co": 0.727272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "kawarahiwa",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "kawasemi",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "kibitaki",
+   "co": 0.192857142857,
+   "clim": 0.428571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "kijibato",
+   "co": 0.370588235294,
+   "clim": 0.823529411765,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "kogera",
+   "co": 0.340909090909,
+   "clim": 0.757575757576,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "mejiro",
+   "co": 0.369642857143,
+   "clim": 0.821428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "mourning_dove",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "mozu",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "northern_cardinal",
+   "co": 0.8,
+   "clim": 0.8,
+   "diet": 0.6
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "pileated_woodpecker",
+   "co": 0.354545454545,
+   "clim": 0.787878787879,
+   "diet": 0.2
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "red_bellied_woodpecker",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.125
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.257142857143,
+   "clim": 0.571428571429,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "shijukara",
+   "co": 1.0,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "shirohara",
+   "co": 0.5,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "song_sparrow",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "suzume",
+   "co": 0.933333333333,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "tsubame",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "tufted_titmouse",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "uguisu",
+   "co": 0.369642857143,
+   "clim": 0.821428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "eastern_bluebird",
+   "b": "yamagara",
+   "co": 0.833333333333,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "hibari",
+   "co": 0.334285714286,
+   "clim": 0.742857142857,
+   "diet": 0.25
+  },
+  {
+   "a": "enaga",
+   "b": "hiyodori",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "house_finch",
+   "co": 0.323076923077,
+   "clim": 0.717948717949,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "ikaru",
+   "co": 0.372413793103,
+   "clim": 0.827586206897,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "jou_bitaki",
+   "co": 0.3234375,
+   "clim": 0.71875,
+   "diet": 0.2
+  },
+  {
+   "a": "enaga",
+   "b": "kakesu",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.2
+  },
+  {
+   "a": "enaga",
+   "b": "kawarahiwa",
+   "co": 0.354545454545,
+   "clim": 0.787878787879,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "kawasemi",
+   "co": 0.727272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "kibitaki",
+   "co": 0.124137931034,
+   "clim": 0.413793103448,
+   "diet": 1.0
+  },
+  {
+   "a": "enaga",
+   "b": "kijibato",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "kogera",
+   "co": 0.966666666667,
+   "clim": 0.966666666667,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "enaga",
+   "b": "mejiro",
+   "co": 0.259090909091,
+   "clim": 0.575757575758,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "mourning_dove",
+   "co": 0.334285714286,
+   "clim": 0.742857142857,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "mozu",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.25
+  },
+  {
+   "a": "enaga",
+   "b": "northern_cardinal",
+   "co": 0.372857142857,
+   "clim": 0.828571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "pileated_woodpecker",
+   "co": 0.935483870968,
+   "clim": 0.935483870968,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "red_bellied_woodpecker",
+   "co": 0.343421052632,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.163636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "shijukara",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.5
+  },
+  {
+   "a": "enaga",
+   "b": "shirohara",
+   "co": 0.3234375,
+   "clim": 0.71875,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "enaga",
+   "b": "song_sparrow",
+   "co": 0.343421052632,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "suzume",
+   "co": 0.308571428571,
+   "clim": 0.685714285714,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "enaga",
+   "b": "tsubame",
+   "co": 0.30303030303,
+   "clim": 0.30303030303,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "tufted_titmouse",
+   "co": 0.395454545455,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "enaga",
+   "b": "uguisu",
+   "co": 0.172727272727,
+   "clim": 0.575757575758,
+   "diet": 1.0
+  },
+  {
+   "a": "enaga",
+   "b": "yamagara",
+   "co": 0.39,
+   "clim": 0.866666666667,
+   "diet": 0.5
+  },
+  {
+   "a": "hibari",
+   "b": "hiyodori",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "house_finch",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "ikaru",
+   "co": 0.3375,
+   "clim": 0.75,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "jou_bitaki",
+   "co": 0.526315789474,
+   "clim": 0.526315789474,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "hibari",
+   "b": "kakesu",
+   "co": 0.742857142857,
+   "clim": 0.742857142857,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "kawarahiwa",
+   "co": 0.421875,
+   "clim": 0.9375,
+   "diet": 0.5
+  },
+  {
+   "a": "hibari",
+   "b": "kawasemi",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "kibitaki",
+   "co": 0.16875,
+   "clim": 0.375,
+   "diet": 0.25
+  },
+  {
+   "a": "hibari",
+   "b": "kijibato",
+   "co": 0.423529411765,
+   "clim": 0.941176470588,
+   "diet": 0.2
+  },
+  {
+   "a": "hibari",
+   "b": "kogera",
+   "co": 0.347142857143,
+   "clim": 0.771428571429,
+   "diet": 0.2
+  },
+  {
+   "a": "hibari",
+   "b": "mejiro",
+   "co": 0.3234375,
+   "clim": 0.71875,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "mourning_dove",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "mozu",
+   "co": 0.397058823529,
+   "clim": 0.882352941176,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "northern_cardinal",
+   "co": 0.914285714286,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "pileated_woodpecker",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "red_bellied_woodpecker",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "shijukara",
+   "co": 0.875,
+   "clim": 0.875,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "hibari",
+   "b": "shirohara",
+   "co": 0.526315789474,
+   "clim": 0.526315789474,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "hibari",
+   "b": "song_sparrow",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "suzume",
+   "co": 0.9375,
+   "clim": 0.9375,
+   "diet": 0.5
+  },
+  {
+   "a": "hibari",
+   "b": "tsubame",
+   "co": 0.196875,
+   "clim": 0.4375,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "tufted_titmouse",
+   "co": 0.857142857143,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "hibari",
+   "b": "uguisu",
+   "co": 0.3234375,
+   "clim": 0.71875,
+   "diet": 0.25
+  },
+  {
+   "a": "hibari",
+   "b": "yamagara",
+   "co": 0.84375,
+   "clim": 0.84375,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "hiyodori",
+   "b": "house_finch",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "ikaru",
+   "co": 0.733333333333,
+   "clim": 0.733333333333,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "hiyodori",
+   "b": "jou_bitaki",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.125
+  },
+  {
+   "a": "hiyodori",
+   "b": "kakesu",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.125
+  },
+  {
+   "a": "hiyodori",
+   "b": "kawarahiwa",
+   "co": 0.933333333333,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "kawasemi",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "kibitaki",
+   "co": 0.192857142857,
+   "clim": 0.428571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "kijibato",
+   "co": 0.823529411765,
+   "clim": 0.823529411765,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "kogera",
+   "co": 0.340909090909,
+   "clim": 0.757575757576,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "mejiro",
+   "co": 0.246428571429,
+   "clim": 0.821428571429,
+   "diet": 1.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "mourning_dove",
+   "co": 0.875,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "mozu",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "northern_cardinal",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "pileated_woodpecker",
+   "co": 0.354545454545,
+   "clim": 0.787878787879,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "red_bellied_woodpecker",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.571428571429,
+   "clim": 0.571428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "shijukara",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "shirohara",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.25
+  },
+  {
+   "a": "hiyodori",
+   "b": "song_sparrow",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "suzume",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "tsubame",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "tufted_titmouse",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "uguisu",
+   "co": 0.369642857143,
+   "clim": 0.821428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "hiyodori",
+   "b": "yamagara",
+   "co": 0.375,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "ikaru",
+   "co": 0.631578947368,
+   "clim": 0.631578947368,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "jou_bitaki",
+   "co": 0.235714285714,
+   "clim": 0.52380952381,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "kakesu",
+   "co": 0.323076923077,
+   "clim": 0.717948717949,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "kawarahiwa",
+   "co": 0.789473684211,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "kawasemi",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "kibitaki",
+   "co": 0.142105263158,
+   "clim": 0.315789473684,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "kijibato",
+   "co": 0.894736842105,
+   "clim": 0.894736842105,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "kogera",
+   "co": 0.334615384615,
+   "clim": 0.74358974359,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "mejiro",
+   "co": 0.605263157895,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "mourning_dove",
+   "co": 0.842105263158,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "mozu",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "northern_cardinal",
+   "co": 0.392307692308,
+   "clim": 0.871794871795,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "pileated_woodpecker",
+   "co": 0.346153846154,
+   "clim": 0.769230769231,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "red_bellied_woodpecker",
+   "co": 0.405,
+   "clim": 0.9,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "house_finch",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.421052631579,
+   "clim": 0.421052631579,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "shijukara",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "shirohara",
+   "co": 0.235714285714,
+   "clim": 0.52380952381,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "song_sparrow",
+   "co": 0.364285714286,
+   "clim": 0.809523809524,
+   "diet": 0.2
+  },
+  {
+   "a": "house_finch",
+   "b": "suzume",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "tsubame",
+   "co": 0.165789473684,
+   "clim": 0.368421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "tufted_titmouse",
+   "co": 0.369230769231,
+   "clim": 0.820512820513,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "uguisu",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "house_finch",
+   "b": "yamagara",
+   "co": 0.319736842105,
+   "clim": 0.710526315789,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "jou_bitaki",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "ikaru",
+   "b": "kakesu",
+   "co": 0.372413793103,
+   "clim": 0.827586206897,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "ikaru",
+   "b": "kawarahiwa",
+   "co": 0.8,
+   "clim": 0.8,
+   "diet": 0.2
+  },
+  {
+   "a": "ikaru",
+   "b": "kawasemi",
+   "co": 0.33,
+   "clim": 0.733333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "kibitaki",
+   "co": 0.173076923077,
+   "clim": 0.384615384615,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "kijibato",
+   "co": 0.705882352941,
+   "clim": 0.705882352941,
+   "diet": 0.2
+  },
+  {
+   "a": "ikaru",
+   "b": "kogera",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "mejiro",
+   "co": 0.566666666667,
+   "clim": 0.566666666667,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "ikaru",
+   "b": "mourning_dove",
+   "co": 0.75,
+   "clim": 0.75,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "mozu",
+   "co": 0.3375,
+   "clim": 0.75,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "northern_cardinal",
+   "co": 0.308571428571,
+   "clim": 0.685714285714,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "pileated_woodpecker",
+   "co": 0.348387096774,
+   "clim": 0.774193548387,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "red_bellied_woodpecker",
+   "co": 0.284210526316,
+   "clim": 0.631578947368,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.333333333333,
+   "clim": 0.333333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "shijukara",
+   "co": 0.33,
+   "clim": 0.733333333333,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "ikaru",
+   "b": "shirohara",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "ikaru",
+   "b": "song_sparrow",
+   "co": 0.284210526316,
+   "clim": 0.631578947368,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "suzume",
+   "co": 0.309375,
+   "clim": 0.6875,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "tsubame",
+   "co": 0.12,
+   "clim": 0.266666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "tufted_titmouse",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "uguisu",
+   "co": 0.255,
+   "clim": 0.566666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "ikaru",
+   "b": "yamagara",
+   "co": 0.4,
+   "clim": 0.888888888889,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "kakesu",
+   "co": 0.71875,
+   "clim": 0.71875,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "kawarahiwa",
+   "co": 0.25,
+   "clim": 0.555555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "kawasemi",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "kibitaki",
+   "co": 0.084375,
+   "clim": 0.1875,
+   "diet": 0.2
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "kijibato",
+   "co": 0.260526315789,
+   "clim": 0.578947368421,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "kogera",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "mejiro",
+   "co": 0.1625,
+   "clim": 0.361111111111,
+   "diet": 0.125
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "mourning_dove",
+   "co": 0.236842105263,
+   "clim": 0.526315789474,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "mozu",
+   "co": 0.275,
+   "clim": 0.611111111111,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "northern_cardinal",
+   "co": 0.605263157895,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "pileated_woodpecker",
+   "co": 0.304411764706,
+   "clim": 0.676470588235,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "red_bellied_woodpecker",
+   "co": 0.6,
+   "clim": 0.6,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.075,
+   "clim": 0.166666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "shijukara",
+   "co": 0.5,
+   "clim": 0.5,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "shirohara",
+   "co": 1.0,
+   "clim": 1.0,
+   "diet": 0.5
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "song_sparrow",
+   "co": 0.684210526316,
+   "clim": 0.684210526316,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "suzume",
+   "co": 0.473684210526,
+   "clim": 0.473684210526,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "tsubame",
+   "co": 0.05,
+   "clim": 0.111111111111,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "tufted_titmouse",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "uguisu",
+   "co": 0.1625,
+   "clim": 0.361111111111,
+   "diet": 0.2
+  },
+  {
+   "a": "jou_bitaki",
+   "b": "yamagara",
+   "co": 0.606060606061,
+   "clim": 0.606060606061,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "kakesu",
+   "b": "kawarahiwa",
+   "co": 0.354545454545,
+   "clim": 0.787878787879,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "kawasemi",
+   "co": 0.327272727273,
+   "clim": 0.727272727273,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "kibitaki",
+   "co": 0.186206896552,
+   "clim": 0.413793103448,
+   "diet": 0.2
+  },
+  {
+   "a": "kakesu",
+   "b": "kijibato",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "kakesu",
+   "b": "kogera",
+   "co": 0.435,
+   "clim": 0.966666666667,
+   "diet": 0.4
+  },
+  {
+   "a": "kakesu",
+   "b": "mejiro",
+   "co": 0.259090909091,
+   "clim": 0.575757575758,
+   "diet": 0.125
+  },
+  {
+   "a": "kakesu",
+   "b": "mourning_dove",
+   "co": 0.334285714286,
+   "clim": 0.742857142857,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "mozu",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "kakesu",
+   "b": "northern_cardinal",
+   "co": 0.828571428571,
+   "clim": 0.828571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "pileated_woodpecker",
+   "co": 0.420967741935,
+   "clim": 0.935483870968,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "red_bellied_woodpecker",
+   "co": 0.763157894737,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.163636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "shijukara",
+   "co": 0.727272727273,
+   "clim": 0.727272727273,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "kakesu",
+   "b": "shirohara",
+   "co": 0.71875,
+   "clim": 0.71875,
+   "diet": 0.125
+  },
+  {
+   "a": "kakesu",
+   "b": "song_sparrow",
+   "co": 0.763157894737,
+   "clim": 0.763157894737,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "suzume",
+   "co": 0.685714285714,
+   "clim": 0.685714285714,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "kakesu",
+   "b": "tsubame",
+   "co": 0.136363636364,
+   "clim": 0.30303030303,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "tufted_titmouse",
+   "co": 0.878787878788,
+   "clim": 0.878787878788,
+   "diet": 0.0
+  },
+  {
+   "a": "kakesu",
+   "b": "uguisu",
+   "co": 0.259090909091,
+   "clim": 0.575757575758,
+   "diet": 0.2
+  },
+  {
+   "a": "kakesu",
+   "b": "yamagara",
+   "co": 0.866666666667,
+   "clim": 0.866666666667,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "kawasemi",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "kibitaki",
+   "co": 0.18,
+   "clim": 0.4,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "kijibato",
+   "co": 0.882352941176,
+   "clim": 0.882352941176,
+   "diet": 0.2
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "kogera",
+   "co": 0.368181818182,
+   "clim": 0.818181818182,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "mejiro",
+   "co": 0.766666666667,
+   "clim": 0.766666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "mourning_dove",
+   "co": 0.9375,
+   "clim": 0.9375,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "mozu",
+   "co": 0.421875,
+   "clim": 0.9375,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "northern_cardinal",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "pileated_woodpecker",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "red_bellied_woodpecker",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.533333333333,
+   "clim": 0.533333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "shijukara",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "shirohara",
+   "co": 0.25,
+   "clim": 0.555555555556,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "song_sparrow",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "suzume",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.2
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "tsubame",
+   "co": 0.21,
+   "clim": 0.466666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "tufted_titmouse",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "uguisu",
+   "co": 0.345,
+   "clim": 0.766666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "kawarahiwa",
+   "b": "yamagara",
+   "co": 0.405,
+   "clim": 0.9,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "kibitaki",
+   "co": 0.428571428571,
+   "clim": 0.428571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "kijibato",
+   "co": 0.370588235294,
+   "clim": 0.823529411765,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "kogera",
+   "co": 0.757575757576,
+   "clim": 0.757575757576,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "mejiro",
+   "co": 0.369642857143,
+   "clim": 0.821428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "mourning_dove",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "mozu",
+   "co": 0.875,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "northern_cardinal",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "pileated_woodpecker",
+   "co": 0.787878787879,
+   "clim": 0.787878787879,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "red_bellied_woodpecker",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.257142857143,
+   "clim": 0.571428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "shijukara",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "shirohara",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "song_sparrow",
+   "co": 0.331578947368,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "suzume",
+   "co": 0.42,
+   "clim": 0.933333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "tsubame",
+   "co": 0.5,
+   "clim": 0.5,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "kawasemi",
+   "b": "tufted_titmouse",
+   "co": 0.381818181818,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "uguisu",
+   "co": 0.821428571429,
+   "clim": 0.821428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "kawasemi",
+   "b": "yamagara",
+   "co": 0.375,
+   "clim": 0.833333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "kijibato",
+   "co": 0.158823529412,
+   "clim": 0.352941176471,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "kogera",
+   "co": 0.4,
+   "clim": 0.4,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "kibitaki",
+   "b": "mejiro",
+   "co": 0.234782608696,
+   "clim": 0.521739130435,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "mourning_dove",
+   "co": 0.16875,
+   "clim": 0.375,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "mozu",
+   "co": 0.375,
+   "clim": 0.375,
+   "diet": 0.25
+  },
+  {
+   "a": "kibitaki",
+   "b": "northern_cardinal",
+   "co": 0.154285714286,
+   "clim": 0.342857142857,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "pileated_woodpecker",
+   "co": 0.387096774194,
+   "clim": 0.387096774194,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "red_bellied_woodpecker",
+   "co": 0.142105263158,
+   "clim": 0.315789473684,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.3375,
+   "clim": 0.75,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "shijukara",
+   "co": 0.192857142857,
+   "clim": 0.428571428571,
+   "diet": 0.5
+  },
+  {
+   "a": "kibitaki",
+   "b": "shirohara",
+   "co": 0.084375,
+   "clim": 0.1875,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "kibitaki",
+   "b": "song_sparrow",
+   "co": 0.142105263158,
+   "clim": 0.315789473684,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "suzume",
+   "co": 0.18,
+   "clim": 0.4,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "kibitaki",
+   "b": "tsubame",
+   "co": 0.625,
+   "clim": 0.625,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "tufted_titmouse",
+   "co": 0.163636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "uguisu",
+   "co": 0.15652173913,
+   "clim": 0.521739130435,
+   "diet": 1.0
+  },
+  {
+   "a": "kibitaki",
+   "b": "yamagara",
+   "co": 0.2,
+   "clim": 0.444444444444,
+   "diet": 0.5
+  },
+  {
+   "a": "kijibato",
+   "b": "kogera",
+   "co": 0.372857142857,
+   "clim": 0.828571428571,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "mejiro",
+   "co": 0.676470588235,
+   "clim": 0.676470588235,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "mourning_dove",
+   "co": 0.941176470588,
+   "clim": 0.941176470588,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "mozu",
+   "co": 0.423529411765,
+   "clim": 0.941176470588,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "northern_cardinal",
+   "co": 0.437142857143,
+   "clim": 0.971428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "pileated_woodpecker",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "red_bellied_woodpecker",
+   "co": 0.402631578947,
+   "clim": 0.894736842105,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.470588235294,
+   "clim": 0.470588235294,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "shijukara",
+   "co": 0.370588235294,
+   "clim": 0.823529411765,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "shirohara",
+   "co": 0.260526315789,
+   "clim": 0.578947368421,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "song_sparrow",
+   "co": 0.402631578947,
+   "clim": 0.894736842105,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "suzume",
+   "co": 0.397058823529,
+   "clim": 0.882352941176,
+   "diet": 0.2
+  },
+  {
+   "a": "kijibato",
+   "b": "tsubame",
+   "co": 0.185294117647,
+   "clim": 0.411764705882,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "tufted_titmouse",
+   "co": 0.411428571429,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "uguisu",
+   "co": 0.304411764706,
+   "clim": 0.676470588235,
+   "diet": 0.0
+  },
+  {
+   "a": "kijibato",
+   "b": "yamagara",
+   "co": 0.357352941176,
+   "clim": 0.794117647059,
+   "diet": 0.4
+  },
+  {
+   "a": "kogera",
+   "b": "mejiro",
+   "co": 0.272727272727,
+   "clim": 0.606060606061,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "mourning_dove",
+   "co": 0.347142857143,
+   "clim": 0.771428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "mozu",
+   "co": 0.878787878788,
+   "clim": 0.878787878788,
+   "diet": 0.2
+  },
+  {
+   "a": "kogera",
+   "b": "northern_cardinal",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "pileated_woodpecker",
+   "co": 0.967741935484,
+   "clim": 0.967741935484,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "red_bellied_woodpecker",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.177272727273,
+   "clim": 0.393939393939,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "shijukara",
+   "co": 0.301136363636,
+   "clim": 0.757575757576,
+   "diet": 0.75
+  },
+  {
+   "a": "kogera",
+   "b": "shirohara",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "kogera",
+   "b": "song_sparrow",
+   "co": 0.355263157895,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "suzume",
+   "co": 0.321428571429,
+   "clim": 0.714285714286,
+   "diet": 0.5
+  },
+  {
+   "a": "kogera",
+   "b": "tsubame",
+   "co": 0.333333333333,
+   "clim": 0.333333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "tufted_titmouse",
+   "co": 0.409090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "kogera",
+   "b": "uguisu",
+   "co": 0.606060606061,
+   "clim": 0.606060606061,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "kogera",
+   "b": "yamagara",
+   "co": 0.405,
+   "clim": 0.9,
+   "diet": 0.4
+  },
+  {
+   "a": "mejiro",
+   "b": "mourning_dove",
+   "co": 0.71875,
+   "clim": 0.71875,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "mozu",
+   "co": 0.3234375,
+   "clim": 0.71875,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "northern_cardinal",
+   "co": 0.295714285714,
+   "clim": 0.657142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "pileated_woodpecker",
+   "co": 0.286363636364,
+   "clim": 0.636363636364,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "red_bellied_woodpecker",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.695652173913,
+   "clim": 0.695652173913,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "shijukara",
+   "co": 0.369642857143,
+   "clim": 0.821428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "shirohara",
+   "co": 0.1625,
+   "clim": 0.361111111111,
+   "diet": 0.25
+  },
+  {
+   "a": "mejiro",
+   "b": "song_sparrow",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "suzume",
+   "co": 0.345,
+   "clim": 0.766666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "tsubame",
+   "co": 0.273913043478,
+   "clim": 0.608695652174,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "tufted_titmouse",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "uguisu",
+   "co": 0.45,
+   "clim": 1.0,
+   "diet": 0.0
+  },
+  {
+   "a": "mejiro",
+   "b": "yamagara",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "mozu",
+   "co": 0.397058823529,
+   "clim": 0.882352941176,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "northern_cardinal",
+   "co": 0.411428571429,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "pileated_woodpecker",
+   "co": 0.36,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "red_bellied_woodpecker",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.5,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "shijukara",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "shirohara",
+   "co": 0.236842105263,
+   "clim": 0.526315789474,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "song_sparrow",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "suzume",
+   "co": 0.421875,
+   "clim": 0.9375,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "tsubame",
+   "co": 0.196875,
+   "clim": 0.4375,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "tufted_titmouse",
+   "co": 0.385714285714,
+   "clim": 0.857142857143,
+   "diet": 0.2
+  },
+  {
+   "a": "mourning_dove",
+   "b": "uguisu",
+   "co": 0.3234375,
+   "clim": 0.71875,
+   "diet": 0.0
+  },
+  {
+   "a": "mourning_dove",
+   "b": "yamagara",
+   "co": 0.3796875,
+   "clim": 0.84375,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "northern_cardinal",
+   "co": 0.411428571429,
+   "clim": 0.914285714286,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "pileated_woodpecker",
+   "co": 0.909090909091,
+   "clim": 0.909090909091,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "red_bellied_woodpecker",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "shijukara",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "mozu",
+   "b": "shirohara",
+   "co": 0.275,
+   "clim": 0.611111111111,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "song_sparrow",
+   "co": 0.378947368421,
+   "clim": 0.842105263158,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "suzume",
+   "co": 0.370588235294,
+   "clim": 0.823529411765,
+   "diet": 0.2
+  },
+  {
+   "a": "mozu",
+   "b": "tsubame",
+   "co": 0.4375,
+   "clim": 0.4375,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "tufted_titmouse",
+   "co": 0.436363636364,
+   "clim": 0.969696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "mozu",
+   "b": "uguisu",
+   "co": 0.71875,
+   "clim": 0.71875,
+   "diet": 0.25
+  },
+  {
+   "a": "mozu",
+   "b": "yamagara",
+   "co": 0.3796875,
+   "clim": 0.84375,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "pileated_woodpecker",
+   "co": 0.398571428571,
+   "clim": 0.885714285714,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "red_bellied_woodpecker",
+   "co": 0.921052631579,
+   "clim": 0.921052631579,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.205714285714,
+   "clim": 0.457142857143,
+   "diet": 0.4
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "shijukara",
+   "co": 0.8,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "shirohara",
+   "co": 0.605263157895,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "song_sparrow",
+   "co": 0.921052631579,
+   "clim": 0.921052631579,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "suzume",
+   "co": 0.857142857143,
+   "clim": 0.857142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "tsubame",
+   "co": 0.18,
+   "clim": 0.4,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "tufted_titmouse",
+   "co": 0.942857142857,
+   "clim": 0.942857142857,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "uguisu",
+   "co": 0.295714285714,
+   "clim": 0.657142857143,
+   "diet": 0.0
+  },
+  {
+   "a": "northern_cardinal",
+   "b": "yamagara",
+   "co": 0.771428571429,
+   "clim": 0.771428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "red_bellied_woodpecker",
+   "co": 0.367105263158,
+   "clim": 0.815789473684,
+   "diet": 0.4
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.190909090909,
+   "clim": 0.424242424242,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "shijukara",
+   "co": 0.354545454545,
+   "clim": 0.787878787879,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "shirohara",
+   "co": 0.304411764706,
+   "clim": 0.676470588235,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "song_sparrow",
+   "co": 0.367105263158,
+   "clim": 0.815789473684,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "suzume",
+   "co": 0.334285714286,
+   "clim": 0.742857142857,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "tsubame",
+   "co": 0.363636363636,
+   "clim": 0.363636363636,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "tufted_titmouse",
+   "co": 0.422727272727,
+   "clim": 0.939393939394,
+   "diet": 0.2
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "uguisu",
+   "co": 0.636363636364,
+   "clim": 0.636363636364,
+   "diet": 0.0
+  },
+  {
+   "a": "pileated_woodpecker",
+   "b": "yamagara",
+   "co": 0.391935483871,
+   "clim": 0.870967741935,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "ruby_throated_hummingbird",
+   "co": 0.189473684211,
+   "clim": 0.421052631579,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "shijukara",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "shirohara",
+   "co": 0.6,
+   "clim": 0.6,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "song_sparrow",
+   "co": 0.9,
+   "clim": 0.9,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "suzume",
+   "co": 0.789473684211,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "tsubame",
+   "co": 0.165789473684,
+   "clim": 0.368421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "tufted_titmouse",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.125
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "uguisu",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "red_bellied_woodpecker",
+   "b": "yamagara",
+   "co": 0.710526315789,
+   "clim": 0.710526315789,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "shijukara",
+   "co": 0.257142857143,
+   "clim": 0.571428571429,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "shirohara",
+   "co": 0.075,
+   "clim": 0.166666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "song_sparrow",
+   "co": 0.189473684211,
+   "clim": 0.421052631579,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "suzume",
+   "co": 0.24,
+   "clim": 0.533333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "tsubame",
+   "co": 0.39375,
+   "clim": 0.875,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "tufted_titmouse",
+   "co": 0.218181818182,
+   "clim": 0.484848484848,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "uguisu",
+   "co": 0.313043478261,
+   "clim": 0.695652173913,
+   "diet": 0.0
+  },
+  {
+   "a": "ruby_throated_hummingbird",
+   "b": "yamagara",
+   "co": 0.195,
+   "clim": 0.433333333333,
+   "diet": 0.0
+  },
+  {
+   "a": "shijukara",
+   "b": "shirohara",
+   "co": 0.5,
+   "clim": 0.5,
+   "diet": 0.125
+  },
+  {
+   "a": "shijukara",
+   "b": "song_sparrow",
+   "co": 0.736842105263,
+   "clim": 0.736842105263,
+   "diet": 0.0
+  },
+  {
+   "a": "shijukara",
+   "b": "suzume",
+   "co": 0.933333333333,
+   "clim": 0.933333333333,
+   "diet": 0.4
+  },
+  {
+   "a": "shijukara",
+   "b": "tsubame",
+   "co": 0.225,
+   "clim": 0.5,
+   "diet": 0.0
+  },
+  {
+   "a": "shijukara",
+   "b": "tufted_titmouse",
+   "co": 0.848484848485,
+   "clim": 0.848484848485,
+   "diet": 0.0
+  },
+  {
+   "a": "shijukara",
+   "b": "uguisu",
+   "co": 0.369642857143,
+   "clim": 0.821428571429,
+   "diet": 0.5
+  },
+  {
+   "a": "shijukara",
+   "b": "yamagara",
+   "co": 0.833333333333,
+   "clim": 0.833333333333,
+   "diet": 0.333333333333
+  },
+  {
+   "a": "shirohara",
+   "b": "song_sparrow",
+   "co": 0.684210526316,
+   "clim": 0.684210526316,
+   "diet": 0.0
+  },
+  {
+   "a": "shirohara",
+   "b": "suzume",
+   "co": 0.473684210526,
+   "clim": 0.473684210526,
+   "diet": 0.142857142857
+  },
+  {
+   "a": "shirohara",
+   "b": "tsubame",
+   "co": 0.05,
+   "clim": 0.111111111111,
+   "diet": 0.0
+  },
+  {
+   "a": "shirohara",
+   "b": "tufted_titmouse",
+   "co": 0.638888888889,
+   "clim": 0.638888888889,
+   "diet": 0.0
+  },
+  {
+   "a": "shirohara",
+   "b": "uguisu",
+   "co": 0.1625,
+   "clim": 0.361111111111,
+   "diet": 0.166666666667
+  },
+  {
+   "a": "shirohara",
+   "b": "yamagara",
+   "co": 0.606060606061,
+   "clim": 0.606060606061,
+   "diet": 0.125
+  },
+  {
+   "a": "song_sparrow",
+   "b": "suzume",
+   "co": 0.789473684211,
+   "clim": 0.789473684211,
+   "diet": 0.0
+  },
+  {
+   "a": "song_sparrow",
+   "b": "tsubame",
+   "co": 0.165789473684,
+   "clim": 0.368421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "song_sparrow",
+   "b": "tufted_titmouse",
+   "co": 0.868421052632,
+   "clim": 0.868421052632,
+   "diet": 0.0
+  },
+  {
+   "a": "song_sparrow",
+   "b": "uguisu",
+   "co": 0.272368421053,
+   "clim": 0.605263157895,
+   "diet": 0.0
+  },
+  {
+   "a": "song_sparrow",
+   "b": "yamagara",
+   "co": 0.710526315789,
+   "clim": 0.710526315789,
+   "diet": 0.0
+  },
+  {
+   "a": "suzume",
+   "b": "tsubame",
+   "co": 0.21,
+   "clim": 0.466666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "suzume",
+   "b": "tufted_titmouse",
+   "co": 0.8,
+   "clim": 0.8,
+   "diet": 0.0
+  },
+  {
+   "a": "suzume",
+   "b": "uguisu",
+   "co": 0.345,
+   "clim": 0.766666666667,
+   "diet": 0.666666666667
+  },
+  {
+   "a": "suzume",
+   "b": "yamagara",
+   "co": 0.78125,
+   "clim": 0.78125,
+   "diet": 0.4
+  },
+  {
+   "a": "tsubame",
+   "b": "tufted_titmouse",
+   "co": 0.190909090909,
+   "clim": 0.424242424242,
+   "diet": 0.0
+  },
+  {
+   "a": "tsubame",
+   "b": "uguisu",
+   "co": 0.608695652174,
+   "clim": 0.608695652174,
+   "diet": 0.0
+  },
+  {
+   "a": "tsubame",
+   "b": "yamagara",
+   "co": 0.165,
+   "clim": 0.366666666667,
+   "diet": 0.0
+  },
+  {
+   "a": "tufted_titmouse",
+   "b": "uguisu",
+   "co": 0.313636363636,
+   "clim": 0.69696969697,
+   "diet": 0.0
+  },
+  {
+   "a": "tufted_titmouse",
+   "b": "yamagara",
+   "co": 0.818181818182,
+   "clim": 0.818181818182,
+   "diet": 0.0
+  },
+  {
+   "a": "uguisu",
+   "b": "yamagara",
+   "co": 0.3,
+   "clim": 0.666666666667,
+   "diet": 0.5
+  }
+ ],
+ "guilds": {
+  "american_goldfinch": "herbivore",
+  "american_robin": "omnivore",
+  "aoji": "herbivore",
+  "blue_jay": "omnivore",
+  "brown_thrasher": "omnivore",
+  "carolina_chickadee": "omnivore",
+  "carolina_wren": "insectivore",
+  "cedar_waxwing": "herbivore",
+  "downy_woodpecker": "insectivore",
+  "eastern_bluebird": "omnivore",
+  "enaga": "insectivore",
+  "hibari": "omnivore",
+  "hiyodori": "herbivore",
+  "house_finch": "herbivore",
+  "ikaru": "herbivore",
+  "jou_bitaki": "omnivore",
+  "kakesu": "omnivore",
+  "kawarahiwa": "herbivore",
+  "kawasemi": "insectivore",
+  "kibitaki": "insectivore",
+  "kijibato": "herbivore",
+  "kogera": "insectivore",
+  "mejiro": "herbivore",
+  "mourning_dove": "herbivore",
+  "mozu": "insectivore",
+  "northern_cardinal": "omnivore",
+  "pileated_woodpecker": "insectivore",
+  "red_bellied_woodpecker": "omnivore",
+  "ruby_throated_hummingbird": "herbivore",
+  "shijukara": "omnivore",
+  "shirohara": "omnivore",
+  "song_sparrow": "omnivore",
+  "suzume": "omnivore",
+  "tsubame": "insectivore",
+  "tufted_titmouse": "omnivore",
+  "uguisu": "insectivore",
+  "yamagara": "omnivore"
+ }
 }

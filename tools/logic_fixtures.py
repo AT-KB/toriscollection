@@ -15,6 +15,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "toris_collection"))
 
 import badges  # noqa: E402
+import ecology  # noqa: E402
+import data as seed  # noqa: E402
 import flock  # noqa: E402
 import i18n  # noqa: E402
 
@@ -79,9 +81,26 @@ def main() -> None:
             "message": badges.badge_message("コマドリ", d),
         })
 
+    # 生態(共起ネットワーク): 実データ37種の**全ペア**で答えを出す。
+    # 顔ぶれの選び方の根っこなので、1組でもズレると出てくる鳥が変わる。
+    birds = seed.BIRDS
+    ids = sorted(birds)
+    eco = []
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            eco.append({
+                "a": a, "b": b,
+                "co": round(ecology.co_occurrence(a, b, birds), 12),
+                "clim": round(ecology.climate_overlap(a, b, birds), 12),
+                "diet": round(ecology.diet_jaccard(a, b, birds), 12),
+            })
+    guilds = {b: ecology.guild(b, birds) for b in ids}
+
     with open(OUT, "w", encoding="utf-8") as f:
-        json.dump({"flock": flock_cases, "badges": badge_cases}, f,
+        json.dump({"flock": flock_cases, "badges": badge_cases,
+                   "ecology": eco, "guilds": guilds}, f,
                   ensure_ascii=False, indent=1)
+    print(f"生態: {len(eco)} 組(37種の全ペア)")
     n = sum(len(c["sizes"]) for c in flock_cases)
     print(f"flock: {len(flock_cases)} 種 × {len(COUNTS)} 回 = {n} 通り")
     print(f"badges: {len(badge_cases)} 通り")

@@ -1,0 +1,806 @@
+{
+ "american_goldfinch": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#f0d040",
+  "description_en": "Brilliant yellow in summer. A seed-eater that gathers around fruiting trees.",
+  "eats_insects": [],
+  "eats_plants": [
+   "dogwood",
+   "redbud"
+  ],
+  "english": "American Goldfinch",
+  "rarity": 0.5,
+  "scientific": "Spinus tristis",
+  "temp_fit": [
+   -5,
+   28
+  ],
+  "wariness": 0.45
+ },
+ "american_robin": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#a06030",
+  "description_en": "Known for its orange breast. The most familiar thrush across North America.",
+  "eats_insects": [
+   "june_beetle",
+   "tent_caterpillar"
+  ],
+  "eats_plants": [
+   "dogwood",
+   "magnolia",
+   "redbud"
+  ],
+  "english": "American Robin",
+  "rarity": 0.3,
+  "scientific": "Turdus migratorius",
+  "temp_fit": [
+   -5,
+   28
+  ],
+  "wariness": 0.3
+ },
+ "aoji": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#8a9a5a",
+  "description_en": "It pecks at seeds along the thicket's edge in winter. A quiet, greenish member of the bunting family.",
+  "eats_insects": [],
+  "eats_plants": [
+   "susuki",
+   "rice",
+   "noibara"
+  ],
+  "english": "Black-faced Bunting",
+  "rarity": 0.5,
+  "scientific": "Emberiza spodocephala",
+  "temp_fit": [
+   -8,
+   20
+  ],
+  "wariness": 0.5
+ },
+ "blue_jay": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#3a78c8",
+  "description_en": "Vivid blue and white. A clever bird, known for hoarding acorns.",
+  "eats_insects": [
+   "june_beetle",
+   "tent_caterpillar"
+  ],
+  "eats_plants": [
+   "loblolly",
+   "red_maple",
+   "magnolia"
+  ],
+  "english": "Blue Jay",
+  "rarity": 0.35,
+  "scientific": "Cyanocitta cristata",
+  "temp_fit": [
+   -5,
+   28
+  ],
+  "wariness": 0.35
+ },
+ "brown_thrasher": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#9c5a2a",
+  "description_en": "It rummages through leaf litter in the brush for insects. Wary by nature, so a rare sight.",
+  "eats_insects": [
+   "june_beetle",
+   "katydid"
+  ],
+  "eats_plants": [
+   "beautyberry",
+   "pokeweed",
+   "service_berry"
+  ],
+  "english": "Brown Thrasher",
+  "rarity": 0.55,
+  "scientific": "Toxostoma rufum",
+  "temp_fit": [
+   -4,
+   33
+  ],
+  "wariness": 0.6
+ },
+ "carolina_chickadee": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#8a8a80",
+  "description_en": "A tiny, friendly chickadee. A feeder regular with a taste for sunflower seeds.",
+  "eats_insects": [
+   "tent_caterpillar",
+   "june_beetle"
+  ],
+  "eats_plants": [
+   "sunflower"
+  ],
+  "english": "Carolina Chickadee",
+  "rarity": 0.3,
+  "scientific": "Poecile carolinensis",
+  "temp_fit": [
+   -8,
+   30
+  ]
+ },
+ "carolina_wren": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#a87038",
+  "description_en": "Its lively song sounds like 'tea-kettle, tea-kettle.' Fond of thickets, and seen all year round.",
+  "eats_insects": [
+   "tent_caterpillar",
+   "fireflies",
+   "carpenter_bee"
+  ],
+  "eats_plants": [],
+  "english": "Carolina Wren",
+  "rarity": 0.45,
+  "scientific": "Thryothorus ludovicianus",
+  "temp_fit": [
+   0,
+   30
+  ],
+  "wariness": 0.45
+ },
+ "cedar_waxwing": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#b9a06a",
+  "description_en": "It travels in flocks in search of berries, with a special love for red cedar fruit.",
+  "eats_insects": [],
+  "eats_plants": [
+   "red_cedar",
+   "service_berry",
+   "dogwood",
+   "beautyberry"
+  ],
+  "english": "Cedar Waxwing",
+  "rarity": 0.6,
+  "scientific": "Bombycilla cedrorum",
+  "temp_fit": [
+   -8,
+   28
+  ],
+  "wariness": 0.5
+ },
+ "downy_woodpecker": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#1a1a1a",
+  "description_en": "North America's smallest woodpecker. A frequent guest at backyard feeders.",
+  "eats_insects": [
+   "june_beetle",
+   "carpenter_bee",
+   "tent_caterpillar"
+  ],
+  "eats_plants": [],
+  "english": "Downy Woodpecker",
+  "rarity": 0.45,
+  "scientific": "Dryobates pubescens",
+  "temp_fit": [
+   -8,
+   28
+  ],
+  "wariness": 0.45
+ },
+ "eastern_bluebird": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#3858b8",
+  "description_en": "Deep blue with an orange breast. It watches for insects over open meadows.",
+  "eats_insects": [
+   "tent_caterpillar",
+   "june_beetle"
+  ],
+  "eats_plants": [
+   "dogwood",
+   "redbud"
+  ],
+  "english": "Eastern Bluebird",
+  "rarity": 0.5,
+  "scientific": "Sialia sialis",
+  "temp_fit": [
+   0,
+   28
+  ],
+  "wariness": 0.45
+ },
+ "enaga": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#d4d4d4",
+  "description_en": "A round little body with a long tail. Snowman-like, it moves about in busy flocks.",
+  "eats_insects": [
+   "ao_imo_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [],
+  "english": "Long-tailed Tit",
+  "rarity": 0.55,
+  "scientific": "Aegithalos caudatus",
+  "temp_fit": [
+   -5,
+   24
+  ],
+  "wariness": 0.5
+ },
+ "hibari": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#b09a6a",
+  "description_en": "It rises singing from the grasslands. It feeds on the seeds and insects of the fields.",
+  "eats_insects": [
+   "ao_imo_mushi"
+  ],
+  "eats_plants": [
+   "rice",
+   "susuki"
+  ],
+  "english": "Eurasian Skylark",
+  "rarity": 0.45,
+  "scientific": "Alauda arvensis",
+  "temp_fit": [
+   -2,
+   30
+  ],
+  "wariness": 0.45
+ },
+ "hiyodori": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#7a7a7a",
+  "description_en": "Loud and lively. A lover of fruit, and an important spreader of seeds.",
+  "eats_insects": [],
+  "eats_plants": [
+   "sakura",
+   "camellia",
+   "enoki",
+   "nanten",
+   "kaki"
+  ],
+  "english": "Brown-eared Bulbul",
+  "rarity": 0.3,
+  "scientific": "Hypsipetes amaurotis",
+  "temp_fit": [
+   0,
+   28
+  ],
+  "wariness": 0.35
+ },
+ "house_finch": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#c65a52",
+  "description_en": "A rosy little bird common around homes. It loves seeds and fruit, and comes in flocks.",
+  "eats_insects": [],
+  "eats_plants": [
+   "sunflower",
+   "service_berry",
+   "beautyberry"
+  ],
+  "english": "House Finch",
+  "rarity": 0.3,
+  "scientific": "Haemorhous mexicanus",
+  "temp_fit": [
+   -4,
+   34
+  ]
+ },
+ "ikaru": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#c0a040",
+  "description_en": "It cracks hard seeds with its thick yellow bill.",
+  "eats_insects": [],
+  "eats_plants": [
+   "kunugi",
+   "nanten",
+   "pine"
+  ],
+  "english": "Japanese Grosbeak",
+  "rarity": 0.65,
+  "scientific": "Eophona personata",
+  "temp_fit": [
+   -2,
+   22
+  ],
+  "wariness": 0.55
+ },
+ "jou_bitaki": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#d07a3a",
+  "description_en": "An orange little bird that arrives for winter. It calls a soft 'hit, hit' and shows little fear of people.",
+  "eats_insects": [
+   "ao_imo_mushi"
+  ],
+  "eats_plants": [
+   "nanten",
+   "murasaki_shikibu",
+   "noibara"
+  ],
+  "english": "Daurian Redstart",
+  "rarity": 0.45,
+  "scientific": "Phoenicurus auroreus",
+  "temp_fit": [
+   -8,
+   18
+  ],
+  "wariness": 0.25
+ },
+ "kakesu": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#a87878",
+  "description_en": "A clever bird that buries acorns in the ground, and so helps the oak woods grow.",
+  "eats_insects": [
+   "kabuto_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [
+   "kunugi",
+   "kaki"
+  ],
+  "english": "Eurasian Jay",
+  "rarity": 0.55,
+  "scientific": "Garrulus glandarius",
+  "temp_fit": [
+   -5,
+   24
+  ],
+  "wariness": 0.6
+ },
+ "kawarahiwa": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#b8a040",
+  "description_en": "Marked by bright yellow wing patches. A seed-eater fond of silver-grass fields and riverbanks.",
+  "eats_insects": [],
+  "eats_plants": [
+   "susuki",
+   "rice",
+   "pine"
+  ],
+  "english": "Oriental Greenfinch",
+  "rarity": 0.4,
+  "scientific": "Chloris sinica",
+  "temp_fit": [
+   -2,
+   28
+  ],
+  "wariness": 0.45
+ },
+ "kawasemi": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#1a7ac8",
+  "description_en": "A back of jewel-like blue. It needs water close by, diving in to catch fish and water insects.",
+  "eats_insects": [
+   "shio_kara_tonbo",
+   "ama_gaeru"
+  ],
+  "eats_plants": [],
+  "english": "Common Kingfisher",
+  "rarity": 0.65,
+  "scientific": "Alcedo atthis",
+  "temp_fit": [
+   0,
+   28
+  ],
+  "wariness": 0.7
+ },
+ "kibitaki": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#e8b820",
+  "description_en": "A yellow-and-black summer visitor. It sings brightly in the canopy, then heads south for winter.",
+  "eats_insects": [
+   "ao_imo_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [],
+  "english": "Narcissus Flycatcher",
+  "rarity": 0.75,
+  "scientific": "Ficedula narcissina",
+  "temp_fit": [
+   12,
+   24
+  ],
+  "wariness": 0.65
+ },
+ "kijibato": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#9a7a6a",
+  "description_en": "A country dove with a soft, rolling coo. It gathers seeds and nuts from the ground.",
+  "eats_insects": [],
+  "eats_plants": [
+   "rice",
+   "kunugi",
+   "egonoki"
+  ],
+  "english": "Oriental Turtle Dove",
+  "rarity": 0.3,
+  "scientific": "Streptopelia orientalis",
+  "temp_fit": [
+   -4,
+   30
+  ],
+  "wariness": 0.35
+ },
+ "kogera": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#6a5a4a",
+  "description_en": "Japan's smallest woodpecker. It taps at dead wood in search of insects.",
+  "eats_insects": [
+   "kabuto_mushi",
+   "ao_imo_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [],
+  "english": "Japanese Pygmy Woodpecker",
+  "rarity": 0.5,
+  "scientific": "Dendrocopos kizuki",
+  "temp_fit": [
+   -5,
+   25
+  ],
+  "wariness": 0.5
+ },
+ "mejiro": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#9ab846",
+  "description_en": "Named for the white ring around each eye. It loves flower nectar and ripe fruit.",
+  "eats_insects": [],
+  "eats_plants": [
+   "sakura",
+   "camellia",
+   "enoki",
+   "nanten",
+   "kaki"
+  ],
+  "english": "Japanese White-eye",
+  "rarity": 0.35,
+  "scientific": "Zosterops japonicus",
+  "temp_fit": [
+   5,
+   28
+  ],
+  "wariness": 0.4
+ },
+ "mourning_dove": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#a89878",
+  "description_en": "Soft, muted beige plumage. Known for its low, mournful coo.",
+  "eats_insects": [],
+  "eats_plants": [
+   "loblolly",
+   "red_maple"
+  ],
+  "english": "Mourning Dove",
+  "rarity": 0.35,
+  "scientific": "Zenaida macroura",
+  "temp_fit": [
+   -2,
+   30
+  ],
+  "wariness": 0.35
+ },
+ "mozu": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#a5713a",
+  "description_en": "A small bird with the air of a little raptor. It catches large insects and leaves them impaled as a larder.",
+  "eats_insects": [
+   "kuwagata",
+   "abura_zemi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [],
+  "english": "Bull-headed Shrike",
+  "rarity": 0.5,
+  "scientific": "Lanius bucephalus",
+  "temp_fit": [
+   -4,
+   28
+  ],
+  "wariness": 0.55
+ },
+ "northern_cardinal": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#c83020",
+  "description_en": "The state bird of North Carolina. Striking, with brilliant red plumage and a black face.",
+  "eats_insects": [
+   "tent_caterpillar"
+  ],
+  "eats_plants": [
+   "dogwood",
+   "redbud",
+   "tulip_tree"
+  ],
+  "english": "Northern Cardinal",
+  "rarity": 0.3,
+  "scientific": "Cardinalis cardinalis",
+  "temp_fit": [
+   -5,
+   30
+  ],
+  "wariness": 0.35
+ },
+ "pileated_woodpecker": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#c01818",
+  "description_en": "A large woodpecker with a bright red crest. It carves great holes in the forest's old trees.",
+  "eats_insects": [
+   "june_beetle",
+   "carpenter_bee"
+  ],
+  "eats_plants": [],
+  "english": "Pileated Woodpecker",
+  "rarity": 0.7,
+  "scientific": "Dryocopus pileatus",
+  "temp_fit": [
+   -5,
+   26
+  ],
+  "wariness": 0.8
+ },
+ "red_bellied_woodpecker": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#c04a3a",
+  "description_en": "A red-capped woodpecker. It eats widely — acorns, bark insects, even feeder seed.",
+  "eats_insects": [
+   "katydid",
+   "carpenter_bee",
+   "june_beetle"
+  ],
+  "eats_plants": [
+   "white_oak",
+   "sunflower"
+  ],
+  "english": "Red-bellied Woodpecker",
+  "rarity": 0.45,
+  "scientific": "Melanerpes carolinus",
+  "temp_fit": [
+   -6,
+   32
+  ]
+ },
+ "ruby_throated_hummingbird": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#3a8a3a",
+  "description_en": "A tiny hummingbird whose wings beat over fifty times a second. It breeds in the eastern woods each summer.",
+  "eats_insects": [],
+  "eats_plants": [
+   "redbud",
+   "tulip_tree",
+   "magnolia"
+  ],
+  "english": "Ruby-throated Hummingbird",
+  "rarity": 0.7,
+  "scientific": "Archilochus colubris",
+  "temp_fit": [
+   12,
+   28
+  ],
+  "wariness": 0.6
+ },
+ "shijukara": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#2a2a2a",
+  "description_en": "Known for its black necktie marking. A familiar visitor, at home everywhere from city parks to deep woods.",
+  "eats_insects": [
+   "ao_imo_mushi",
+   "kara_imo_mushi",
+   "kabuto_mushi"
+  ],
+  "eats_plants": [
+   "pine"
+  ],
+  "english": "Japanese Tit",
+  "rarity": 0.3,
+  "scientific": "Parus minor",
+  "temp_fit": [
+   0,
+   28
+  ],
+  "wariness": 0.3
+ },
+ "shirohara": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#6a5a4a",
+  "description_en": "A quiet thrush that turns over leaves on the winter forest floor. It eats berries and insects.",
+  "eats_insects": [
+   "ao_imo_mushi"
+  ],
+  "eats_plants": [
+   "nanten",
+   "murasaki_shikibu",
+   "kuwa",
+   "kaki"
+  ],
+  "english": "Pale Thrush",
+  "rarity": 0.5,
+  "scientific": "Turdus pallidus",
+  "temp_fit": [
+   -8,
+   18
+  ],
+  "wariness": 0.55
+ },
+ "song_sparrow": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#8a6a4a",
+  "description_en": "A sparrow that sings often at the edge of thickets. It eats seeds and small insects.",
+  "eats_insects": [
+   "hoverfly_us"
+  ],
+  "eats_plants": [
+   "sunflower",
+   "pokeweed"
+  ],
+  "english": "Song Sparrow",
+  "rarity": 0.35,
+  "scientific": "Melospiza melodia",
+  "temp_fit": [
+   -8,
+   30
+  ],
+  "wariness": 0.45
+ },
+ "suzume": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#a07040",
+  "description_en": "The classic bird of villages, its life woven closely into rice fields and the ways of people.",
+  "eats_insects": [
+   "ao_imo_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [
+   "rice"
+  ],
+  "english": "Eurasian Tree Sparrow",
+  "rarity": 0.2,
+  "scientific": "Passer montanus",
+  "temp_fit": [
+   0,
+   30
+  ],
+  "wariness": 0.2
+ },
+ "tsubame": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#1a2a4a",
+  "description_en": "A summer visitor arriving in spring. It catches insects on the wing as it flies.",
+  "eats_insects": [
+   "nihon_mitsubachi",
+   "shio_kara_tonbo"
+  ],
+  "eats_plants": [],
+  "english": "Barn Swallow",
+  "rarity": 0.45,
+  "scientific": "Hirundo rustica",
+  "temp_fit": [
+   14,
+   28
+  ],
+  "wariness": 0.4
+ },
+ "tufted_titmouse": {
+  "biome_pref": [
+   "charlotte"
+  ],
+  "color": "#9aa8b8",
+  "description_en": "Marked by a small grey crest. North America's signature member of the tit family.",
+  "eats_insects": [
+   "tent_caterpillar",
+   "june_beetle"
+  ],
+  "eats_plants": [
+   "red_maple",
+   "tulip_tree"
+  ],
+  "english": "Tufted Titmouse",
+  "rarity": 0.4,
+  "scientific": "Baeolophus bicolor",
+  "temp_fit": [
+   -5,
+   28
+  ],
+  "wariness": 0.4
+ },
+ "uguisu": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#8a9452",
+  "description_en": "The herald of spring. It sings beautifully from the thickets, yet rarely shows itself.",
+  "eats_insects": [
+   "ao_imo_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [],
+  "english": "Japanese Bush Warbler",
+  "rarity": 0.5,
+  "scientific": "Horornis diphone",
+  "temp_fit": [
+   5,
+   28
+  ],
+  "wariness": 0.7
+ },
+ "yamagara": {
+  "biome_pref": [
+   "kyoto"
+  ],
+  "color": "#b06030",
+  "description_en": "It stores away acorns and snowbell seeds, and is known for its friendly, trusting nature.",
+  "eats_insects": [
+   "ao_imo_mushi",
+   "kara_imo_mushi"
+  ],
+  "eats_plants": [
+   "kunugi",
+   "egonoki"
+  ],
+  "english": "Varied Tit",
+  "rarity": 0.4,
+  "scientific": "Sittiparus varius",
+  "temp_fit": [
+   -2,
+   25
+  ],
+  "wariness": 0.3
+ }
+}
