@@ -11,6 +11,9 @@
   2. 台帳(`tools/migration_ledger.json`)と突き合わせ、
   3. 台帳に無い関数があれば **落ちる**(= 新しく増えた機能を見落とせない)、
   4. 「移した」と書いてある項目は、Dart 側に実体があるかを実際に探して確かめる。
+  5. **画面を検める**(下の `screen_audit`)。関数を移したかだけでは、
+     画面のミスは1件も捕まらない — 実際、Flutter のマスコットが鳥の代わりに
+     出ていたのを見逃した(CEO 指摘 2026-08-15)。
 
 **作業を1つ終えるたびに必ず走らせること。**
 
@@ -86,6 +89,102 @@ def load_ledger() -> dict:
     return {"items": {}}
 
 
+# ─────────────────────────────────────────────────────────────
+# 画面の検査
+#
+# ## なぜ足したか(2026-08-15 CEO)
+# 「なんで監査機能働いてないの? ゴミみたいな初期スクリーンで分かるミスやん」
+#
+# そのとおりで、ここまでの監査は「Python の関数を移したか」しか見ておらず、
+# **画面を一度も見ていなかった**。実際に漏れた:
+#   - 絵の無い種のフォールバックが `Icons.flutter_dash`(Flutter のマスコット)
+#   - 画面に日本語が出ていた(アプリは全部英語)
+#
+# 完成度は機械で測れないが、**「これが出ていたら確実に間違い」は機械で測れる。**
+# 以下はその一覧。目で見つける前に落とすのが目的。
+# ─────────────────────────────────────────────────────────────
+
+# 出ていたら確実に間違い、という印(正規表現, 説明)
+FORBIDDEN_IN_UI = [
+    (r"Icons\.flutter_dash",
+     "Flutter のマスコット。素材の代役に枠組みの既定を使わない"),
+    (r"Icons\.image_not_supported|Icons\.broken_image",
+     "「絵がありません」を見せない。代役を用意する"),
+    (r"FlutterLogo",
+     "Flutter のロゴが画面に出る"),
+    (r"\bTODO\b|\bFIXME\b|Lorem ipsum|placeholder text",
+     "書きかけが画面に残っている"),
+    (r"Text\(\s*['\"]\s*['\"]\s*\)",
+     "空の文字。出さないなら widget ごと出さない"),
+]
+
+# 画面に日本語が出ていないこと。**アプリの表示は全部英語**
+# (一度これで作り直しになった)。コメントと doc は日本語なので、
+# 文字列リテラルの中だけを見る。
+JP = r"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]"
+
+
+def _ui_files() -> list:
+    out = []
+    app_lib = os.path.join(ROOT, "toris_app", "lib")
+    for root, _dirs, files in os.walk(app_lib):
+        for f in files:
+            if f.endswith(".dart"):
+                out.append(os.path.join(root, f))
+    return sorted(out)
+
+
+def _strip_comments(line: str) -> str:
+    i = line.find("//")
+    return line[:i] if i >= 0 else line
+
+
+def screen_audit() -> list:
+    """画面の作りを機械で検める。問題の一覧を返す(空なら合格)。"""
+    import re
+    problems = []
+
+    for path in _ui_files():
+        rel = os.path.relpath(path, ROOT).replace("\\", "/")
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+        for n, raw in enumerate(lines, 1):
+            line = _strip_comments(raw)
+            if not line.strip():
+                continue
+            for pat, why in FORBIDDEN_IN_UI:
+                if re.search(pat, line):
+                    problems.append(f"{rel}:{n} {why}\n        {line.strip()[:90]}")
+            # 表示文字列の中の日本語だけを見る
+            for lit in re.findall(r"'([^'\\]*)'|\"([^\"\\]*)\"", line):
+                text = lit[0] or lit[1]
+                if re.search(JP, text):
+                    problems.append(
+                        f"{rel}:{n} 画面に日本語(アプリは全部英語)\n"
+                        f"        {text[:60]}")
+
+    # 全37種に、絵か**代役の方針**があること。
+    # 絵が無いこと自体は問題ではない(描き下ろしは順次)。
+    # 問題なのは、代役が用意されていないこと。
+    sprites = os.path.join(ROOT, "toris_app", "assets", "sprites")
+    birds_json = os.path.join(ROOT, "toris_app", "assets", "data", "birds.json")
+    if os.path.isdir(sprites) and os.path.exists(birds_json):
+        have = {f[:-4] for f in os.listdir(sprites)
+                if f.endswith(".png") and not f.endswith("_detail.png")}
+        with open(birds_json, encoding="utf-8") as f:
+            all_birds = set(json.load(f))
+        missing = sorted(all_birds - have)
+        mark = os.path.join(ROOT, "toris_app", "lib", "ui", "bird_mark.dart")
+        if missing and not os.path.exists(mark):
+            problems.append(
+                f"絵が無い種が {len(missing)} 件あるのに、代役(ui/bird_mark.dart)"
+                f"が無い: {', '.join(missing[:6])}…")
+        elif missing:
+            print(f"  絵が無い種 {len(missing)}/{len(all_birds)} 件は代役で出る"
+                  f"(BirdMark): {', '.join(missing)}")
+    return problems
+
+
 def main() -> None:
     api = python_api()
     ledger = load_ledger()
@@ -146,7 +245,18 @@ def main() -> None:
         for mod in sorted(by_mod):
             print(f"  {mod:<16} {', '.join(sorted(by_mod[mod]))}")
 
-    if broken or unknown:
+    # ── 画面の検査 ──
+    # 関数を移したかだけでは、画面のミスは1件も捕まらない。
+    print("\n── 画面 ──")
+    screen_problems = screen_audit()
+    if screen_problems:
+        print(f"  !! {len(screen_problems)} 件")
+        for p in screen_problems:
+            print(f"     {p}")
+    else:
+        print("  問題なし")
+
+    if broken or unknown or screen_problems:
         raise SystemExit(1)
 
 

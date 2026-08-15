@@ -15,6 +15,7 @@ import 'sleep_mode.dart';
 class RadioPage extends StatefulWidget {
   /// 会った回数。よく会った鳥ほど主役に出やすく、近くで、厚く鳴く。
   final Map<String, int> observed;
+
   const RadioPage({super.key, this.observed = const {}});
 
   @override
@@ -60,6 +61,12 @@ class _RadioPageState extends State<RadioPage>
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          // ⚠️ ここに「今の庭(いま庭に居る鳥)」を置いてはいけない。
+          // ラジオの顔ぶれは共起ネットワークからの抽選で、**庭に居る鳥とは無関係**。
+          // 並べると「これから鳴く鳥」に読めてしまい、嘘になる
+          // (CEO 2026-08-15「そこの Jay いたけど、ラジオにはいない」)。
+          // 今の庭は庭のタブにある。
+
           // ── 主役: 鳴らす/止める ──
           FilledButton.icon(
             onPressed:

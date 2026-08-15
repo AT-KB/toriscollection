@@ -17,7 +17,9 @@ import 'package:toris_core/toris_core.dart' as core;
 
 import '../ui/theme.dart';
 import 'garden_state.dart';
+import 'now_in_garden.dart';
 import 'ritual.dart';
+import 'transfer_sheet.dart';
 import 'tree_scene.dart';
 
 class GardenPage extends StatefulWidget {
@@ -162,7 +164,20 @@ class _GardenPageState extends State<GardenPage>
     final web = g.web;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Garden')),
+      appBar: AppBar(
+        title: const Text('Garden'),
+        actions: [
+          // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。
+          IconButton(
+            tooltip: 'Move your garden',
+            icon: const Icon(Icons.ios_share_rounded),
+            onPressed: () => showTransferSheet(context, g, onRestored: () async {
+              widget.onChanged?.call(g);
+              setState(() {});
+            }),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
@@ -178,17 +193,15 @@ class _GardenPageState extends State<GardenPage>
                       ? Ritual.depthName(_ritual!.branch[b] ?? 0)
                       : g.depthOf(b),
                   sprite: g.spriteFor(b),
+                  data: g.data.birds[b] as Map<String, dynamic>?,
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          // ── 今の庭。**名前の羅列ではなく、まず絵**(原則5)。 ──
+          // 木の上の鳥は小さいので、ここで誰が居るかを大きく見せる。
+          NowInGarden(garden: g),
           const SizedBox(height: 10),
-          Text(
-            g.visiting.isEmpty
-                ? 'No one yet.'
-                : g.visiting.map((b) => _name(g.data.birds, b)).join(' · '),
-            style: const TextStyle(color: kInk, fontSize: 16),
-          ),
-          const SizedBox(height: 6),
           Text('${web.temperature.round()}°C',
               style: const TextStyle(color: kSub, fontSize: 13)),
           const SizedBox(height: 14),

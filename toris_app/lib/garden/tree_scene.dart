@@ -12,6 +12,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../ui/bird_mark.dart';
+
 class TreeSpec {
   final double branchTop; // 枝の高さ(%)
   final double halfWidth; // 枝の半幅(%)
@@ -49,12 +51,16 @@ class PerchedBird {
   /// 近さ。b1 が手前。会った回数で決まる(現行の _obs_to_depth)。
   final String depth;
 
-  /// ドット絵のパス(無ければ丸で代用)。
+  /// ドット絵のパス(無ければ `BirdMark` で代用)。
   final String? sprite;
+
+  /// 種データ(絵が無いとき、その鳥の色で代役を描くのに使う)。
+  final Map<String, dynamic>? data;
   const PerchedBird(
       {required this.id,
       required this.english,
       required this.depth,
+      this.data,
       this.sprite});
 }
 
@@ -171,7 +177,9 @@ class _TreeSceneState extends State<TreeScene> {
               child: b.sprite != null
                   ? Image.asset(b.sprite!,
                       width: size, height: size, filterQuality: FilterQuality.none)
-                  : Icon(Icons.flutter_dash, size: size, color: _kBranch),
+                  // 絵が無い種は、その鳥の色をした小鳥のかたちで代える。
+                  // (以前は Flutter のマスコットが出ていた)
+                  : BirdMark.forBird(b.data, size: size),
             ),
           ),
         ));
