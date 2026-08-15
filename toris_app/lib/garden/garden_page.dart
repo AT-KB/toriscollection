@@ -22,6 +22,7 @@ import 'popups.dart';
 import 'ritual.dart';
 import 'transfer_sheet.dart';
 import 'tree_scene.dart';
+import 'tutorial_overlay.dart';
 
 class GardenPage extends StatefulWidget {
   final void Function(Garden garden)? onChanged;
@@ -44,6 +45,11 @@ class _GardenPageState extends State<GardenPage>
 
   /// この回の儀式が「出会い」として記録されるか。始めた時点で決める。
   bool _ritualCounts = true;
+
+  // チュートリアルで**明るく残すもの**の目印。
+  final GlobalKey _landKey = GlobalKey();
+  final GlobalKey _plantKey = GlobalKey();
+  final GlobalKey _insectKey = GlobalKey();
 
   @override
   bool get wantKeepAlive => true;
@@ -74,20 +80,24 @@ class _GardenPageState extends State<GardenPage>
     final report = AwayReport(
       hoursAway: hoursAway,
       arrivals: [
-        for (final b in g.lastArrivals) MetBird(b, g.lastFirstTimers.contains(b))
+        for (final b in g.lastArrivals)
+          MetBird(b, g.lastFirstTimers.contains(b)),
       ],
       departures: <String>{
-        for (final b in g.lastDepartures) _name(g.data.birds, b)
+        for (final b in g.lastDepartures) _name(g.data.birds, b),
       }.toList(),
       lostPlants: [for (final p in g.lastLostPlants) _name(g.data.plants, p)],
       // 撹乱は種類ごとに一文で語る。倒れた植物はその文の中に入る。
       disturbanceStories: [
         for (final d in g.lastDisturbances)
-          core.disturbanceStory(d.type, d.icon,
-              [for (final p in g.lastLostPlants) _name(g.data.plants, p)])
+          core.disturbanceStory(d.type, d.icon, [
+            for (final p in g.lastLostPlants) _name(g.data.plants, p),
+          ]),
       ],
       summary: core.summarizeEvents(
-          g.lastArrivals, (b) => _name(g.data.birds, b)),
+        g.lastArrivals,
+        (b) => _name(g.data.birds, b),
+      ),
     );
     if (report.worthShowing && mounted) {
       await showWelcomeBackPopup(context, g, report);
@@ -118,7 +128,9 @@ class _GardenPageState extends State<GardenPage>
       return Image.asset(sprite, filterQuality: FilterQuality.none);
     }
     return BirdMark.forBird(
-        (g.data.birds[birdId] as Map?)?.cast<String, dynamic>(), size: 20);
+      (g.data.birds[birdId] as Map?)?.cast<String, dynamic>(),
+      size: 20,
+    );
   }
 
   /// 植えるものを選ぶ。**開いたときだけ**一覧を見せる。
@@ -136,23 +148,34 @@ class _GardenPageState extends State<GardenPage>
             controller: controller,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             children: [
-              Text('Plant  ${g.planted.length}/${g.maxPlants}',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w600, color: kInk)),
+              Text(
+                'Plant  ${g.planted.length}/${g.maxPlants}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: kInk,
+                ),
+              ),
               const SizedBox(height: 14),
               for (final p in g.availablePlants)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Text(
-                      (g.data.plants[p]?['icon'] as String?) ?? '🌱',
-                      style: const TextStyle(fontSize: 24)),
-                  title: Text(_name(g.data.plants, p),
-                      style: const TextStyle(fontSize: 16, color: kInk)),
+                    (g.data.plants[p]?['icon'] as String?) ?? '🌱',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  title: Text(
+                    _name(g.data.plants, p),
+                    style: const TextStyle(fontSize: 16, color: kInk),
+                  ),
                   trailing: g.planted.contains(p)
                       ? const Icon(Icons.check_circle, color: kGreen)
                       : (g.planted.length >= g.maxPlants
-                          ? null
-                          : const Icon(Icons.add_circle_outline, color: kSub)),
+                            ? null
+                            : const Icon(
+                                Icons.add_circle_outline,
+                                color: kSub,
+                              )),
                   onTap: () async {
                     setSheet(() {
                       g.planted.contains(p) ? g.remove(p) : g.plant(p);
@@ -231,6 +254,19 @@ class _GardenPageState extends State<GardenPage>
     }
     final web = g.web;
 
+    // ── チュートリアルの覆い ──
+    // 進み具合を見て段を繰り上げる(「次へ」では進めない段がある)。
+    if (g.tutorialRunning) {
+      final resolved = core.resolveTutorialStep(
+        g.tutorialStep,
+        hasPlanted: g.planted.isNotEmpty,
+      );
+      if (resolved != g.tutorialStep) {
+        g.tutorialStep = resolved;
+        WidgetsBinding.instance.addPostFrameCallback((_) => _save());
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Garden'),
@@ -239,196 +275,264 @@ class _GardenPageState extends State<GardenPage>
           IconButton(
             tooltip: 'Move your garden',
             icon: const Icon(Icons.ios_share_rounded),
-            onPressed: () => showTransferSheet(context, g, onRestored: () async {
-              widget.onChanged?.call(g);
-              setState(() {});
-            }),
+            onPressed: () => showTransferSheet(
+              context,
+              g,
+              onRestored: () async {
+                widget.onChanged?.call(g);
+                setState(() {});
+              },
+            ),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      body: Stack(
         children: [
-          // ── ① 裏庭の情景。ここが庭の顔。 ──
-          // 餌台・リス・タカ・植生は、**選択とそのまま連動する**。
-          TreeScene(
-            plants: [
-              for (final p in g.planted)
-                (g.data.plants[p]?['icon'] as String?) ?? '🌱'
-            ],
-            feeder: g.feeders.isEmpty ? null : g.feeders.first,
-            hasSquirrel: g.chain.animals.isNotEmpty,
-            hasRaptor: g.chain.raptors.isNotEmpty,
-            birds: [
-              for (final b in g.visiting)
-                PerchedBird(
-                  id: b,
-                  english: _name(g.data.birds, b),
-                  // 儀式のあいだは、いま止まっている枝をそのまま出す
-                  depth: _ritual != null
-                      ? Ritual.depthName(_ritual!.branch[b] ?? 0)
-                      : g.depthOf(b),
-                  sprite: g.spriteFor(b),
-                  data: g.data.birds[b] as Map<String, dynamic>?,
+          ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            children: [
+              // ── ① 裏庭の情景。ここが庭の顔。 ──
+              // 餌台・リス・タカ・植生は、**選択とそのまま連動する**。
+              TreeScene(
+                plants: [
+                  for (final p in g.planted)
+                    (g.data.plants[p]?['icon'] as String?) ?? '🌱',
+                ],
+                feeder: g.feeders.isEmpty ? null : g.feeders.first,
+                hasSquirrel: g.chain.animals.isNotEmpty,
+                hasRaptor: g.chain.raptors.isNotEmpty,
+                birds: [
+                  for (final b in g.visiting)
+                    PerchedBird(
+                      id: b,
+                      english: _name(g.data.birds, b),
+                      // 儀式のあいだは、いま止まっている枝をそのまま出す
+                      depth: _ritual != null
+                          ? Ritual.depthName(_ritual!.branch[b] ?? 0)
+                          : g.depthOf(b),
+                      sprite: g.spriteFor(b),
+                      data: g.data.birds[b] as Map<String, dynamic>?,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // いま来ている鳥。**虫と同じ形**(絵 + 名前のチップ)で下に出す
+              // (CEO 2026-08-16「land の鳥も insects みたいに名前とアイコンを
+              // 下に出して」)。木の上の鳥は小さいので、ここで誰か分かる。
+              if (g.visiting.isEmpty)
+                const Text(
+                  'No one yet.',
+                  style: TextStyle(color: kSub, fontSize: 15),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final b in g.visiting)
+                      Chip(
+                        avatar: _birdAvatar(g, b),
+                        label: Text(_name(g.data.birds, b)),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // いま来ている鳥。**虫と同じ形**(絵 + 名前のチップ)で下に出す
-          // (CEO 2026-08-16「land の鳥も insects みたいに名前とアイコンを
-          // 下に出して」)。木の上の鳥は小さいので、ここで誰か分かる。
-          if (g.visiting.isEmpty)
-            const Text('No one yet.',
-                style: TextStyle(color: kSub, fontSize: 15))
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final b in g.visiting)
-                  Chip(
-                    avatar: _birdAvatar(g, b),
-                    label: Text(_name(g.data.birds, b)),
+              const SizedBox(height: 8),
+              Text(
+                '${web.temperature.round()}°C',
+                style: const TextStyle(color: kSub, fontSize: 13),
+              ),
+              const SizedBox(height: 14),
+
+              // ── 出会いの儀式 ──
+              // 押し続けさせない。待っていれば、鳥のほうから近づいてくる。
+              if (g.visiting.isNotEmpty) ...[
+                FilledButton.icon(
+                  onPressed: _ritual == null ? _listen : _stopListening,
+                  icon: Icon(
+                    _ritual == null ? Icons.hearing : Icons.stop_rounded,
+                    size: 26,
+                  ),
+                  label: Text(_ritual == null ? 'Listen closely' : 'Enough'),
+                ),
+                // 眺めるのはいつでもできる。**記録にならない**時だけ、静かに断る。
+                if (!g.ritualCounts)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      "🌙 You've listened closely enough for today. "
+                      'When a new bird comes, you can go and meet it again.',
+                      style: TextStyle(fontSize: 12, height: 1.4, color: kSub),
+                    ),
                   ),
               ],
-            ),
-          const SizedBox(height: 8),
-          Text('${web.temperature.round()}°C',
-              style: const TextStyle(color: kSub, fontSize: 13)),
-          const SizedBox(height: 14),
+              const SizedBox(height: 20),
 
-          // ── 出会いの儀式 ──
-          // 押し続けさせない。待っていれば、鳥のほうから近づいてくる。
-          if (g.visiting.isNotEmpty) ...[
-            FilledButton.icon(
-              onPressed: _ritual == null ? _listen : _stopListening,
-              icon: Icon(
-                  _ritual == null ? Icons.hearing : Icons.stop_rounded,
-                  size: 26),
-              label: Text(_ritual == null ? 'Listen closely' : 'Enough'),
-            ),
-            // 眺めるのはいつでもできる。**記録にならない**時だけ、静かに断る。
-            if (!g.ritualCounts)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                    "🌙 You've listened closely enough for today. "
-                    'When a new bird comes, you can go and meet it again.',
-                    style: TextStyle(fontSize: 12, height: 1.4, color: kSub)),
+              // ── ② 留守のあいだの出来事 ──
+              // **ここには出さない。ポップアップにだけ出す**(CEO 2026-08-16
+              // 「ガーデンの lost left とかはポップにだけあればいい」)。
+              // 庭に常設すると、痩せたことをずっと突きつけることになる。
+
+              // ── ③ 土地 ──
+              const _Label('Your land'),
+              Wrap(
+                key: _landKey,
+                spacing: 10,
+                children: [
+                  for (final id in g.data.biomes.keys)
+                    ChoiceChip(
+                      label: Text(
+                        (g.data.biomes[id]?['name_en'] as String?) ?? id,
+                      ),
+                      selected: g.biomeId == id,
+                      onSelected: (_) async {
+                        setState(() {
+                          g.setBiome(id);
+                          // 案内中は、土地を選んだ時点で次へ(「次へ」は出さない)。
+                          if (g.tutorialStep == 0) {
+                            g.tutorialStep = core.advanceTutorialStep(0);
+                          }
+                        });
+                        await _save();
+                      },
+                    ),
+                ],
               ),
-          ],
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // ── ② 留守のあいだの出来事 ──
-          // **ここには出さない。ポップアップにだけ出す**(CEO 2026-08-16
-          // 「ガーデンの lost left とかはポップにだけあればいい」)。
-          // 庭に常設すると、痩せたことをずっと突きつけることになる。
-
-          // ── ③ 土地 ──
-          const _Label('Your land'),
-          Wrap(
-            spacing: 10,
-            children: [
-              for (final id in g.data.biomes.keys)
-                ChoiceChip(
-                  label: Text(
-                      (g.data.biomes[id]?['name_en'] as String?) ?? id),
-                  selected: g.biomeId == id,
-                  onSelected: (_) async {
-                    setState(() => g.setBiome(id));
-                    await _save();
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // ── ④ 植える ──
-          // 一覧を出しっぱなしにしない。**植えたものだけ**を見せ、
-          // 足すときにだけ選ぶ画面を開く(CEO 2026-08-15「ダラダラしている」)。
-          Row(children: [
-            Expanded(
-              child: _Label('Plant  ${g.planted.length}/${g.maxPlants}'),
-            ),
-            if (g.planted.length < g.maxPlants)
-              TextButton.icon(
-                onPressed: () => _openPlantPicker(g),
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text('Add'),
-              ),
-          ]),
-          if (g.planted.isEmpty)
-            Text('Nothing planted yet.',
-                style: TextStyle(color: kSub, fontSize: 14))
-          else
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final p in g.planted)
-                  InputChip(
-                    avatar:
-                        Text((g.data.plants[p]?['icon'] as String?) ?? '🌱'),
-                    label: Text(_name(g.data.plants, p)),
-                    onDeleted: () async {
-                      setState(() => g.remove(p));
-                      await _save();
-                    },
+              // ── ④ 植える ──
+              // 一覧を出しっぱなしにしない。**植えたものだけ**を見せ、
+              // 足すときにだけ選ぶ画面を開く(CEO 2026-08-15「ダラダラしている」)。
+              Row(
+                children: [
+                  Expanded(
+                    child: _Label('Plant  ${g.planted.length}/${g.maxPlants}'),
                   ),
-              ],
-            ),
-
-          // ── 餌台 ──
-          // 開放型を置くとリスが届き、リスがタカを呼び、臆病な鳥が来にくくなる。
-          // かご型ならリスは届かない。**これが唯一の駆け引き**で、罰ではなく選択。
-          const SizedBox(height: 20),
-          const _Label('Feeder'),
-          Wrap(
-            spacing: 10,
-            children: [
-              for (final f in ['feeder_open', 'feeder_cage'])
-                ChoiceChip(
-                  label: Text(core.kFeeders[f]!['english'] as String),
-                  selected: g.feeders.contains(f),
-                  onSelected: (on) async {
-                    setState(() => g.setFeeder(on ? f : null));
-                    await _save();
-                  },
+                  if (g.planted.length < g.maxPlants)
+                    TextButton.icon(
+                      key: _plantKey,
+                      onPressed: () => _openPlantPicker(g),
+                      icon: const Icon(Icons.add, size: 20),
+                      label: const Text('Add'),
+                    ),
+                ],
+              ),
+              if (g.planted.isEmpty)
+                Text(
+                  'Nothing planted yet.',
+                  style: TextStyle(color: kSub, fontSize: 14),
+                )
+              else
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final p in g.planted)
+                      InputChip(
+                        avatar: Text(
+                          (g.data.plants[p]?['icon'] as String?) ?? '🌱',
+                        ),
+                        label: Text(_name(g.data.plants, p)),
+                        onDeleted: () async {
+                          setState(() => g.remove(p));
+                          await _save();
+                        },
+                      ),
+                  ],
                 ),
+
+              // ── 餌台 ──
+              // 開放型を置くとリスが届き、リスがタカを呼び、臆病な鳥が来にくくなる。
+              // かご型ならリスは届かない。**これが唯一の駆け引き**で、罰ではなく選択。
+              const SizedBox(height: 20),
+              const _Label('Feeder'),
+              Wrap(
+                spacing: 10,
+                children: [
+                  for (final f in ['feeder_open', 'feeder_cage'])
+                    ChoiceChip(
+                      label: Text(core.kFeeders[f]!['english'] as String),
+                      selected: g.feeders.contains(f),
+                      onSelected: (on) async {
+                        setState(() => g.setFeeder(on ? f : null));
+                        await _save();
+                      },
+                    ),
+                ],
+              ),
+              // **短く。種名は絵文字で代用**(CEO 2026-08-16)。
+              // 何が起きているかは庭の絵に出ているので、文はひとことでいい。
+              if (g.chain.raptors.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text(
+                    '🐿️ → 🦅   Shy birds keep their distance.',
+                    style: TextStyle(fontSize: 13, color: kSub),
+                  ),
+                )
+              else if (g.chain.animals.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text(
+                    '🐿️ is taking the seed.',
+                    style: TextStyle(fontSize: 13, color: kSub),
+                  ),
+                ),
+
+              // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
+              if (web.insects.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const _Label('Insects'),
+                Wrap(
+                  key: _insectKey,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final i in web.insects.keys)
+                      Chip(
+                        avatar: const Text('🐛'),
+                        label: Text(_name(g.data.insects, i)),
+                      ),
+                  ],
+                ),
+              ],
             ],
           ),
-          // **短く。種名は絵文字で代用**(CEO 2026-08-16)。
-          // 何が起きているかは庭の絵に出ているので、文はひとことでいい。
-          if (g.chain.raptors.isNotEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text('🐿️ → 🦅   Shy birds keep their distance.',
-                  style: TextStyle(fontSize: 13, color: kSub)),
-            )
-          else if (g.chain.animals.isNotEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text('🐿️ is taking the seed.',
-                  style: TextStyle(fontSize: 13, color: kSub)),
-            ),
 
-          // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
-          if (web.insects.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            const _Label('Insects'),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final i in web.insects.keys)
-                  Chip(
-                      avatar: const Text('🐛'),
-                      label: Text(_name(g.data.insects, i))),
-              ],
-            ),
-          ],
+          // ── チュートリアルの覆い。次に触るものだけ明るい ──
+          if (g.tutorialRunning) _tutorial(g, web),
         ],
       ),
+    );
+  }
+
+  /// いまの段の覆い。段によって、明るく残すものが変わる。
+  Widget _tutorial(Garden g, core.FoodWeb web) {
+    final step = g.tutorialStep;
+    final content = core.tutorialStepContent(
+      step,
+      hasInsects: web.insects.isNotEmpty,
+    );
+
+    // 明るく残すもの。**土地と植えるは、実際に触るまで進めない**ので、
+    // そこだけ穴を開けて指を通す。
+    final target = switch (step) {
+      0 => _landKey,
+      1 => _plantKey,
+      2 => web.insects.isNotEmpty ? _insectKey : null,
+      _ => null,
+    };
+
+    return TutorialOverlay(
+      targetKey: target,
+      title: content.title,
+      body: content.body,
+      nextLabel: content.nextLabel,
+      onNext: content.nextLabel == null
+          ? null
+          : () async {
+              setState(() => g.tutorialStep = core.advanceTutorialStep(step));
+              await _save();
+            },
     );
   }
 }
@@ -438,13 +542,15 @@ class _Label extends StatelessWidget {
   const _Label(this.text);
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(text,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-                color: kSub)),
-      );
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+        color: kSub,
+      ),
+    ),
+  );
 }
-

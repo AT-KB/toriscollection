@@ -96,6 +96,13 @@ class Garden {
           ritualDoneFor!.length == visiting.length &&
           ritualDoneFor!.containsAll(visiting));
 
+  /// はじめての案内が、いまどの段にいるか。`kTutorialSteps` 以上で終わり。
+  ///
+  /// **セーブコードには入れない。** 端末ごとの案内であって、庭の状態ではない。
+  int tutorialStep = 0;
+
+  bool get tutorialRunning => !core.tutorialIsDone(tutorialStep);
+
   /// 留守のあいだに来た鳥が、**図鑑に新しく載ったか**。
   /// 観察回数ではなく discovered で見る(現行と同じ判定軸)。
   final Set<String> lastFirstTimers = {};
@@ -363,17 +370,25 @@ class Garden {
   }
 
   static const _key = 'toris_save';
+  static const _tutorialKey = 'toris_tutorial_step';
 
   Future<void> save() async {
     final p = await SharedPreferences.getInstance();
     await p.setString(_key, core.encodeCurrentState(toState()));
+    await p.setInt(_tutorialKey, tutorialStep);
   }
 
   Future<void> restore() async {
     final p = await SharedPreferences.getInstance();
+    tutorialStep = p.getInt(_tutorialKey) ?? 0;
     final code = p.getString(_key);
     if (code == null) return;
     final s = core.decodeSave(code);
     if (s != null) applyState(s);
+    // **既に庭がある人には案内しない。** セーブコードで移してきた人や、
+    // 前の版から使っている人に、いまさら「土地を選びましょう」は失礼。
+    if (planted.isNotEmpty || discovered.isNotEmpty) {
+      tutorialStep = core.kTutorialSteps;
+    }
   }
 }

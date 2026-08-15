@@ -38,10 +38,10 @@ class TorisApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'Toris Collection',
-        theme: buildTheme(),
-        home: const HomeShell(),
-      );
+    title: 'Toris Collection',
+    theme: buildTheme(),
+    home: const HomeShell(),
+  );
 }
 
 /// 5つのタブ。現行版(Streamlit)のタブ構成に合わせてある。
@@ -70,19 +70,42 @@ class _HomeShellState extends State<HomeShell> {
       NetworkPage(garden: _garden),
       const AlarmPage(),
     ];
+    // ── チュートリアル中は、庭だけ ──
+    // 他のタブは押しても反応しない(CEO 2026-08-16「ほか押せない」)。
+    // やることが1つに定まるまで、選択肢を出さない。
+    final tutorial = _garden?.tutorialRunning ?? false;
+    if (tutorial && _index != 1) _index = 1;
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.graphic_eq), label: 'Radio'),
-          NavigationDestination(icon: Icon(Icons.park_outlined), label: 'Garden'),
-          NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined), label: 'Guide'),
-          NavigationDestination(icon: Icon(Icons.hub_outlined), label: 'Network'),
-          NavigationDestination(icon: Icon(Icons.alarm), label: 'Wake'),
-        ],
+      body: IndexedStack(index: tutorial ? 1 : _index, children: pages),
+      bottomNavigationBar: IgnorePointer(
+        ignoring: tutorial,
+        child: Opacity(
+          opacity: tutorial ? 0.35 : 1.0,
+          child: NavigationBar(
+            selectedIndex: tutorial ? 1 : _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.graphic_eq),
+                label: 'Radio',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.park_outlined),
+                label: 'Garden',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.menu_book_outlined),
+                label: 'Guide',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.hub_outlined),
+                label: 'Network',
+              ),
+              NavigationDestination(icon: Icon(Icons.alarm), label: 'Wake'),
+            ],
+          ),
+        ),
       ),
     );
   }
