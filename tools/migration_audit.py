@@ -63,6 +63,9 @@ SCREENS = [
     "tab_howto", "login_screen", "save_code_ui", "biome_choice",
     "garden_tree_scene", "bird_sprites", "network_graph_view",
     "ritual_meet_birds", "todays_garden", "popup_met_bird",
+    # 「おかえりなさい」は台帳に無かった(app.py の _welcome_dialog)。
+    # 画面の数え漏れ(2026-08-16 にポップアップを移すときに気づいた)。
+    "popup_welcome_back",
 ]
 
 

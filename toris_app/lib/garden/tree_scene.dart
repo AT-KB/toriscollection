@@ -16,8 +16,9 @@
 /// つつくと跳ねるのもそのまま(CEO「ぴょんぴょん飛ぶのはいい感じ」)。
 ///
 /// **餌台・リス・タカは選択とそのまま連動する**(`feeder_chain`)。
-/// 開放型を置けばリスが餌台の下に現れ、リスがタカを呼んで空を旋回する。
+/// 開放型を置けば 🐿️ が餌台の下に現れ、リスが 🦅 を呼ぶ。
 /// かご型に替えれば両方消える。文字で説明せず、絵で見せる。
+/// **動物と植物は絵文字**。塗りで描くと、小さいと潰れ、大きいと鳥と紛れた。
 library;
 
 import 'dart:math';
@@ -162,6 +163,25 @@ class _TreeSceneState extends State<TreeScene> {
                 style: const TextStyle(fontSize: iconSize)),
           ));
         }
+      }
+
+      // リスとタカは**絵文字**で置く(CEO 2026-08-16「リス 鷹は絵文字のを
+      // 庭に入れれないか」)。塗りで描いた版もあったが、小さくすると潰れ、
+      // 大きくすると枝の鳥と紛れた。絵文字なら小さくても何か分かる。
+      if (widget.feeder != null && widget.hasSquirrel) {
+        children.add(Positioned(
+          left: w * 0.20,
+          top: kGroundTop / 100 * kSceneHeight - 6,
+          child: const Text('🐿️', style: TextStyle(fontSize: 26)),
+        ));
+      }
+      if (widget.hasRaptor) {
+        // 空の右上。枝の届かないところ(重なると「大きい鳥」に見える)。
+        children.add(Positioned(
+          right: w * 0.05,
+          top: kSceneHeight * 0.06,
+          child: const Text('🦅', style: TextStyle(fontSize: 24)),
+        ));
       }
 
       // 鳥を枝に置く。
@@ -331,21 +351,6 @@ class _BackyardPainter extends CustomPainter {
           Paint()..color = const Color(0xFF6E6152));
       _paintFeeder(canvas, Offset(poleX, poleTop), h, feeder!);
     }
-
-    // ── タカ ──
-    // 猛禽は**空を旋回している**。フェンスが無くなったので止まる所も無い。
-    // 小さく描く — 大きいと枝の鳥と同じに見えるうえ、かわいくない
-    // (CEO 2026-08-16「リスと鷹がでかすぎ、かわいくない」)。
-    if (hasRaptor) {
-      _paintHawk(canvas, Offset(w * 0.87, h * 0.14), h * 0.055);
-    }
-
-    // ── リス ──
-    // 餌台の柱の下。こちらも小さく、まるく。
-    if (feeder != null && hasSquirrel) {
-      _paintSquirrel(
-          canvas, Offset(poleX + w * 0.03, ground + h * 0.10), h * 0.075);
-    }
   }
 
   /// 餌台。開放型は皿、かご型は筒に金網。
@@ -399,79 +404,6 @@ class _BackyardPainter extends CustomPainter {
             ..close(),
           roof);
     }
-  }
-
-  /// リス。餌台の下で種を拾っている。
-  ///
-  /// しっぽは**太さを一定に**した線で描く。塗りつぶしの多角形で描いたら
-  /// 巨大な三日月になって、別の生き物に見えた(実機で確認して作り直した)。
-  void _paintSquirrel(Canvas canvas, Offset base, double s) {
-    const furColor = Color(0xFF9A8E80);
-    final fur = Paint()..color = furColor;
-
-    // しっぽ。体の後ろから立ち上がって背中の上へ。
-    canvas.drawPath(
-        Path()
-          ..moveTo(base.dx + s * 0.28, base.dy - s * 0.18)
-          ..cubicTo(
-              base.dx + s * 0.95, base.dy - s * 0.30,
-              base.dx + s * 1.00, base.dy - s * 1.05,
-              base.dx + s * 0.42, base.dy - s * 1.28),
-        Paint()
-          ..color = furColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = s * 0.40
-          ..strokeCap = StrokeCap.round);
-
-    // からだ(前かがみ)
-    canvas.drawOval(
-        Rect.fromCenter(
-            center: Offset(base.dx, base.dy - s * 0.42),
-            width: s * 0.72,
-            height: s * 0.88),
-        fur);
-    // あたま
-    canvas.drawCircle(
-        Offset(base.dx - s * 0.20, base.dy - s * 0.95), s * 0.30, fur);
-    // みみ
-    canvas.drawCircle(
-        Offset(base.dx - s * 0.30, base.dy - s * 1.22), s * 0.11, fur);
-    // め
-    canvas.drawCircle(Offset(base.dx - s * 0.34, base.dy - s * 1.00), s * 0.055,
-        Paint()..color = const Color(0xFF2A2A2A));
-    // 前あし(種を持っている)
-    canvas.drawCircle(
-        Offset(base.dx - s * 0.30, base.dy - s * 0.55), s * 0.10, fur);
-  }
-
-  /// タカ。空から見ている。小さく、まるく。
-  void _paintHawk(Canvas canvas, Offset base, double s) {
-    final body = Paint()..color = const Color(0xFF6E5D4E);
-    canvas.drawOval(
-        Rect.fromLTWH(
-            base.dx - s * 0.34, base.dy - s * 0.90, s * 0.68, s * 0.90),
-        body);
-    canvas.drawCircle(Offset(base.dx, base.dy - s * 0.95), s * 0.26, body);
-    // くちばし(曲がっている ＝ 猛禽)
-    canvas.drawPath(
-        Path()
-          ..moveTo(base.dx + s * 0.20, base.dy - s * 1.00)
-          ..lineTo(base.dx + s * 0.52, base.dy - s * 0.94)
-          ..lineTo(base.dx + s * 0.22, base.dy - s * 0.82)
-          ..close(),
-        Paint()..color = const Color(0xFFD8B84E));
-    canvas.drawCircle(Offset(base.dx + s * 0.09, base.dy - s * 1.02), s * 0.07,
-        Paint()..color = const Color(0xFFF2E9D8));
-    canvas.drawCircle(Offset(base.dx + s * 0.10, base.dy - s * 1.02), s * 0.035,
-        Paint()..color = const Color(0xFF1F1F1F));
-    // 尾
-    canvas.drawPath(
-        Path()
-          ..moveTo(base.dx - s * 0.28, base.dy - s * 0.30)
-          ..lineTo(base.dx - s * 0.78, base.dy - s * 0.05)
-          ..lineTo(base.dx - s * 0.26, base.dy - s * 0.02)
-          ..close(),
-        body);
   }
 
   @override

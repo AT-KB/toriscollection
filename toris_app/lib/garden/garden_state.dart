@@ -74,6 +74,32 @@ class Garden {
   /// いまの儀式で既に出会えた鳥(二重に数えないため)。
   final Set<String> metThisRitual = {};
 
+  /// **この滞在メンバーには、もう耳を澄ませた。**
+  ///
+  /// 同じ顔ぶれのまま儀式を繰り返すと、観察回数と会った日数を水増しできる
+  /// (それがラジオの近さと群れの厚みに効く)。現行も
+  /// `ritual_done_for_residents` で同じ歯止めをかけている。
+  /// **減らすものは何も無い**(原則2「罰しない」)。入り口を閉じるだけ。
+  Set<String>? ritualDoneFor;
+
+  /// **いまの儀式が「出会い」として記録されるか。**
+  ///
+  /// 耳を澄ませること自体はいつでもできる(鳥が枝を移るのを眺められる)。
+  /// ただし同じ顔ぶれに二度目からは**記録されない**
+  /// (CEO 2026-08-16「リッスンしてぴょこぴょこするのはいつでもできるでいいけど、
+  ///  出会い、登録にならないようにだけして」)。
+  ///
+  /// 現行は儀式そのものを閉じていたが、**閉じる必要は無かった**。
+  /// 止めたいのは水増しであって、眺めることではない。
+  bool get ritualCounts =>
+      !(ritualDoneFor != null &&
+          ritualDoneFor!.length == visiting.length &&
+          ritualDoneFor!.containsAll(visiting));
+
+  /// 留守のあいだに来た鳥が、**図鑑に新しく載ったか**。
+  /// 観察回数ではなく discovered で見る(現行と同じ判定軸)。
+  final Set<String> lastFirstTimers = {};
+
   /// **「なぜ来たか」の記録。** あなたが組んだ関係が鳥を呼んだ証拠。
   /// 撹乱で植物が失われても消さない(原則2「罰しない」)。
   List<core.EcoEntry> ecoLog = [];
@@ -239,6 +265,10 @@ class Garden {
         ..clear()
         ..addAll(r.plantedFinal);
       // 来た鳥は図鑑に載る(名前まで)。**近くで会うのは儀式を経てから。**
+      // 「はじめまして」は**図鑑への新規登録かどうか**で見る(現行と同じ)。
+      lastFirstTimers
+        ..clear()
+        ..addAll(r.arrivals.where((b) => !discovered.contains(b)));
       discovered.addAll(r.arrivals);
       // 「なぜ来たか」を溜める。同じ鳥の同じ理由は1件だけ。
       ecoLog = core.appendEvents(ecoLog, r.reasons);

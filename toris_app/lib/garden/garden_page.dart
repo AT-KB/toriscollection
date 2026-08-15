@@ -18,6 +18,7 @@ import 'package:toris_core/toris_core.dart' as core;
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
+import 'popups.dart';
 import 'ritual.dart';
 import 'transfer_sheet.dart';
 import 'tree_scene.dart';
@@ -38,6 +39,12 @@ class _GardenPageState extends State<GardenPage>
   /// 出会いの儀式。耳を澄ますと、鳥が枝を移りながら近づいてくる。
   Ritual? _ritual;
 
+  /// この儀式で出会えた鳥(終わったらポップアップで見せる)。
+  final List<MetBird> _metThisRitual = [];
+
+  /// この回の儀式が「出会い」として記録されるか。始めた時点で決める。
+  bool _ritualCounts = true;
+
   @override
   bool get wantKeepAlive => true;
 
@@ -52,12 +59,31 @@ class _GardenPageState extends State<GardenPage>
     final d = await GardenData.load();
     final g = Garden(d);
     await g.restore();
+    final before = g.lastSeenAt;
     // 開いた時点で、留守のあいだのぶんを進める。押させない。
     g.catchUp(_rng);
+    final hoursAway = before == null
+        ? 0.0
+        : DateTime.now().difference(before).inSeconds / 3600.0;
     await g.save();
     if (!mounted) return;
     widget.onChanged?.call(g);
     setState(() => _g = g);
+
+    // **一度に開くのは1つだけ。** 起動時は「おかえり」だけ(出会いは儀式のあと)。
+    final report = AwayReport(
+      hoursAway: hoursAway,
+      arrivals: [
+        for (final b in g.lastArrivals) MetBird(b, g.lastFirstTimers.contains(b))
+      ],
+      departures: <String>{
+        for (final b in g.lastDepartures) _name(g.data.birds, b)
+      }.toList(),
+      lostPlants: [for (final p in g.lastLostPlants) _name(g.data.plants, p)],
+    );
+    if (report.worthShowing && mounted) {
+      await showWelcomeBackPopup(context, g, report);
+    }
   }
 
   @override
@@ -85,20 +111,6 @@ class _GardenPageState extends State<GardenPage>
     }
     return BirdMark.forBird(
         (g.data.birds[birdId] as Map?)?.cast<String, dynamic>(), size: 20);
-  }
-
-  /// 到来1件を、短く。**鳥 ← 目当て** だけ。
-  /// 目当てが分からなければ鳥の名前だけ(何かに惹かれたことにしない・原則4)。
-  String _shortReason(Garden g, core.ArrivalEvent r) {
-    final bird = _name(g.data.birds, r.birdId);
-    if (r.relatedPlant.isNotEmpty) {
-      final icon = (g.data.plants[r.relatedPlant]?['icon'] as String?) ?? '🌱';
-      return '$bird  ←  $icon ${_name(g.data.plants, r.relatedPlant)}';
-    }
-    if (r.relatedInsect.isNotEmpty) {
-      return '$bird  ←  🐛 ${_name(g.data.insects, r.relatedInsect)}';
-    }
-    return bird;
   }
 
   /// 植えるものを選ぶ。**開いたときだけ**一覧を見せる。
@@ -152,14 +164,27 @@ class _GardenPageState extends State<GardenPage>
     final g = _g;
     if (g == null || g.visiting.isEmpty) return;
     final r = Ritual(List<String>.from(g.visiting), _rng);
+    // この回が記録される儀式かどうかを、始めた時点で決める。
+    _ritualCounts = g.ritualCounts;
     setState(() => _ritual = r);
     await r.start(() {
       if (!mounted) return;
       // 手前まで来た鳥とは「出会えた」。会うほど馴染む。
+      // **記録するのは、数える儀式のときだけ。** 眺めるだけの回は何も増えない。
+      if (!_ritualCounts) {
+        setState(() {});
+        return;
+      }
       for (final b in r.met) {
         if (!g.metThisRitual.contains(b)) {
+          // 「はじめまして」= **図鑑への新規登録かどうか**。観察回数では見ない
+          // (回数で見ると、既に図鑑に載っている鳥にも「はじめて」が出る)。
+          final isFirst = !g.discovered.contains(b);
           g.metThisRitual.add(b);
           g.observed[b] = (g.observed[b] ?? 0) + 1;
+          // 近くで観察できた鳥は、当然「来た鳥」でもある。
+          g.discovered.add(b);
+          _metThisRitual.add(MetBird(b, isFirst));
         }
       }
       setState(() {});
@@ -167,13 +192,23 @@ class _GardenPageState extends State<GardenPage>
   }
 
   Future<void> _stopListening() async {
+    final met = List<MetBird>.from(_metThisRitual);
+    _metThisRitual.clear();
     _ritual?.stop();
     final g = _g;
     if (g != null) {
       g.metThisRitual.clear();
+      if (_ritualCounts) {
+        // **この顔ぶれには、もう耳を澄ませた。** 同じ相手に繰り返して
+        // 観察回数を水増しできないようにする(現行 ritual_done_for_residents)。
+        g.ritualDoneFor = g.visiting.toSet();
+      }
       await _save();
     }
     if (mounted) setState(() => _ritual = null);
+    if (g != null && met.isNotEmpty && mounted) {
+      await showMetBirdPopup(context, g, met);
+    }
   }
 
   @override
@@ -256,46 +291,30 @@ class _GardenPageState extends State<GardenPage>
 
           // ── 出会いの儀式 ──
           // 押し続けさせない。待っていれば、鳥のほうから近づいてくる。
-          if (g.visiting.isNotEmpty)
+          if (g.visiting.isNotEmpty) ...[
             FilledButton.icon(
               onPressed: _ritual == null ? _listen : _stopListening,
-              icon: Icon(_ritual == null
-                  ? Icons.hearing
-                  : Icons.stop_rounded, size: 26),
+              icon: Icon(
+                  _ritual == null ? Icons.hearing : Icons.stop_rounded,
+                  size: 26),
               label: Text(_ritual == null ? 'Listen closely' : 'Enough'),
             ),
-          if (_ritual != null && _ritual!.met.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _Note('Came close: '
-                '${_ritual!.met.map((b) => _name(g.data.birds, b)).join(', ')}'),
+            // 眺めるのはいつでもできる。**記録にならない**時だけ、静かに断る。
+            if (!g.ritualCounts)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                    "🌙 You've listened closely enough for today. "
+                    'When a new bird comes, you can go and meet it again.',
+                    style: TextStyle(fontSize: 12, height: 1.4, color: kSub)),
+              ),
           ],
           const SizedBox(height: 20),
 
           // ── ② 留守のあいだの出来事 ──
-          // **文章にしない。** 「◯◯が来ました。△△に惹かれて立ち寄ったようです。」
-          // では長すぎる(CEO 2026-08-16「文章だと文字数が多すぎます」)。
-          // 関係だけを矢印で見せる: `Carolina Wren ← 🐛 Firefly`
-          //
-          // 記録そのもの(図鑑の "Why it came")は Python と一致させた**原文のまま**
-          // 残してある。ここは表示の組み立て直しで、`ArrivalEvent` が持っている
-          // 構造(どの植物・どの虫)から短く作る。
-          if (g.lastReasons.isNotEmpty ||
-              g.lastArrivals.isNotEmpty ||
-              g.lastDepartures.isNotEmpty ||
-              g.lastLostPlants.isNotEmpty) ...[
-            _Note([
-              if (g.lastLostPlants.isNotEmpty)
-                '${g.lastDisturbances.join(' ')} Lost  '
-                    '${g.lastLostPlants.map((p) => _name(g.data.plants, p)).join(' · ')}',
-              for (final r in g.lastReasons) _shortReason(g, r),
-              if (g.lastReasons.isEmpty)
-                for (final b in g.lastArrivals) _name(g.data.birds, b),
-              if (g.lastDepartures.isNotEmpty)
-                'Left  '
-                    '${g.lastDepartures.map((b) => _name(g.data.birds, b)).join(' · ')}',
-            ].join('\n')),
-            const SizedBox(height: 20),
-          ],
+          // **ここには出さない。ポップアップにだけ出す**(CEO 2026-08-16
+          // 「ガーデンの lost left とかはポップにだけあればいい」)。
+          // 庭に常設すると、痩せたことをずっと突きつけることになる。
 
           // ── ③ 土地 ──
           const _Label('Your land'),
@@ -370,16 +389,20 @@ class _GardenPageState extends State<GardenPage>
                 ),
             ],
           ),
-          if (g.chain.animals.isNotEmpty || g.chain.raptors.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _Note([
-              for (final a in g.chain.animals)
-                '🐿️ ${core.kAnimals[a]?['english']} is taking the seed.',
-              for (final r in g.chain.raptors)
-                "🦅 ${core.kRaptors[r]?['english']} is watching. "
-                    'Shy birds keep their distance.',
-            ].join('\n')),
-          ],
+          // **短く。種名は絵文字で代用**(CEO 2026-08-16)。
+          // 何が起きているかは庭の絵に出ているので、文はひとことでいい。
+          if (g.chain.raptors.isNotEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: Text('🐿️ → 🦅   Shy birds keep their distance.',
+                  style: TextStyle(fontSize: 13, color: kSub)),
+            )
+          else if (g.chain.animals.isNotEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: Text('🐿️ is taking the seed.',
+                  style: TextStyle(fontSize: 13, color: kSub)),
+            ),
 
           // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
           if (web.insects.isNotEmpty) ...[
@@ -417,18 +440,3 @@ class _Label extends StatelessWidget {
       );
 }
 
-/// 留守のあいだの知らせ。急かさず、静かに。
-class _Note extends StatelessWidget {
-  final String text;
-  const _Note(this.text);
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE8F1DE),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Text(text,
-            style: const TextStyle(color: kInk, fontSize: 15, height: 1.5)),
-      );
-}

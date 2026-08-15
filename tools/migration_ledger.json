@@ -113,11 +113,13 @@
   },
   "community.aggregate_atlas": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16「3は要らない」。集合アトラス(全ユーザーの庭を合算した図)は作らない"
   },
   "community.render_community_atlas": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16「3は要らない」。集合アトラス(全ユーザーの庭を合算した図)は作らない"
   },
   "daily.daily_seed": {
    "dart": "",
@@ -551,8 +553,9 @@
    "why": ""
   },
   "screen.popup_met_bird": {
-   "dart": "",
-   "status": "todo"
+   "dart": "showMetBirdPopup",
+   "status": "done",
+   "why": "_obs_dialog の移植。はじめての判定は**図鑑への新規登録**で見る(観察回数ではない)"
   },
   "screen.ritual_meet_birds": {
    "dart": "Ritual",
@@ -761,6 +764,11 @@
   "xc_client.search_recordings": {
    "dart": "",
    "status": "todo"
+  },
+  "screen.popup_welcome_back": {
+   "dart": "showWelcomeBackPopup",
+   "status": "done",
+   "why": "_welcome_dialog の移植。留守に何かあった時だけ出す/来た鳥6件・去った鳥5件まで/2時間・48時間で言い方が変わる/Lost・Left はここにだけ出す"
   }
  }
 }
