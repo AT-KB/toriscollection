@@ -298,8 +298,18 @@ class AbsenceResult {
   final List<String> arrivals;
   final List<String> departures;
   final int ticks;
-  const AbsenceResult(
-      this.residents, this.arrivals, this.departures, this.ticks);
+
+  /// 撹乱で倒れた植物(純減。自動では植え直さない)。
+  final List<String> lostPlants;
+
+  /// 起きた撹乱。
+  final List<Disturbance> disturbances;
+
+  /// 撹乱を反映した最終的な植生。
+  final List<String> plantedFinal;
+
+  const AbsenceResult(this.residents, this.arrivals, this.departures,
+      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal);
 }
 
 /// 前回見たときから今までを進める。`absence_loop.evolve_state` に当たる。
@@ -324,12 +334,24 @@ AbsenceResult evolveWhileAway({
   var cur = Set<String>.from(residents);
   final arrivals = <String>[];
   final departures = <String>[];
-  if (plantedPlants.isEmpty || ticks == 0) {
-    return AbsenceResult(cur, arrivals, departures, 0);
+  final planted = List<String>.from(plantedPlants);
+  final lost = <String>[];
+  final events = <Disturbance>[];
+  if (planted.isEmpty || ticks == 0) {
+    return AbsenceResult(cur, arrivals, departures, 0, lost, events, planted);
   }
   for (var i = 0; i < ticks; i++) {
+    // 現行と同じ順序: 先に撹乱、そのあとで1サイクル。植生が変わるので、
+    // **確率はコマごとに計算し直される**(runTurn が毎回 buildFoodWeb する)。
+    final d = rollDisturbance(rng);
+    if (d != null) {
+      final removed = applyDisturbance(planted, d, plantsData, rng);
+      planted.removeWhere(removed.contains);
+      lost.addAll(removed);
+      events.add(d);
+    }
     final r = runTurn(
-      plantedPlants: plantedPlants,
+      plantedPlants: planted,
       biomeId: biomeId,
       month: month,
       residents: cur,
@@ -344,5 +366,75 @@ AbsenceResult evolveWhileAway({
     arrivals.addAll(r.arrivals);
     departures.addAll(r.departures);
   }
-  return AbsenceResult(cur, arrivals, departures, ticks);
+  return AbsenceResult(
+      cur, arrivals, departures, ticks, lost, events, planted);
+}
+
+/// 撹乱(嵐・落雷・伐採)。`toris_collection/disturbance.py` の移植。
+///
+/// 庭は痩せることがある。ただし**罰ではない** — 図鑑も会った日数も減らない
+/// (交渉不能の原則2)。そして**最後の1本は必ず残す**。緑がゼロにはならない。
+class Disturbance {
+  final String type;
+  final String icon;
+  final double severity;
+  const Disturbance(this.type, this.icon, this.severity);
+}
+
+/// 1サイクルあたりの発生確率。低頻度にして日常を壊さない。
+const double kDisturbanceP = 0.10;
+
+const Map<String, Disturbance> kDisturbances = {
+  'storm': Disturbance('storm', '🌀', 0.50),
+  'lightning': Disturbance('lightning', '⚡', 0.30),
+  'logging': Disturbance('logging', '🪓', 0.60),
+};
+
+/// 種類の相対頻度。自然の撹乱が主で、人の手(伐採)はまれ。
+const Map<String, double> kDisturbanceWeights = {
+  'storm': 0.55,
+  'lightning': 0.30,
+  'logging': 0.15,
+};
+
+/// 植物ごとの倒れやすさ。データに無ければ 0.5(現行の DEFAULT_SENSITIVITY)。
+const double kDefaultSensitivity = 0.5;
+
+double plantSensitivity(String plantId, Map<String, dynamic> plantsData) {
+  final v = pyFloat((plantsData[plantId] as Map?)?['sensitivity']);
+  if (v == null) return kDefaultSensitivity;
+  return v.clamp(0.0, 1.0);
+}
+
+/// 撹乱が起きるかを引く。起きなければ null。
+Disturbance? rollDisturbance(Random rng) {
+  if (rng.nextDouble() >= kDisturbanceP) return null;
+  final types = kDisturbanceWeights.keys.toList();
+  final weights = [for (final t in types) kDisturbanceWeights[t]!];
+  final total = weights.fold<double>(0, (a, b) => a + b);
+  var r = rng.nextDouble() * total;
+  var acc = 0.0;
+  for (var i = 0; i < types.length; i++) {
+    acc += weights[i];
+    if (r <= acc) return kDisturbances[types[i]];
+  }
+  return kDisturbances[types.last];
+}
+
+/// 撹乱で倒れる植物を返す。倒れる確率 = 強さ × その植物の倒れやすさ。
+/// **全滅しそうなら1本残す**(最後の緑は失わせない)。
+List<String> applyDisturbance(List<String> planted, Disturbance event,
+    Map<String, dynamic> plantsData, Random rng) {
+  if (planted.isEmpty) return const [];
+  final removed = <String>[];
+  for (final pid in planted) {
+    if (rng.nextDouble() < event.severity * plantSensitivity(pid, plantsData)) {
+      removed.add(pid);
+    }
+  }
+  if (removed.isNotEmpty && removed.length >= planted.length) {
+    final keep = planted[rng.nextInt(planted.length)];
+    removed.removeWhere((r) => r == keep);
+  }
+  return removed;
 }

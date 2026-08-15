@@ -141,20 +141,23 @@
    "why": ""
   },
   "disturbance.apply_disturbance": {
-   "dart": "",
-   "status": "todo"
+   "dart": "applyDisturbance",
+   "status": "done",
+   "why": ""
   },
   "disturbance.disturbance_story": {
    "dart": "",
    "status": "todo"
   },
   "disturbance.plant_sensitivity": {
-   "dart": "",
-   "status": "todo"
+   "dart": "plantSensitivity",
+   "status": "done",
+   "why": ""
   },
   "disturbance.roll_disturbance": {
-   "dart": "",
-   "status": "todo"
+   "dart": "rollDisturbance",
+   "status": "done",
+   "why": ""
   },
   "eco_log.append_events": {
    "dart": "",
@@ -411,8 +414,9 @@
    "status": "todo"
   },
   "observation_log.load_observation_counts": {
-   "dart": "",
-   "status": "todo"
+   "dart": "observed",
+   "status": "done",
+   "why": ""
   },
   "observation_log.record_observation": {
    "dart": "metThisRitual",
@@ -524,7 +528,7 @@
    "why": ""
   },
   "screen.tab_guide": {
-   "dart": "GuidePage",
+   "dart": "ExpansionTile",
    "status": "done",
    "why": ""
   },

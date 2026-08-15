@@ -45,8 +45,21 @@ class Garden {
   String biomeId;
   final List<String> planted = [];
 
-  /// 鳥ID → 会った回数。よく会うほど近くで鳴くようになる(ラジオが読む)。
+  /// **近くで出会った回数**(儀式で手前の枝まで来た回数)。
+  /// これがラジオの近さ・群れの厚みに効く(現行の観察回数)。
+  /// 来訪しただけでは増えない — 会いに行くから馴染む。
   final Map<String, int> observed = {};
+
+  /// **来訪済みの鳥**。図鑑に名前が載る(絵はまだ出ない)。
+  final Set<String> discovered = {};
+
+  /// **会った日数**(1日1カウントの累計)。節目でバッジが付く。
+  final Map<String, int> birdDays = {};
+
+  /// 鳥ごとに「最後に数えた日」。**1日1カウントは鳥ごと**
+  /// (現行の _mark_met_today は鳥ごとに last を持つ。アプリ全体で1回にすると、
+  ///  同じ日に後から来た鳥が数えられない)。
+  final Map<String, String> lastMetDay = {};
 
   /// いま庭に来ている鳥。
   final List<String> visiting = [];
@@ -60,6 +73,11 @@ class Garden {
   /// 留守のあいだに来た鳥・去った鳥(画面に出すため)。
   List<String> lastArrivals = [];
   List<String> lastDepartures = [];
+
+  /// 留守のあいだに撹乱で倒れた植物と、その出来事。
+  /// 倒れたぶんは**純減**で、自動では植え直さない(現行と同じ)。
+  List<String> lastLostPlants = [];
+  List<String> lastDisturbances = [];
 
   Garden(this.data, {this.biomeId = 'kyoto'});
 
@@ -182,9 +200,22 @@ class Garden {
         ..addAll(r.residents);
       lastArrivals = r.arrivals;
       lastDepartures = r.departures;
-      // 来ていた鳥とは「会った」ことになる。会うほど馴染んで近くで鳴く。
-      for (final b in r.arrivals) {
-        observed[b] = (observed[b] ?? 0) + 1;
+      // 撹乱で倒れた植物を反映する。庭は痩せるが、記録は減らさない。
+      lastLostPlants = r.lostPlants;
+      lastDisturbances = [for (final d in r.disturbances) d.icon];
+      planted
+        ..clear()
+        ..addAll(r.plantedFinal);
+      // 来た鳥は図鑑に載る(名前まで)。**近くで会うのは儀式を経てから。**
+      discovered.addAll(r.arrivals);
+    }
+    // 会った日数は**鳥ごとに**1日1カウント。いま庭にいる鳥ぶんだけ増える。
+    final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    for (final b in visiting) {
+      if (lastMetDay[b] != today) {
+        lastMetDay[b] = today;
+        birdDays[b] = (birdDays[b] ?? 0) + 1;
       }
     }
     lastSeenAt = now;
@@ -197,8 +228,9 @@ class Garden {
         'biome': biomeId,
         'planted': planted,
         'residents': visiting.toSet(),
-        'discovered': observed.keys.toSet(),
+        'discovered': discovered,
         'observed': {for (final e in observed.entries) e.key: e.value},
+        'bird_days': {for (final e in birdDays.entries) e.key: e.value},
         'saved_at': core.isoSeconds(lastSeenAt ?? DateTime.now()),
       };
 

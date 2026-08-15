@@ -37,13 +37,18 @@ class NetworkPage extends StatelessWidget {
     }
 
     final web = g.web;
-    // 現行と同じ絞り込み: 食べ物の経路がある鳥だけを図に出す
-    // (全37種を出すと、来られない鳥で埋まって形が見えない)。
+    // 現行と同じ: **届く鳥は外周に、届かない鳥は最外周に極小で**置く。
+    // 「どれだけの鳥に手が届いていないか」も含めて図なので、消さない。
     final birdsNear = web.birdFood.entries
         .where((e) => e.value > 0)
         .map((e) => e.key)
         .toList()
       ..sort((a, b) => web.birdFood[b]!.compareTo(web.birdFood[a]!));
+    final birdsFar = web.birdFood.entries
+        .where((e) => e.value <= 0)
+        .map((e) => e.key)
+        .toList()
+      ..sort();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Network')),
@@ -58,6 +63,12 @@ class NetworkPage extends StatelessWidget {
                 plants: web.plants.keys.toList(),
                 insects: web.insects.keys.toList(),
                 birds: birdsNear,
+                birdsFar: birdsFar,
+                birdColor: (id) {
+                  final c = g.data.birds[id]?['color'] as String?;
+                  if (c == null || !c.startsWith('#')) return null;
+                  return Color(int.parse('FF${c.substring(1)}', radix: 16));
+                },
                 links: {
                   for (final b in birdsNear)
                     b: (web.birdLinks[b] ?? const []).map((l) => l.id).toList()
@@ -111,6 +122,8 @@ class _WebPainter extends CustomPainter {
   final List<String> plants;
   final List<String> insects;
   final List<String> birds;
+  final List<String> birdsFar;
+  final Color? Function(String) birdColor;
   final Map<String, List<String>> links; // 鳥 → 直接の食べ物
   final Map<String, List<String>> insectEats; // 虫 → 食草
   final String Function(String) label;
@@ -120,6 +133,8 @@ class _WebPainter extends CustomPainter {
     required this.plants,
     required this.insects,
     required this.birds,
+    required this.birdsFar,
+    required this.birdColor,
     required this.links,
     required this.insectEats,
     required this.label,
@@ -143,9 +158,11 @@ class _WebPainter extends CustomPainter {
       }
     }
 
+    // 現行と同じ半径比。内側から 植物 → 虫 → 届く鳥 → 届かない鳥。
     shell(plants, maxR * 0.30);
     shell(insects, maxR * 0.58);
     shell(birds, maxR * 0.85);
+    shell(birdsFar, maxR * 1.00);
 
     // 線: 植物 → 虫 → 鳥
     final line = Paint()
@@ -166,7 +183,8 @@ class _WebPainter extends CustomPainter {
       }
     });
 
-    void node(String id, Color c, double r, {bool ring = false}) {
+    void node(String id, Color c, double r,
+        {bool ring = false, bool label = false}) {
       final p = pos[id];
       if (p == null) return;
       canvas.drawCircle(p, r, Paint()..color = c);
@@ -179,24 +197,34 @@ class _WebPainter extends CustomPainter {
               ..style = PaintingStyle.stroke
               ..strokeWidth = 2);
       }
+      // 名前は、植物・虫・来た鳥にだけ。全部に付けると図が読めない。
+      if (!label) return;
       final tp = TextPainter(
         text: TextSpan(
-            text: label(id),
+            text: this.label(id),
             style: const TextStyle(fontSize: 10, color: kInk)),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: 90);
       tp.paint(canvas, p + Offset(-tp.width / 2, r + 3));
     }
 
+    // 大きさと濃さは現行の node_style と同じ考え方:
+    //   植物は大きく濃い緑 / 虫は小さい肌色 /
+    //   来た鳥はその鳥の色で大きく / 届く鳥は淡く / 届かない鳥は極小のグレー
     for (final p in plants) {
-      node(p, const Color(0xFF7BA87B), 7);
+      node(p, const Color(0xFF4A8A4A), 9, label: true);
     }
     for (final i in insects) {
-      node(i, const Color(0xFFC9A227), 6);
+      node(i, const Color(0xFFE8C0A0), 6, label: true);
     }
     for (final b in birds) {
-      // いま来ている鳥は輪で囲う
-      node(b, const Color(0xFF3F6FA8), 8, ring: residents.contains(b));
+      final resident = residents.contains(b);
+      node(b, resident ? (birdColor(b) ?? const Color(0xFF2A5AA8)) : const Color(0xFFC8D4E4),
+          resident ? 10 : 6,
+          ring: resident, label: resident);
+    }
+    for (final b in birdsFar) {
+      node(b, const Color(0xFFECECEC), 3);
     }
   }
 

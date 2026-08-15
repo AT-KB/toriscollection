@@ -26777,5 +26777,19 @@
     ]
    }
   }
- ]
+ ],
+ "disturbance": {
+  "base_p": 0.1,
+  "weights": {
+   "storm": 0.55,
+   "lightning": 0.3,
+   "logging": 0.15
+  },
+  "severity": {
+   "storm": 0.5,
+   "lightning": 0.3,
+   "logging": 0.6
+  },
+  "default_sensitivity": 0.5
+ }
 }

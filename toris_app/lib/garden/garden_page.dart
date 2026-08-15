@@ -73,6 +73,53 @@ class _GardenPageState extends State<GardenPage>
   String _name(Map<String, dynamic> m, String id) =>
       (m[id]?['english'] as String?) ?? id;
 
+  /// 植えるものを選ぶ。**開いたときだけ**一覧を見せる。
+  Future<void> _openPlantPicker(Garden g) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        builder: (ctx, controller) => StatefulBuilder(
+          builder: (ctx, setSheet) => ListView(
+            controller: controller,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            children: [
+              Text('Plant  ${g.planted.length}/${g.maxPlants}',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w600, color: kInk)),
+              const SizedBox(height: 14),
+              for (final p in g.availablePlants)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Text(
+                      (g.data.plants[p]?['icon'] as String?) ?? '🌱',
+                      style: const TextStyle(fontSize: 24)),
+                  title: Text(_name(g.data.plants, p),
+                      style: const TextStyle(fontSize: 16, color: kInk)),
+                  trailing: g.planted.contains(p)
+                      ? const Icon(Icons.check_circle, color: kGreen)
+                      : (g.planted.length >= g.maxPlants
+                          ? null
+                          : const Icon(Icons.add_circle_outline, color: kSub)),
+                  onTap: () async {
+                    setSheet(() {
+                      g.planted.contains(p) ? g.remove(p) : g.plant(p);
+                    });
+                    setState(() {});
+                    await _save();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _listen() async {
     final g = _g;
     if (g == null || g.visiting.isEmpty) return;
@@ -163,8 +210,13 @@ class _GardenPageState extends State<GardenPage>
           const SizedBox(height: 20),
 
           // ── ② 留守のあいだの出来事 ──
-          if (g.lastArrivals.isNotEmpty || g.lastDepartures.isNotEmpty) ...[
+          if (g.lastArrivals.isNotEmpty ||
+              g.lastDepartures.isNotEmpty ||
+              g.lastLostPlants.isNotEmpty) ...[
             _Note([
+              if (g.lastLostPlants.isNotEmpty)
+                '${g.lastDisturbances.join(' ')} A storm passed. '
+                    'Lost: ${g.lastLostPlants.map((p) => _name(g.data.plants, p)).join(', ')}',
               if (g.lastArrivals.isNotEmpty)
                 'Came while you were away: '
                     '${g.lastArrivals.map((b) => _name(g.data.birds, b)).join(', ')}',
@@ -195,25 +247,39 @@ class _GardenPageState extends State<GardenPage>
           const SizedBox(height: 20),
 
           // ── ④ 植える ──
-          _Label('Plant  ${g.planted.length}/${g.maxPlants}'),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final p in g.availablePlants)
-                FilterChip(
-                  avatar: Text((g.data.plants[p]?['icon'] as String?) ?? '🌱'),
-                  label: Text(_name(g.data.plants, p)),
-                  selected: g.planted.contains(p),
-                  onSelected: (_) async {
-                    setState(() => g.planted.contains(p)
-                        ? g.remove(p)
-                        : g.plant(p));
-                    await _save();
-                  },
-                ),
-            ],
-          ),
+          // 一覧を出しっぱなしにしない。**植えたものだけ**を見せ、
+          // 足すときにだけ選ぶ画面を開く(CEO 2026-08-15「ダラダラしている」)。
+          Row(children: [
+            Expanded(
+              child: _Label('Plant  ${g.planted.length}/${g.maxPlants}'),
+            ),
+            if (g.planted.length < g.maxPlants)
+              TextButton.icon(
+                onPressed: () => _openPlantPicker(g),
+                icon: const Icon(Icons.add, size: 20),
+                label: const Text('Add'),
+              ),
+          ]),
+          if (g.planted.isEmpty)
+            Text('Nothing planted yet.',
+                style: TextStyle(color: kSub, fontSize: 14))
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final p in g.planted)
+                  InputChip(
+                    avatar:
+                        Text((g.data.plants[p]?['icon'] as String?) ?? '🌱'),
+                    label: Text(_name(g.data.plants, p)),
+                    onDeleted: () async {
+                      setState(() => g.remove(p));
+                      await _save();
+                    },
+                  ),
+              ],
+            ),
 
           // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
           if (web.insects.isNotEmpty) ...[

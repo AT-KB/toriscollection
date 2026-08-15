@@ -1,12 +1,13 @@
 /// 図鑑。現行(Streamlit)の「📖 図鑑」に当たる。
 ///
-/// 現行と同じものを出す:
-///   詳細のドット絵 / 会った日数と近さ / **プロフィール3行**
-///   (好きなもの・好きな場所・こわいもの) / 説明文
+/// **全37種が折りたたみ(プルダウン)で並ぶ。** 開くと中身が見える。
+/// 見た目は3段階で、儀式を経て近くで会うまで正体は分からない:
+///   ❓ まだ来ていない  → 名前も「???」
+///   🐦 来訪済み        → 名前は分かるが、絵はまだ出ない
+///   🪶 近くで出会った  → **ドット絵が出る**
 ///
-/// 「こわいもの」は GloBI の実際の捕食記録から。恣意的に足さない
-/// (交渉不能の原則4「生態に誠実」)。
-/// 庭が痩せても、ここの記録は減らない(原則2「罰しない」)。
+/// 並びは「地域別 / レア度順」の2通り(現行の segmented_control と同じ)。
+/// 庭が痩せても、ここの記録は減らない(交渉不能の原則2「罰しない」)。
 library;
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ import 'package:flutter/material.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
 
-/// 「こわいもの」の分類 → 表示名。現行 predators.py のラベルに合わせる。
+/// 「こわいもの」の分類 → 表示名。
 const Map<String, String> kPredatorLabels = {
   'raptor': 'Hawks',
   'owl': 'Owls',
@@ -25,40 +26,80 @@ const Map<String, String> kPredatorLabels = {
   'other': 'Others',
 };
 
-class GuidePage extends StatelessWidget {
+class GuidePage extends StatefulWidget {
   final Garden? garden;
   const GuidePage({super.key, this.garden});
 
   @override
+  State<GuidePage> createState() => _GuidePageState();
+}
+
+class _GuidePageState extends State<GuidePage> {
+  /// 並び。現行と同じ2通り。
+  String _sort = 'region';
+
+  @override
   Widget build(BuildContext context) {
-    final g = garden;
-    final met = (g?.observed.keys.toList() ?? [])
-      ..sort((a, b) => (g!.observed[b] ?? 0).compareTo(g.observed[a] ?? 0));
+    final g = widget.garden;
+    if (g == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Guide')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final ids = g.data.birds.keys.toList();
+    if (_sort == 'rarity') {
+      ids.sort((a, b) => ((g.data.birds[a]?['rarity'] as num?) ?? 0)
+          .compareTo((g.data.birds[b]?['rarity'] as num?) ?? 0));
+    } else {
+      // 地域別: 好む土地でまとめ、そのなかは名前順
+      ids.sort((a, b) {
+        final ba =
+            ((g.data.birds[a]?['biome_pref'] as List?) ?? const []).join(',');
+        final bb =
+            ((g.data.birds[b]?['biome_pref'] as List?) ?? const []).join(',');
+        final c = ba.compareTo(bb);
+        if (c != 0) return c;
+        final na = '${g.data.birds[a]?['english']}';
+        final nb = '${g.data.birds[b]?['english']}';
+        return na.compareTo(nb);
+      });
+    }
+
+    final found = ids.where(g.discovered.contains).length;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Guide  ${met.length}/37')),
-      body: met.isEmpty
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text('Plant something.\nThe birds will come on their own.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: kSub, height: 1.6)),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              itemCount: met.length,
-              itemBuilder: (_, i) => _Card(g!, met[i]),
-            ),
+      appBar: AppBar(title: Text('Guide  $found/${ids.length}')),
+      body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'region', label: Text('By region')),
+              ButtonSegment(value: 'rarity', label: Text('By rarity')),
+            ],
+            selected: {_sort},
+            onSelectionChanged: (s) => setState(() => _sort = s.first),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 32),
+            itemCount: ids.length,
+            itemBuilder: (_, i) => _Entry(g, ids[i]),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-class _Card extends StatelessWidget {
+/// 1種ぶんの折りたたみ。
+class _Entry extends StatelessWidget {
   final Garden g;
   final String id;
-  const _Card(this.g, this.id);
+  const _Entry(this.g, this.id);
 
   String _name(Map<String, dynamic> m, String key) =>
       (m[key]?['english'] as String?) ?? key;
@@ -66,80 +107,105 @@ class _Card extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = (g.data.birds[id] as Map?) ?? const {};
-    final count = g.observed[id] ?? 0;
-    final detail = g.detailSpriteFor(id);
-    final fears = (g.data.predators[id]?['categories'] as List?) ?? const [];
+    final discovered = g.discovered.contains(id); // 来訪済み
+    final observed = (g.observed[id] ?? 0) > 0; // 近くで出会った
+    final rarity = ((b['rarity'] as num?) ?? 0.5).toDouble();
+    final stars = '★' * (1 + (rarity * 5).toInt());
+    final days = g.birdDays[id] ?? 0;
 
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              if (detail != null)
-                Image.asset(detail,
-                    width: 64, height: 64, filterQuality: FilterQuality.none)
-              else
-                const Icon(Icons.flutter_dash, size: 48, color: kBar),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text((b['english'] as String?) ?? id,
-                        style: const TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
-                            color: kInk)),
-                    const SizedBox(height: 2),
-                    Text(_closeness(count),
-                        style: const TextStyle(fontSize: 13, color: kGreen)),
-                  ],
-                ),
-              ),
-              Text('$count days', style: const TextStyle(color: kSub)),
-            ]),
-            const SizedBox(height: 12),
+    final icon = observed ? '🪶' : (discovered ? '🐦' : '❓');
+    final title = discovered ? ((b['english'] as String?) ?? id) : '???';
 
-            // ── プロフィール3行(現行と同じ並び) ──
-            _Row('Likes', [
-              for (final p in ((b['eats_plants'] as List?) ?? const []))
-                if (g.data.plants[p] != null)
-                  '${g.data.plants[p]?['icon'] ?? '🌱'} ${_name(g.data.plants, '$p')}',
-              for (final i in ((b['eats_insects'] as List?) ?? const []))
-                if (g.data.insects[i] != null) '🐛 ${_name(g.data.insects, '$i')}',
-            ]),
-            _Row('Home', [
-              for (final x in ((b['biome_pref'] as List?) ?? const []))
-                if (g.data.biomes[x] != null)
-                  '${g.data.biomes[x]?['name_en'] ?? x}',
-            ]),
-            if (fears.isNotEmpty)
-              _Row('Fears',
-                  [for (final f in fears) kPredatorLabels['$f'] ?? '$f']),
+    final likes = <String>[
+      for (final p in ((b['eats_plants'] as List?) ?? const []))
+        if (g.data.plants[p] != null)
+          '${g.data.plants[p]?['icon'] ?? '🌱'} ${_name(g.data.plants, '$p')}',
+      for (final i in ((b['eats_insects'] as List?) ?? const []))
+        if (g.data.insects[i] != null) '🐛 ${_name(g.data.insects, '$i')}',
+    ];
+    final home = <String>[
+      for (final x in ((b['biome_pref'] as List?) ?? const []))
+        if (g.data.biomes[x] != null) '${g.data.biomes[x]?['name_en'] ?? x}',
+    ];
+    final fears = <String>[
+      for (final f
+          in ((g.data.predators[id]?['categories'] as List?) ?? const []))
+        kPredatorLabels['$f'] ?? '$f',
+    ];
 
-            if (b['description_en'] != null) ...[
-              const SizedBox(height: 10),
-              Text(b['description_en'] as String,
-                  style: const TextStyle(
-                      fontSize: 14, color: kSub, height: 1.5)),
-            ],
-          ],
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        leading: Text(icon, style: const TextStyle(fontSize: 22)),
+        title: Text(title,
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: discovered ? kInk : kSub)),
+        subtitle: Text(
+          discovered && days > 0 ? '$stars  ·  ${_badge(days)}' : stars,
+          style: const TextStyle(fontSize: 12, color: kSub),
         ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: !discovered
+                // まだ来ていない鳥は、何も明かさない。
+                ? const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Not yet in your garden.',
+                        style: TextStyle(color: kSub)),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // **絵が出るのは、近くで出会ってから。**
+                      if (observed) ...[
+                        Center(child: _picture()),
+                        const SizedBox(height: 12),
+                      ] else
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: Text(
+                              'Listen closely in the garden to see it up close.',
+                              style: TextStyle(color: kSub, fontSize: 13)),
+                        ),
+                      _Row('Likes', likes),
+                      _Row('Home', home),
+                      _Row('Fears', fears),
+                      if (b['description_en'] != null) ...[
+                        const SizedBox(height: 10),
+                        Text(b['description_en'] as String,
+                            style: const TextStyle(
+                                fontSize: 14, color: kSub, height: 1.5)),
+                      ],
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  /// 近さの段階。`radio.py` の _obs_to_depth と同じ区切り。
-  String _closeness(int count) {
-    if (count >= 6) return 'Sings right beside you';
-    if (count >= 3) return 'Comes a little closer';
-    return 'Still keeping its distance';
+  Widget _picture() {
+    final detail = g.detailSpriteFor(id);
+    if (detail != null) {
+      return Image.asset(detail, height: 140, filterQuality: FilterQuality.none);
+    }
+    final small = g.spriteFor(id);
+    if (small != null) {
+      return Image.asset(small, height: 96, filterQuality: FilterQuality.none);
+    }
+    return const Text('🐦', style: TextStyle(fontSize: 64));
+  }
+
+  /// 会った日数の節目。`badges.py` と同じ区切り。
+  String _badge(int days) {
+    if (days >= 100) return '🏅 $days days together';
+    if (days >= 30) return '🌿 $days days together';
+    if (days >= 10) return '🌱 $days days together';
+    return '$days days';
   }
 }
 

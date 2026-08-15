@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "toris_collecti
 import badges  # noqa: E402
 import ecology  # noqa: E402
 import engine  # noqa: E402
+import disturbance as dist  # noqa: E402
 import data as seed  # noqa: E402
 import flock  # noqa: E402
 import i18n  # noqa: E402
@@ -127,9 +128,19 @@ def main() -> None:
                     "temp": round(temp, 12), **web, "probs": probs,
                 })
 
+    # 撹乱: 乱数列は Python と Dart で違うので、結果そのものは突き合わせられない。
+    # 代わりに**定数と判定の境目**を運ぶ(Dart 側は乱数を差し替えて境目を試す)。
+    dist_consts = {
+        "base_p": dist.BASE_DISTURBANCE_P,
+        "weights": dict(dist.TYPE_WEIGHTS),
+        "severity": {k: v["severity"] for k, v in dist.DISTURBANCES.items()},
+        "default_sensitivity": dist.DEFAULT_SENSITIVITY,
+    }
+
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump({"flock": flock_cases, "badges": badge_cases,
-                   "ecology": eco, "guilds": guilds, "arrivals": arrivals}, f,
+                   "ecology": eco, "guilds": guilds, "arrivals": arrivals,
+                   "disturbance": dist_consts}, f,
                   ensure_ascii=False, indent=1)
     print(f"生態: {len(eco)} 組(37種の全ペア)")
     print(f"到来: {len(arrivals)} 状況 × {len(ids)}種 = {len(arrivals)*len(ids)} 通り")

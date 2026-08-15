@@ -7,10 +7,24 @@
 library;
 
 import 'dart:convert';
+import 'dart:math';
 import 'dart:io';
 
 import 'package:test/test.dart';
 import 'package:toris_core/toris_core.dart';
+
+/// 決めた順に値を返す乱数。境目の試験用。
+class _Scripted implements Random {
+  final List<double> _v;
+  int _i = 0;
+  _Scripted(this._v);
+  @override
+  double nextDouble() => _v[_i++ % _v.length];
+  @override
+  int nextInt(int max) => 0;
+  @override
+  bool nextBool() => false;
+}
 
 void main() {
   final f = File('test/fixtures/logic.json');
@@ -161,6 +175,30 @@ void main() {
     expect(estimateTickCount(8.0), 4);
     expect(estimateTickCount(20.0), 5);
     expect(estimateTickCount(48.0), 6); // 上限
+  });
+
+  test('撹乱: 定数と判定の境目が Python 版と同じ', () {
+    // 乱数列は言語で違うので、結果ではなく**判定の境目**を確かめる。
+    final d = fx['disturbance'] as Map<String, dynamic>;
+    expect(kDisturbanceP, closeTo(d['base_p'] as num, 1e-12));
+    expect(kDefaultSensitivity, closeTo(d['default_sensitivity'] as num, 1e-12));
+    (d['weights'] as Map<String, dynamic>).forEach((k, v) {
+      expect(kDisturbanceWeights[k], closeTo(v as num, 1e-12), reason: '$k の頻度');
+    });
+    (d['severity'] as Map<String, dynamic>).forEach((k, v) {
+      expect(kDisturbances[k]!.severity, closeTo(v as num, 1e-12),
+          reason: '$k の強さ');
+    });
+
+    // 境目: 確率ちょうどでは起きない(>= で弾く)
+    expect(rollDisturbance(_Scripted([0.10])), isNull);
+    expect(rollDisturbance(_Scripted([0.0999, 0.0])), isNotNull);
+
+    // 全滅させない: 全部倒れる判定でも1本は残る
+    final planted = ['a', 'b', 'c'];
+    final removed = applyDisturbance(planted, kDisturbances['logging']!,
+        const {}, _Scripted([0.0, 0.0, 0.0, 0.0]));
+    expect(removed.length, planted.length - 1, reason: '最後の1本は残すはず');
   });
 
   group('Python の型変換をまねる部分', () {
