@@ -101,3 +101,32 @@ String awayHeadline(String summary) => '🌙 While you were away: $summary';
 
 /// 折りたたみの見出し。
 const String kSeeWhatHappened = 'See what happened';
+
+/// 顔ぶれの一文の、**短い言い方**。
+///
+/// 現行の文はスマホには長すぎた(CEO 2026-08-16「今日のキャストのところ
+/// 文字多くて読みにくい。もっと少なく。あともっと大きくわかりやすく」)。
+/// **長い方(`lineupStoryText`)は現行のまま残してある** — 判断の中身は
+/// 一切変えず、言い方だけを短くする。
+///
+/// ギルドごとに言い方を持つのは、`Mostly a bit of everything today` のような
+/// 読みにくい合成を避けるため。
+const Map<String, String> kLineupShortByGuild = {
+  'insectivore': '🐛  Insect-eaters today',
+  'herbivore': '🍇  Berry and nectar lovers today',
+  'omnivore': '🍃  A bit of everything today',
+  'other': '🐦  Each their own way today',
+};
+
+String lineupStoryShort(LineupStory? story) {
+  if (story == null) return '';
+  switch (story.kind) {
+    case 'guild':
+      return kLineupShortByGuild[story.guild] ?? kLineupShortByGuild['other']!;
+    case 'climate':
+      return '🌡  Same climate, different tastes';
+    case 'mixed':
+      return '🌿  Gathered by this garden';
+  }
+  return '';
+}

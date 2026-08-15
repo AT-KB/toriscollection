@@ -315,15 +315,18 @@
   },
   "freesound_client.clear_cache": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
   },
   "freesound_client.get_ambient_path": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
   },
   "freesound_client.is_enabled": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
   },
   "garden_items.departure_bonus": {
    "dart": "itemDepartureBonus",
@@ -371,43 +374,53 @@
   },
   "globi_client.compare_with_seed": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
   },
   "globi_client.enrich_seed_with_globi": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
   },
   "globi_client.get_diet": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
   },
   "globi_client.get_diet_japan": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
   },
   "globi_client.get_interactions": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
   },
   "i18n.describe": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
   },
   "i18n.disp": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
   },
   "i18n.get_lang": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
   },
   "i18n.set_lang": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
   },
   "i18n.t": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
   },
   "mementos.all_possible_mementos": {
    "dart": "",
@@ -551,7 +564,8 @@
   },
   "screen.login_screen": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "「新規スタート / セーブコードで再開」を選ばせる入口画面。Streamlit はサーバー側で動くため必要だったが、Flutter は端末に保存して**黙って再開する**。セーブコードでの再開は、庭の右上の受け渡しシート(showTransferSheet)が担う。ログイン・認証の概念は現行にも無い"
   },
   "screen.network_graph_view": {
    "dart": "_WebPainter",
@@ -569,8 +583,9 @@
    "why": ""
   },
   "screen.save_code_ui": {
-   "dart": "",
-   "status": "todo"
+   "dart": "showTransferSheet",
+   "status": "done",
+   "why": "庭の右上から開く受け渡しシート。現行は WebView の制約で手段が4つ並んでいたが、ネイティブでは**コピーする / 貼り付ける の2つだけ**で足りる(CEO 2026-08-15)"
   },
   "screen.tab_garden": {
    "dart": "GardenPage",
@@ -609,107 +624,133 @@
   },
   "sheets_client.add_memento": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.add_observation": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.add_planting": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.add_visit": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.get_client": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.get_spreadsheet": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.list_testers": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_active_plantings": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_active_plantings_with_time": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_all_collection": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_bird_days": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_bird_notes": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_collection_set": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_field_state": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_mementos": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_observation_counts": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.load_visit_calendar": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.log_access": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.now_iso": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.remove_all_plantings": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.remove_planting": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.reset_tester_data": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.save_bird_note": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.save_field_state": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.update_memento_note": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "sheets_client.upsert_collection": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
   },
   "tutorial.advance_step": {
    "dart": "",
@@ -733,43 +774,53 @@
   },
   "xc_client.clear_failed_cache": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.download_audio": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.download_audio_variants": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.get_audio_url": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.get_audio_urls": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.get_citation": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.is_enabled": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.is_nc_only": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.license_class": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "xc_client.search_recordings": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
   },
   "screen.popup_welcome_back": {
    "dart": "showWelcomeBackPopup",

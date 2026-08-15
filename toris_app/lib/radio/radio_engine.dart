@@ -346,9 +346,10 @@ class RadioEngine {
       baseWeight: {for (final id in ids) id: 1.0 + (observed[id] ?? 0) * 0.5},
     );
     // 「なぜこの顔ぶれか」。共起モデルが言える範囲だけを語る(原則4)。
+    final story = core.lineupStory(chosen, _birdsData);
     guildGroups = core.guildGroups(chosen, _birdsData);
-    lineupStory = core.lineupStoryText(core.lineupStory(chosen, _birdsData));
-    if (lineupStory.isEmpty) lineupStory = core.kLineupFallback;
+    // 画面に出すのは**短い方**。長い方は現行の文のまま `stories.dart` にある。
+    lineupStory = core.lineupStoryShort(story);
     return [for (final id in chosen) byId[id]!];
   }
 
