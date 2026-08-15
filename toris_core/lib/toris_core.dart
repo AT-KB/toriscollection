@@ -7,6 +7,7 @@
 library;
 
 export 'src/badges.dart';
+export 'src/eco_log.dart';
 export 'src/ecology.dart';
 export 'src/feeder_chain.dart';
 export 'src/engine.dart';

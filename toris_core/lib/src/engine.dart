@@ -10,8 +10,10 @@ library;
 
 import 'dart:math';
 
+import 'eco_log.dart';
 import 'feeder_chain.dart';
 import 'py_coerce.dart';
+import 'save_code.dart' show isoSeconds;
 
 /// その土地・月の気温。
 /// 南半球では季節を半年ずらす(北半球の対応する月のオフセットを使う)。
@@ -217,7 +219,11 @@ class TurnResult {
   final Set<String> residents;
   final List<String> arrivals;
   final List<String> departures;
-  const TurnResult(this.residents, this.arrivals, this.departures);
+
+  /// このサイクルで使った食物網。「なぜ来たか」を組むのに要る
+  /// (撹乱で植生が変わるので、**サイクルごとに違う**)。
+  final FoodWeb web;
+  const TurnResult(this.residents, this.arrivals, this.departures, this.web);
 }
 
 /// 1サイクル進める。`engine.run_turn` と同じ手順・同じ順序。
@@ -300,7 +306,7 @@ TurnResult runTurn({
     }
   }
 
-  return TurnResult(next, arrivals, departures);
+  return TurnResult(next, arrivals, departures, web);
 }
 
 /// 離れていた時間から、進めるサイクル数を決める。
@@ -335,13 +341,19 @@ class AbsenceResult {
   /// 撹乱を反映した最終的な植生。
   final List<String> plantedFinal;
 
+  /// 到来イベント(「なぜ来たか」の一文つき)。到着した順。
+  final List<ArrivalEvent> reasons;
+
   const AbsenceResult(this.residents, this.arrivals, this.departures,
-      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal);
+      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal,
+      [this.reasons = const []]);
 }
 
 /// 前回見たときから今までを進める。`absence_loop.evolve_state` に当たる。
 ///
-/// 撹乱(嵐・伐採で植物が減る)は**まだ移していない**。
+/// 到着した鳥には「なぜ来たか」の一文が付く(`reasons`)。理由は
+/// **そのサイクルの食物網**から組む — 撹乱で植生が変わるので、あとから
+/// まとめて組むと嘘になる。
 AbsenceResult evolveWhileAway({
   required List<String> plantedPlants,
   required String biomeId,
@@ -365,9 +377,13 @@ AbsenceResult evolveWhileAway({
   final planted = List<String>.from(plantedPlants);
   final lost = <String>[];
   final events = <Disturbance>[];
+  final reasons = <ArrivalEvent>[];
   if (planted.isEmpty || ticks == 0) {
     return AbsenceResult(cur, arrivals, departures, 0, lost, events, planted);
   }
+  // 何コマぶんを、いつの出来事として記録するか。
+  // 均等割りにして、古い到来ほど古い時刻になるようにする。
+  final span = now.difference(lastSeenAt);
   for (var i = 0; i < ticks; i++) {
     // 現行と同じ順序: 先に撹乱、そのあとで1サイクル。植生が変わるので、
     // **確率はコマごとに計算し直される**(runTurn が毎回 buildFoodWeb する)。
@@ -394,9 +410,21 @@ AbsenceResult evolveWhileAway({
     cur = r.residents;
     arrivals.addAll(r.arrivals);
     departures.addAll(r.departures);
+    final at = isoSeconds(
+        lastSeenAt.add(Duration(seconds: span.inSeconds * (i + 1) ~/ ticks)));
+    for (final bid in r.arrivals) {
+      reasons.add(buildReason(
+        birdId: bid,
+        web: r.web,
+        arrivedAt: at,
+        birdsData: birdsData,
+        plantsData: plantsData,
+        insectsData: insectsData,
+      ));
+    }
   }
   return AbsenceResult(
-      cur, arrivals, departures, ticks, lost, events, planted);
+      cur, arrivals, departures, ticks, lost, events, planted, reasons);
 }
 
 /// 撹乱(嵐・落雷・伐採)。`toris_collection/disturbance.py` の移植。

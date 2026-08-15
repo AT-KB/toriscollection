@@ -15,6 +15,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "toris_collection"))
 
 import badges  # noqa: E402
+import absence_loop as absence  # noqa: E402
+import eco_log  # noqa: E402
 import ecology  # noqa: E402
 import engine  # noqa: E402
 import feeder_chain as fc  # noqa: E402
@@ -158,6 +160,64 @@ def main() -> None:
                     for w in wariness_values},
             })
 
+    # 「なぜ来たか」の記録(eco_log)。重複除去と並びが肝。
+    # 同じ鳥の同じ理由は1件だけ、というのが「関係の証拠」の意味を保つ。
+    eco_log_cases = []
+    _evs = [
+        {"bird_id": "a", "reason_text": "X", "arrived_at": "2026-08-01T10:00:00"},
+        {"bird_id": "a", "reason_text": "X", "arrived_at": "2026-08-02T10:00:00"},
+        {"bird_id": "a", "reason_text": "Y", "arrived_at": "2026-08-03T10:00:00"},
+        {"bird_id": "b", "reason_text": "X", "arrived_at": "2026-07-01T10:00:00"},
+        {"bird_id": "", "reason_text": "Z", "arrived_at": "2026-08-04T10:00:00"},
+        {"bird_id": "c", "reason_text": "", "arrived_at": "2026-08-05T10:00:00"},
+        {"bird_id": "d", "reason_text": "W", "arrived_at": None},
+    ]
+    for n in range(len(_evs) + 1):
+        log = eco_log.append_events(None, _evs[:n])
+        # 二度同じものを流し込んでも増えないこと(重複除去の要)
+        twice = eco_log.append_events(log, _evs[:n])
+        eco_log_cases.append({
+            "n": n, "log": log, "twice_len": len(twice),
+            "for_a": eco_log.entries_for_bird(log, "a"),
+            "for_missing": eco_log.entries_for_bird(log, "zzz"),
+        })
+    founding_cases = []
+    _log = eco_log.append_events(None, _evs)
+    _ents = eco_log.entries_for_bird(_log, "a")
+    for first in ["2026-08-01T00:00:00", None, ""]:
+        founding_cases.append({
+            "observed_first": first,
+            "flags": [eco_log.is_founding_record(e, _ents, first)
+                      for e in _ents],
+            # 記録が空なら常に False
+            "empty": eco_log.is_founding_record(
+                {"bird_id": "a", "text": "X"}, [], first),
+        })
+
+    # 「なぜ来たか」の一文。**実データで全37種 × 植生 × 月**を総当たり。
+    # 一番重みの大きい経路を1つだけ採る、という判断がズレると文が変わる。
+    #
+    # ⚠️ ここだけ表示言語を en に切り替える。バッジ(上)は日本語の原文を
+    # 移植先に持たせる設計だが、「なぜ来たか」は**画面にそのまま出る文**で、
+    # アプリは全部英語。移植先も出荷済みの英語をそのまま持つ。
+    i18n.set_lang("en")
+    reason_cases = []
+    for biome_id in sorted(seed.BIOMES):
+        for pset in plant_sets:
+            for month in (1, 5, 8, 11):
+                G, _temp = engine.build_network(pset, biome_id, month)
+                for bid in ids:
+                    info = engine.calculate_arrival_probability(
+                        bid, G, biome_id, month)
+                    text, plant, insect = absence.build_reason_text(bid, info)
+                    reason_cases.append({
+                        "biome": biome_id, "planted": pset, "month": month,
+                        "bird": bid, "text": text,
+                        "plant": plant, "insect": insect,
+                    })
+
+    i18n.set_lang("ja")   # 後続に影響させない
+
     # 撹乱: 乱数列は Python と Dart で違うので、結果そのものは突き合わせられない。
     # 代わりに**定数と判定の境目**を運ぶ(Dart 側は乱数を差し替えて境目を試す)。
     dist_consts = {
@@ -171,9 +231,12 @@ def main() -> None:
         json.dump({"flock": flock_cases, "badges": badge_cases,
                    "ecology": eco, "guilds": guilds, "arrivals": arrivals,
                    "feeder_chain": feeder_cases,
+                   "eco_log": eco_log_cases, "founding": founding_cases,
+                   "reasons": reason_cases,
                    "disturbance": dist_consts}, f,
                   ensure_ascii=False, indent=1)
     nf = len(feeder_cases) * len(wariness_values)
+    print(f"なぜ来たか: {len(reason_cases)} 通り / 記録: {len(eco_log_cases)} 段階")
     print(f"餌台の連鎖: {len(feeder_cases)} 状況 × 警戒心{len(wariness_values)}通り "
           f"= {nf} 通り")
     print(f"生態: {len(eco)} 組(37種の全ペア)")

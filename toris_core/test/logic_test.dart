@@ -237,6 +237,97 @@ void main() {
     }
   });
 
+  test('なぜ来たか: 実データ1480通りで Python 版と同じ一文になる', () {
+    // 「あなたが組んだ関係が鳥を呼んだ」証拠。一番重みの大きい経路を1つだけ
+    // 採る、という判断がズレると文が変わる。捏造しないことがここの肝。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final plants = load('plants');
+    final insects = load('insects');
+    final biomes = load('biomes');
+    final season = load('season_offset');
+
+    FoodWeb? web;
+    String? key;
+    var checked = 0;
+    for (final c in fx['reasons'] as List) {
+      final k = '${c['biome']}|${c['planted']}|${c['month']}';
+      if (k != key) {
+        key = k;
+        web = buildFoodWeb(
+          plantedPlants: (c['planted'] as List).map((e) => '$e').toList(),
+          biomeId: c['biome'] as String,
+          month: c['month'] as int,
+          plantsData: plants,
+          insectsData: insects,
+          birdsData: birds,
+          biomes: biomes,
+          seasonOffset: season,
+        );
+      }
+      final ev = buildReason(
+        birdId: c['bird'] as String,
+        web: web!,
+        arrivedAt: '2026-08-15T09:00:00',
+        birdsData: birds,
+        plantsData: plants,
+        insectsData: insects,
+      );
+      expect(ev.reasonText, c['text'], reason: '$k ${c['bird']} の一文が違う');
+      expect(ev.relatedPlant, c['plant'], reason: '$k ${c['bird']} の植物が違う');
+      expect(ev.relatedInsect, c['insect'], reason: '$k ${c['bird']} の虫が違う');
+      checked++;
+    }
+    expect(checked, 1480);
+  });
+
+  test('なぜ来たかの記録: 重複を除いて溜まる(Python 版と一致)', () {
+    // 同じ鳥の同じ理由は1件だけ。そうでないと「関係の証拠」ではなく履歴になる。
+    final evs = [
+      const ArrivalEvent('a', 'X', '2026-08-01T10:00:00'),
+      const ArrivalEvent('a', 'X', '2026-08-02T10:00:00'),
+      const ArrivalEvent('a', 'Y', '2026-08-03T10:00:00'),
+      const ArrivalEvent('b', 'X', '2026-07-01T10:00:00'),
+      const ArrivalEvent('', 'Z', '2026-08-04T10:00:00'),
+      const ArrivalEvent('c', '', '2026-08-05T10:00:00'),
+      const ArrivalEvent('d', 'W', ''),
+    ];
+    for (final c in fx['eco_log'] as List) {
+      final n = c['n'] as int;
+      final log = appendEvents(null, evs.sublist(0, n));
+      expect(log.map((e) => e.toJson()).toList(), c['log'],
+          reason: '$n 件流し込んだ結果が違う');
+      // 二度流し込んでも増えない
+      expect(appendEvents(log, evs.sublist(0, n)).length, c['twice_len'],
+          reason: '$n 件を二度流したら増えてしまった');
+      expect(entriesForBird(log, 'a').map((e) => e.toJson()).toList(),
+          c['for_a']);
+      expect(entriesForBird(log, 'zzz'), isEmpty);
+    }
+
+    final full = appendEvents(null, evs);
+    final ents = entriesForBird(full, 'a');
+    for (final c in fx['founding'] as List) {
+      final first = c['observed_first'] as String?;
+      expect([for (final e in ents) isFoundingRecord(e, ents, first)],
+          c['flags'], reason: 'observed_first=$first の判定が違う');
+      expect(isFoundingRecord(ents.first, const [], first), c['empty']);
+    }
+  });
+
+  test('なぜ来たかは消えない: 消す関数を持たない', () {
+    // 交渉不能の原則2「罰しない」。撹乱で植物が失われても記録は残る。
+    var log = appendEvents(null, [
+      const ArrivalEvent('a', 'drawn to Sakura', '2026-08-01T10:00:00'),
+    ]);
+    // 植物が全部消えた状態で、もう一度進んでも記録は減らない
+    log = appendEvents(log, const []);
+    expect(log.length, 1);
+    expect(log.first.text, 'drawn to Sakura');
+  });
+
   test('留守のあいだの進み方: 区切りが Python 版と同じ', () {
     // 急かさない設計の根っこ。**時間は勝手に進む**(原則1「受動的である」)。
     expect(estimateTickCount(0.0), 0);

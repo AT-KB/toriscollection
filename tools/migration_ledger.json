@@ -1,8 +1,9 @@
 {
  "items": {
   "absence_loop.build_reason_text": {
-   "dart": "",
-   "status": "todo"
+   "dart": "buildReason",
+   "status": "done",
+   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
   },
   "absence_loop.estimate_tick_count": {
    "dart": "estimateTickCount",
@@ -160,16 +161,19 @@
    "why": ""
   },
   "eco_log.append_events": {
-   "dart": "",
-   "status": "todo"
+   "dart": "appendEvents",
+   "status": "done",
+   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
   },
   "eco_log.entries_for_bird": {
-   "dart": "",
-   "status": "todo"
+   "dart": "entriesForBird",
+   "status": "done",
+   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
   },
   "eco_log.is_founding_record": {
-   "dart": "",
-   "status": "todo"
+   "dart": "isFoundingRecord",
+   "status": "done",
+   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
   },
   "ecology.climate_overlap": {
    "dart": "climateOverlap",

@@ -74,9 +74,16 @@ class Garden {
   /// いまの儀式で既に出会えた鳥(二重に数えないため)。
   final Set<String> metThisRitual = {};
 
+  /// **「なぜ来たか」の記録。** あなたが組んだ関係が鳥を呼んだ証拠。
+  /// 撹乱で植物が失われても消さない(原則2「罰しない」)。
+  List<core.EcoEntry> ecoLog = [];
+
   /// 留守のあいだに来た鳥・去った鳥(画面に出すため)。
   List<String> lastArrivals = [];
   List<String> lastDepartures = [];
+
+  /// 留守のあいだの到来と、その理由(庭の画面にそのまま出す)。
+  List<core.ArrivalEvent> lastReasons = [];
 
   /// 留守のあいだに撹乱で倒れた植物と、その出来事。
   /// 倒れたぶんは**純減**で、自動では植え直さない(現行と同じ)。
@@ -203,6 +210,7 @@ class Garden {
     final last = lastSeenAt;
     lastArrivals = [];
     lastDepartures = [];
+    lastReasons = [];
     if (last != null && planted.isNotEmpty) {
       final r = core.evolveWhileAway(
         plantedPlants: planted,
@@ -232,6 +240,9 @@ class Garden {
         ..addAll(r.plantedFinal);
       // 来た鳥は図鑑に載る(名前まで)。**近くで会うのは儀式を経てから。**
       discovered.addAll(r.arrivals);
+      // 「なぜ来たか」を溜める。同じ鳥の同じ理由は1件だけ。
+      ecoLog = core.appendEvents(ecoLog, r.reasons);
+      lastReasons = r.reasons;
     }
     // 会った日数は**鳥ごとに**1日1カウント。いま庭にいる鳥ぶんだけ増える。
     final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
@@ -264,6 +275,8 @@ class Garden {
           for (final e in birdDays.entries)
             e.key: {'days': e.value, 'last': lastMetDay[e.key] ?? ''}
         },
+        // 「なぜ来たか」。Python 側も SAVE_KEYS に持っている。
+        'eco_log': [for (final e in ecoLog) e.toJson()],
         'saved_at': core.isoSeconds(lastSeenAt ?? DateTime.now()),
       };
 
@@ -284,6 +297,10 @@ class Garden {
     discovered
       ..clear()
       ..addAll(((s['discovered'] as Iterable?) ?? const []).map((e) => '$e'));
+    ecoLog = [
+      for (final e in ((s['eco_log'] as List?) ?? const []))
+        if (core.EcoEntry.fromJson(e) != null) core.EcoEntry.fromJson(e)!
+    ];
     birdDays.clear();
     lastMetDay.clear();
     final days = s['bird_days'];

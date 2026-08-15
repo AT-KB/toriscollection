@@ -218,7 +218,9 @@ class _GardenPageState extends State<GardenPage>
               if (g.lastLostPlants.isNotEmpty)
                 '${g.lastDisturbances.join(' ')} A storm passed. '
                     'Lost: ${g.lastLostPlants.map((p) => _name(g.data.plants, p)).join(', ')}',
-              if (g.lastArrivals.isNotEmpty)
+              // **なぜ来たか**を、そのまま出す。あなたが組んだ関係の証拠。
+              for (final r in g.lastReasons) r.reasonText,
+              if (g.lastArrivals.isNotEmpty && g.lastReasons.isEmpty)
                 'Came while you were away: '
                     '${g.lastArrivals.map((b) => _name(g.data.birds, b)).join(', ')}',
               if (g.lastDepartures.isNotEmpty)
