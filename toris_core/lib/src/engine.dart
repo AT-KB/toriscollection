@@ -10,6 +10,7 @@ library;
 
 import 'dart:math';
 
+import 'centrality.dart';
 import 'eco_log.dart';
 import 'feeder_chain.dart';
 import 'py_coerce.dart';
@@ -49,6 +50,10 @@ class FoodWeb {
   /// 依存する植物があって湧いた虫 → 適合度
   final Map<String, double> insects;
 
+  /// 虫 → その虫が食べている**育っている植物**。
+  /// `build_network` は植物→虫の辺も張るので、辺を数えるのに要る。
+  final Map<String, List<String>> insectLinks;
+
   /// 鳥 → その鳥に流れ込む重みの合計(食物網スコア)
   final Map<String, double> birdFood;
 
@@ -60,6 +65,7 @@ class FoodWeb {
   const FoodWeb({
     required this.plants,
     required this.insects,
+    this.insectLinks = const {},
     required this.birdFood,
     required this.birdLinks,
     required this.temperature,
@@ -100,15 +106,18 @@ FoodWeb buildFoodWeb({
   }
 
   final insects = <String, double>{};
+  final insectLinks = <String, List<String>>{};
   insectsData.forEach((iid, raw) {
     final ins = raw as Map;
     final fit = temperatureFit(temp, ins['temp_fit'] as List?);
     if (fit < 0.1) return;
     final eats = ((ins['eats_plants'] as List?) ?? const [])
         .map((e) => '$e')
-        .where(plants.containsKey);
+        .where(plants.containsKey)
+        .toList();
     if (eats.isEmpty) return;
     insects[iid] = fit;
+    insectLinks[iid] = eats;
   });
 
   final birdFood = <String, double>{};
@@ -138,6 +147,7 @@ FoodWeb buildFoodWeb({
   return FoodWeb(
     plants: plants,
     insects: insects,
+    insectLinks: insectLinks,
     birdFood: birdFood,
     birdLinks: birdLinks,
     temperature: temp,
@@ -155,6 +165,9 @@ class Arrival {
 
   /// 猛禽が居るときの抑制。居なければ 1.0。`feeder_chain` 由来。
   final double waryFactor;
+
+  /// レア度係数を上書きした中心性(補正済み PageRank)。使わなければ null。
+  final double? centralityUsed;
   const Arrival({
     required this.probability,
     required this.tempFit,
@@ -163,6 +176,7 @@ class Arrival {
     required this.foodFactor,
     required this.rarityFactor,
     this.waryFactor = 1.0,
+    this.centralityUsed,
   });
 }
 
@@ -171,8 +185,10 @@ class Arrival {
 /// `engine.calculate_arrival_probability` と同じ式。最後の 0.5 は
 /// 「滞在2〜4種の落ち着いた庭」に収めるための引き締め。
 ///
-/// 中心性(Sony CSL の PageRank 補正)による上書きは**移していない**。
-/// 現行もデータが無ければシードの rarity を使う作りで、そちらに合わせている。
+/// [centralities] があると、レア度係数が **Sony CSL の補正済み PageRank で
+/// 上書きされる**(`centrality.dart`)。元データはリポジトリに無いので Python 側
+/// でも発動していないが、式は持っている — 動作が同じだからと省くのは推測で
+/// 決めることになる(CEO 2026-08-16)。
 ///
 /// [raptors] に猛禽が居ると、警戒心の強い鳥ほど来にくくなる(`feeder_chain`)。
 /// **省略すれば 1.0 倍**なので、餌台を置いていない庭の確率は今までと変わらない。
@@ -182,6 +198,7 @@ Arrival arrivalProbability({
   required String biomeId,
   required Map<String, dynamic> birdsData,
   List<String> raptors = const [],
+  Map<String, Centrality>? centralities,
 }) {
   final bird = (birdsData[birdId] as Map?) ?? const {};
   final tFit = temperatureFit(web.temperature, bird['temp_fit'] as List?);
@@ -194,7 +211,17 @@ Arrival arrivalProbability({
       foodScore <= 0 ? 0.0 : 1.0 - pow(0.6, foodScore).toDouble();
 
   final rarity = pyFloat(bird['rarity']) ?? 0.5;
-  final rarityFactor = (1.0 - rarity * 0.85) * 0.9;
+  var rarityFactor = (1.0 - rarity * 0.85) * 0.9;
+  // 中心性があれば**上書き**する(足すのではない)。
+  double? centralityUsed;
+  final fromCentrality =
+      centralityRarityFactor(bird['scientific'] as String?, centralities);
+  if (fromCentrality != null) {
+    rarityFactor = fromCentrality;
+    centralityUsed = centralities![
+            (bird['scientific'] as String).toUpperCase()]!
+        .value;
+  }
 
   // 恐怖の景観。猛禽が居なければ 1.0 で、式は今まで通り。
   final wary =
@@ -211,6 +238,7 @@ Arrival arrivalProbability({
     foodFactor: foodFactor,
     rarityFactor: rarityFactor,
     waryFactor: wary,
+    centralityUsed: centralityUsed,
   );
 }
 
@@ -246,6 +274,11 @@ TurnResult runTurn({
   required Map<String, dynamic> biomes,
   required Map<String, dynamic> seasonOffset,
   List<String> placedFeatures = const [],
+  Map<String, Centrality>? centralities,
+  /// 「今日の庭アイテム」の到来加点。省略すると一切呼ばれない。
+  double Function(String)? arrivalBonusFn,
+  /// 同・退去率の減算。0 なら一切効かない。
+  double departureBonus = 0.0,
   int maxResidents = 4,
   int maxArrivalsPerTurn = 1,
 }) {
@@ -274,9 +307,14 @@ TurnResult runTurn({
             web: web,
             biomeId: biomeId,
             birdsData: birdsData,
-            raptors: raptors)
+            raptors: raptors,
+            centralities: centralities)
         .probability;
-    final depRate = 0.3 - 0.25 * p;
+    // 退去はアイテムの**到来加点を受けない**(Python も加点前の p を使う)。
+    var depRate = 0.3 - 0.25 * p;
+    if (departureBonus != 0.0) {
+      depRate = max(0.02, depRate - departureBonus);
+    }
     if (rng.nextDouble() < depRate) {
       next.remove(bid);
       departures.add(bid);
@@ -286,13 +324,17 @@ TurnResult runTurn({
   final candidates = <MapEntry<String, double>>[];
   for (final bid in birdsData.keys) {
     if (next.contains(bid)) continue;
-    final p = arrivalProbability(
+    var p = arrivalProbability(
             birdId: bid,
             web: web,
             biomeId: biomeId,
             birdsData: birdsData,
-            raptors: raptors)
+            raptors: raptors,
+            centralities: centralities)
         .probability;
+    if (arrivalBonusFn != null) {
+      p = min(1.0, p + arrivalBonusFn(bid));
+    }
     if (p > 0) candidates.add(MapEntry(bid, p));
   }
   candidates.shuffle(rng);
@@ -368,6 +410,9 @@ AbsenceResult evolveWhileAway({
   required Map<String, dynamic> biomes,
   required Map<String, dynamic> seasonOffset,
   List<String> placedFeatures = const [],
+  Map<String, Centrality>? centralities,
+  double Function(String)? arrivalBonusFn,
+  double departureBonus = 0.0,
 }) {
   final hours = now.difference(lastSeenAt).inSeconds / 3600.0;
   final ticks = hours <= 0 ? 0 : estimateTickCount(hours);
@@ -406,6 +451,9 @@ AbsenceResult evolveWhileAway({
       biomes: biomes,
       seasonOffset: seasonOffset,
       placedFeatures: placedFeatures,
+      centralities: centralities,
+      arrivalBonusFn: arrivalBonusFn,
+      departureBonus: departureBonus,
     );
     cur = r.residents;
     arrivals.addAll(r.arrivals);
@@ -494,4 +542,242 @@ List<String> applyDisturbance(List<String> planted, Disturbance event,
     removed.removeWhere((r) => r == keep);
   }
   return removed;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 「どうすればあの鳥が来るか」を答える部分。`engine.py` の
+// network_stats / simulate_with_added_plant / suggest_for_bird。
+//
+// 確率そのものを変えるわけではないが、**確率の読み方**を客に見せる部分なので、
+// 推測で作らず同じ判定を移す(CEO 2026-08-16)。
+// ─────────────────────────────────────────────────────────────
+
+/// 食物網の規模。`network_stats` と同じ数え方。
+class NetworkStats {
+  final int plants;
+  final int insects;
+
+  /// エサ経路がある鳥の数(流入が1本でもある鳥)。
+  final int birdsActive;
+
+  /// 相互作用(辺)の数。
+  final int edges;
+
+  /// いちばん次数の大きいノード。誰も居なければ null。
+  final NetworkHub? hub;
+  const NetworkStats(
+      this.plants, this.insects, this.birdsActive, this.edges, this.hub);
+}
+
+class NetworkHub {
+  final String id;
+  final String kind; // 'plant' / 'insect' / 'bird'
+  final int degree;
+  const NetworkHub(this.id, this.kind, this.degree);
+}
+
+/// 食物網を数える。`network_stats` と同じ。
+///
+/// 辺は **植物→虫 / 植物→鳥 / 虫→鳥** の3種類(`build_network` が張るのと同じ)。
+/// 植物→虫を数え落とすと、辺の数もハブも変わる。
+///
+/// **エサ経路の無い鳥はハブの候補から外す**(Python も `in_degree == 0` の鳥を
+/// skip する)。外さないと、繋がっていない鳥が最大次数になりうる。
+NetworkStats networkStats(FoodWeb web) {
+  final degree = <String, int>{}; // 入次数 + 出次数
+  void bump(String a, String b) {
+    degree[a] = (degree[a] ?? 0) + 1;
+    degree[b] = (degree[b] ?? 0) + 1;
+  }
+
+  var edges = 0;
+  web.insectLinks.forEach((iid, ps) {
+    for (final p in ps) {
+      bump(p, iid);
+      edges++;
+    }
+  });
+
+  var birdsActive = 0;
+  final birdIn = <String, int>{};
+  web.birdLinks.forEach((bid, links) {
+    birdIn[bid] = links.length;
+    if (links.isNotEmpty) birdsActive++;
+    for (final l in links) {
+      bump(l.id, bid);
+      edges++;
+    }
+  });
+
+  NetworkHub? hub;
+  var maxDeg = 0;
+  void consider(String id, String kind) {
+    final deg = degree[id] ?? 0;
+    if (deg > maxDeg) {
+      maxDeg = deg;
+      hub = NetworkHub(id, kind, deg);
+    }
+  }
+
+  // Python は G.nodes の順に見る: 植物 → 虫 → 鳥(追加順)。
+  // 同点なら**先に見たほう**が残るので、順序を合わせる。
+  for (final p in web.plants.keys) {
+    consider(p, 'plant');
+  }
+  for (final i in web.insects.keys) {
+    consider(i, 'insect');
+  }
+  for (final b in web.birdLinks.keys) {
+    if ((birdIn[b] ?? 0) == 0) continue; // 繋がっていない鳥は候補にしない
+    consider(b, 'bird');
+  }
+
+  return NetworkStats(
+      web.plants.length, web.insects.length, birdsActive, edges, hub);
+}
+
+/// 「これを植えたら、あの鳥はどれだけ来やすくなるか」。
+/// `simulate_with_added_plant` と同じ — 仮に足して確率を出し直すだけ。
+double simulateWithAddedPlant({
+  required String targetBirdId,
+  required List<String> plantedPlants,
+  required String candidatePlant,
+  required String biomeId,
+  required int month,
+  required Map<String, dynamic> plantsData,
+  required Map<String, dynamic> insectsData,
+  required Map<String, dynamic> birdsData,
+  required Map<String, dynamic> biomes,
+  required Map<String, dynamic> seasonOffset,
+  Map<String, Centrality>? centralities,
+}) {
+  final web = buildFoodWeb(
+    plantedPlants: [...plantedPlants, candidatePlant],
+    biomeId: biomeId,
+    month: month,
+    plantsData: plantsData,
+    insectsData: insectsData,
+    birdsData: birdsData,
+    biomes: biomes,
+    seasonOffset: seasonOffset,
+  );
+  return arrivalProbability(
+          birdId: targetBirdId,
+          web: web,
+          biomeId: biomeId,
+          birdsData: birdsData,
+          centralities: centralities)
+      .probability;
+}
+
+/// 「あの鳥を呼ぶには、何が足りないか」の1件。
+///
+/// **文言は持たない。** 表示は画面側の仕事(Python も i18n 漏れを防ぐため
+/// 構造だけを返す)。
+class PlantSuggestion {
+  final String plantId;
+
+  /// 'direct' = その鳥が直接食べる / 'indirect' = 目当ての虫を成り立たせる
+  final String directness;
+  final String birdId;
+
+  /// indirect のときの、目当ての虫。
+  final String? insectId;
+  const PlantSuggestion(this.plantId, this.directness, this.birdId,
+      {this.insectId});
+}
+
+class BirdSuggestion {
+  final double currentProbability;
+  final bool hasFoodPath;
+  final List<PlantSuggestion> suggestions;
+  const BirdSuggestion(
+      this.currentProbability, this.hasFoodPath, this.suggestions);
+}
+
+/// `suggest_for_bird` と同じ順序・同じ判定。
+///
+/// 順序が結果を左右する:
+///   ① その鳥が**直接食べる植物**のうち、まだ植えていないもの
+///   ② 食べる**虫を成り立たせる植物**(その虫の食草が1つも無いときだけ)
+/// どちらも「この土地に植えられる」「気温に耐える」ものに限る。
+/// 同じ植物は二度出さない。②は虫1匹につき**最初の1つだけ**。
+BirdSuggestion? suggestForBird({
+  required String targetBirdId,
+  required List<String> plantedPlants,
+  required String biomeId,
+  required int month,
+  required Map<String, dynamic> plantsData,
+  required Map<String, dynamic> insectsData,
+  required Map<String, dynamic> birdsData,
+  required Map<String, dynamic> biomes,
+  required Map<String, dynamic> seasonOffset,
+  Map<String, Centrality>? centralities,
+}) {
+  final bird = birdsData[targetBirdId] as Map?;
+  if (bird == null) return null;
+
+  final temp = currentTemperature(biomeId, month, biomes, seasonOffset);
+  final web = buildFoodWeb(
+    plantedPlants: plantedPlants,
+    biomeId: biomeId,
+    month: month,
+    plantsData: plantsData,
+    insectsData: insectsData,
+    birdsData: birdsData,
+    biomes: biomes,
+    seasonOffset: seasonOffset,
+  );
+  final info = arrivalProbability(
+      birdId: targetBirdId,
+      web: web,
+      biomeId: biomeId,
+      birdsData: birdsData,
+      centralities: centralities);
+  final hasFoodPath = (web.birdLinks[targetBirdId] ?? const []).isNotEmpty;
+
+  final out = <PlantSuggestion>[];
+  final seen = <String>{};
+
+  bool plantable(String pid) {
+    final p = plantsData[pid] as Map?;
+    if (p == null) return false;
+    final b = ((p['biome'] as List?) ?? const []).map((e) => '$e');
+    if (!b.contains(biomeId)) return false;
+    return temperatureFit(temp, p['temp_fit'] as List?) >= 0.05;
+  }
+
+  // ① 直接食べる植物
+  for (final raw in ((bird['eats_plants'] as List?) ?? const [])) {
+    final pid = '$raw';
+    if (plantsData[pid] == null) continue;
+    if (plantedPlants.contains(pid)) continue;
+    if (!plantable(pid)) continue;
+    if (seen.add(pid)) {
+      out.add(PlantSuggestion(pid, 'direct', targetBirdId));
+    }
+  }
+
+  // ② 虫を成り立たせる植物
+  for (final raw in ((bird['eats_insects'] as List?) ?? const [])) {
+    final iid = '$raw';
+    final insect = insectsData[iid] as Map?;
+    if (insect == null) continue;
+    if (temperatureFit(temp, insect['temp_fit'] as List?) < 0.1) continue;
+    final food = ((insect['eats_plants'] as List?) ?? const [])
+        .map((e) => '$e')
+        .toList();
+    // その虫の食草がもう植わっているなら、足すものは無い
+    if (food.any(plantedPlants.contains)) continue;
+    for (final pid in food) {
+      if (plantsData[pid] == null) continue;
+      if (!plantable(pid)) continue;
+      if (seen.add(pid)) {
+        out.add(PlantSuggestion(pid, 'indirect', targetBirdId, insectId: iid));
+        break; // 虫1匹につき1つだけ
+      }
+    }
+  }
+
+  return BirdSuggestion(info.probability, hasFoodPath, out);
 }

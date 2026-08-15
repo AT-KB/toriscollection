@@ -96,16 +96,19 @@
    "why": ""
   },
   "centrality.get_centrality": {
-   "dart": "",
-   "status": "todo"
+   "dart": "getCentrality",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。補正後を優先し、無ければ生の値"
   },
   "centrality.is_available": {
-   "dart": "",
-   "status": "todo"
+   "dart": "centralityIsAvailable",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。データが手元にあるか。Python はファイルの有無、Dart は表の有無で見る"
   },
   "centrality.load_centralities": {
-   "dart": "",
-   "status": "todo"
+   "dart": "loadCentralities",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。元データ(200-300MB)は同梱しない。`.centrality_cache.json` 相当の小さな表を渡す形にした"
   },
   "community.aggregate_atlas": {
    "dart": "",
@@ -242,8 +245,9 @@
    "why": ""
   },
   "engine.network_stats": {
-   "dart": "",
-   "status": "todo"
+   "dart": "networkStats",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。植物→虫の辺も数える(build_network が張る)。40状況で突き合わせ"
   },
   "engine.run_turn": {
    "dart": "runTurn",
@@ -251,12 +255,14 @@
    "why": ""
   },
   "engine.simulate_with_added_plant": {
-   "dart": "",
-   "status": "todo"
+   "dart": "simulateWithAddedPlant",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。96通りで突き合わせ"
   },
   "engine.suggest_for_bird": {
-   "dart": "",
-   "status": "todo"
+   "dart": "suggestForBird",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。提案の**順序も**比べる(直接→間接)。1480件で突き合わせ"
   },
   "engine.temperature_fit": {
    "dart": "temperatureFit",
@@ -311,36 +317,44 @@
    "status": "todo"
   },
   "garden_items.departure_bonus": {
-   "dart": "",
-   "status": "todo"
+   "dart": "itemDepartureBonus",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.hours_remaining": {
-   "dart": "",
-   "status": "todo"
+   "dart": "itemHoursRemaining",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.is_active": {
-   "dart": "",
-   "status": "todo"
+   "dart": "itemIsActive",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。両端を含む"
   },
   "garden_items.is_available": {
-   "dart": "",
-   "status": "todo"
+   "dart": "itemIsAvailable",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.is_item_boosted_arrival": {
-   "dart": "",
-   "status": "todo"
+   "dart": "isItemBoostedArrival",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.make_arrival_bonus_fn": {
-   "dart": "",
-   "status": "todo"
+   "dart": "makeArrivalBonusFn",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.place_item": {
-   "dart": "",
-   "status": "todo"
+   "dart": "placeItem",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.target_bird_ids": {
-   "dart": "",
-   "status": "todo"
+   "dart": "targetBirdIds",
+   "status": "done",
+   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.unavailable_reason": {
    "dart": "",

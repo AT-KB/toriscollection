@@ -237,6 +237,321 @@ void main() {
     }
   });
 
+  test('食物網の統計と「足りないもの」の提案が Python 版と一致する(40状況 × 37種)', () {
+    // 「どうすればあの鳥が来るか」。順序も含めて比べる — 提案の順序は
+    //   ① 直接食べる植物 → ② 目当ての虫を成り立たせる植物
+    // で、そこがズレると案内が変わる。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final plants = load('plants');
+    final insects = load('insects');
+    final biomes = load('biomes');
+    final season = load('season_offset');
+
+    var checked = 0;
+    for (final c in fx['helpers'] as List) {
+      final planted = (c['planted'] as List).map((e) => '$e').toList();
+      final biome = c['biome'] as String;
+      final month = c['month'] as int;
+      final label = '$biome $planted $month月';
+
+      final web = buildFoodWeb(
+        plantedPlants: planted,
+        biomeId: biome,
+        month: month,
+        plantsData: plants,
+        insectsData: insects,
+        birdsData: birds,
+        biomes: biomes,
+        seasonOffset: season,
+      );
+
+      final st = networkStats(web);
+      final e = c['stats'] as Map<String, dynamic>;
+      expect(st.plants, e['plants'], reason: '$label の植物の数');
+      expect(st.insects, e['insects'], reason: '$label の虫の数');
+      expect(st.birdsActive, e['birds_active'], reason: '$label の来られる鳥の数');
+      expect(st.edges, e['edges'], reason: '$label の辺の数');
+      if (e['hub'] == null) {
+        expect(st.hub, isNull, reason: '$label のハブは無いはず');
+      } else {
+        final h = e['hub'] as List;
+        expect(st.hub?.id, h[0], reason: '$label のハブが違う');
+        expect(st.hub?.kind, h[1], reason: '$label のハブの種別が違う');
+        expect(st.hub?.degree, h[2], reason: '$label のハブの次数が違う');
+      }
+
+      (c['suggest'] as Map<String, dynamic>).forEach((bid, v) {
+        final r = suggestForBird(
+          targetBirdId: bid,
+          plantedPlants: planted,
+          biomeId: biome,
+          month: month,
+          plantsData: plants,
+          insectsData: insects,
+          birdsData: birds,
+          biomes: biomes,
+          seasonOffset: season,
+        )!;
+        final m = v as Map<String, dynamic>;
+        expect(r.currentProbability, closeTo(m['prob'] as num, 1e-9),
+            reason: '$label $bid の現在の確率');
+        expect(r.hasFoodPath, m['has_food_path'],
+            reason: '$label $bid の食物経路の有無');
+        expect([
+          for (final x in r.suggestions) [x.plantId, x.directness, x.insectId]
+        ], m['items'], reason: '$label $bid の提案(順序も)');
+        checked++;
+      });
+    }
+    expect(checked, greaterThan(1400));
+  });
+
+  test('仮に1つ植えたときの確率が Python 版と一致する(96通り)', () {
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final plants = load('plants');
+    final insects = load('insects');
+    final biomes = load('biomes');
+    final season = load('season_offset');
+
+    for (final c in fx['simulate'] as List) {
+      final p = simulateWithAddedPlant(
+        targetBirdId: c['bird'] as String,
+        plantedPlants: const ['sakura'],
+        candidatePlant: c['candidate'] as String,
+        biomeId: c['biome'] as String,
+        month: 5,
+        plantsData: plants,
+        insectsData: insects,
+        birdsData: birds,
+        biomes: biomes,
+        seasonOffset: season,
+      );
+      expect(p, closeTo(c['prob'] as num, 1e-9),
+          reason: '${c['bird']} に ${c['candidate']} を足したときの確率');
+    }
+  });
+
+  test('居ない鳥を指しても落ちない(null が返る)', () {
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    expect(
+        suggestForBird(
+          targetBirdId: 'not_a_bird',
+          plantedPlants: const [],
+          biomeId: 'kyoto',
+          month: 5,
+          plantsData: load('plants'),
+          insectsData: load('insects'),
+          birdsData: load('birds'),
+          biomes: load('biomes'),
+          seasonOffset: load('season_offset'),
+        ),
+        isNull);
+  });
+
+  test('中心性: レア度係数の上書きが Python 版と一致する(19状況 × 37種)', () {
+    // ⚠️ 元データはリポジトリに無く、ふだんは発動しない道。だから
+    // fixtures 側で値を注入して**実際に発動させた**答えと突き合わせる。
+    // 「動作が同じだから」と式を省くと、データが来た日にズレる。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final web = buildFoodWeb(
+      plantedPlants: const ['sakura', 'kunugi'],
+      biomeId: 'kyoto',
+      month: 5,
+      plantsData: load('plants'),
+      insectsData: load('insects'),
+      birdsData: birds,
+      biomes: load('biomes'),
+      seasonOffset: load('season_offset'),
+    );
+
+    var checked = 0;
+    for (final c in fx['centrality'] as List) {
+      final pr = c['pr'];
+      final corrected = c['corrected'];
+      // 学名がキャッシュに無い場合(pr が null)は、当たらない表を渡す
+      final table = <String, Centrality>{};
+      if (pr == null) {
+        table['NOT_A_REAL_TAXON'] = const Centrality(prCorrected: 1e-6);
+      } else {
+        for (final b in birds.values) {
+          final sci = (b as Map)['scientific'] as String?;
+          if (sci == null || sci.isEmpty) continue;
+          table[sci.toUpperCase()] = corrected == true
+              ? Centrality(prCorrected: (pr as num).toDouble(), pr: 1e-3)
+              : Centrality(pr: (pr as num).toDouble());
+        }
+      }
+
+      (c['probs'] as Map<String, dynamic>).forEach((bid, v) {
+        final a = arrivalProbability(
+            birdId: bid,
+            web: web,
+            biomeId: 'kyoto',
+            birdsData: birds,
+            centralities: table);
+        final e = v as List;
+        expect(a.probability, closeTo(e[0] as num, 1e-9),
+            reason: '$bid: pr=$pr corrected=$corrected の確率が違う');
+        expect(a.rarityFactor, closeTo(e[1] as num, 1e-9),
+            reason: '$bid: pr=$pr corrected=$corrected のレア度係数が違う');
+        if (e[2] == null) {
+          expect(a.centralityUsed, isNull, reason: '$bid: 使っていないはず');
+        } else {
+          expect(a.centralityUsed, closeTo(e[2] as num, 1e-15));
+        }
+        checked++;
+      });
+    }
+    expect(checked, greaterThan(600));
+  });
+
+  test('中心性: 渡さなければ、確率は今までと1ビットも変わらない', () {
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final web = buildFoodWeb(
+      plantedPlants: const ['sakura', 'kunugi'],
+      biomeId: 'kyoto',
+      month: 5,
+      plantsData: load('plants'),
+      insectsData: load('insects'),
+      birdsData: birds,
+      biomes: load('biomes'),
+      seasonOffset: load('season_offset'),
+    );
+    for (final bid in birds.keys) {
+      final bare = arrivalProbability(
+          birdId: bid, web: web, biomeId: 'kyoto', birdsData: birds);
+      final empty = arrivalProbability(
+          birdId: bid,
+          web: web,
+          biomeId: 'kyoto',
+          birdsData: birds,
+          centralities: const {});
+      expect(empty.probability, bare.probability);
+      expect(bare.centralityUsed, isNull);
+    }
+  });
+
+  test('今日の庭アイテム: 対象・期限・加点が Python 版と一致する', () {
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final g = fx['garden_items'] as Map<String, dynamic>;
+
+    expect(kItemDurationHours, g['duration_hours']);
+
+    // ── 対象種と、選べるかどうか ──
+    for (final c in g['targets'] as List) {
+      final item = c['item'] as String;
+      final biome = c['biome'] as String;
+      expect(targetBirdIds(item, biome, birds).toList()..sort(), c['targets'],
+          reason: '$item @ $biome の対象種が違う');
+      expect(itemIsAvailable(item, biome, birds), c['available'],
+          reason: '$item @ $biome の可否が違う');
+      expect(kGardenItems[item]!.effectKind, c['effect_kind']);
+      expect(kGardenItems[item]!.value, closeTo(c['value'] as num, 1e-12));
+    }
+
+    // ── 効いている時間の境目(両端を含む) ──
+    final placedAt = DateTime(2026, 8, 16, 9, 0, 0);
+    final plc = placeItem('feeder', now: placedAt);
+    for (final c in g['active'] as List) {
+      final at = placedAt.add(Duration(seconds: c['offset_sec'] as int));
+      expect(itemIsActive(plc, at: at), c['active'],
+          reason: '${c['offset_sec']}秒後の有効判定が違う');
+      expect(itemHoursRemaining(plc, at: at),
+          closeTo(c['hours_left'] as num, 1e-6),
+          reason: '${c['offset_sec']}秒後の残り時間が違う');
+    }
+
+    // ── 加点の値 ──
+    for (final c in g['bonus'] as List) {
+      final item = c['item'] as String;
+      final p = placeItem(item, now: placedAt);
+      final at = placedAt.add(const Duration(hours: 1));
+      final fn = makeArrivalBonusFn(p, 'charlotte', birds, at: at);
+      (c['arrival'] as Map<String, dynamic>).forEach((bid, v) {
+        expect(fn(bid), closeTo(v as num, 1e-12),
+            reason: '$item の $bid への加点が違う');
+      });
+      expect(itemDepartureBonus(p, at: at),
+          closeTo(c['departure'] as num, 1e-12), reason: '$item の退去減算');
+      expect(
+          [
+            for (final bid in (c['arrival'] as Map).keys)
+              if (isItemBoostedArrival(bid, p, 'charlotte', birds, at: at))
+                bid
+          ]..sort(),
+          c['boosted'],
+          reason: '$item の対象判定');
+      // 切れたらゼロに戻る
+      expect(itemDepartureBonus(p, at: placedAt.add(const Duration(hours: 7))),
+          closeTo(c['expired_departure'] as num, 1e-12));
+    }
+  });
+
+  test('アイテムの加点は、退去には効かない(到着だけ)', () {
+    // Python の run_turn は、退去判定に**加点前の p** を使う。
+    // 加点を退去にも効かせると、アイテムが「去りにくくする」二重の効果を持つ。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final plants = load('plants');
+    final insects = load('insects');
+    final biomes = load('biomes');
+    final season = load('season_offset');
+
+    // 退去率 0.3-0.25p は最大 0.3。最初の乱数を 0.99 にすれば誰も去らない。
+    // 到着は加点で必ず起きる(加点 1.0 → p は 1.0 に張り付く)。
+    final r = runTurn(
+      plantedPlants: const ['sakura'],
+      biomeId: 'kyoto',
+      month: 5,
+      residents: {'suzume'},
+      rng: _Scripted([0.99, ...List.filled(200, 0.0)]),
+      plantsData: plants,
+      insectsData: insects,
+      birdsData: birds,
+      biomes: biomes,
+      seasonOffset: season,
+      arrivalBonusFn: (_) => 1.0,
+    );
+    expect(r.departures, isEmpty, reason: '乱数 0.99 では誰も去らないはず');
+    expect(r.arrivals.length, 1, reason: '加点で1種は必ず来る');
+
+    // 退去減算の下限 0.02。減算を大きくしても 0.02 未満にはならない。
+    final r2 = runTurn(
+      plantedPlants: const ['sakura'],
+      biomeId: 'kyoto',
+      month: 5,
+      residents: {'suzume'},
+      rng: _Scripted(List.filled(200, 0.019)),
+      plantsData: plants,
+      insectsData: insects,
+      birdsData: birds,
+      biomes: biomes,
+      seasonOffset: season,
+      departureBonus: 10.0,
+    );
+    expect(r2.departures, ['suzume'],
+        reason: '0.019 < 下限 0.02 なので、それでも去る');
+  });
+
   test('なぜ来たか: 実データ1480通りで Python 版と同じ一文になる', () {
     // 「あなたが組んだ関係が鳥を呼んだ」証拠。一番重みの大きい経路を1つだけ
     // 採る、という判断がズレると文が変わる。捏造しないことがここの肝。
