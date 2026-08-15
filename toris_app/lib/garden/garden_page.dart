@@ -15,6 +15,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
 import 'ritual.dart';
@@ -74,6 +75,17 @@ class _GardenPageState extends State<GardenPage>
 
   String _name(Map<String, dynamic> m, String id) =>
       (m[id]?['english'] as String?) ?? id;
+
+  /// チップに載せる鳥の絵。ドット絵が無い種は、その鳥の色の小鳥で代える
+  /// (虫の 🐛 と同じ役回り。ここでも枠組みの既定は使わない)。
+  Widget _birdAvatar(Garden g, String birdId) {
+    final sprite = g.spriteFor(birdId);
+    if (sprite != null) {
+      return Image.asset(sprite, filterQuality: FilterQuality.none);
+    }
+    return BirdMark.forBird(
+        (g.data.birds[birdId] as Map?)?.cast<String, dynamic>(), size: 20);
+  }
 
   /// 到来1件を、短く。**鳥 ← 目当て** だけ。
   /// 目当てが分からなければ鳥の名前だけ(何かに惹かれたことにしない・原則4)。
@@ -218,18 +230,26 @@ class _GardenPageState extends State<GardenPage>
                 ),
             ],
           ),
-          const SizedBox(height: 10),
-          // **今の庭は、上の木そのもの。** 別のカードを足さない。
-          // 一度「In your garden now」という帯を作って外した(CEO 2026-08-15
-          // 「使い道が分からん」)。木に居る鳥をもう一度並べるだけで、
-          // 情報は1つも増えていなかった。
-          Text(
-            g.visiting.isEmpty
-                ? 'No one yet.'
-                : g.visiting.map((b) => _name(g.data.birds, b)).join(' · '),
-            style: const TextStyle(color: kInk, fontSize: 16),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
+          // いま来ている鳥。**虫と同じ形**(絵 + 名前のチップ)で下に出す
+          // (CEO 2026-08-16「land の鳥も insects みたいに名前とアイコンを
+          // 下に出して」)。木の上の鳥は小さいので、ここで誰か分かる。
+          if (g.visiting.isEmpty)
+            const Text('No one yet.',
+                style: TextStyle(color: kSub, fontSize: 15))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final b in g.visiting)
+                  Chip(
+                    avatar: _birdAvatar(g, b),
+                    label: Text(_name(g.data.birds, b)),
+                  ),
+              ],
+            ),
+          const SizedBox(height: 8),
           Text('${web.temperature.round()}°C',
               style: const TextStyle(color: kSub, fontSize: 13)),
           const SizedBox(height: 14),

@@ -1,10 +1,14 @@
 /// 図鑑。現行(Streamlit)の「📖 図鑑」に当たる。
 ///
-/// **全37種が折りたたみ(プルダウン)で並ぶ。** 開くと中身が見える。
-/// 見た目は3段階で、儀式を経て近くで会うまで正体は分からない:
-///   ❓ まだ来ていない  → 名前も「???」
-///   🐦 来訪済み        → 名前は分かるが、絵はまだ出ない
-///   🪶 近くで出会った  → **ドット絵が出る**
+/// **全37種が折りたたみ(プルダウン)で並ぶ。** 開くと図鑑の1ページが出る。
+/// 見出しの印は3段階で、儀式を経て近くで会うまで正体は分からない:
+///   ❓ まだ来ていない  → 名前も「???」、中身も明かさない
+///   🐦 来訪済み        → 名前と中身が出る。図版は**小さなアイコン**
+///   🪶 近くで出会った  → 図版が**詳細画に入れ替わる**
+///
+/// 会う前を白紙にはしない(CEO 2026-08-16「近くで会っていない鳥はアイコンを
+/// 表示、それを近くで会ったらディテールに入れ替えるイメージ」)。
+/// **会うと絵が育つ**、が伝わればよい。
 ///
 /// 並びは「地域別 / レア度順」の2通り(現行の segmented_control と同じ)。
 /// 庭が痩せても、ここの記録は減らない(交渉不能の原則2「罰しない」)。
@@ -13,8 +17,14 @@ library;
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
+
+/// 図鑑の版面の色。紙・図版の枠・罫線。
+const Color kPage = Color(0xFFFBFAF3);
+const Color kPlate = Color(0xFFF1F4E8);
+const Color kRule = Color(0xFFE1E6D4);
 
 class GuidePage extends StatefulWidget {
   final Garden? garden;
@@ -148,47 +158,89 @@ class _Entry extends StatelessWidget {
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
             child: !discovered
                 // まだ来ていない鳥は、何も明かさない。
                 ? const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Not yet in your garden.',
-                        style: TextStyle(color: kSub)),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(4, 0, 4, 10),
+                      child: Text('Not yet in your garden.',
+                          style: TextStyle(color: kSub)),
+                    ),
                   )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // **絵が出るのは、近くで出会ってから。**
-                      if (observed) ...[
-                        Center(child: _picture()),
-                        const SizedBox(height: 12),
-                      ] else
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 12),
-                          child: Text(
-                              'Listen closely in the garden to see it up close.',
-                              style: TextStyle(color: kSub, fontSize: 13)),
+                // ── 図鑑の1ページ ──
+                : Container(
+                    decoration: BoxDecoration(
+                      color: kPage,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: kRule),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 見出し: 図版 + 英名 + 学名。図鑑の版面らしく左に絵。
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _plate(observed),
+                            const SizedBox(width: 14),
+                            Expanded(child: _heading(b, stars, days, observed)),
+                          ],
                         ),
-                      _Row('Likes', likes),
-                      _Row('Home', home),
-                      _Row('Fears', fears),
-                      // **なぜ来たか**の記録。あなたが組んだ関係が呼んだ証拠。
-                      // 庭が痩せても、ここは消えない(原則2「罰しない」)。
-                      ..._whyItCame(),
-                      if (b['description_en'] != null) ...[
-                        const SizedBox(height: 10),
-                        Text(b['description_en'] as String,
-                            style: const TextStyle(
-                                fontSize: 14, color: kSub, height: 1.5)),
+                        const _Rule(),
+                        _Row('Likes', likes),
+                        _Row('Home', home),
+                        _Row('Fears', fears),
+                        // **なぜ来たか**の記録。あなたが組んだ関係が呼んだ証拠。
+                        // 庭が痩せても、ここは消えない(原則2「罰しない」)。
+                        ..._whyItCame(),
+                        if (b['description_en'] != null) ...[
+                          const _Rule(),
+                          Text(b['description_en'] as String,
+                              style: const TextStyle(
+                                  fontSize: 14, color: kInk, height: 1.7)),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
           ),
         ],
       ),
     );
   }
+
+  /// 見出し。英名 → 学名(斜体)→ レア度と会った日数。
+  Widget _heading(Map b, String stars, int days, bool observed) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text((b['english'] as String?) ?? id,
+              style: const TextStyle(
+                  fontSize: 19,
+                  height: 1.2,
+                  fontWeight: FontWeight.w700,
+                  color: kInk)),
+          if (b['scientific'] != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(b['scientific'] as String,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: kSub)),
+            ),
+          const SizedBox(height: 8),
+          Text(days > 0 ? '$stars   ${_badge(days)}' : stars,
+              style: const TextStyle(fontSize: 12, color: kSub)),
+          if (!observed)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('Listen closely in the garden to see it up close.',
+                  style: TextStyle(fontSize: 12, height: 1.45, color: kSub)),
+            ),
+        ],
+      );
 
   /// この鳥について記録された「なぜ来たか」。古い順。
   ///
@@ -199,33 +251,62 @@ class _Entry extends StatelessWidget {
     if (entries.isEmpty) return const [];
     final observedFirst = (g.observed[id] ?? 0) > 0 ? 'yes' : null;
     return [
-      const SizedBox(height: 12),
-      const Text('Why it came',
+      const _Rule(),
+      const Text('WHY IT CAME',
           style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w700, color: kSub)),
-      const SizedBox(height: 4),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.0,
+              color: kSub)),
+      const SizedBox(height: 6),
       for (final e in entries)
         Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
-            (core.isFoundingRecord(e, entries, observedFirst) ? '🌱 ' : '· ') +
+            (core.isFoundingRecord(e, entries, observedFirst) ? '🌱 ' : '·  ') +
                 e.text,
-            style: const TextStyle(fontSize: 13, color: kInk, height: 1.5),
+            style: const TextStyle(fontSize: 13, color: kInk, height: 1.6),
           ),
         ),
     ];
   }
 
-  Widget _picture() {
+  /// 図版。**近くで会う前はアイコン、会ったら詳細画に入れ替わる。**
+  ///
+  /// 会う前を白紙にする必要はない(CEO 2026-08-16)。会うと絵が育つ、が
+  /// 伝わればよい。詳細画が無い種は、会ってもアイコンが少し大きくなるだけ。
+  Widget _plate(bool observed) {
+    const box = 112.0;
     final detail = g.detailSpriteFor(id);
-    if (detail != null) {
-      return Image.asset(detail, height: 140, filterQuality: FilterQuality.none);
-    }
     final small = g.spriteFor(id);
-    if (small != null) {
-      return Image.asset(small, height: 96, filterQuality: FilterQuality.none);
+
+    Widget art;
+    if (observed && detail != null) {
+      art = Image.asset(detail,
+          height: box - 14, filterQuality: FilterQuality.none);
+    } else if (small != null) {
+      art = Image.asset(small,
+          height: observed ? box - 30 : 54, filterQuality: FilterQuality.none);
+    } else {
+      art = BirdMark.forBird((g.data.birds[id] as Map?)?.cast<String, dynamic>(),
+          size: observed ? 74 : 50);
     }
-    return const Text('🐦', style: TextStyle(fontSize: 64));
+
+    return Container(
+      width: box,
+      height: box,
+      decoration: BoxDecoration(
+        color: kPlate,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kRule),
+      ),
+      alignment: Alignment.center,
+      // 会った瞬間に、静かに入れ替わる。
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        child: SizedBox(key: ValueKey(observed), child: art),
+      ),
+    );
   }
 
   /// 会った日数の節目。`badges.py` と同じ区切り。
@@ -237,6 +318,16 @@ class _Entry extends StatelessWidget {
   }
 }
 
+/// 項目のあいだの罫線。図鑑らしい区切り。
+class _Rule extends StatelessWidget {
+  const _Rule();
+  @override
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 11),
+        child: Divider(height: 1, thickness: 1, color: kRule),
+      );
+}
+
 class _Row extends StatelessWidget {
   final String label;
   final List<String> items;
@@ -246,17 +337,21 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SizedBox(
-          width: 58,
-          child: Text(label,
+          width: 62,
+          child: Text(label.toUpperCase(),
               style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: kSub)),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                  height: 2.1,
+                  color: kSub)),
         ),
         Expanded(
-          child: Text(items.join('  ·  '),
-              style: const TextStyle(fontSize: 14, color: kInk, height: 1.5)),
+          child: Text(items.join('   ·   '),
+              style: const TextStyle(fontSize: 14, color: kInk, height: 1.6)),
         ),
       ]),
     );
