@@ -41,6 +41,22 @@ SKIP_MODULES = {
     "app",  # 画面の組み立て。関数単位ではなく画面単位で数える(下の SCREENS)
 }
 
+# app.py の公開関数。**黙って除外しない。**
+# SKIP_MODULES に app を入れて画面単位で数えているが、それだと app.py に
+# ロジックが増えても気づけない。ここに名前を書いておき、知らない関数が
+# 現れたら落とす(2026-08-16 の監査で、9件が黙って除外されていたのを見つけた)。
+APP_FUNCTIONS = {
+    "render_bird_profile_html": "図鑑のプロフィール → screen.tab_guide",
+    "render_bird_sprite_html": "鳥のドット絵 → screen.bird_sprites",
+    "render_bird_detail_image_html": "図鑑の大きい絵 → screen.bird_sprites",
+    "render_bird_audio": "鳴き声の再生 → screen.tab_guide",
+    "render_field_view": "庭の SVG → screen.garden_tree_scene",
+    "render_login_screen": "入口画面 → screen.login_screen",
+    "load_state_from_sheets": "[legacy・未使用] Sheets からの復元。捨てる",
+    "init_state": "初期化 → Garden の既定値",
+    "render_tutorial_banner": "3ステップの案内 → tutorial(保留)",
+}
+
 # 画面(app.py の中身)は関数では数えられないので、目で見える単位で持つ
 SCREENS = [
     "tab_radio", "tab_garden", "tab_plant", "tab_guide", "tab_network",
@@ -72,13 +88,45 @@ def python_api() -> dict:
 
 
 def dart_sources() -> str:
+    """Dart の**実装だけ**(コメントと文字列リテラルを落とす)。
+
+    ⚠️ 以前は全文をそのまま連結していた。すると「移した」の確認が
+    **コメントや画面の文字列への部分一致**で通ってしまう。実際
+    `bird_profile.likes / home / fears` は図鑑のラベル
+    "Likes" / "Home" / "Fears" に当たって「移した」ことになっていたが、
+    実体は無く、中身(天敵の分類表)は間違っていた(2026-08-16 の監査で発覚)。
+    """
+    import re
     buf = []
     for d in DART_DIRS:
         for root, _, files in os.walk(d):
             for f in files:
-                if f.endswith(".dart"):
-                    buf.append(open(os.path.join(root, f), encoding="utf-8").read())
+                if not f.endswith(".dart"):
+                    continue
+                t = open(os.path.join(root, f), encoding="utf-8").read()
+                t = re.sub(r"/\*.*?\*/", " ", t, flags=re.S)             # ブロック注釈
+                t = "\n".join(l.split("//")[0] for l in t.splitlines())  # 行注釈
+                t = re.sub(r"'(?:[^'\\\n]|\\.)*'", " ", t)               # 文字列
+                t = re.sub(r'"(?:[^"\\\n]|\\.)*"', " ", t)
+                buf.append(t)
     return "\n".join(buf)
+
+
+def is_declared(sym: str, code: str) -> bool:
+    """その名前が Dart 側で**宣言されている**か(呼ばれているだけでは駄目)。
+
+    関数・クラス・定数・getter を拾う。戻り値の型に括弧が入る形
+    (`double Function(String) makeArrivalBonusFn(`)も通す。
+    """
+    import re
+    e = re.escape(sym)
+    pats = [
+        r"\b(?:class|enum|mixin|extension|typedef)\s+" + e + r"\b",
+        r"(?:^|\n)\s*(?:const|final|var|late)\s[^;\n]*\b" + e + r"\s*=",
+        r"(?:^|\n)[^;\n]*\b" + e + r"\s*\([^;]*\)\s*(?:async\s*)?[{=]",
+        r"(?:^|\n)[^;\n]*\bget\s+" + e + r"\b",
+    ]
+    return any(re.search(p, code) for p in pats)
 
 
 def snake_to_camel(s: str) -> str:
@@ -185,6 +233,45 @@ def screen_audit() -> list:
         elif missing:
             print(f"  絵が無い種 {len(missing)}/{len(all_birds)} 件は代役で出る"
                   f"(BirdMark): {', '.join(missing)}")
+
+    # app.py に、台帳に無い公開関数が増えていないか。
+    import ast as _ast
+    app_py = os.path.join(PY_DIR, "app.py")
+    if os.path.exists(app_py):
+        try:
+            tree = _ast.parse(open(app_py, encoding="utf-8").read())
+            names = {n.name for n in tree.body
+                     if isinstance(n, (_ast.FunctionDef, _ast.AsyncFunctionDef))
+                     and not n.name.startswith("_")}
+            for n in sorted(names - set(APP_FUNCTIONS)):
+                problems.append(
+                    f"app.py に台帳の無い公開関数 {n}(APP_FUNCTIONS に足すこと)")
+            gone = sorted(set(APP_FUNCTIONS) - names)
+            if gone:
+                print(f"  app.py から消えた関数(台帳の掃除どき): {', '.join(gone)}")
+        except Exception as e:
+            problems.append(f"app.py を読めなかった: {e}")
+
+    # アセットと差分テストのデータが**同じもの**か。
+    # 別管理にしていたら predators.json だけ入っておらず、図鑑のテストが
+    # 書けなかった(2026-08-16)。片方だけ更新されると、テストが古いデータを
+    # 見たまま「一致している」と嘘をつく。
+    assets = os.path.join(ROOT, "toris_app", "assets", "data")
+    fixtures = os.path.join(ROOT, "toris_core", "test", "fixtures")
+    if os.path.isdir(assets) and os.path.isdir(fixtures):
+        for f in sorted(os.listdir(assets)):
+            if not f.endswith(".json"):
+                continue
+            a = os.path.join(assets, f)
+            b = os.path.join(fixtures, f)
+            if not os.path.exists(b):
+                problems.append(f"データ {f} が差分テスト側に無い"
+                                f"(tools/export_data.py が両方に書くはず)")
+            elif (open(a, encoding="utf-8").read()
+                  != open(b, encoding="utf-8").read()):
+                problems.append(f"データ {f} がアセットと差分テストでずれている"
+                                f"(py -3 tools/export_data.py を実行すること)")
+
     return problems
 
 
@@ -268,9 +355,10 @@ def main() -> None:
         if st == "dropped":
             dropped.append(k)
         elif st == "done":
-            # 「移した」なら実体があるはず。無ければ嘘なので落とす。
+            # 「移した」なら**宣言**があるはず。呼ばれているだけ・コメントに
+            # 出てくるだけ・画面の文字列に当たっただけでは通さない。
             sym = it.get("dart") or snake_to_camel(k.split(".", 1)[1])
-            (done if sym in src else broken).append(k)
+            (done if is_declared(sym, src) else broken).append(k)
         else:
             todo.append(k)
 

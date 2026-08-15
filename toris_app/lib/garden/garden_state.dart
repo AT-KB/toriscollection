@@ -318,8 +318,8 @@ class Garden {
     }
     // 前回見た時刻。セーブコードの saved_at をそのまま使う
     // (現行も「離れていた時間」をこれで測っている)。
-    final at = s['saved_at'];
-    if (at is String) lastSeenAt = DateTime.tryParse(at);
+    // 読めなければ静かに null( と同じ)。
+    lastSeenAt = core.parseIso(s['saved_at']) ?? lastSeenAt;
     observed.clear();
     final obs = s['observed'];
     if (obs is Map) {

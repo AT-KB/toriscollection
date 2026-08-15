@@ -7,6 +7,7 @@
 library;
 
 export 'src/badges.dart';
+export 'src/bird_profile.dart';
 export 'src/centrality.dart';
 export 'src/garden_items.dart';
 export 'src/eco_log.dart';

@@ -149,3 +149,14 @@ String isoSeconds(DateTime t) {
 /// `buildCurrentSnapshot` + `encodeSave` をまとめたもの。
 String encodeCurrentState(Map<String, dynamic> state, {DateTime? now}) =>
     encodeSave(buildCurrentSnapshot(state, now: now));
+
+/// ISO 形式の文字列を時刻に。読めなければ null。
+/// `absence_loop.parse_iso` と同じ — **例外を投げず、静かに null を返す**
+/// (保存が壊れていてもアプリを止めない)。
+DateTime? parseIso(Object? s) {
+  if (s == null) return null;
+  if (s is DateTime) return s;
+  final t = '$s';
+  if (t.isEmpty) return null;
+  return DateTime.tryParse(t);
+}

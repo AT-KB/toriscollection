@@ -15,6 +15,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "toris_collection"))
 
 import badges  # noqa: E402
+import bird_profile as bp  # noqa: E402
+import predators as pred  # noqa: E402
 import absence_loop as absence  # noqa: E402
 import eco_log  # noqa: E402
 import ecology  # noqa: E402
@@ -160,6 +162,41 @@ def main() -> None:
                     fc.wary_arrival_multiplier(w, r["raptors"]), 12)
                     for w in wariness_values},
             })
+
+    # 図鑑のプロフィール(好きなもの / 好きな場所 / こわいもの)。
+    #
+    # ⚠️ ここは私が **Dart 側に分類の表を手で書いて間違えた**ところ。
+    # 実データが使う crow/falcon/fox/rodent/weasel が表に無く、逆に
+    # mammal/corvid/other という存在しない分類を書いていた。表ごと突き合わせる。
+    i18n.set_lang("en")   # 表示名は出荷済みの英語
+    profile_cases = []
+    for bid in ids:
+        b = birds[bid]
+        prof = bp.build(bid, b, seed.PLANTS, seed.INSECTS, seed.BIOMES)
+        profile_cases.append({
+            "bird": bid,
+            "likes": [[x["kind"], x["id"]] for x in prof["likes"]],
+            "home": [x["id"] for x in prof["home"]],
+            "categories": prof["fears"]["categories"],
+            "genus_level": prof["fears"]["genus_level"],
+            "labels": pred.labels(bid),
+            "has_data": pred.has_data(bid),
+        })
+    predator_labels = {k: i18n.t(v) for k, v in pred.CATEGORY_LABELS.items()}
+    # 表に無い分類は静かに落ちること(データが汚れても知らない語を出さない)
+    _dirty = {"zzz_unknown": {"categories": ["raptor", "zzz_unknown", "owl"],
+                              "level": "genus"}}
+    _saved_pred = pred.PREDATORS
+    try:
+        pred.PREDATORS = _dirty
+        unknown_case = {"categories": pred.categories("zzz_unknown"),
+                        "genus": pred.is_genus_level("zzz_unknown"),
+                        "labels": pred.labels("zzz_unknown"),
+                        "has_data": pred.has_data("zzz_unknown"),
+                        "missing_bird": pred.categories("no_such_bird")}
+    finally:
+        pred.PREDATORS = _saved_pred
+    i18n.set_lang("ja")
 
     # 「どうすればあの鳥が来るか」— network_stats / simulate / suggest。
     # 確率そのものではないが、確率の読み方を客に見せる部分なので同じ判定を移す。
@@ -370,11 +407,16 @@ def main() -> None:
                    "feeder_chain": feeder_cases,
                    "centrality": cent_cases, "garden_items": item_bundle,
                    "helpers": helper_cases, "simulate": sim_cases,
+                   "profiles": profile_cases,
+                   "predator_labels": predator_labels,
+                   "predator_unknown": unknown_case,
                    "eco_log": eco_log_cases, "founding": founding_cases,
                    "reasons": reason_cases,
                    "disturbance": dist_consts}, f,
                   ensure_ascii=False, indent=1)
     nf = len(feeder_cases) * len(wariness_values)
+    print(f"図鑑プロフィール: {len(profile_cases)} 種 / "
+          f"天敵の分類 {len(predator_labels)} 種類")
     print(f"食物網の統計と提案: {len(helper_cases)} 状況 / "
           f"仮植え: {len(sim_cases)} 通り")
     print(f"中心性: {len(cent_cases)} 状況 × {len(ids)}種")

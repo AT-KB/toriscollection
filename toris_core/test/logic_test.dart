@@ -237,6 +237,70 @@ void main() {
     }
   });
 
+  test('図鑑プロフィール: 37種すべてで Python 版と一致する', () {
+    // ⚠️ ここは Dart 側に分類の表を**手で書いて間違えた**ところ。
+    // 実データが使う crow/falcon/fox/rodent/weasel が表に無く、逆に
+    // mammal/corvid/other という存在しない分類を書いていた。表ごと比べる。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final plants = load('plants');
+    final insects = load('insects');
+    final biomes = load('biomes');
+    final preds = load('predators');
+
+    // 分類の表そのもの(数・キー・表示名・**並び**まで)
+    final expectedLabels =
+        (fx['predator_labels'] as Map).cast<String, dynamic>();
+    expect(kPredatorLabels.length, expectedLabels.length,
+        reason: '分類の数が違う');
+    expect(kPredatorLabels.keys.toList(), expectedLabels.keys.toList(),
+        reason: '分類のキーか並びが違う');
+    expectedLabels.forEach((k, v) {
+      expect(kPredatorLabels[k], v, reason: '$k の表示名が違う');
+    });
+
+    for (final c in fx['profiles'] as List) {
+      final bid = c['bird'] as String;
+      final prof = buildBirdProfile(
+        birdId: bid,
+        bird: (birds[bid] as Map).cast<String, dynamic>(),
+        plants: plants,
+        insects: insects,
+        biomes: biomes,
+        predatorsData: preds,
+      );
+      expect([for (final l in prof.likes) [l.kind, l.id]], c['likes'],
+          reason: '$bid の好きなもの(順序も)');
+      expect(prof.home, c['home'], reason: '$bid の好きな場所');
+      expect(prof.fears.categories, c['categories'], reason: '$bid のこわいもの');
+      expect(prof.fears.genusLevel, c['genus_level'],
+          reason: '$bid の同属由来かどうか');
+      expect(predatorLabels(bid, preds), c['labels'],
+          reason: '$bid のこわいものの表示名');
+      expect(predatorHasData(bid, preds), c['has_data'],
+          reason: '$bid の天敵データの有無');
+    }
+  });
+
+  test('知らない分類は、画面に出さず静かに落とす', () {
+    // データが増えたときに、生のキーが図鑑に出ないための安全弁。
+    final u = fx['predator_unknown'] as Map<String, dynamic>;
+    final dirty = <String, dynamic>{
+      'zzz_unknown': {
+        'categories': ['raptor', 'zzz_unknown', 'owl'],
+        'level': 'genus',
+      }
+    };
+    expect(predatorCategories('zzz_unknown', dirty), u['categories']);
+    expect(predatorIsGenusLevel('zzz_unknown', dirty), u['genus']);
+    expect(predatorLabels('zzz_unknown', dirty), u['labels']);
+    expect(predatorHasData('zzz_unknown', dirty), u['has_data']);
+    // そもそも居ない鳥
+    expect(predatorCategories('no_such_bird', dirty), u['missing_bird']);
+  });
+
   test('食物網の統計と「足りないもの」の提案が Python 版と一致する(40状況 × 37種)', () {
     // 「どうすればあの鳥が来るか」。順序も含めて比べる — 提案の順序は
     //   ① 直接食べる植物 → ② 目当ての虫を成り立たせる植物

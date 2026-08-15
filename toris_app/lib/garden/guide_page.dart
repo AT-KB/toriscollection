@@ -16,17 +16,6 @@ import 'package:toris_core/toris_core.dart' as core;
 import '../ui/theme.dart';
 import 'garden_state.dart';
 
-/// 「こわいもの」の分類 → 表示名。
-const Map<String, String> kPredatorLabels = {
-  'raptor': 'Hawks',
-  'owl': 'Owls',
-  'snake': 'Snakes',
-  'mammal': 'Mammals',
-  'cat': 'Cats',
-  'corvid': 'Crows and jays',
-  'other': 'Others',
-};
-
 class GuidePage extends StatefulWidget {
   final Garden? garden;
   const GuidePage({super.key, this.garden});
@@ -120,22 +109,28 @@ class _Entry extends StatelessWidget {
     final icon = observed ? '🪶' : (discovered ? '🐦' : '❓');
     final title = discovered ? ((b['english'] as String?) ?? id) : '???';
 
+    // **表を自分で書かない。** `toris_core` の移植をそのまま使う。
+    // 以前は Dart 側に7分類を手で書いていて、実データが使う
+    // crow/falcon/fox/rodent/weasel が抜け、図鑑に生のキーが出ていた。
+    final prof = core.buildBirdProfile(
+      birdId: id,
+      bird: b.cast<String, dynamic>(),
+      plants: g.data.plants,
+      insects: g.data.insects,
+      biomes: g.data.biomes,
+      predatorsData: g.data.predators,
+    );
     final likes = <String>[
-      for (final p in ((b['eats_plants'] as List?) ?? const []))
-        if (g.data.plants[p] != null)
-          '${g.data.plants[p]?['icon'] ?? '🌱'} ${_name(g.data.plants, '$p')}',
-      for (final i in ((b['eats_insects'] as List?) ?? const []))
-        if (g.data.insects[i] != null) '🐛 ${_name(g.data.insects, '$i')}',
+      for (final l in prof.likes)
+        if (l.kind == 'plant')
+          '${g.data.plants[l.id]?['icon'] ?? '🌱'} ${_name(g.data.plants, l.id)}'
+        else
+          '🐛 ${_name(g.data.insects, l.id)}',
     ];
     final home = <String>[
-      for (final x in ((b['biome_pref'] as List?) ?? const []))
-        if (g.data.biomes[x] != null) '${g.data.biomes[x]?['name_en'] ?? x}',
+      for (final x in prof.home) '${g.data.biomes[x]?['name_en'] ?? x}',
     ];
-    final fears = <String>[
-      for (final f
-          in ((g.data.predators[id]?['categories'] as List?) ?? const []))
-        kPredatorLabels['$f'] ?? '$f',
-    ];
+    final fears = core.predatorLabels(id, g.data.predators);
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),

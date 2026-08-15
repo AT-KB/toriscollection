@@ -51278,6 +51278,1157 @@
    "prob": 0.0
   }
  ],
+ "profiles": [
+  {
+   "bird": "american_goldfinch",
+   "likes": [
+    [
+     "plant",
+     "dogwood"
+    ],
+    [
+     "plant",
+     "redbud"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "american_robin",
+   "likes": [
+    [
+     "plant",
+     "dogwood"
+    ],
+    [
+     "plant",
+     "magnolia"
+    ],
+    [
+     "plant",
+     "redbud"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "raptor",
+    "owl",
+    "snake"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Owls",
+    "Snakes"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "aoji",
+   "likes": [
+    [
+     "plant",
+     "susuki"
+    ],
+    [
+     "plant",
+     "rice"
+    ],
+    [
+     "plant",
+     "noibara"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "raptor",
+    "crow",
+    "owl"
+   ],
+   "genus_level": true,
+   "labels": [
+    "Hawks",
+    "Crows and jays",
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "blue_jay",
+   "likes": [
+    [
+     "plant",
+     "loblolly"
+    ],
+    [
+     "plant",
+     "red_maple"
+    ],
+    [
+     "plant",
+     "magnolia"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "raptor",
+    "snake"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Snakes"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "brown_thrasher",
+   "likes": [
+    [
+     "plant",
+     "beautyberry"
+    ],
+    [
+     "plant",
+     "pokeweed"
+    ],
+    [
+     "plant",
+     "service_berry"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ],
+    [
+     "insect",
+     "katydid"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "snake",
+    "crow",
+    "raptor"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Snakes",
+    "Crows and jays",
+    "Hawks"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "carolina_chickadee",
+   "likes": [
+    [
+     "plant",
+     "sunflower"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "owl",
+    "raptor"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Owls",
+    "Hawks"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "carolina_wren",
+   "likes": [
+    [
+     "insect",
+     "tent_caterpillar"
+    ],
+    [
+     "insect",
+     "fireflies"
+    ],
+    [
+     "insect",
+     "carpenter_bee"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "snake"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Snakes"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "cedar_waxwing",
+   "likes": [
+    [
+     "plant",
+     "red_cedar"
+    ],
+    [
+     "plant",
+     "service_berry"
+    ],
+    [
+     "plant",
+     "dogwood"
+    ],
+    [
+     "plant",
+     "beautyberry"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "owl"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "downy_woodpecker",
+   "likes": [
+    [
+     "insect",
+     "june_beetle"
+    ],
+    [
+     "insect",
+     "carpenter_bee"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "eastern_bluebird",
+   "likes": [
+    [
+     "plant",
+     "dogwood"
+    ],
+    [
+     "plant",
+     "redbud"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "enaga",
+   "likes": [
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "owl",
+    "crow",
+    "rodent"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Owls",
+    "Crows and jays",
+    "Mice and rats"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "hibari",
+   "likes": [
+    [
+     "plant",
+     "rice"
+    ],
+    [
+     "plant",
+     "susuki"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "raptor",
+    "falcon",
+    "owl"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Falcons",
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "hiyodori",
+   "likes": [
+    [
+     "plant",
+     "sakura"
+    ],
+    [
+     "plant",
+     "camellia"
+    ],
+    [
+     "plant",
+     "enoki"
+    ],
+    [
+     "plant",
+     "nanten"
+    ],
+    [
+     "plant",
+     "kaki"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "house_finch",
+   "likes": [
+    [
+     "plant",
+     "sunflower"
+    ],
+    [
+     "plant",
+     "service_berry"
+    ],
+    [
+     "plant",
+     "beautyberry"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "snake",
+    "falcon",
+    "raptor"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Snakes",
+    "Falcons",
+    "Hawks"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "ikaru",
+   "likes": [
+    [
+     "plant",
+     "kunugi"
+    ],
+    [
+     "plant",
+     "nanten"
+    ],
+    [
+     "plant",
+     "pine"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "jou_bitaki",
+   "likes": [
+    [
+     "plant",
+     "nanten"
+    ],
+    [
+     "plant",
+     "murasaki_shikibu"
+    ],
+    [
+     "plant",
+     "noibara"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "owl",
+    "raptor",
+    "crow"
+   ],
+   "genus_level": true,
+   "labels": [
+    "Owls",
+    "Hawks",
+    "Crows and jays"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "kakesu",
+   "likes": [
+    [
+     "plant",
+     "kunugi"
+    ],
+    [
+     "plant",
+     "kaki"
+    ],
+    [
+     "insect",
+     "kabuto_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "raptor",
+    "crow",
+    "owl"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Crows and jays",
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "kawarahiwa",
+   "likes": [
+    [
+     "plant",
+     "susuki"
+    ],
+    [
+     "plant",
+     "rice"
+    ],
+    [
+     "plant",
+     "pine"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "crow",
+    "owl",
+    "raptor"
+   ],
+   "genus_level": true,
+   "labels": [
+    "Crows and jays",
+    "Owls",
+    "Hawks"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "kawasemi",
+   "likes": [
+    [
+     "insect",
+     "shio_kara_tonbo"
+    ],
+    [
+     "insect",
+     "ama_gaeru"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "fox",
+    "owl"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Foxes",
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "kibitaki",
+   "likes": [
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "owl",
+    "rodent",
+    "crow"
+   ],
+   "genus_level": true,
+   "labels": [
+    "Owls",
+    "Mice and rats",
+    "Crows and jays"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "kijibato",
+   "likes": [
+    [
+     "plant",
+     "rice"
+    ],
+    [
+     "plant",
+     "kunugi"
+    ],
+    [
+     "plant",
+     "egonoki"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "kogera",
+   "likes": [
+    [
+     "insect",
+     "kabuto_mushi"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "owl",
+    "raptor",
+    "rodent"
+   ],
+   "genus_level": true,
+   "labels": [
+    "Owls",
+    "Hawks",
+    "Mice and rats"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "mejiro",
+   "likes": [
+    [
+     "plant",
+     "sakura"
+    ],
+    [
+     "plant",
+     "camellia"
+    ],
+    [
+     "plant",
+     "enoki"
+    ],
+    [
+     "plant",
+     "nanten"
+    ],
+    [
+     "plant",
+     "kaki"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "mourning_dove",
+   "likes": [
+    [
+     "plant",
+     "loblolly"
+    ],
+    [
+     "plant",
+     "red_maple"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "raptor",
+    "snake",
+    "falcon"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Snakes",
+    "Falcons"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "mozu",
+   "likes": [
+    [
+     "insect",
+     "kuwagata"
+    ],
+    [
+     "insect",
+     "abura_zemi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "weasel"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Weasels"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "northern_cardinal",
+   "likes": [
+    [
+     "plant",
+     "dogwood"
+    ],
+    [
+     "plant",
+     "redbud"
+    ],
+    [
+     "plant",
+     "tulip_tree"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "snake",
+    "crow",
+    "raptor"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Snakes",
+    "Crows and jays",
+    "Hawks"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "pileated_woodpecker",
+   "likes": [
+    [
+     "insect",
+     "june_beetle"
+    ],
+    [
+     "insect",
+     "carpenter_bee"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "red_bellied_woodpecker",
+   "likes": [
+    [
+     "plant",
+     "white_oak"
+    ],
+    [
+     "plant",
+     "sunflower"
+    ],
+    [
+     "insect",
+     "katydid"
+    ],
+    [
+     "insect",
+     "carpenter_bee"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "raptor",
+    "snake"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Snakes"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "ruby_throated_hummingbird",
+   "likes": [
+    [
+     "plant",
+     "redbud"
+    ],
+    [
+     "plant",
+     "tulip_tree"
+    ],
+    [
+     "plant",
+     "magnolia"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "shijukara",
+   "likes": [
+    [
+     "plant",
+     "pine"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ],
+    [
+     "insect",
+     "kabuto_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "owl",
+    "raptor",
+    "crow"
+   ],
+   "genus_level": true,
+   "labels": [
+    "Owls",
+    "Hawks",
+    "Crows and jays"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "shirohara",
+   "likes": [
+    [
+     "plant",
+     "nanten"
+    ],
+    [
+     "plant",
+     "murasaki_shikibu"
+    ],
+    [
+     "plant",
+     "kuwa"
+    ],
+    [
+     "plant",
+     "kaki"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "song_sparrow",
+   "likes": [
+    [
+     "plant",
+     "sunflower"
+    ],
+    [
+     "plant",
+     "pokeweed"
+    ],
+    [
+     "insect",
+     "hoverfly_us"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "snake",
+    "falcon",
+    "owl"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Snakes",
+    "Falcons",
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "suzume",
+   "likes": [
+    [
+     "plant",
+     "rice"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "raptor",
+    "owl",
+    "crow"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Owls",
+    "Crows and jays"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "tsubame",
+   "likes": [
+    [
+     "insect",
+     "nihon_mitsubachi"
+    ],
+    [
+     "insect",
+     "shio_kara_tonbo"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [
+    "falcon",
+    "snake",
+    "raptor"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Falcons",
+    "Snakes",
+    "Hawks"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "tufted_titmouse",
+   "likes": [
+    [
+     "plant",
+     "red_maple"
+    ],
+    [
+     "plant",
+     "tulip_tree"
+    ],
+    [
+     "insect",
+     "tent_caterpillar"
+    ],
+    [
+     "insect",
+     "june_beetle"
+    ]
+   ],
+   "home": [
+    "charlotte"
+   ],
+   "categories": [
+    "raptor",
+    "owl"
+   ],
+   "genus_level": false,
+   "labels": [
+    "Hawks",
+    "Owls"
+   ],
+   "has_data": true
+  },
+  {
+   "bird": "uguisu",
+   "likes": [
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  },
+  {
+   "bird": "yamagara",
+   "likes": [
+    [
+     "plant",
+     "kunugi"
+    ],
+    [
+     "plant",
+     "egonoki"
+    ],
+    [
+     "insect",
+     "ao_imo_mushi"
+    ],
+    [
+     "insect",
+     "kara_imo_mushi"
+    ]
+   ],
+   "home": [
+    "kyoto"
+   ],
+   "categories": [],
+   "genus_level": false,
+   "labels": [],
+   "has_data": false
+  }
+ ],
+ "predator_labels": {
+  "raptor": "Hawks",
+  "owl": "Owls",
+  "falcon": "Falcons",
+  "snake": "Snakes",
+  "crow": "Crows and jays",
+  "shrike": "Shrikes",
+  "cat": "Cats",
+  "raccoon": "Raccoons",
+  "weasel": "Weasels",
+  "fox": "Foxes",
+  "squirrel": "Squirrels",
+  "rodent": "Mice and rats"
+ },
+ "predator_unknown": {
+  "categories": [
+   "raptor",
+   "owl"
+  ],
+  "genus": true,
+  "labels": [
+   "Hawks",
+   "Owls"
+  ],
+  "has_data": true,
+  "missing_bird": []
+ },
  "eco_log": [
   {
    "n": 0,

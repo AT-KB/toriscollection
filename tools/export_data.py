@@ -20,6 +20,13 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..",
                        "toris_app", "assets", "data")
 OUT = os.path.join(OUT_DIR, "birds.json")
 
+# 差分テストが読む場所。**アセットと同じものを置く。**
+# 別管理にしていたら predators.json だけ入っておらず、図鑑のテストが書けなかった
+# (2026-08-16 の監査で発覚)。片方だけ更新されるとテストが古いデータを見て
+# 「一致している」と嘘をつくので、書き出しは必ず両方へ。
+FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "..",
+                           "toris_core", "test", "fixtures")
+
 # Flutter 版で使う項目だけ。表示は英語のみなので、日本語の名前と説明は運ばない
 # (製品版は 2026-08-09 に日本語表示を落としている)。
 FIELDS = ("scientific", "english", "description_en", "color",
@@ -27,10 +34,17 @@ FIELDS = ("scientific", "english", "description_en", "color",
           "rarity", "wariness")
 
 
+def _write_both(name: str, obj) -> None:
+    """アセットと差分テストの両方に、同じ中身を書く。"""
+    text = json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=True)
+    for d in (OUT_DIR, FIXTURE_DIR):
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, name), "w", encoding="utf-8") as f:
+            f.write(text)
+
+
 def _dump(name: str, obj) -> None:
-    p = os.path.join(OUT_DIR, name)
-    with open(p, "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, indent=1, sort_keys=True)
+    _write_both(name, obj)
     print(f"  {name}: {len(obj)}件")
 
 
@@ -48,9 +62,7 @@ def main() -> None:
     for bid, b in items:
         out[bid] = {k: b[k] for k in FIELDS if k in b}
 
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=1, sort_keys=True)
+    _write_both("birds.json", out)
 
     missing = {k for b in out.values() for k in FIELDS} - set(FIELDS)
     n_diet = sum(1 for b in out.values() if b.get("eats_insects") or b.get("eats_plants"))

@@ -20,9 +20,9 @@
    "status": "todo"
   },
   "absence_loop.parse_iso": {
-   "dart": "lastSeenAt",
+   "dart": "parseIso",
    "status": "done",
-   "why": ""
+   "why": "読めなければ静かに null(例外を投げない)"
   },
   "absence_loop.summarize_events": {
    "dart": "",
@@ -72,23 +72,24 @@
    "why": ""
   },
   "bird_profile.build": {
-   "dart": "",
-   "status": "todo"
+   "dart": "buildBirdProfile",
+   "status": "done",
+   "why": "37種で突き合わせ"
   },
   "bird_profile.fears": {
-   "dart": "Fears",
+   "dart": "profileFears",
    "status": "done",
-   "why": ""
+   "why": "37種で突き合わせ"
   },
   "bird_profile.home": {
-   "dart": "Home",
+   "dart": "profileHome",
    "status": "done",
-   "why": ""
+   "why": "37種で突き合わせ"
   },
   "bird_profile.likes": {
-   "dart": "Likes",
+   "dart": "profileLikes",
    "status": "done",
-   "why": ""
+   "why": "37種で突き合わせ(順序も)"
   },
   "bird_profile.rows": {
    "dart": "_Row",
@@ -144,9 +145,9 @@
    "why": ""
   },
   "detail_sprites.has_detail_image": {
-   "dart": "detailIds",
+   "dart": "detailSpriteFor",
    "status": "done",
-   "why": ""
+   "why": "同梱の絵から判定する"
   },
   "disturbance.apply_disturbance": {
    "dart": "applyDisturbance",
@@ -466,16 +467,19 @@
    "why": ""
   },
   "predators.has_data": {
-   "dart": "",
-   "status": "todo"
+   "dart": "predatorHasData",
+   "status": "done",
+   "why": "37種で突き合わせ"
   },
   "predators.is_genus_level": {
-   "dart": "",
-   "status": "todo"
+   "dart": "predatorIsGenusLevel",
+   "status": "done",
+   "why": "37種で突き合わせ"
   },
   "predators.labels": {
-   "dart": "",
-   "status": "todo"
+   "dart": "predatorLabels",
+   "status": "done",
+   "why": "**分類表ごと**突き合わせる。Dart 側に7分類を手で書いて、実データが使う crow/falcon/fox/rodent/weasel が抜けていた(2026-08-16 の監査で発覚)"
   },
   "radio.bird_in_season": {
    "dart": "",
@@ -565,14 +569,14 @@
    "why": ""
   },
   "screen.tab_guide": {
-   "dart": "ExpansionTile",
+   "dart": "GuidePage",
    "status": "done",
    "why": ""
   },
   "screen.tab_howto": {
    "dart": "",
    "status": "dropped",
-   "why": "説明が要らない作りにする方針。画面は置かない"
+   "why": "**私(開発)の判断で保留にしている**。CEO の指示は tutorial について「もっと固まってからでいい」(2026-08-16)であって、使い方タブを捨てる指示ではない。体験が固まった段階で、置くか置かないかを CEO に確認すること"
   },
   "screen.tab_network": {
    "dart": "NetworkPage",
