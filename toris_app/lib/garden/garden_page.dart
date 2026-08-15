@@ -15,9 +15,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../ui/plant_form.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
-import 'now_in_garden.dart';
 import 'ritual.dart';
 import 'transfer_sheet.dart';
 import 'tree_scene.dart';
@@ -75,6 +75,20 @@ class _GardenPageState extends State<GardenPage>
 
   String _name(Map<String, dynamic> m, String id) =>
       (m[id]?['english'] as String?) ?? id;
+
+  /// 到来1件を、短く。**鳥 ← 目当て** だけ。
+  /// 目当てが分からなければ鳥の名前だけ(何かに惹かれたことにしない・原則4)。
+  String _shortReason(Garden g, core.ArrivalEvent r) {
+    final bird = _name(g.data.birds, r.birdId);
+    if (r.relatedPlant.isNotEmpty) {
+      final icon = (g.data.plants[r.relatedPlant]?['icon'] as String?) ?? '🌱';
+      return '$bird  ←  $icon ${_name(g.data.plants, r.relatedPlant)}';
+    }
+    if (r.relatedInsect.isNotEmpty) {
+      return '$bird  ←  🐛 ${_name(g.data.insects, r.relatedInsect)}';
+    }
+    return bird;
+  }
 
   /// 植えるものを選ぶ。**開いたときだけ**一覧を見せる。
   Future<void> _openPlantPicker(Garden g) async {
@@ -181,8 +195,16 @@ class _GardenPageState extends State<GardenPage>
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          // ── ① 木の情景。ここが庭の顔。 ──
+          // ── ① 裏庭の情景。ここが庭の顔。 ──
+          // 餌台・リス・タカ・植生は、**選択とそのまま連動する**。
           TreeScene(
+            plants: [
+              for (final p in g.planted)
+                plantLook(g.data.plants[p]?['icon'] as String?)
+            ],
+            feeder: g.feeders.isEmpty ? null : g.feeders.first,
+            hasSquirrel: g.chain.animals.isNotEmpty,
+            hasRaptor: g.chain.raptors.isNotEmpty,
             birds: [
               for (final b in g.visiting)
                 PerchedBird(
@@ -197,11 +219,18 @@ class _GardenPageState extends State<GardenPage>
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          // ── 今の庭。**名前の羅列ではなく、まず絵**(原則5)。 ──
-          // 木の上の鳥は小さいので、ここで誰が居るかを大きく見せる。
-          NowInGarden(garden: g),
           const SizedBox(height: 10),
+          // **今の庭は、上の木そのもの。** 別のカードを足さない。
+          // 一度「In your garden now」という帯を作って外した(CEO 2026-08-15
+          // 「使い道が分からん」)。木に居る鳥をもう一度並べるだけで、
+          // 情報は1つも増えていなかった。
+          Text(
+            g.visiting.isEmpty
+                ? 'No one yet.'
+                : g.visiting.map((b) => _name(g.data.birds, b)).join(' · '),
+            style: const TextStyle(color: kInk, fontSize: 16),
+          ),
+          const SizedBox(height: 6),
           Text('${web.temperature.round()}°C',
               style: const TextStyle(color: kSub, fontSize: 13)),
           const SizedBox(height: 14),
@@ -224,21 +253,27 @@ class _GardenPageState extends State<GardenPage>
           const SizedBox(height: 20),
 
           // ── ② 留守のあいだの出来事 ──
-          if (g.lastArrivals.isNotEmpty ||
+          // **文章にしない。** 「◯◯が来ました。△△に惹かれて立ち寄ったようです。」
+          // では長すぎる(CEO 2026-08-16「文章だと文字数が多すぎます」)。
+          // 関係だけを矢印で見せる: `Carolina Wren ← 🐛 Firefly`
+          //
+          // 記録そのもの(図鑑の "Why it came")は Python と一致させた**原文のまま**
+          // 残してある。ここは表示の組み立て直しで、`ArrivalEvent` が持っている
+          // 構造(どの植物・どの虫)から短く作る。
+          if (g.lastReasons.isNotEmpty ||
+              g.lastArrivals.isNotEmpty ||
               g.lastDepartures.isNotEmpty ||
               g.lastLostPlants.isNotEmpty) ...[
             _Note([
               if (g.lastLostPlants.isNotEmpty)
-                '${g.lastDisturbances.join(' ')} A storm passed. '
-                    'Lost: ${g.lastLostPlants.map((p) => _name(g.data.plants, p)).join(', ')}',
-              // **なぜ来たか**を、そのまま出す。あなたが組んだ関係の証拠。
-              for (final r in g.lastReasons) r.reasonText,
-              if (g.lastArrivals.isNotEmpty && g.lastReasons.isEmpty)
-                'Came while you were away: '
-                    '${g.lastArrivals.map((b) => _name(g.data.birds, b)).join(', ')}',
+                '${g.lastDisturbances.join(' ')} Lost  '
+                    '${g.lastLostPlants.map((p) => _name(g.data.plants, p)).join(' · ')}',
+              for (final r in g.lastReasons) _shortReason(g, r),
+              if (g.lastReasons.isEmpty)
+                for (final b in g.lastArrivals) _name(g.data.birds, b),
               if (g.lastDepartures.isNotEmpty)
-                'Moved on: '
-                    '${g.lastDepartures.map((b) => _name(g.data.birds, b)).join(', ')}',
+                'Left  '
+                    '${g.lastDepartures.map((b) => _name(g.data.birds, b)).join(' · ')}',
             ].join('\n')),
             const SizedBox(height: 20),
           ],

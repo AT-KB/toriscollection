@@ -14,11 +14,14 @@
   5. **画面を検める**(下の `screen_audit`)。関数を移したかだけでは、
      画面のミスは1件も捕まらない — 実際、Flutter のマスコットが鳥の代わりに
      出ていたのを見逃した(CEO 指摘 2026-08-15)。
+  6. **テストを実際に走らせる**(下の `run_tests`)。テストは書いてあっても
+     回さなければ無いのと同じ。この1コマンドを唯一の入口にする。
 
 **作業を1つ終えるたびに必ず走らせること。**
 
-    py -3 tools/migration_audit.py            # 一覧と残りを出す
+    py -3 tools/migration_audit.py            # 一覧・画面の検査・テスト
     py -3 tools/migration_audit.py --update   # 新しい関数を台帳に todo で足す
+    py -3 tools/migration_audit.py --no-test  # テストを飛ばす(急ぐときだけ)
 """
 import ast
 import json
@@ -185,6 +188,54 @@ def screen_audit() -> list:
     return problems
 
 
+# ─────────────────────────────────────────────────────────────
+# テストを実際に走らせる
+#
+# テストは**書いてあっても回さなければ無い**のと同じ。監査を1つの入口にする。
+#   - toris_core : Python 版と突き合わせた差分テスト(到来4440通り 等)
+#   - toris_app  : 庭の状態の往復(閉じて開き直しても欠けないこと)
+# 遅いのが嫌なときだけ --no-test。ふだんは付けないこと。
+# ─────────────────────────────────────────────────────────────
+
+def run_tests() -> list:
+    """テストを走らせる。落ちたものの一覧を返す(空なら合格)。"""
+    import shutil
+    import subprocess
+
+    failures = []
+    flutter = shutil.which("flutter") or shutil.which("flutter.bat")
+    dart = shutil.which("dart") or shutil.which("dart.bat")
+    if not dart and not flutter:
+        return ["dart / flutter が PATH に無いのでテストを走らせられない"]
+
+    jobs = []
+    if dart:
+        jobs.append(("toris_core (Python 版との突き合わせ)",
+                     [dart, "test"], os.path.join(ROOT, "toris_core")))
+    if flutter:
+        jobs.append(("toris_app (庭の状態の往復・画面)",
+                     [flutter, "test"], os.path.join(ROOT, "toris_app")))
+
+    for label, cmd, cwd in jobs:
+        if not os.path.isdir(cwd):
+            continue
+        try:
+            r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                               timeout=600, encoding="utf-8", errors="replace")
+        except Exception as e:
+            failures.append(f"{label}: 走らせられなかった({e})")
+            continue
+        if r.returncode == 0:
+            tail = [ln for ln in (r.stdout or "").splitlines() if ln.strip()]
+            print(f"  OK  {label}  {tail[-1][:70] if tail else ''}")
+        else:
+            failures.append(f"{label}: 落ちた")
+            for ln in (r.stdout or "").splitlines()[-12:]:
+                if ln.strip():
+                    failures.append(f"      {ln[:110]}")
+    return failures
+
+
 def main() -> None:
     api = python_api()
     ledger = load_ledger()
@@ -256,7 +307,15 @@ def main() -> None:
     else:
         print("  問題なし")
 
-    if broken or unknown or screen_problems:
+    # ── テスト ──
+    test_failures = []
+    if "--no-test" not in sys.argv:
+        print("\n── テスト ──")
+        test_failures = run_tests()
+        for f in test_failures:
+            print(f"  !! {f}" if not f.startswith("  ") else f)
+
+    if broken or unknown or screen_problems or test_failures:
         raise SystemExit(1)
 
 

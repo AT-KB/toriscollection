@@ -117,19 +117,23 @@
   },
   "daily.daily_seed": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
   },
   "daily.is_met": {
-   "dart": "",
-   "status": "todo"
+   "dart": "observed",
+   "status": "done",
+   "why": "近くで会ったか = observed>0。Garden.observed が持っている"
   },
   "daily.render_todays_garden": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
   },
   "daily.todays_bird": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
   },
   "detail_sprites.detail_image_path": {
    "dart": "detailSpriteFor",
@@ -573,7 +577,8 @@
   },
   "screen.todays_garden": {
    "dart": "",
-   "status": "todo"
+   "status": "dropped",
+   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
   },
   "sheets_client.add_memento": {
    "dart": "",
