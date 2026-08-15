@@ -5,14 +5,18 @@
 /// (CEO 2026-08-16「アメリカの庭のバックヤードの Feeder をおいていそうな感じ」)。
 ///
 /// 奥から手前へ:
-///   空 → 家の端 → フェンス → 木(3層の枝)→ 餌台 → 植えたもの → 芝生
+///   空 → 家の端 → 木(3層の枝)→ 餌台 → 植えたもの → 芝生
+///
+/// フェンスは**置かない**(CEO 2026-08-16「フェンス要らない」)。
+/// 植えたものは**チップと同じアイコンをそのまま**置く(同「なんかアイコンと
+/// 同じとかでいい」)。形と色を描き分ける版は作ったが、要らないと判断された。
 ///
 /// **鳥は木の枝に止まり、枝を移って近づいてくる。** 枝の3層はそのまま
 /// 「近さ」(b1 が手前)で、会った回数で決まる(`radio.py` の _obs_to_depth)。
 /// つつくと跳ねるのもそのまま(CEO「ぴょんぴょん飛ぶのはいい感じ」)。
 ///
 /// **餌台・リス・タカは選択とそのまま連動する**(`feeder_chain`)。
-/// 開放型を置けばリスが餌台の下に現れ、リスがタカを呼んでフェンスに止まる。
+/// 開放型を置けばリスが餌台の下に現れ、リスがタカを呼んで空を旋回する。
 /// かご型に替えれば両方消える。文字で説明せず、絵で見せる。
 library;
 
@@ -21,7 +25,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../ui/bird_mark.dart';
-import '../ui/plant_form.dart';
 
 class TreeSpec {
   final double branchTop; // 枝の高さ(情景の高さに対する%)
@@ -46,7 +49,7 @@ const List<TreeSpec> kTreeSpecs = [
 ];
 
 /// 幹の位置(幅に対する%)。左に餌台、**右端はタカの席**として空ける。
-/// 右に寄せすぎると、フェンスのタカが奥の枝と重なって「大きい鳥」にしか
+/// 右に寄せすぎると、右上のタカが奥の枝と重なって「大きい鳥」にしか
 /// 見えなくなる(実際にそうなった)。
 const double kTrunkX = 55.0;
 
@@ -60,8 +63,6 @@ const Color _kSky = Color(0xFFE3EFF4);
 const Color _kSkyLow = Color(0xFFF2F6E8);
 const Color _kLawn = Color(0xFF8FB56A);
 const Color _kLawnDark = Color(0xFF83AA61);
-const Color _kFence = Color(0xFFCFBE9F);
-const Color _kFenceLine = Color(0xFFB6A288);
 const Color _kHouse = Color(0xFFE9E2D5);
 const Color _kRoof = Color(0xFF9A7F6A);
 const Color _kLeaf = Color(0xFF9CBF8A);
@@ -91,8 +92,8 @@ class PerchedBird {
 class TreeScene extends StatefulWidget {
   final List<PerchedBird> birds;
 
-  /// 植えたもの。地面に並べて描く(アイコンから形と色を引く)。
-  final List<PlantLook> plants;
+  /// 植えたもののアイコン(`plants.json` の icon)。地面にそのまま並べる。
+  final List<String> plants;
 
   /// 置いている餌台。`feeder_open` / `feeder_cage` / null。
   final String? feeder;
@@ -100,7 +101,7 @@ class TreeScene extends StatefulWidget {
   /// 餌台に来ている動物が居るか(リスを描く)。
   final bool hasSquirrel;
 
-  /// 猛禽が居るか(フェンスにタカを描く)。
+  /// 猛禽が居るか(空にタカを描く)。
   final bool hasRaptor;
 
   const TreeScene({
@@ -126,11 +127,10 @@ class _TreeSceneState extends State<TreeScene> {
     return LayoutBuilder(builder: (context, c) {
       final w = c.maxWidth;
       final children = <Widget>[
-        // 裏庭そのもの(空・家・フェンス・木・餌台・植生・芝生・リス・タカ)
+        // 裏庭そのもの(空・家・木・餌台・芝生・リス・タカ)
         Positioned.fill(
           child: CustomPaint(
             painter: _BackyardPainter(
-              plants: widget.plants,
               feeder: widget.feeder,
               hasSquirrel: widget.hasSquirrel,
               hasRaptor: widget.hasRaptor,
@@ -138,6 +138,31 @@ class _TreeSceneState extends State<TreeScene> {
           ),
         ),
       ];
+
+      // 植えたものを、地面にアイコンのまま並べる。
+      // **重ならない間隔**で置く(鳥と同じ理由。詰めると何が生えているか
+      // 分からなくなる)。手前・奥に振って、平らに見えないようにする。
+      if (widget.plants.isNotEmpty) {
+        const iconSize = 30.0;
+        final ground = kGroundTop / 100 * kSceneHeight;
+        final from = widget.feeder != null ? w * 0.30 : w * 0.20;
+        // 絵文字は指定より横に広い。右端で切れないよう余白を多めに取る。
+        final to = w - iconSize * 1.4;
+        final span = (to - from - iconSize).clamp(0.0, w);
+        final step = widget.plants.length == 1
+            ? 0.0
+            : span / (widget.plants.length - 1);
+        for (var i = 0; i < widget.plants.length; i++) {
+          children.add(Positioned(
+            left: from + step * i,
+            top: ground +
+                (kSceneHeight - ground) * (i.isEven ? 0.10 : 0.46) -
+                iconSize * 0.2,
+            child: Text(widget.plants[i],
+                style: const TextStyle(fontSize: iconSize)),
+          ));
+        }
+      }
 
       // 鳥を枝に置く。
       //
@@ -224,12 +249,10 @@ List<List<double>> branchSegments(TreeSpec t, double w) {
 
 /// 裏庭を描く。奥から手前へ順番に。
 class _BackyardPainter extends CustomPainter {
-  final List<PlantLook> plants;
   final String? feeder;
   final bool hasSquirrel;
   final bool hasRaptor;
   const _BackyardPainter({
-    required this.plants,
     required this.feeder,
     required this.hasSquirrel,
     required this.hasRaptor,
@@ -269,24 +292,6 @@ class _BackyardPainter extends CustomPainter {
         Paint()
           ..color = _kHouse
           ..strokeWidth = 2);
-
-    // ── フェンス(奥) ──
-    final fenceTop = h * 0.37;
-    canvas.drawRect(
-        Rect.fromLTWH(houseW, fenceTop, w - houseW, ground - fenceTop),
-        Paint()..color = _kFence);
-    final line = Paint()
-      ..color = _kFenceLine
-      ..strokeWidth = 1.4;
-    for (var i = 1; i < 4; i++) {
-      final y = fenceTop + (ground - fenceTop) * i / 4;
-      canvas.drawLine(Offset(houseW, y), Offset(w, y), line);
-    }
-    for (var x = houseW + 30.0; x < w; x += 64) {
-      canvas.drawRect(
-          Rect.fromLTWH(x, fenceTop - h * 0.015, 5, ground - fenceTop + h * 0.015),
-          Paint()..color = _kFenceLine);
-    }
 
     // ── 芝生 ──
     canvas.drawRect(
@@ -328,36 +333,18 @@ class _BackyardPainter extends CustomPainter {
     }
 
     // ── タカ ──
-    // 猛禽はフェンスの上から見ている。臆病な鳥が来にくいのは、この視線のせい。
-    // **枝の届かない右端**に置く。枝と重なると、ただの大きい鳥に見える。
+    // 猛禽は**空を旋回している**。フェンスが無くなったので止まる所も無い。
+    // 小さく描く — 大きいと枝の鳥と同じに見えるうえ、かわいくない
+    // (CEO 2026-08-16「リスと鷹がでかすぎ、かわいくない」)。
     if (hasRaptor) {
-      _paintHawk(canvas, Offset(w * 0.91, h * 0.37), h * 0.125);
-    }
-
-    // ── 植えたもの ──
-    // 餌台の右から画面いっぱいまで、**重ならない間隔**で並べる。
-    // 鳥と同じで、狭い範囲に詰めると株が重なって何が生えているか分からなくなる
-    // (実際に4株で重なった)。1株ぶんの幅を確保してから割る。
-    if (plants.isNotEmpty) {
-      final ph = h * 0.185; // 1株の高さ
-      final pw = ph * 1.05; // 1株の幅(茂みがいちばん横に張る)
-      final from = (feeder != null ? poleX + w * 0.10 : houseW + w * 0.02);
-      final to = w - w * 0.02;
-      final span = (to - from - pw).clamp(0.0, w);
-      final step = plants.length == 1 ? 0.0 : span / (plants.length - 1);
-      for (var i = 0; i < plants.length; i++) {
-        final x = from + pw / 2 + step * i;
-        // 前後に振って奥行きを出す(重なりは横の間隔で既に防いでいる)
-        final y = ground + (h - ground) * (i.isEven ? 0.40 : 0.88);
-        paintPlant(canvas, Offset(x, y), ph, plants[i]);
-      }
+      _paintHawk(canvas, Offset(w * 0.87, h * 0.14), h * 0.055);
     }
 
     // ── リス ──
-    // **植生より後に描く。** 先に描くと茂みに隠れて、何が居るのか分からない。
+    // 餌台の柱の下。こちらも小さく、まるく。
     if (feeder != null && hasSquirrel) {
-      _paintSquirrel(canvas, Offset(poleX + w * 0.02, ground + h * 0.09),
-          h * 0.125);
+      _paintSquirrel(
+          canvas, Offset(poleX + w * 0.03, ground + h * 0.10), h * 0.075);
     }
   }
 
@@ -457,7 +444,7 @@ class _BackyardPainter extends CustomPainter {
         Offset(base.dx - s * 0.30, base.dy - s * 0.55), s * 0.10, fur);
   }
 
-  /// タカ。フェンスの上から見ている。
+  /// タカ。空から見ている。小さく、まるく。
   void _paintHawk(Canvas canvas, Offset base, double s) {
     final body = Paint()..color = const Color(0xFF6E5D4E);
     canvas.drawOval(
@@ -491,6 +478,5 @@ class _BackyardPainter extends CustomPainter {
   bool shouldRepaint(_BackyardPainter old) =>
       old.feeder != feeder ||
       old.hasSquirrel != hasSquirrel ||
-      old.hasRaptor != hasRaptor ||
-      old.plants.length != plants.length;
+      old.hasRaptor != hasRaptor;
 }

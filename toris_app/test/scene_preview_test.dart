@@ -10,6 +10,9 @@
 ///     flutter test test/scene_preview_test.dart
 ///
 /// 判定はしない(絵の良し悪しは人が見る)。描けずに落ちたらそれは不具合。
+///
+/// ⚠️ **植えたもののアイコン(絵文字)は □ になる。** テスト環境に絵文字の
+/// フォントが無いため。実機では出る。絵文字の見え方だけは実機で見ること。
 library;
 
 import 'dart:io';
@@ -19,7 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toris_app/garden/tree_scene.dart';
-import 'package:toris_app/ui/plant_form.dart';
 
 Future<void> _shoot(WidgetTester tester, String name, Widget child) async {
   final key = GlobalKey();
@@ -73,12 +75,8 @@ List<PerchedBird> _birds() => const [
 
 void main() {
   testWidgets('裏庭を描き出す(空の庭 / 植生あり / 開放型 / かご型)', (tester) async {
-    final plants = [
-      plantLook('🟣'), // Beautyberry
-      plantLook('🌸'), // Buttonbush
-      plantLook('🌲'), // Loblolly Pine
-      plantLook('🍇'), // Pokeweed
-    ];
+    // 植えたものは `plants.json` の icon をそのまま置く。
+    const plants = ['🟣', '🌸', '🌲', '🍇'];
 
     await _shoot(tester, '01_empty', const TreeScene(birds: []));
 
@@ -103,16 +101,8 @@ void main() {
         TreeScene(
             birds: _birds(), plants: plants, feeder: 'feeder_cage'));
 
-    // 植物の描き分けを全部
-    await _shoot(
-        tester,
-        '05_all_plants',
-        TreeScene(birds: const [], plants: [
-          for (final icon in kPlantLooks.keys) plantLook(icon)
-        ]));
-
     for (final n in ['01_empty', '02_planted', '03_open_feeder',
-                     '04_caged_feeder', '05_all_plants']) {
+                     '04_caged_feeder']) {
       expect(File('build/preview/$n.png').existsSync(), isTrue,
           reason: '$n が描けていない');
     }

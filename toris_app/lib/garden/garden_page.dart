@@ -15,7 +15,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
-import '../ui/plant_form.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
 import 'ritual.dart';
@@ -200,7 +199,7 @@ class _GardenPageState extends State<GardenPage>
           TreeScene(
             plants: [
               for (final p in g.planted)
-                plantLook(g.data.plants[p]?['icon'] as String?)
+                (g.data.plants[p]?['icon'] as String?) ?? '🌱'
             ],
             feeder: g.feeders.isEmpty ? null : g.feeders.first,
             hasSquirrel: g.chain.animals.isNotEmpty,
