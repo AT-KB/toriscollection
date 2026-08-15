@@ -151,6 +151,18 @@ void main() {
     expect(checked, 4440, reason: '4440通りを見ているはず');
   });
 
+  test('留守のあいだの進み方: 区切りが Python 版と同じ', () {
+    // 急かさない設計の根っこ。**時間は勝手に進む**(原則1「受動的である」)。
+    expect(estimateTickCount(0.0), 0);
+    expect(estimateTickCount(4 / 60), 0); // 5分未満は何も起きない
+    expect(estimateTickCount(10 / 60), 1);
+    expect(estimateTickCount(1.0), 2);
+    expect(estimateTickCount(3.0), 3);
+    expect(estimateTickCount(8.0), 4);
+    expect(estimateTickCount(20.0), 5);
+    expect(estimateTickCount(48.0), 6); // 上限
+  });
+
   group('Python の型変換をまねる部分', () {
     test('int(): 小数は0方向へ切り捨て、整数でない文字列は通さない', () {
       expect(pyInt(2), 2);

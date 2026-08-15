@@ -1,0 +1,305 @@
+{
+ "american_robin": {
+  "categories": [
+   "raptor",
+   "owl",
+   "snake"
+  ],
+  "level": "species",
+  "records": {
+   "owl": 8,
+   "raptor": 12,
+   "snake": 6
+  }
+ },
+ "aoji": {
+  "categories": [
+   "raptor",
+   "crow",
+   "owl"
+  ],
+  "level": "genus",
+  "records": {
+   "crow": 70,
+   "owl": 60,
+   "raptor": 105
+  }
+ },
+ "blue_jay": {
+  "categories": [
+   "raptor",
+   "snake"
+  ],
+  "level": "species",
+  "records": {
+   "raptor": 8,
+   "snake": 6
+  }
+ },
+ "brown_thrasher": {
+  "categories": [
+   "snake",
+   "crow",
+   "raptor"
+  ],
+  "level": "species",
+  "records": {
+   "crow": 6,
+   "raptor": 4,
+   "snake": 8
+  }
+ },
+ "carolina_chickadee": {
+  "categories": [
+   "owl",
+   "raptor"
+  ],
+  "level": "species",
+  "records": {
+   "owl": 4,
+   "raptor": 4
+  }
+ },
+ "carolina_wren": {
+  "categories": [
+   "snake"
+  ],
+  "level": "species",
+  "records": {
+   "snake": 4
+  }
+ },
+ "cedar_waxwing": {
+  "categories": [
+   "owl"
+  ],
+  "level": "species",
+  "records": {
+   "owl": 4
+  }
+ },
+ "enaga": {
+  "categories": [
+   "owl",
+   "crow",
+   "rodent"
+  ],
+  "level": "species",
+  "records": {
+   "crow": 10,
+   "owl": 16,
+   "rodent": 8
+  }
+ },
+ "hibari": {
+  "categories": [
+   "raptor",
+   "falcon",
+   "owl"
+  ],
+  "level": "species",
+  "records": {
+   "falcon": 18,
+   "owl": 14,
+   "raptor": 26
+  }
+ },
+ "house_finch": {
+  "categories": [
+   "snake",
+   "falcon",
+   "raptor"
+  ],
+  "level": "species",
+  "records": {
+   "falcon": 4,
+   "raptor": 4,
+   "snake": 8
+  }
+ },
+ "jou_bitaki": {
+  "categories": [
+   "owl",
+   "raptor",
+   "crow"
+  ],
+  "level": "genus",
+  "records": {
+   "crow": 24,
+   "owl": 36,
+   "raptor": 24
+  }
+ },
+ "kakesu": {
+  "categories": [
+   "raptor",
+   "crow",
+   "owl"
+  ],
+  "level": "species",
+  "records": {
+   "crow": 10,
+   "owl": 8,
+   "raptor": 14
+  }
+ },
+ "kawarahiwa": {
+  "categories": [
+   "crow",
+   "owl",
+   "raptor"
+  ],
+  "level": "genus",
+  "records": {
+   "crow": 27,
+   "owl": 18,
+   "raptor": 18
+  }
+ },
+ "kawasemi": {
+  "categories": [
+   "fox",
+   "owl"
+  ],
+  "level": "species",
+  "records": {
+   "fox": 6,
+   "owl": 4
+  }
+ },
+ "kibitaki": {
+  "categories": [
+   "owl",
+   "rodent",
+   "crow"
+  ],
+  "level": "genus",
+  "records": {
+   "crow": 40,
+   "owl": 54,
+   "rodent": 46
+  }
+ },
+ "kogera": {
+  "categories": [
+   "owl",
+   "raptor",
+   "rodent"
+  ],
+  "level": "genus",
+  "records": {
+   "owl": 12,
+   "raptor": 8,
+   "rodent": 8
+  }
+ },
+ "mourning_dove": {
+  "categories": [
+   "raptor",
+   "snake",
+   "falcon"
+  ],
+  "level": "species",
+  "records": {
+   "falcon": 8,
+   "raptor": 22,
+   "snake": 10
+  }
+ },
+ "mozu": {
+  "categories": [
+   "weasel"
+  ],
+  "level": "species",
+  "records": {
+   "weasel": 4
+  }
+ },
+ "northern_cardinal": {
+  "categories": [
+   "snake",
+   "crow",
+   "raptor"
+  ],
+  "level": "species",
+  "records": {
+   "crow": 8,
+   "raptor": 8,
+   "snake": 28
+  }
+ },
+ "red_bellied_woodpecker": {
+  "categories": [
+   "raptor",
+   "snake"
+  ],
+  "level": "species",
+  "records": {
+   "raptor": 6,
+   "snake": 4
+  }
+ },
+ "shijukara": {
+  "categories": [
+   "owl",
+   "raptor",
+   "crow"
+  ],
+  "level": "genus",
+  "records": {
+   "crow": 44,
+   "owl": 66,
+   "raptor": 44
+  }
+ },
+ "song_sparrow": {
+  "categories": [
+   "snake",
+   "falcon",
+   "owl"
+  ],
+  "level": "species",
+  "records": {
+   "falcon": 8,
+   "owl": 8,
+   "snake": 10
+  }
+ },
+ "suzume": {
+  "categories": [
+   "raptor",
+   "owl",
+   "crow"
+  ],
+  "level": "species",
+  "records": {
+   "crow": 14,
+   "owl": 18,
+   "raptor": 20
+  }
+ },
+ "tsubame": {
+  "categories": [
+   "falcon",
+   "snake",
+   "raptor"
+  ],
+  "level": "species",
+  "records": {
+   "falcon": 16,
+   "raptor": 8,
+   "snake": 8
+  }
+ },
+ "tufted_titmouse": {
+  "categories": [
+   "raptor",
+   "owl"
+  ],
+  "level": "species",
+  "records": {
+   "owl": 4,
+   "raptor": 6
+  }
+ }
+}

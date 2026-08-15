@@ -1,0 +1,716 @@
+{
+ "items": {
+  "absence_loop.build_reason_text": {
+   "dart": "",
+   "status": "todo"
+  },
+  "absence_loop.estimate_tick_count": {
+   "dart": "estimateTickCount",
+   "status": "done",
+   "why": ""
+  },
+  "absence_loop.evolve_state": {
+   "dart": "evolveWhileAway",
+   "status": "done",
+   "why": ""
+  },
+  "absence_loop.humanize_delta": {
+   "dart": "",
+   "status": "todo"
+  },
+  "absence_loop.parse_iso": {
+   "dart": "lastSeenAt",
+   "status": "done",
+   "why": ""
+  },
+  "absence_loop.summarize_events": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.has_claimed_today": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.is_radio_active": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.mark_claimed_today": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.render_admob_banner": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.render_banner_placeholder": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.render_garden_item_button": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ads.render_pending_ad_loader": {
+   "dart": "",
+   "status": "todo"
+  },
+  "alarm_ui.render_alarm": {
+   "dart": "AlarmPage",
+   "status": "done",
+   "why": ""
+  },
+  "badges.badge_for_days": {
+   "dart": "badgeForDays",
+   "status": "done",
+   "why": ""
+  },
+  "badges.badge_message": {
+   "dart": "badgeMessage",
+   "status": "done",
+   "why": ""
+  },
+  "bird_profile.build": {
+   "dart": "",
+   "status": "todo"
+  },
+  "bird_profile.fears": {
+   "dart": "Fears",
+   "status": "done",
+   "why": ""
+  },
+  "bird_profile.home": {
+   "dart": "Home",
+   "status": "done",
+   "why": ""
+  },
+  "bird_profile.likes": {
+   "dart": "Likes",
+   "status": "done",
+   "why": ""
+  },
+  "bird_profile.rows": {
+   "dart": "_Row",
+   "status": "done",
+   "why": ""
+  },
+  "centrality.get_centrality": {
+   "dart": "",
+   "status": "todo"
+  },
+  "centrality.is_available": {
+   "dart": "",
+   "status": "todo"
+  },
+  "centrality.load_centralities": {
+   "dart": "",
+   "status": "todo"
+  },
+  "community.aggregate_atlas": {
+   "dart": "",
+   "status": "todo"
+  },
+  "community.render_community_atlas": {
+   "dart": "",
+   "status": "todo"
+  },
+  "daily.daily_seed": {
+   "dart": "",
+   "status": "todo"
+  },
+  "daily.is_met": {
+   "dart": "",
+   "status": "todo"
+  },
+  "daily.render_todays_garden": {
+   "dart": "",
+   "status": "todo"
+  },
+  "daily.todays_bird": {
+   "dart": "",
+   "status": "todo"
+  },
+  "detail_sprites.detail_image_path": {
+   "dart": "detailSpriteFor",
+   "status": "done",
+   "why": ""
+  },
+  "detail_sprites.has_detail_image": {
+   "dart": "detailIds",
+   "status": "done",
+   "why": ""
+  },
+  "disturbance.apply_disturbance": {
+   "dart": "",
+   "status": "todo"
+  },
+  "disturbance.disturbance_story": {
+   "dart": "",
+   "status": "todo"
+  },
+  "disturbance.plant_sensitivity": {
+   "dart": "",
+   "status": "todo"
+  },
+  "disturbance.roll_disturbance": {
+   "dart": "",
+   "status": "todo"
+  },
+  "eco_log.append_events": {
+   "dart": "",
+   "status": "todo"
+  },
+  "eco_log.entries_for_bird": {
+   "dart": "",
+   "status": "todo"
+  },
+  "eco_log.is_founding_record": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ecology.climate_overlap": {
+   "dart": "climateOverlap",
+   "status": "done",
+   "why": ""
+  },
+  "ecology.co_occurrence": {
+   "dart": "coOccurrence",
+   "status": "done",
+   "why": ""
+  },
+  "ecology.co_occurrence_matrix": {
+   "dart": "coOccurrenceMatrix",
+   "status": "done",
+   "why": ""
+  },
+  "ecology.diet_jaccard": {
+   "dart": "dietJaccard",
+   "status": "done",
+   "why": ""
+  },
+  "ecology.guild": {
+   "dart": "guild",
+   "status": "done",
+   "why": ""
+  },
+  "ecology.guild_groups": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ecology.guild_label": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ecology.lineup_story": {
+   "dart": "",
+   "status": "todo"
+  },
+  "ecology.pick_lineup": {
+   "dart": "pickLineup",
+   "status": "done",
+   "why": ""
+  },
+  "engine.build_network": {
+   "dart": "buildFoodWeb",
+   "status": "done",
+   "why": ""
+  },
+  "engine.calculate_arrival_probability": {
+   "dart": "arrivalProbability",
+   "status": "done",
+   "why": ""
+  },
+  "engine.current_temperature": {
+   "dart": "currentTemperature",
+   "status": "done",
+   "why": ""
+  },
+  "engine.force_directed_layout": {
+   "dart": "shell",
+   "status": "done",
+   "why": ""
+  },
+  "engine.network_stats": {
+   "dart": "",
+   "status": "todo"
+  },
+  "engine.run_turn": {
+   "dart": "runTurn",
+   "status": "done",
+   "why": ""
+  },
+  "engine.simulate_with_added_plant": {
+   "dart": "",
+   "status": "todo"
+  },
+  "engine.suggest_for_bird": {
+   "dart": "",
+   "status": "todo"
+  },
+  "engine.temperature_fit": {
+   "dart": "temperatureFit",
+   "status": "done",
+   "why": ""
+  },
+  "feeder_chain.animals_present": {
+   "dart": "",
+   "status": "todo"
+  },
+  "feeder_chain.available_foods": {
+   "dart": "",
+   "status": "todo"
+  },
+  "feeder_chain.raptors_present": {
+   "dart": "",
+   "status": "todo"
+  },
+  "feeder_chain.resolve": {
+   "dart": "",
+   "status": "todo"
+  },
+  "feeder_chain.wary_arrival_multiplier": {
+   "dart": "",
+   "status": "todo"
+  },
+  "flock.flock_cap": {
+   "dart": "flockCap",
+   "status": "done",
+   "why": ""
+  },
+  "flock.flock_size": {
+   "dart": "flockSize",
+   "status": "done",
+   "why": ""
+  },
+  "freesound_client.clear_cache": {
+   "dart": "",
+   "status": "todo"
+  },
+  "freesound_client.get_ambient_path": {
+   "dart": "",
+   "status": "todo"
+  },
+  "freesound_client.is_enabled": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.departure_bonus": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.hours_remaining": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.is_active": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.is_available": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.is_item_boosted_arrival": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.make_arrival_bonus_fn": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.place_item": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.target_bird_ids": {
+   "dart": "",
+   "status": "todo"
+  },
+  "garden_items.unavailable_reason": {
+   "dart": "",
+   "status": "todo"
+  },
+  "globi_client.compare_with_seed": {
+   "dart": "",
+   "status": "todo"
+  },
+  "globi_client.enrich_seed_with_globi": {
+   "dart": "",
+   "status": "todo"
+  },
+  "globi_client.get_diet": {
+   "dart": "",
+   "status": "todo"
+  },
+  "globi_client.get_diet_japan": {
+   "dart": "",
+   "status": "todo"
+  },
+  "globi_client.get_interactions": {
+   "dart": "",
+   "status": "todo"
+  },
+  "i18n.describe": {
+   "dart": "",
+   "status": "todo"
+  },
+  "i18n.disp": {
+   "dart": "",
+   "status": "todo"
+  },
+  "i18n.get_lang": {
+   "dart": "",
+   "status": "todo"
+  },
+  "i18n.set_lang": {
+   "dart": "",
+   "status": "todo"
+  },
+  "i18n.t": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.all_possible_mementos": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.feather_id": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.make_id": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.memento_category": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.memento_display": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.memento_target": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.plume_id": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.possible_mementos_from_bird": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.roll_drop": {
+   "dart": "",
+   "status": "todo"
+  },
+  "mementos.twig_id": {
+   "dart": "",
+   "status": "todo"
+  },
+  "observation_log.load_observation_counts": {
+   "dart": "",
+   "status": "todo"
+  },
+  "observation_log.record_observation": {
+   "dart": "metThisRitual",
+   "status": "done",
+   "why": ""
+  },
+  "predators.categories": {
+   "dart": "kPredatorLabels",
+   "status": "done",
+   "why": ""
+  },
+  "predators.has_data": {
+   "dart": "",
+   "status": "todo"
+  },
+  "predators.is_genus_level": {
+   "dart": "",
+   "status": "todo"
+  },
+  "predators.labels": {
+   "dart": "",
+   "status": "todo"
+  },
+  "radio.bird_in_season": {
+   "dart": "",
+   "status": "dropped",
+   "why": "季節での絞り込みは機能として廃止(2026-08-14)"
+  },
+  "radio.current_app_season": {
+   "dart": "",
+   "status": "dropped",
+   "why": "同上"
+  },
+  "radio.render_radio": {
+   "dart": "RadioPage",
+   "status": "done",
+   "why": ""
+  },
+  "radio.weeks_until_next_season": {
+   "dart": "",
+   "status": "dropped",
+   "why": "同上"
+  },
+  "ritual.render_ritual": {
+   "dart": "Ritual",
+   "status": "done",
+   "why": ""
+  },
+  "save_code.build_current_snapshot": {
+   "dart": "buildCurrentSnapshot",
+   "status": "done",
+   "why": ""
+  },
+  "save_code.decode_save": {
+   "dart": "decodeSave",
+   "status": "done",
+   "why": ""
+  },
+  "save_code.encode_current_state": {
+   "dart": "encodeCurrentState",
+   "status": "done",
+   "why": ""
+  },
+  "save_code.encode_save": {
+   "dart": "encodeSave",
+   "status": "done",
+   "why": ""
+  },
+  "screen.biome_choice": {
+   "dart": "setBiome",
+   "status": "done",
+   "why": ""
+  },
+  "screen.bird_sprites": {
+   "dart": "PerchedBird",
+   "status": "done",
+   "why": ""
+  },
+  "screen.garden_tree_scene": {
+   "dart": "TreeScene",
+   "status": "done",
+   "why": ""
+  },
+  "screen.login_screen": {
+   "dart": "",
+   "status": "todo"
+  },
+  "screen.network_graph_view": {
+   "dart": "_WebPainter",
+   "status": "done",
+   "why": ""
+  },
+  "screen.popup_met_bird": {
+   "dart": "",
+   "status": "todo"
+  },
+  "screen.ritual_meet_birds": {
+   "dart": "Ritual",
+   "status": "done",
+   "why": ""
+  },
+  "screen.save_code_ui": {
+   "dart": "",
+   "status": "todo"
+  },
+  "screen.tab_garden": {
+   "dart": "GardenPage",
+   "status": "done",
+   "why": ""
+  },
+  "screen.tab_guide": {
+   "dart": "GuidePage",
+   "status": "done",
+   "why": ""
+  },
+  "screen.tab_howto": {
+   "dart": "",
+   "status": "dropped",
+   "why": "説明が要らない作りにする方針。画面は置かない"
+  },
+  "screen.tab_network": {
+   "dart": "NetworkPage",
+   "status": "done",
+   "why": ""
+  },
+  "screen.tab_plant": {
+   "dart": "GardenPage",
+   "status": "done",
+   "why": ""
+  },
+  "screen.tab_radio": {
+   "dart": "RadioPage",
+   "status": "done",
+   "why": ""
+  },
+  "screen.todays_garden": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.add_memento": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.add_observation": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.add_planting": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.add_visit": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.get_client": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.get_spreadsheet": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.list_testers": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_active_plantings": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_active_plantings_with_time": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_all_collection": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_bird_days": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_bird_notes": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_collection_set": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_field_state": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_mementos": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_observation_counts": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.load_visit_calendar": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.log_access": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.now_iso": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.remove_all_plantings": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.remove_planting": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.reset_tester_data": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.save_bird_note": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.save_field_state": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.update_memento_note": {
+   "dart": "",
+   "status": "todo"
+  },
+  "sheets_client.upsert_collection": {
+   "dart": "",
+   "status": "todo"
+  },
+  "tutorial.advance_step": {
+   "dart": "",
+   "status": "todo"
+  },
+  "tutorial.is_done": {
+   "dart": "",
+   "status": "todo"
+  },
+  "tutorial.resolve_step": {
+   "dart": "",
+   "status": "todo"
+  },
+  "tutorial.step_content": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.clear_failed_cache": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.download_audio": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.download_audio_variants": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.get_audio_url": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.get_audio_urls": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.get_citation": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.is_enabled": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.is_nc_only": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.license_class": {
+   "dart": "",
+   "status": "todo"
+  },
+  "xc_client.search_recordings": {
+   "dart": "",
+   "status": "todo"
+  }
+ }
+}

@@ -197,3 +197,152 @@ Arrival arrivalProbability({
     rarityFactor: rarityFactor,
   );
 }
+
+/// 1サイクルの結果。
+class TurnResult {
+  final Set<String> residents;
+  final List<String> arrivals;
+  final List<String> departures;
+  const TurnResult(this.residents, this.arrivals, this.departures);
+}
+
+/// 1サイクル進める。`engine.run_turn` と同じ手順・同じ順序。
+///
+/// 落ち着いた庭に保つための上限がある(自然観察としても、画面の静けさとしても):
+///   滞在は最大4種 / 1サイクルの新規到着は最大1種。
+///
+/// 順序が結果を左右するので変えないこと:
+///   ① 先に退去判定(滞在中の各鳥、退去率 = 0.3 - 0.25 × 到来確率)
+///   ② 次に到着判定(候補をシャッフルしてから、上限まで)
+TurnResult runTurn({
+  required List<String> plantedPlants,
+  required String biomeId,
+  required int month,
+  required Set<String> residents,
+  required Random rng,
+  required Map<String, dynamic> plantsData,
+  required Map<String, dynamic> insectsData,
+  required Map<String, dynamic> birdsData,
+  required Map<String, dynamic> biomes,
+  required Map<String, dynamic> seasonOffset,
+  int maxResidents = 4,
+  int maxArrivalsPerTurn = 1,
+}) {
+  final web = buildFoodWeb(
+    plantedPlants: plantedPlants,
+    biomeId: biomeId,
+    month: month,
+    plantsData: plantsData,
+    insectsData: insectsData,
+    birdsData: birdsData,
+    biomes: biomes,
+    seasonOffset: seasonOffset,
+  );
+
+  final next = Set<String>.from(residents);
+  final arrivals = <String>[];
+  final departures = <String>[];
+
+  for (final bid in residents.toList()) {
+    final p = arrivalProbability(
+            birdId: bid, web: web, biomeId: biomeId, birdsData: birdsData)
+        .probability;
+    final depRate = 0.3 - 0.25 * p;
+    if (rng.nextDouble() < depRate) {
+      next.remove(bid);
+      departures.add(bid);
+    }
+  }
+
+  final candidates = <MapEntry<String, double>>[];
+  for (final bid in birdsData.keys) {
+    if (next.contains(bid)) continue;
+    final p = arrivalProbability(
+            birdId: bid, web: web, biomeId: biomeId, birdsData: birdsData)
+        .probability;
+    if (p > 0) candidates.add(MapEntry(bid, p));
+  }
+  candidates.shuffle(rng);
+
+  for (final c in candidates) {
+    if (arrivals.length >= maxArrivalsPerTurn) break;
+    if (next.length >= maxResidents) break;
+    if (rng.nextDouble() < c.value) {
+      next.add(c.key);
+      arrivals.add(c.key);
+    }
+  }
+
+  return TurnResult(next, arrivals, departures);
+}
+
+/// 離れていた時間から、進めるサイクル数を決める。
+/// `absence_loop.estimate_tick_count` と同じ区切り。
+///
+/// **時間は勝手に進む。** 急かす仕掛け(スタミナ・時短課金)は入れない
+/// (交渉不能の原則1「受動的である」)。留守のあいだに庭が動いているだけ。
+int estimateTickCount(double hoursPassed) {
+  final minutes = hoursPassed * 60;
+  if (minutes < 5) return 0; // ほぼ即の再訪では何も起こさない
+  if (minutes < 30) return 1; // コーヒー休憩
+  if (hoursPassed < 2) return 2; // ちょっと外出
+  if (hoursPassed < 6) return 3; // 半日
+  if (hoursPassed < 12) return 4; // 仕事前 → 仕事後
+  if (hoursPassed < 24) return 5; // 1日
+  return 6; // 上限
+}
+
+/// 留守のあいだの出来事。
+class AbsenceResult {
+  final Set<String> residents;
+  final List<String> arrivals;
+  final List<String> departures;
+  final int ticks;
+  const AbsenceResult(
+      this.residents, this.arrivals, this.departures, this.ticks);
+}
+
+/// 前回見たときから今までを進める。`absence_loop.evolve_state` に当たる。
+///
+/// 撹乱(嵐・伐採で植物が減る)は**まだ移していない**。
+AbsenceResult evolveWhileAway({
+  required List<String> plantedPlants,
+  required String biomeId,
+  required int month,
+  required Set<String> residents,
+  required DateTime lastSeenAt,
+  required DateTime now,
+  required Random rng,
+  required Map<String, dynamic> plantsData,
+  required Map<String, dynamic> insectsData,
+  required Map<String, dynamic> birdsData,
+  required Map<String, dynamic> biomes,
+  required Map<String, dynamic> seasonOffset,
+}) {
+  final hours = now.difference(lastSeenAt).inSeconds / 3600.0;
+  final ticks = hours <= 0 ? 0 : estimateTickCount(hours);
+  var cur = Set<String>.from(residents);
+  final arrivals = <String>[];
+  final departures = <String>[];
+  if (plantedPlants.isEmpty || ticks == 0) {
+    return AbsenceResult(cur, arrivals, departures, 0);
+  }
+  for (var i = 0; i < ticks; i++) {
+    final r = runTurn(
+      plantedPlants: plantedPlants,
+      biomeId: biomeId,
+      month: month,
+      residents: cur,
+      rng: rng,
+      plantsData: plantsData,
+      insectsData: insectsData,
+      birdsData: birdsData,
+      biomes: biomes,
+      seasonOffset: seasonOffset,
+    );
+    cur = r.residents;
+    arrivals.addAll(r.arrivals);
+    departures.addAll(r.departures);
+  }
+  return AbsenceResult(cur, arrivals, departures, ticks);
+}

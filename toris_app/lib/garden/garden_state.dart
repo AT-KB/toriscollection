@@ -22,15 +22,19 @@ class GardenData {
   final Map<String, dynamic> insects;
   final Map<String, dynamic> biomes;
   final Map<String, dynamic> seasonOffset;
-  const GardenData(
-      this.birds, this.plants, this.insects, this.biomes, this.seasonOffset);
+
+  /// 図鑑の「こわいもの」。GloBI の実際の捕食記録。
+  final Map<String, dynamic> predators;
+
+  const GardenData(this.birds, this.plants, this.insects, this.biomes,
+      this.seasonOffset, this.predators);
 
   static Future<GardenData> load() async {
     Future<Map<String, dynamic>> j(String n) async =>
         (jsonDecode(await rootBundle.loadString('assets/data/$n.json')) as Map)
             .cast<String, dynamic>();
     return GardenData(await j('birds'), await j('plants'), await j('insects'),
-        await j('biomes'), await j('season_offset'));
+        await j('biomes'), await j('season_offset'), await j('predators'));
   }
 }
 
@@ -46,6 +50,16 @@ class Garden {
 
   /// いま庭に来ている鳥。
   final List<String> visiting = [];
+
+  /// 前回ここを見た時刻。**時間は勝手に進む**ので、これが基準になる。
+  DateTime? lastSeenAt;
+
+  /// いまの儀式で既に出会えた鳥(二重に数えないため)。
+  final Set<String> metThisRitual = {};
+
+  /// 留守のあいだに来た鳥・去った鳥(画面に出すため)。
+  List<String> lastArrivals = [];
+  List<String> lastDepartures = [];
 
   Garden(this.data, {this.biomeId = 'kyoto'});
 
@@ -77,6 +91,60 @@ class Garden {
     return out;
   }
 
+  /// 土地を変える。植えたものはその土地に合わないので一度手放す
+  /// (現行も土地ごとに植えられる植物が違う)。
+  void setBiome(String id) {
+    if (biomeId == id) return;
+    biomeId = id;
+    planted.removeWhere((p) {
+      final b = ((data.plants[p]?['biome'] as List?) ?? const [])
+          .map((e) => '$e');
+      return !b.contains(id);
+    });
+  }
+
+  /// 会った回数からの「近さ」。`radio.py` の _obs_to_depth と同じ区切り。
+  String depthOf(String birdId) {
+    final c = observed[birdId] ?? 0;
+    if (c >= 6) return 'b1';
+    if (c >= 3) return 'b2';
+    return 'b3';
+  }
+
+  /// ドット絵。無い種は null(丸で代用する)。
+  String? spriteFor(String birdId) =>
+      spriteIds.contains(birdId) ? 'assets/sprites/$birdId.png' : null;
+
+  /// 図鑑用の大きい絵。無ければ null。
+  String? detailSpriteFor(String birdId) => detailIds.contains(birdId)
+      ? 'assets/sprites/${birdId}_detail.png'
+      : null;
+
+  /// 詳細絵がある種ID。
+  static Set<String> detailIds = {};
+
+  /// 同梱しているドット絵の種ID。起動時に一度だけ読む。
+  static Set<String> spriteIds = {};
+
+  /// アプリに入っているドット絵を数える(AssetManifest から)。
+  static Future<void> loadSpriteIds() async {
+    try {
+      final m = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final all = m.listAssets().where(
+          (k) => k.startsWith('assets/sprites/') && k.endsWith('.png'));
+      spriteIds = {
+        for (final k in all)
+          if (!k.endsWith('_detail.png'))
+            k.substring('assets/sprites/'.length, k.length - 4)
+      };
+      detailIds = {
+        for (final k in all)
+          if (k.endsWith('_detail.png'))
+            k.substring('assets/sprites/'.length, k.length - '_detail.png'.length)
+      };
+    } catch (_) {}
+  }
+
   bool plant(String plantId) {
     if (planted.length >= maxPlants || planted.contains(plantId)) return false;
     planted.add(plantId);
@@ -85,28 +153,41 @@ class Garden {
 
   void remove(String plantId) => planted.remove(plantId);
 
-  /// 見に行く。来ている鳥を数え直し、会った回数を増やす。
+  /// **留守のあいだのぶんを進める。** 画面を開いた時に一度だけ呼ぶ。
   ///
-  /// 現行の run_turn に当たる。滞在は最大4種(落ち着いた庭に保つため)。
-  /// **来なかったことは罰ではない**ので、記録は減らさない。
-  List<String> lookAtGarden(Random rng) {
-    final w = web;
-    final newcomers = <String>[];
-    for (final bid in data.birds.keys) {
-      if (visiting.contains(bid)) continue;
-      if (visiting.length >= 4) break;
-      final a = core.arrivalProbability(
-          birdId: bid, web: w, biomeId: biomeId, birdsData: data.birds);
-      if (a.probability > 0 && rng.nextDouble() < a.probability) {
-        visiting.add(bid);
-        newcomers.add(bid);
+  /// 現行の `absence_loop.evolve_state` に当たる。押して進める仕掛けは置かない
+  /// (交渉不能の原則1「受動的である」)。5分未満の再訪では何も起きない。
+  void catchUp(Random rng) {
+    final now = DateTime.now();
+    final last = lastSeenAt;
+    lastArrivals = [];
+    lastDepartures = [];
+    if (last != null && planted.isNotEmpty) {
+      final r = core.evolveWhileAway(
+        plantedPlants: planted,
+        biomeId: biomeId,
+        month: month,
+        residents: visiting.toSet(),
+        lastSeenAt: last,
+        now: now,
+        rng: rng,
+        plantsData: data.plants,
+        insectsData: data.insects,
+        birdsData: data.birds,
+        biomes: data.biomes,
+        seasonOffset: data.seasonOffset,
+      );
+      visiting
+        ..clear()
+        ..addAll(r.residents);
+      lastArrivals = r.arrivals;
+      lastDepartures = r.departures;
+      // 来ていた鳥とは「会った」ことになる。会うほど馴染んで近くで鳴く。
+      for (final b in r.arrivals) {
+        observed[b] = (observed[b] ?? 0) + 1;
       }
     }
-    // 会った回数は、いま来ている鳥ぶんだけ増える(会いに行くほど馴染む)
-    for (final bid in visiting) {
-      observed[bid] = (observed[bid] ?? 0) + 1;
-    }
-    return newcomers;
+    lastSeenAt = now;
   }
 
   // ── 保存 ──
@@ -118,6 +199,7 @@ class Garden {
         'residents': visiting.toSet(),
         'discovered': observed.keys.toSet(),
         'observed': {for (final e in observed.entries) e.key: e.value},
+        'saved_at': core.isoSeconds(lastSeenAt ?? DateTime.now()),
       };
 
   void applyState(Map<String, dynamic> s) {
@@ -128,6 +210,10 @@ class Garden {
     visiting
       ..clear()
       ..addAll(((s['residents'] as Iterable?) ?? const []).map((e) => '$e'));
+    // 前回見た時刻。セーブコードの saved_at をそのまま使う
+    // (現行も「離れていた時間」をこれで測っている)。
+    final at = s['saved_at'];
+    if (at is String) lastSeenAt = DateTime.tryParse(at);
     observed.clear();
     final obs = s['observed'];
     if (obs is Map) {

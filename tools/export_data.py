@@ -66,6 +66,10 @@ def main() -> None:
     _dump("season_offset.json",
           {str(k): v for k, v in data.SEASON_TEMP_OFFSET.items()})
 
+    # 図鑑の「こわいもの」。GloBI の実際の捕食記録(恣意的に足さない)。
+    import predator_data
+    _dump("predators.json", predator_data.PREDATORS)
+
     print(f"{len(out)}種 -> {os.path.abspath(OUT)}")
     print(f"  食べ物のデータがある種: {n_diet}")
     print(f"  温度域(temp_fit)がある種: {sum(1 for b in out.values() if b.get('temp_fit'))}")
