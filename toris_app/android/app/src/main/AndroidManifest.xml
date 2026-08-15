@@ -56,6 +56,13 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <!-- ラジオを鳴らしている間だけ立てる。画面を消しても音を止めないため
+             (背面に回ると OS がバックグラウンド再生とみなして絞る)。 -->
+        <service
+            android:name=".RadioService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

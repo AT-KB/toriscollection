@@ -19,6 +19,9 @@ import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:toris_core/toris_core.dart' as core;
+
+import 'sleep_mode.dart';
 
 /// 現行版 radio.py の定数(BGMモードでない方)。数字は勝手に変えないこと。
 const double kSingMinS = 2.5;
@@ -58,6 +61,16 @@ const Map<String, double> kAmbMax = {
   'lake': 1.00, 'fire': 0.90, 'drips': 0.70,
 };
 
+/// 観察回数から「近さ」を決める。`radio.py` の `_obs_to_depth` と同じ。
+///
+/// **よく会った鳥ほど手前で鳴く。** 警戒心が薄れて近くまで来る、という
+/// 見立てで、会いに行くことがそのまま音の近さになる。
+String obsToDepth(int count) {
+  if (count >= 6) return 'b1'; // 手前・クリア
+  if (count >= 3) return 'b2'; // 中間
+  return 'b3'; // 遠景
+}
+
 /// 同梱している鳥。`assets/birds/_credits.json` から読む
 /// (音源を足したり差し替えたりしても、コードを触らずに反映される)。
 class BirdAsset {
@@ -83,6 +96,10 @@ Future<List<BirdAsset>> loadBirdAssets() async {
 class BirdVoice {
   final BirdAsset bird;
   final String depth;
+
+  /// 何羽で鳴くか。観察回数で育つ(`toris_core` の flockSize)。
+  /// いまは表示のみ。実際に重ねるのは現行 radio.py の群れ処理を移してから。
+  final int flock;
   final Random _rng;
 
   AudioSource? _source;
@@ -90,7 +107,7 @@ class BirdVoice {
   Timer? _cycle;
   bool singing = false;
 
-  BirdVoice(this.bird, this.depth, this._rng);
+  BirdVoice(this.bird, this.depth, this._rng, {this.flock = 1});
 
   double get _peak => kDepthGain[depth] ?? 1.0;
 
@@ -118,7 +135,7 @@ class BirdVoice {
     }
     singing = true;
     onChange();
-    SoLoud.instance.fadeVolume(h, _peak, const Duration(milliseconds: 400));
+    SoLoud.instance.fadeVolume(h, _peak * _scale, const Duration(milliseconds: 400));
   }
 
   void _stopSinging(void Function() onChange) {
@@ -172,6 +189,17 @@ class BirdVoice {
     SoLoud.instance.setVolume(h, 0);
     SoLoud.instance.setPause(h, true);
   }
+
+  /// 眠りに落ちるときの減衰。1.0 で通常、0 で無音。
+  double _scale = 1.0;
+
+  void fadeScale(double k) {
+    _scale = k;
+    final h = _handle;
+    if (h != null && singing) {
+      SoLoud.instance.setVolume(h, _peak * _scale);
+    }
+  }
 }
 
 /// ラジオ全体。鳥3羽と環境音7層を持つ。
@@ -189,20 +217,22 @@ class RadioEngine {
 
   /// 鳴らす顔ぶれを選んで読み込む。
   ///
-  /// 本来は「会ったことのある鳥」から選ぶ(現行の pick_lineup)。生態エンジンを
-  /// 移すまでの間は、同梱している中から重複なく選ぶ。
-  Future<void> load({List<String>? onlyIds}) async {
+  /// **顔ぶれはランダム**に選ぶ。ただし完全な平等ではなく、**よく会った鳥ほど
+  /// 主役に出やすい**(現行 radio.py の base_w = 1.0 + count * 0.5 と同じ)。
+  /// 近さ(奥行き)と群れの大きさも観察回数で決まる — よく会うほど警戒心が薄れ、
+  /// 手前で、厚く鳴く。
+  ///
+  /// 共起ネットワークによる引き寄せ(ecology.pick_lineup)は、生態エンジンを
+  /// 移してから足す。いまは基礎重みのぶんだけを写している。
+  Future<void> load({Map<String, int> observed = const {}}) async {
     try {
       await SoLoud.instance.init();
-      var all = await loadBirdAssets();
-      if (onlyIds != null && onlyIds.isNotEmpty) {
-        all = all.where((b) => onlyIds.contains(b.id)).toList();
-      }
-      all.shuffle(_rng);
-      final lineup = all.take(kMaxBirds).toList();
-      const depths = ['b2', 'b3', 'b1']; // 近さをばらけさせる
-      for (var i = 0; i < lineup.length; i++) {
-        final v = BirdVoice(lineup[i], depths[i % depths.length], _rng);
+      final all = await loadBirdAssets();
+      final lineup = _pickLineup(all, observed);
+      for (final b in lineup) {
+        final count = observed[b.id] ?? 0;
+        final v = BirdVoice(b, obsToDepth(count), _rng,
+            flock: core.flockSize(b.id, count, const {}));
         await v.load();
         birds.add(v);
       }
@@ -216,6 +246,34 @@ class RadioEngine {
     }
   }
 
+  /// 観察回数で重み付けした抽選。重み 1.0 + 回数 * 0.5(現行と同じ)。
+  List<BirdAsset> _pickLineup(List<BirdAsset> all, Map<String, int> observed) {
+    final pool = List<BirdAsset>.from(all);
+    final out = <BirdAsset>[];
+    while (out.length < kMaxBirds && pool.isNotEmpty) {
+      final weights = [
+        for (final b in pool) 1.0 + (observed[b.id] ?? 0) * 0.5
+      ];
+      final total = weights.fold<double>(0, (a, b) => a + b);
+      var r = _rng.nextDouble() * total;
+      var idx = pool.length - 1;
+      for (var i = 0; i < pool.length; i++) {
+        r -= weights[i];
+        if (r <= 0) {
+          idx = i;
+          break;
+        }
+      }
+      out.add(pool.removeAt(idx));
+    }
+    return out;
+  }
+
+  /// 眠りにつくまでの残り。null なら睡眠モードではない。
+  Timer? _sleepTimer;
+  Timer? _fadeTimer;
+  DateTime? sleepEndsAt;
+
   void toggle(void Function() onChange) {
     if (!ready) return;
     running = !running;
@@ -223,7 +281,74 @@ class RadioEngine {
       running ? v.start(birds.length, onChange) : v.stop();
     }
     applyAmbience();
+    // 画面が消えても鳴り続けるように、鳴っている間だけサービスを立てる。
+    if (running) {
+      RadioNative.startForeground();
+    } else {
+      cancelSleep();
+      RadioNative.stopForeground();
+      RadioNative.setBrightness(-1);
+    }
     onChange();
+  }
+
+  /// 睡眠モードを始める。[minutes] 後に、最後の1分をかけて沈めて止める。
+  void startSleep(int minutes, void Function() onChange) {
+    cancelSleep();
+    if (!running) toggle(onChange);
+    sleepEndsAt = DateTime.now().add(Duration(minutes: minutes));
+    final untilFade = Duration(minutes: minutes) - kFadeOut;
+    _sleepTimer = Timer(untilFade.isNegative ? Duration.zero : untilFade, () {
+      // 終わりは切らずに沈める。急に消えると、かえって目が覚める。
+      _fadeOut(onChange);
+    });
+    // 画面は暗くするが、消すのは端末のスリープ時間に任せる。
+    RadioNative.setBrightness(0.0);
+    onChange();
+  }
+
+  void _fadeOut(void Function() onChange) {
+    final steps = kFadeOut.inSeconds;
+    final startVol = ambVol;
+    var i = 0;
+    _fadeTimer?.cancel();
+    _fadeTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      i++;
+      final k = (1 - i / steps).clamp(0.0, 1.0);
+      ambVol = startVol * k;
+      applyAmbience();
+      for (final v in birds) {
+        v.fadeScale(k);
+      }
+      if (i >= steps) {
+        t.cancel();
+        ambVol = startVol;
+        if (running) toggle(onChange);
+        sleepEndsAt = null;
+        onChange();
+      }
+    });
+  }
+
+  void cancelSleep() {
+    _sleepTimer?.cancel();
+    _fadeTimer?.cancel();
+    _sleepTimer = null;
+    _fadeTimer = null;
+    sleepEndsAt = null;
+    for (final v in birds) {
+      v.fadeScale(1.0);
+    }
+    RadioNative.setBrightness(-1);
+  }
+
+  /// 通知の「Stop」が押されていたら止める(画面を見ていなくても止められる)。
+  Future<void> pollStopRequest(void Function() onChange) async {
+    if (!running) return;
+    if (await RadioNative.stopRequested()) {
+      await RadioNative.clearStopRequest();
+      toggle(onChange);
+    }
   }
 
   void applyAmbience() {
@@ -250,6 +375,8 @@ class RadioEngine {
   int get voiceCount => ready ? SoLoud.instance.getActiveVoiceCount() : 0;
 
   void dispose() {
+    cancelSleep();
+    RadioNative.stopForeground();
     for (final t in _ambPause.values) {
       t.cancel();
     }

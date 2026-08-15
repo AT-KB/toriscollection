@@ -11,5 +11,9 @@ class MainActivity : FlutterActivity() {
         val alarm = AlarmChannel(this)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AlarmChannel.CHANNEL)
             .setMethodCallHandler { call, result -> alarm.handle(call, result) }
+
+        val radio = RadioChannel(this)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, RadioChannel.CHANNEL)
+            .setMethodCallHandler { call, result -> radio.handle(call, result) }
     }
 }

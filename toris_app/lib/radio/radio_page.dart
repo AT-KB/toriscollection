@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'radio_engine.dart';
+import 'sleep_mode.dart';
 
 class RadioPage extends StatefulWidget {
   const RadioPage({super.key});
@@ -32,6 +33,10 @@ class _RadioPageState extends State<RadioPage>
       if (mounted) setState(() {});
     });
     _watch = Timer.periodic(const Duration(seconds: 2), (_) {
+      // 通知の「Stop」で止められるようにする(画面を見ていなくても止まる)
+      _engine.pollStopRequest(() {
+        if (mounted) setState(() {});
+      });
       if (mounted) setState(() {});
     });
   }
@@ -121,6 +126,42 @@ class _RadioPageState extends State<RadioPage>
               );
             }).toList(),
           ),
+          const SizedBox(height: 20),
+
+          // ── 睡眠モード ──
+          // Streamlit では作れなかった機能。画面を消しても鳴り続け、
+          // 決めた時間で静かに沈んで止まる。
+          const Text('Fall asleep to the garden',
+              style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(
+            e.sleepEndsAt == null
+                ? 'The screen dims and the birds keep singing. '
+                  'They fade away on their own.'
+                : 'Fading away at '
+                  '${TimeOfDay.fromDateTime(e.sleepEndsAt!).format(context)}',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final m in kSleepMinutes)
+                ChoiceChip(
+                  label: Text('$m min'),
+                  selected: false,
+                  onSelected:
+                      e.ready ? (_) => e.startSleep(m, () => setState(() {})) : null,
+                ),
+              if (e.sleepEndsAt != null)
+                ActionChip(
+                  label: const Text('Cancel'),
+                  onPressed: () => setState(() => e.cancelSleep()),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           Row(children: [
             const Text('🔈'),
             Expanded(
