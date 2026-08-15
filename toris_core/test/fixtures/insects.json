@@ -1,0 +1,217 @@
+{
+ "abura_zemi": {
+  "eats_plants": [
+   "sakura",
+   "kunugi",
+   "enoki"
+  ],
+  "english": "Large Brown Cicada",
+  "scientific": "Graptopsaltria nigrofuscata",
+  "temp_fit": [
+   20,
+   30
+  ]
+ },
+ "ageha_chou": {
+  "eats_plants": [
+   "sakura",
+   "ume",
+   "sazanka",
+   "kobushi"
+  ],
+  "english": "Asian Swallowtail",
+  "scientific": "Papilio xuthus",
+  "temp_fit": [
+   12,
+   28
+  ]
+ },
+ "ama_gaeru": {
+  "eats_plants": [
+   "rice"
+  ],
+  "english": "Japanese Tree Frog",
+  "scientific": "Hyla japonica",
+  "temp_fit": [
+   10,
+   28
+  ]
+ },
+ "ao_imo_mushi": {
+  "eats_plants": [
+   "sakura",
+   "enoki"
+  ],
+  "english": "Cabbage White Caterpillar",
+  "scientific": "Pieris rapae",
+  "temp_fit": [
+   10,
+   26
+  ]
+ },
+ "carpenter_bee": {
+  "eats_plants": [
+   "redbud",
+   "magnolia",
+   "tulip_tree",
+   "dogwood"
+  ],
+  "english": "Eastern Carpenter Bee",
+  "scientific": "Xylocopa virginica",
+  "temp_fit": [
+   12,
+   28
+  ]
+ },
+ "fireflies": {
+  "eats_plants": [
+   "loblolly",
+   "red_maple"
+  ],
+  "english": "Common Eastern Firefly",
+  "scientific": "Photinus pyralis",
+  "temp_fit": [
+   16,
+   28
+  ]
+ },
+ "hoverfly_us": {
+  "eats_plants": [
+   "sourwood",
+   "sweetbay",
+   "buttonbush",
+   "service_berry"
+  ],
+  "english": "Calligrapher Fly",
+  "scientific": "Toxomerus marginatus",
+  "temp_fit": [
+   10,
+   28
+  ]
+ },
+ "june_beetle": {
+  "eats_plants": [
+   "red_maple",
+   "tulip_tree"
+  ],
+  "english": "June Beetle",
+  "scientific": "Phyllophaga sp.",
+  "temp_fit": [
+   15,
+   28
+  ]
+ },
+ "kabuto_mushi": {
+  "eats_plants": [
+   "kunugi"
+  ],
+  "english": "Japanese Rhinoceros Beetle",
+  "scientific": "Trypoxylus dichotomus",
+  "temp_fit": [
+   18,
+   30
+  ]
+ },
+ "kara_imo_mushi": {
+  "eats_plants": [
+   "sakura",
+   "kunugi",
+   "kaki"
+  ],
+  "english": "Inchworm",
+  "scientific": "Geometridae",
+  "temp_fit": [
+   8,
+   25
+  ]
+ },
+ "katydid": {
+  "eats_plants": [
+   "white_oak",
+   "tulip_tree",
+   "sourwood"
+  ],
+  "english": "Katydid",
+  "scientific": "Tettigoniidae",
+  "temp_fit": [
+   14,
+   28
+  ]
+ },
+ "kuwagata": {
+  "eats_plants": [
+   "kunugi",
+   "enoki",
+   "momiji"
+  ],
+  "english": "Stag Beetle",
+  "scientific": "Lucanidae",
+  "temp_fit": [
+   15,
+   28
+  ]
+ },
+ "monarch": {
+  "eats_plants": [
+   "dogwood",
+   "redbud",
+   "magnolia"
+  ],
+  "english": "Monarch Butterfly",
+  "scientific": "Danaus plexippus",
+  "temp_fit": [
+   12,
+   28
+  ]
+ },
+ "nihon_mitsubachi": {
+  "eats_plants": [
+   "sakura",
+   "camellia",
+   "kaki"
+  ],
+  "english": "Japanese Honeybee",
+  "scientific": "Apis cerana japonica",
+  "temp_fit": [
+   10,
+   28
+  ]
+ },
+ "ruby_tiger_moth": {
+  "eats_plants": [
+   "service_berry",
+   "buttonbush",
+   "sweetbay"
+  ],
+  "english": "Ruby Tiger Moth",
+  "scientific": "Phragmatobia fuliginosa",
+  "temp_fit": [
+   10,
+   25
+  ]
+ },
+ "shio_kara_tonbo": {
+  "eats_plants": [
+   "rice"
+  ],
+  "english": "White-tailed Skimmer",
+  "scientific": "Orthetrum albistylum",
+  "temp_fit": [
+   15,
+   30
+  ]
+ },
+ "tent_caterpillar": {
+  "eats_plants": [
+   "dogwood",
+   "red_maple",
+   "tulip_tree"
+  ],
+  "english": "Eastern Tent Caterpillar",
+  "scientific": "Malacosoma americanum",
+  "temp_fit": [
+   8,
+   25
+  ]
+ }
+}

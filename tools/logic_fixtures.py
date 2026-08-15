@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "toris_collecti
 
 import badges  # noqa: E402
 import ecology  # noqa: E402
+import engine  # noqa: E402
 import data as seed  # noqa: E402
 import flock  # noqa: E402
 import i18n  # noqa: E402
@@ -96,11 +97,42 @@ def main() -> None:
             })
     guilds = {b: ecology.guild(b, birds) for b in ids}
 
+    # 到来の仕組み: 実データで、植えた組み合わせ × 全12ヶ月 × 全37種。
+    # 「植える→虫→鳥」はこの商品の背骨なので、ここがズレると別物になる。
+    plant_sets = [
+        [],
+        ["sakura"],
+        ["sakura", "kunugi"],
+        ["himawari", "susuki", "sakura", "kunugi"],
+        ["nonexistent_plant", "sakura"],
+    ]
+    arrivals = []
+    for biome_id in sorted(seed.BIOMES):
+        for pset in plant_sets:
+            for month in range(1, 13):
+                G, temp = engine.build_network(pset, biome_id, month)
+                web = {
+                    "plants": sorted(n for n, d in G.nodes(data=True)
+                                     if d.get("kind") == "plant"),
+                    "insects": sorted(n for n, d in G.nodes(data=True)
+                                      if d.get("kind") == "insect"),
+                }
+                probs = {}
+                for bid in ids:
+                    r = engine.calculate_arrival_probability(bid, G, biome_id, month)
+                    probs[bid] = [round(r["probability"], 12),
+                                  round(r["food_score"], 12)]
+                arrivals.append({
+                    "biome": biome_id, "planted": pset, "month": month,
+                    "temp": round(temp, 12), **web, "probs": probs,
+                })
+
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump({"flock": flock_cases, "badges": badge_cases,
-                   "ecology": eco, "guilds": guilds}, f,
+                   "ecology": eco, "guilds": guilds, "arrivals": arrivals}, f,
                   ensure_ascii=False, indent=1)
     print(f"生態: {len(eco)} 組(37種の全ペア)")
+    print(f"到来: {len(arrivals)} 状況 × {len(ids)}種 = {len(arrivals)*len(ids)} 通り")
     n = sum(len(c["sizes"]) for c in flock_cases)
     print(f"flock: {len(flock_cases)} 種 × {len(COUNTS)} 回 = {n} 通り")
     print(f"badges: {len(badge_cases)} 通り")

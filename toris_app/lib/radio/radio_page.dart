@@ -13,7 +13,9 @@ import 'radio_engine.dart';
 import 'sleep_mode.dart';
 
 class RadioPage extends StatefulWidget {
-  const RadioPage({super.key});
+  /// 会った回数。よく会った鳥ほど主役に出やすく、近くで、厚く鳴く。
+  final Map<String, int> observed;
+  const RadioPage({super.key, this.observed = const {}});
 
   @override
   State<RadioPage> createState() => _RadioPageState();
@@ -30,7 +32,7 @@ class _RadioPageState extends State<RadioPage>
   @override
   void initState() {
     super.initState();
-    _engine.load().then((_) {
+    _engine.load(observed: widget.observed).then((_) {
       if (mounted) setState(() {});
     });
     _watch = Timer.periodic(const Duration(seconds: 2), (_) {

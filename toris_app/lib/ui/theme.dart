@@ -49,9 +49,18 @@ ThemeData buildTheme() {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
-    chipTheme: const ChipThemeData(
-      labelStyle: TextStyle(fontSize: 15),
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+    // チップは**必ず文字色を指定する**。既定のままだと未選択のラベルが
+    // 白抜きになって読めなかった(2026-08-15 実機で発覚)。
+    chipTheme: ChipThemeData(
+      labelStyle: const TextStyle(fontSize: 15, color: kInk),
+      secondaryLabelStyle: const TextStyle(fontSize: 15, color: kInk),
+      backgroundColor: Colors.white,
+      selectedColor: const Color(0xFFD8ECC4),
+      side: const BorderSide(color: Color(0xFFCFDCC0)),
+      showCheckmark: true,
+      checkmarkColor: kInk,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
   );
 }

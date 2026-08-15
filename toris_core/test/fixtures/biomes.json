@@ -1,0 +1,20 @@
+{
+ "charlotte": {
+  "description_en": "The humid temperate forest of the eastern United States. Broadleaf trees mingle with pines, home to many brightly colored birds.",
+  "hemisphere": "north",
+  "lat": 35.2,
+  "lon": -80.8,
+  "max_plants": 4,
+  "name_en": "Charlotte",
+  "temp_mean": 16
+ },
+ "kyoto": {
+  "description_en": "A temperate monsoon land of four distinct seasons. Its satoyama foothills and secondary woods teem with plants, insects, and birds.",
+  "hemisphere": "north",
+  "lat": 35.0,
+  "lon": 135.8,
+  "max_plants": 4,
+  "name_en": "Kyoto",
+  "temp_mean": 14
+ }
+}

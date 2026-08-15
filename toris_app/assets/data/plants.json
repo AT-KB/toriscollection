@@ -1,0 +1,386 @@
+{
+ "beautyberry": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "American Beautyberry",
+  "icon": "🟣",
+  "scientific": "Callicarpa americana",
+  "temp_fit": [
+   5,
+   32
+  ]
+ },
+ "buttonbush": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Buttonbush",
+  "icon": "🌸",
+  "scientific": "Cephalanthus occidentalis",
+  "temp_fit": [
+   8,
+   28
+  ]
+ },
+ "camellia": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Camellia",
+  "icon": "🌺",
+  "scientific": "Camellia japonica",
+  "temp_fit": [
+   10,
+   24
+  ]
+ },
+ "dogwood": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Flowering Dogwood",
+  "icon": "🌸",
+  "scientific": "Cornus florida",
+  "temp_fit": [
+   5,
+   26
+  ]
+ },
+ "egonoki": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Snowbell",
+  "icon": "🤍",
+  "scientific": "Styrax japonica",
+  "temp_fit": [
+   2,
+   26
+  ]
+ },
+ "enoki": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Chinese Hackberry",
+  "icon": "🌳",
+  "scientific": "Celtis sinensis",
+  "temp_fit": [
+   8,
+   24
+  ]
+ },
+ "kaki": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Persimmon",
+  "icon": "🍂",
+  "scientific": "Diospyros kaki",
+  "temp_fit": [
+   8,
+   24
+  ]
+ },
+ "kobushi": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Kobushi Magnolia",
+  "icon": "🌼",
+  "scientific": "Magnolia kobus",
+  "temp_fit": [
+   3,
+   22
+  ]
+ },
+ "kunugi": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Sawtooth Oak",
+  "icon": "🌳",
+  "scientific": "Quercus acutissima",
+  "temp_fit": [
+   8,
+   22
+  ]
+ },
+ "kuwa": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Mulberry",
+  "icon": "🌿",
+  "scientific": "Morus australis",
+  "temp_fit": [
+   6,
+   30
+  ]
+ },
+ "loblolly": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Loblolly Pine",
+  "icon": "🌲",
+  "scientific": "Pinus taeda",
+  "temp_fit": [
+   5,
+   28
+  ]
+ },
+ "magnolia": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Southern Magnolia",
+  "icon": "🌼",
+  "scientific": "Magnolia grandiflora",
+  "temp_fit": [
+   8,
+   28
+  ]
+ },
+ "momiji": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Maple",
+  "icon": "🍁",
+  "scientific": "Acer palmatum",
+  "temp_fit": [
+   5,
+   24
+  ]
+ },
+ "murasaki_shikibu": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Beautyberry",
+  "icon": "🟣",
+  "scientific": "Callicarpa japonica",
+  "temp_fit": [
+   3,
+   28
+  ]
+ },
+ "nanten": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Heavenly Bamboo",
+  "icon": "🌿",
+  "scientific": "Nandina domestica",
+  "temp_fit": [
+   8,
+   24
+  ]
+ },
+ "noibara": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Multiflora Rose",
+  "icon": "🌹",
+  "scientific": "Rosa multiflora",
+  "temp_fit": [
+   -2,
+   26
+  ]
+ },
+ "pine": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Red Pine",
+  "icon": "🌲",
+  "scientific": "Pinus densiflora",
+  "temp_fit": [
+   3,
+   22
+  ]
+ },
+ "pokeweed": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "American Pokeweed",
+  "icon": "🍇",
+  "scientific": "Phytolacca americana",
+  "temp_fit": [
+   5,
+   32
+  ]
+ },
+ "red_cedar": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Eastern Red Cedar",
+  "icon": "🌲",
+  "scientific": "Juniperus virginiana",
+  "temp_fit": [
+   -10,
+   28
+  ]
+ },
+ "red_maple": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Red Maple",
+  "icon": "🍁",
+  "scientific": "Acer rubrum",
+  "temp_fit": [
+   3,
+   26
+  ]
+ },
+ "redbud": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Eastern Redbud",
+  "icon": "🌸",
+  "scientific": "Cercis canadensis",
+  "temp_fit": [
+   5,
+   26
+  ]
+ },
+ "rice": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Rice",
+  "icon": "🌾",
+  "scientific": "Oryza sativa",
+  "temp_fit": [
+   15,
+   28
+  ]
+ },
+ "sakura": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Cherry",
+  "icon": "🌸",
+  "scientific": "Prunus serrulata",
+  "temp_fit": [
+   5,
+   22
+  ]
+ },
+ "sazanka": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Sasanqua Camellia",
+  "icon": "🌺",
+  "scientific": "Camellia sasanqua",
+  "temp_fit": [
+   5,
+   22
+  ]
+ },
+ "service_berry": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Serviceberry",
+  "icon": "🍒",
+  "scientific": "Amelanchier arborea",
+  "temp_fit": [
+   3,
+   24
+  ]
+ },
+ "sourwood": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Sourwood",
+  "icon": "🌼",
+  "scientific": "Oxydendrum arboreum",
+  "temp_fit": [
+   5,
+   26
+  ]
+ },
+ "sunflower": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Common Sunflower",
+  "icon": "🌻",
+  "scientific": "Helianthus annuus",
+  "temp_fit": [
+   12,
+   32
+  ]
+ },
+ "susuki": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Silver Grass",
+  "icon": "🌾",
+  "scientific": "Miscanthus sinensis",
+  "temp_fit": [
+   5,
+   28
+  ]
+ },
+ "sweetbay": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Sweetbay Magnolia",
+  "icon": "🌼",
+  "scientific": "Magnolia virginiana",
+  "temp_fit": [
+   8,
+   28
+  ]
+ },
+ "tulip_tree": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "Tulip Tree",
+  "icon": "🌳",
+  "scientific": "Liriodendron tulipifera",
+  "temp_fit": [
+   5,
+   26
+  ]
+ },
+ "ume": {
+  "biome": [
+   "kyoto"
+  ],
+  "english": "Japanese Apricot",
+  "icon": "🌸",
+  "scientific": "Prunus mume",
+  "temp_fit": [
+   3,
+   22
+  ]
+ },
+ "white_oak": {
+  "biome": [
+   "charlotte"
+  ],
+  "english": "White Oak",
+  "icon": "🌳",
+  "scientific": "Quercus alba",
+  "temp_fit": [
+   3,
+   26
+  ]
+ }
+}

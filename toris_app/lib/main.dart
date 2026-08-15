@@ -24,6 +24,10 @@ library;
 import 'package:flutter/material.dart';
 
 import 'alarm/alarm_page.dart';
+import 'garden/garden_page.dart';
+import 'garden/garden_state.dart';
+import 'garden/guide_page.dart';
+import 'garden/network_page.dart';
 import 'radio/radio_page.dart';
 import 'ui/theme.dart';
 
@@ -52,31 +56,22 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  // IndexedStack にしているのは、タブを移ってもラジオを鳴らし続けるため。
-  final List<Widget> _pages = const [
-    RadioPage(),
-    ComingSoon(
-      title: 'Garden',
-      icon: Icons.park_outlined,
-      note: 'Your garden is still in the old app.\nComing here next.',
-    ),
-    ComingSoon(
-      title: 'Guide',
-      icon: Icons.menu_book_outlined,
-      note: 'The birds you have met.\nComing here next.',
-    ),
-    ComingSoon(
-      title: 'Network',
-      icon: Icons.hub_outlined,
-      note: 'Who eats what, and who comes because of it.',
-    ),
-    AlarmPage(),
-  ];
+  /// 庭の状態は全画面で共有する。**会った回数**がラジオ(近さ・群れ)と
+  /// 図鑑に効くので、ここを唯一の持ち主にする。
+  Garden? _garden;
 
   @override
   Widget build(BuildContext context) {
+    // IndexedStack にしているのは、タブを移ってもラジオを鳴らし続けるため。
+    final pages = [
+      RadioPage(observed: _garden?.observed ?? const {}),
+      GardenPage(onChanged: (g) => setState(() => _garden = g)),
+      GuidePage(garden: _garden),
+      NetworkPage(garden: _garden),
+      const AlarmPage(),
+    ];
     return Scaffold(
-      body: IndexedStack(index: _index, children: _pages),
+      body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

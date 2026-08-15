@@ -107,6 +107,50 @@ void main() {
     expect(b.first, only, reason: '基礎重みが効いていない');
   });
 
+  test('到来の仕組み: 実データ4440通りで Python 版と一致する', () {
+    // 「植える→虫→鳥」はこの商品の背骨。ここがズレると別物になる。
+    Map<String, dynamic> load(String n) =>
+        (jsonDecode(File('test/fixtures/$n.json').readAsStringSync()) as Map)
+            .cast<String, dynamic>();
+    final birds = load('birds');
+    final plants = load('plants');
+    final insects = load('insects');
+    final biomes = load('biomes');
+    final season = load('season_offset');
+
+    var checked = 0;
+    for (final c in fx['arrivals'] as List) {
+      final web = buildFoodWeb(
+        plantedPlants: (c['planted'] as List).map((e) => '$e').toList(),
+        biomeId: c['biome'] as String,
+        month: c['month'] as int,
+        plantsData: plants,
+        insectsData: insects,
+        birdsData: birds,
+        biomes: biomes,
+        seasonOffset: season,
+      );
+      expect(web.temperature, closeTo(c['temp'] as num, 1e-9),
+          reason: '${c['biome']} ${c['month']}月 の気温が違う');
+      expect(web.plants.keys.toList()..sort(), c['plants'],
+          reason: '育つ植物が違う');
+      expect(web.insects.keys.toList()..sort(), c['insects'],
+          reason: '湧く虫が違う');
+
+      (c['probs'] as Map<String, dynamic>).forEach((bid, v) {
+        final a = arrivalProbability(
+            birdId: bid, web: web, biomeId: c['biome'] as String,
+            birdsData: birds);
+        expect(a.probability, closeTo((v as List)[0] as num, 1e-9),
+            reason: '$bid の到来確率が違う(${c['biome']} ${c['month']}月)');
+        expect(a.foodScore, closeTo(v[1] as num, 1e-9),
+            reason: '$bid の食物網スコアが違う');
+        checked++;
+      });
+    }
+    expect(checked, 4440, reason: '4440通りを見ているはず');
+  });
+
   group('Python の型変換をまねる部分', () {
     test('int(): 小数は0方向へ切り捨て、整数でない文字列は通さない', () {
       expect(pyInt(2), 2);
