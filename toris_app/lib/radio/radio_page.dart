@@ -16,7 +16,11 @@ class RadioPage extends StatefulWidget {
   /// 会った回数。よく会った鳥ほど主役に出やすく、近くで、厚く鳴く。
   final Map<String, int> observed;
 
-  const RadioPage({super.key, this.observed = const {}});
+  /// 庭の土地。ラジオの既定の土地になる(現行と同じ)。
+  final String biomeId;
+
+  const RadioPage(
+      {super.key, this.observed = const {}, this.biomeId = 'charlotte'});
 
   @override
   State<RadioPage> createState() => _RadioPageState();
@@ -33,7 +37,9 @@ class _RadioPageState extends State<RadioPage>
   @override
   void initState() {
     super.initState();
-    _engine.load(observed: widget.observed).then((_) {
+    _engine
+        .load(observed: widget.observed, biomeId: widget.biomeId)
+        .then((_) {
       if (mounted) setState(() {});
     });
     _watch = Timer.periodic(const Duration(seconds: 2), (_) {
@@ -61,6 +67,22 @@ class _RadioPageState extends State<RadioPage>
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          // ── どの土地のラジオを聴くか ──
+          // 現行にもある(`radio.py` は選んだ土地の鳥だけを鳴らす)。
+          // 既定は自分の庭の土地。別の土地の声も聴ける。
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'charlotte', label: Text('Charlotte')),
+              ButtonSegment(value: 'kyoto', label: Text('Kyoto')),
+            ],
+            selected: {e.biomeId},
+            onSelectionChanged: (v) async {
+              await _engine.reload(v.first);
+              if (mounted) setState(() {});
+            },
+          ),
+          const SizedBox(height: 18),
+
           // ⚠️ ここに「今の庭(いま庭に居る鳥)」を置いてはいけない。
           // ラジオの顔ぶれは共起ネットワークからの抽選で、**庭に居る鳥とは無関係**。
           // 並べると「これから鳴く鳥」に読めてしまい、嘘になる

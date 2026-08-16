@@ -306,7 +306,30 @@ class RadioEngine {
   String englishOf(String id) =>
       (_birdsData[id]?['english'] as String?) ?? id;
 
-  Future<void> load({Map<String, int> observed = const {}}) async {
+  /// どの土地のラジオを聴くか。**現行にも土地の選択がある**
+  /// (`radio.py` は `biome_pref` で顔ぶれを絞る)。移植で落ちていた。
+  String biomeId = 'charlotte';
+
+  /// 土地を替える。鳴っていたら、いったん止めてから組み直す。
+  Future<void> reload(String biome) async {
+    if (biome == biomeId) return;
+    final wasRunning = running;
+    if (running) toggle(() {});
+    for (final v in birds) {
+      v.stop();
+    }
+    birds.clear();
+    ready = false;
+    await load(observed: _lastObserved, biomeId: biome);
+    if (wasRunning && ready) toggle(() {});
+  }
+
+  Map<String, int> _lastObserved = const {};
+
+  Future<void> load(
+      {Map<String, int> observed = const {}, String? biomeId}) async {
+    if (biomeId != null) this.biomeId = biomeId;
+    _lastObserved = observed;
     try {
       await SoLoud.instance.init();
       _birdsData = await loadBirdsData();
@@ -340,7 +363,16 @@ class RadioEngine {
   /// 関係は恣意的に足さず、食べ物と気候の重なりから出す(原則4「生態に誠実」)。
   List<BirdAsset> _pickLineup(List<BirdAsset> all, Map<String, int> observed) {
     final byId = {for (final b in all) b.id: b};
-    final ids = byId.keys.toList();
+    // **その土地に居る鳥だけ**から選ぶ(`radio.py` の biome_birds と同じ)。
+    // 絞らないと、シャーロットの庭で日本の鳥が鳴く。
+    final ids = [
+      for (final id in byId.keys)
+        if (((_birdsData[id]?['biome_pref'] as List?) ?? const [])
+            .map((e) => '$e')
+            .contains(biomeId))
+          id
+    ];
+    if (ids.isEmpty) return [];
     final chosen = core.pickLineup(
       ids, _birdsData, kMaxBirds, _rng.nextDouble,
       baseWeight: {for (final id in ids) id: 1.0 + (observed[id] ?? 0) * 0.5},

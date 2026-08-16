@@ -465,15 +465,16 @@ class _GardenPageState extends State<GardenPage>
                 const Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Text(
-                    '🐿️ → 🦅   Shy birds keep their distance.',
-                    style: TextStyle(fontSize: 13, color: kSub),
+                    'The squirrel drew a hawk. '
+                    'Shy birds keep their distance.',
+                    style: TextStyle(fontSize: 13, height: 1.4, color: kSub),
                   ),
                 )
               else if (g.chain.animals.isNotEmpty)
                 const Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Text(
-                    '🐿️ is taking the seed.',
+                    'A squirrel is taking the seed.',
                     style: TextStyle(fontSize: 13, color: kSub),
                   ),
                 ),

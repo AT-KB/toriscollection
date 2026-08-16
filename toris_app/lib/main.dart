@@ -64,7 +64,10 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     // IndexedStack にしているのは、タブを移ってもラジオを鳴らし続けるため。
     final pages = [
-      RadioPage(observed: _garden?.observed ?? const {}),
+      RadioPage(
+        observed: _garden?.observed ?? const {},
+        biomeId: _garden?.biomeId ?? 'charlotte',
+      ),
       GardenPage(onChanged: (g) => setState(() => _garden = g)),
       GuidePage(garden: _garden),
       NetworkPage(garden: _garden),

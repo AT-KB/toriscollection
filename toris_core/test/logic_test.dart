@@ -601,6 +601,18 @@ void main() {
           reason: '$item @ $biome の可否が違う');
       expect(kGardenItems[item]!.effectKind, c['effect_kind']);
       expect(kGardenItems[item]!.value, closeTo(c['value'] as num, 1e-12));
+      // **絵文字も突き合わせる。** 勘で書いて2件違っていた(🍬→🌺 / 🌰→🌾)。
+      expect(kGardenItems[item]!.emoji, c['emoji'], reason: '$item の絵文字');
+    }
+
+    // ── 選べない理由の文 ──
+    // アイテム名は英訳が無いので、名前を固定の印にして
+    // 「文の組み立て」だけを比べる。
+    for (final c in g['reasons'] as List) {
+      final item = c['item'] as String;
+      final got = itemUnavailableReason(item, c['biome'] as String, birds)
+          .replaceAll(kItemNames[item]!, 'NAME');
+      expect(got, c['text'], reason: '$item @ ${c['biome']} の理由文');
     }
 
     // ── 効いている時間の境目(両端を含む) ──

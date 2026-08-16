@@ -38,14 +38,17 @@ class GardenItem {
   bool get hasSingleTarget => singleTarget != null;
 }
 
-/// 6種。値は `garden_items.py` の ITEMS と同じ。
+/// 6種。値も**絵文字も** `garden_items.py` の ITEMS と同じ。
+///
+/// ⚠️ 絵文字を勘で書かないこと。🍬 を 🌺、🌰 を 🌾 と書いていて、
+/// 突き合わせのテストを足した時に落ちた(2026-08-16)。
 const Map<String, GardenItem> kGardenItems = {
   'feeder': GardenItem('🌻', kEffectArrivalBonus, 0.010),
-  'hummingbird_feeder': GardenItem('🌺', kEffectArrivalBonus, 0.060,
+  'hummingbird_feeder': GardenItem('🍬', kEffectArrivalBonus, 0.060,
       singleTarget: 'ruby_throated_hummingbird'),
   'suet_feeder': GardenItem('🧈', kEffectArrivalBonus, 0.025),
   'bird_bath': GardenItem('💧', kEffectDepartureReduction, 0.050),
-  'nyjer_feeder': GardenItem('🌾', kEffectArrivalBonus, 0.050),
+  'nyjer_feeder': GardenItem('🌰', kEffectArrivalBonus, 0.050),
   'squirrel_baffle': GardenItem('🛡', kEffectArrivalBonus, 0.030),
 };
 
@@ -180,3 +183,36 @@ bool isItemBoostedArrival(String birdId, ItemPlacement? p, String biomeId,
   if (item == null || item.effectKind != kEffectArrivalBonus) return false;
   return targetBirdIds(p.itemId, biomeId, birdsData).contains(birdId);
 }
+
+/// 選べない理由。**事実だけを言い、責める言い方にしない**
+/// (`garden_items.unavailable_reason`。交渉不能の原則2「罰しない」)。
+///
+/// ハチドリ用だけ言い方が違う — 「この庭には居ないから」と種の話にして、
+/// 「あなたの庭が足りない」とは言わない。
+///
+/// ⚠️ **理由の文は出荷済みの英語だが、アイテム名の英訳は存在しない。**
+/// `i18n.py` に登録が無く、EN でも日本語が返る(現行では英語画面に
+/// 日本語のアイテム名が出る状態)。下の `kItemNames` は**こちらで付けた名前**。
+/// 広告を入れる段で、CEO に確認すること。
+String itemUnavailableReason(
+    String itemId, String biomeId, Map<String, dynamic> birdsData) {
+  final item = kGardenItems[itemId];
+  if (item == null) return '';
+  final name = kItemNames[itemId] ?? itemId;
+  if (itemId == 'hummingbird_feeder') {
+    return "${item.emoji} $name — can't be used here, since hummingbirds "
+        "don't live in this garden (it works in the Charlotte garden).";
+  }
+  return "${item.emoji} $name — there's no target bird for this garden "
+      'right now.';
+}
+
+/// アイテムの名前。**出荷済みの英語ではない**(上の注意を参照)。
+const Map<String, String> kItemNames = {
+  'feeder': 'Bird feeder',
+  'hummingbird_feeder': 'Hummingbird feeder',
+  'suet_feeder': 'Suet feeder',
+  'bird_bath': 'Bird bath',
+  'nyjer_feeder': 'Nyjer seed feeder',
+  'squirrel_baffle': 'Squirrel baffle',
+};

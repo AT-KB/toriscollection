@@ -31364,7 +31364,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.01
+    "value": 0.01,
+    "emoji": "🌻"
    },
    {
     "item": "feeder",
@@ -31386,7 +31387,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.01
+    "value": 0.01,
+    "emoji": "🌻"
    },
    {
     "item": "hummingbird_feeder",
@@ -31396,7 +31398,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.06
+    "value": 0.06,
+    "emoji": "🍬"
    },
    {
     "item": "hummingbird_feeder",
@@ -31404,7 +31407,8 @@
     "targets": [],
     "available": false,
     "effect_kind": "arrival_bonus",
-    "value": 0.06
+    "value": 0.06,
+    "emoji": "🍬"
    },
    {
     "item": "suet_feeder",
@@ -31416,7 +31420,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.025
+    "value": 0.025,
+    "emoji": "🧈"
    },
    {
     "item": "suet_feeder",
@@ -31426,7 +31431,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.025
+    "value": 0.025,
+    "emoji": "🧈"
    },
    {
     "item": "bird_bath",
@@ -31434,7 +31440,8 @@
     "targets": [],
     "available": true,
     "effect_kind": "departure_reduction",
-    "value": 0.05
+    "value": 0.05,
+    "emoji": "💧"
    },
    {
     "item": "bird_bath",
@@ -31442,7 +31449,8 @@
     "targets": [],
     "available": true,
     "effect_kind": "departure_reduction",
-    "value": 0.05
+    "value": 0.05,
+    "emoji": "💧"
    },
    {
     "item": "nyjer_feeder",
@@ -31452,7 +31460,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.05
+    "value": 0.05,
+    "emoji": "🌰"
    },
    {
     "item": "nyjer_feeder",
@@ -31462,7 +31471,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.05
+    "value": 0.05,
+    "emoji": "🌰"
    },
    {
     "item": "squirrel_baffle",
@@ -31474,7 +31484,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.03
+    "value": 0.03,
+    "emoji": "🛡"
    },
    {
     "item": "squirrel_baffle",
@@ -31489,7 +31500,8 @@
     ],
     "available": true,
     "effect_kind": "arrival_bonus",
-    "value": 0.03
+    "value": 0.03,
+    "emoji": "🛡"
    }
   ],
   "active": [
@@ -31527,6 +31539,68 @@
     "offset_sec": 21601,
     "active": false,
     "hours_left": 0.0
+   }
+  ],
+  "reasons": [
+   {
+    "item": "feeder",
+    "biome": "charlotte",
+    "text": "🌻 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "feeder",
+    "biome": "kyoto",
+    "text": "🌻 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "hummingbird_feeder",
+    "biome": "charlotte",
+    "text": "🍬 NAME — can't be used here, since hummingbirds don't live in this garden (it works in the Charlotte garden)."
+   },
+   {
+    "item": "hummingbird_feeder",
+    "biome": "kyoto",
+    "text": "🍬 NAME — can't be used here, since hummingbirds don't live in this garden (it works in the Charlotte garden)."
+   },
+   {
+    "item": "suet_feeder",
+    "biome": "charlotte",
+    "text": "🧈 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "suet_feeder",
+    "biome": "kyoto",
+    "text": "🧈 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "bird_bath",
+    "biome": "charlotte",
+    "text": "💧 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "bird_bath",
+    "biome": "kyoto",
+    "text": "💧 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "nyjer_feeder",
+    "biome": "charlotte",
+    "text": "🌰 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "nyjer_feeder",
+    "biome": "kyoto",
+    "text": "🌰 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "squirrel_baffle",
+    "biome": "charlotte",
+    "text": "🛡 NAME — there's no target bird for this garden right now."
+   },
+   {
+    "item": "squirrel_baffle",
+    "biome": "kyoto",
+    "text": "🛡 NAME — there's no target bird for this garden right now."
    }
   ],
   "bonus": [

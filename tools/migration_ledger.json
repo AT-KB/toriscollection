@@ -369,8 +369,9 @@
    "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
   },
   "garden_items.unavailable_reason": {
-   "dart": "",
-   "status": "todo"
+   "dart": "itemUnavailableReason",
+   "status": "done",
+   "why": "事実だけを言い、責める言い方にしない(原則2)。理由の文は出荷済みの英語だが、**アイテム名の英訳は i18n.py に存在しない**ため、名前はこちらで付けた。広告を入れる段で CEO に確認すること"
   },
   "globi_client.compare_with_seed": {
    "dart": "",

@@ -364,6 +364,7 @@ def main() -> None:
                 "available": gi.is_available(item_id, biome_id, birds),
                 "effect_kind": gi.ITEMS[item_id]["effect_kind"],
                 "value": gi.ITEMS[item_id]["value"],
+                "emoji": gi.ITEMS[item_id]["emoji"],
             })
     # 効いている/切れている の境目。**両端を含む**ことまで見る。
     _placed = datetime(2026, 8, 16, 9, 0, 0)
@@ -392,7 +393,27 @@ def main() -> None:
             "expired_departure": round(
                 gi.departure_bonus(plc, _placed + timedelta(hours=7)), 12),
         })
+    # 選べない理由の文。**アイテム名は英訳が無い**ので、名前を固定の印に
+    # 差し替えて「文の組み立て」だけを比べる(名前の訳は別の課題)。
+    reason_cases = []
+    _saved_names = {k: v["name"] for k, v in gi.ITEMS.items()}
+    try:
+        for k in gi.ITEMS:
+            gi.ITEMS[k]["name"] = "NAME"
+        i18n.set_lang("en")
+        for item_id in gi.ITEMS:
+            for biome_id in sorted(seed.BIOMES):
+                reason_cases.append({
+                    "item": item_id, "biome": biome_id,
+                    "text": gi.unavailable_reason(item_id, biome_id, birds),
+                })
+        i18n.set_lang("ja")
+    finally:
+        for k, v in _saved_names.items():
+            gi.ITEMS[k]["name"] = v
+
     item_bundle = {"targets": item_cases, "active": active_cases,
+                   "reasons": reason_cases,
                    "bonus": bonus_cases, "duration_hours": gi.DURATION_HOURS}
 
     # 「なぜ来たか」の記録(eco_log)。重複除去と並びが肝。
