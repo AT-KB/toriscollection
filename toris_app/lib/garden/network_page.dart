@@ -92,11 +92,16 @@ class NetworkPage extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: const [
-            _Key(color: Color(0xFF7BA87B), text: 'Plant'),
-            _Key(color: Color(0xFFC9A227), text: 'Insect'),
-            _Key(color: Color(0xFF3F6FA8), text: 'Bird'),
-          ]),
+          // ⚠️ **凡例の色は、図で実際に使っている色にすること。**
+          // 以前は虫が黄・鳥が青と書いてあったが、図では虫は肌色、
+          // 来た鳥はその鳥自身の色で描いていた(2026-08-16 の監査で発覚)。
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: const [
+                _Key(color: Color(0xFF4A8A4A), text: 'Plant'),
+                _Key(color: Color(0xFFE8C0A0), text: 'Insect'),
+                _Key(color: Color(0xFFC8D4E4), text: 'Bird'),
+              ]),
         ),
       ]),
     );
@@ -148,21 +153,27 @@ class _WebPainter extends CustomPainter {
     final pos = <String, Offset>{};
 
     // 同心円に並べる。現行の shells と同じ半径比。
-    void shell(List<String> nodes, double r) {
+    //
+    // ⚠️ **輪ごとに開始角をずらすこと。** ずらさないと、植物2・虫2・鳥1の
+    // ような**小さい庭で全部が同じ軸(0°と180°)に乗り、横一直線になる**。
+    // 庭は常に小さい(植物は最大4)ので、これが例外ではなく常態だった
+    // (2026-08-16 の実機監査で発覚)。
+    void shell(List<String> nodes, double r, double phase) {
       if (nodes.isEmpty) return;
       final n = nodes.length;
-      final offset = n.isEven ? 0.0 : pi / n;
       for (var i = 0; i < n; i++) {
-        final th = 2 * pi * i / n + offset;
+        final th = 2 * pi * i / n + phase;
         pos[nodes[i]] = Offset(cx + r * cos(th), cy + r * sin(th));
       }
     }
 
     // 現行と同じ半径比。内側から 植物 → 虫 → 届く鳥 → 届かない鳥。
-    shell(plants, maxR * 0.30);
-    shell(insects, maxR * 0.58);
-    shell(birds, maxR * 0.85);
-    shell(birdsFar, maxR * 1.00);
+    // 開始角は輪ごとに黄金角ずつ回す(何羽・何株でも重なりにくい)。
+    const golden = 2.399963229728653; // 黄金角(ラジアン)
+    shell(plants, maxR * 0.30, -pi / 2);
+    shell(insects, maxR * 0.58, -pi / 2 + golden);
+    shell(birds, maxR * 0.85, -pi / 2 + golden * 2);
+    shell(birdsFar, maxR * 1.00, -pi / 2 + golden * 3);
 
     // 線: 植物 → 虫 → 鳥
     final line = Paint()
@@ -205,7 +216,15 @@ class _WebPainter extends CustomPainter {
             style: const TextStyle(fontSize: 10, color: kInk)),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: 90);
-      tp.paint(canvas, p + Offset(-tp.width / 2, r + 3));
+      // 名前は**中心から外向き**に置く。節の真下に固定すると、
+      // 内側の輪の名前が外側の節と重なる(実機で重なった)。
+      final away = (p - Offset(cx, cy));
+      final dir = away.distance < 1 ? const Offset(0, 1) : away / away.distance;
+      final anchor = p + dir * (r + 6);
+      tp.paint(
+          canvas,
+          anchor +
+              Offset(-tp.width / 2, dir.dy >= 0 ? 0 : -tp.height));
     }
 
     // 大きさと濃さは現行の node_style と同じ考え方:
