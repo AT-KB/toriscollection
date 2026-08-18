@@ -71,6 +71,15 @@ public class BirdAlarmService extends Service {
     /** いま鳴っているか。画面に「止める」を出すために Flutter 側から見る。 */
     public static volatile boolean RINGING = false;
 
+    /**
+     * **いま鳴っている鳥**(鳴き始めた順)。画面がこれを読んで名前を光らせる。
+     *
+     * 実際に `MediaPlayer` を足したところでしか書かない。予定を先に書くと、
+     * まだ鳴いていない鳥の名前が光ってしまう(原則4「生態に誠実」)。
+     */
+    public static volatile java.util.List<String> SINGING =
+            java.util.Collections.emptyList();
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // 2026-08-13 実機で発覚: 止める手段が実質無く、CEO が端末を再起動する羽目に
@@ -101,10 +110,14 @@ public class BirdAlarmService extends Service {
         if (first != null) {
             players.add(first);
         }
+        SINGING = first == null
+                ? java.util.Collections.emptyList()
+                : java.util.Collections.singletonList(
+                        BirdAlarmSounds.keyOrDefault(key));
         // 2羽目・3羽目は後から加わる。
-        final int[] later = BirdAlarmSounds.chorusAfter(key);
-        handler.postDelayed(() -> join(later[0]), JOIN2_MS);
-        handler.postDelayed(() -> join(later[1]), JOIN3_MS);
+        final String[] laterKeys = BirdAlarmSounds.chorusKeysAfter(key);
+        handler.postDelayed(() -> join(laterKeys[0]), JOIN2_MS);
+        handler.postDelayed(() -> join(laterKeys[1]), JOIN3_MS);
 
         tick();
         handler.postDelayed(this::stopSelf, AUTO_STOP_MS);
@@ -130,9 +143,13 @@ public class BirdAlarmService extends Service {
         }, STEP_MS);
     }
 
-    private void join(int resId) {
-        MediaPlayer mp = makePlayer(resId);
+    private void join(String key) {
+        MediaPlayer mp = makePlayer(BirdAlarmSounds.resFor(key));
         if (mp != null) {
+            // **鳴り出したときだけ**名簿に足す。
+            java.util.List<String> next = new java.util.ArrayList<>(SINGING);
+            next.add(key);
+            SINGING = java.util.Collections.unmodifiableList(next);
             players.add(mp);
         }
     }
@@ -226,6 +243,7 @@ public class BirdAlarmService extends Service {
     @Override
     public void onDestroy() {
         RINGING = false;
+        SINGING = java.util.Collections.emptyList();
         handler.removeCallbacksAndMessages(null);
         for (MediaPlayer mp : players) {
             try {

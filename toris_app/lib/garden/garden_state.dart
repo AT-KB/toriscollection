@@ -113,6 +113,9 @@ class Garden {
 
   /// 留守のあいだに来た鳥・去った鳥(画面に出すため)。
   List<String> lastArrivals = [];
+
+  /// 直近の `catchUp` で**何コマ進んだか**。0 なら何も起きていない。
+  int lastTicks = 0;
   List<String> lastDepartures = [];
 
   /// 留守のあいだの到来と、その理由(庭の画面にそのまま出す)。
@@ -243,6 +246,7 @@ class Garden {
   void catchUp(Random rng) {
     final now = DateTime.now();
     final last = lastSeenAt;
+    lastTicks = 0;
     lastArrivals = [];
     lastDepartures = [];
     lastReasons = [];
@@ -262,6 +266,7 @@ class Garden {
         seasonOffset: data.seasonOffset,
         placedFeatures: feeders,
       );
+      lastTicks = r.ticks;
       visiting
         ..clear()
         ..addAll(r.residents);
@@ -292,7 +297,11 @@ class Garden {
         birdDays[b] = (birdDays[b] ?? 0) + 1;
       }
     }
-    lastSeenAt = now;
+    // **進んだときだけ時計を進める。**
+    // 無条件に now を書くと、5分未満で開き直すたびに経過時間が消え、
+    // 数分おきに開く人の庭には鳥が永遠に来なくなる(2026-08-18 に発覚)。
+    // 初回(last == null)は基準が要るので必ず置く。
+    if (last == null || lastTicks > 0) lastSeenAt = now;
   }
 
   // ── 保存 ──

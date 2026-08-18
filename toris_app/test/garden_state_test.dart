@@ -103,6 +103,29 @@ void main() {
     expect(after.discovered, containsAll(['blue_jay', 'song_sparrow']));
     expect(after.birdDays['blue_jay'], 12);
   });
+
+  /// 留守の時計が**貯まる**こと。
+  ///
+  /// ## なぜ要るか(2026-08-18)
+  /// CEO「なんで到来全然しないの」。調べたら、短い間隔で開き直すと
+  /// **経過時間がそのたびに 0 に戻されて**いた。`catchUp` は 5分未満なら
+  /// 何も起こさないのが正しいのに、最後の `lastSeenAt = now` を
+  /// **無条件で**書いていたため、数分おきに開くと時計が一生進まない。
+  /// 1日中開いても 0 コマ。鳥は永遠に来ない。
+  ///
+  /// 進まなかったときは、**時計を据え置く**のが正しい。
+  test('5分未満で開き直しても、留守の時計は巻き戻らない', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.planted.add('sakura');
+    // 2分前に開いたばかり。ここで開き直してもコマは進まない(5分未満)。
+    final t0 = DateTime.now().subtract(const Duration(minutes: 2));
+    g.lastSeenAt = t0;
+    g.catchUp(Random(1));
+    expect(g.lastTicks, 0, reason: '5分未満なので何も起きないのが正しい');
+    expect(g.lastSeenAt, t0,
+        reason: '進まなかったのだから時計は据え置き。ここが now になると、'
+            '短い間隔で開くたびに経過時間が消え、鳥が永遠に来なくなる');
+  });
 }
 
 /// 乱数は使わせない(この試験は時間の判定だけを見る)。

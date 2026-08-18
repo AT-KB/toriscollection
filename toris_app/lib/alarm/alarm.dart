@@ -22,6 +22,7 @@ const List<({String key, String name})> alarmBirds = [
   (key: 'american_robin', name: 'American Robin'),
   (key: 'song_sparrow', name: 'Song Sparrow'),
   (key: 'carolina_wren', name: 'Carolina Wren'),
+  (key: 'eastern_bluebird', name: 'Eastern Bluebird'),
 ];
 
 class AlarmSetting {
@@ -89,4 +90,13 @@ class Alarm {
       await _ch.invokeMethod<bool>('isRinging') ?? false;
 
   static Future<void> stopRinging() => _ch.invokeMethod<void>('stopRinging');
+
+  /// **いま鳴いている鳥**(鳴き始めた順)。鳴っていなければ空。
+  ///
+  /// 順番も時刻も Dart 側では組み立てない。ネイティブが実際に音を足した
+  /// ところだけを返すので、画面に出る名前は必ず鳴っている鳥になる。
+  static Future<List<String>> ringingBirds() async {
+    final v = await _ch.invokeMethod<List<Object?>>('ringingBirds');
+    return [for (final e in v ?? const []) '$e'];
+  }
 }

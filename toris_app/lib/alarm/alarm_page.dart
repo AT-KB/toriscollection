@@ -7,8 +7,10 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
+import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'alarm.dart';
 
@@ -30,6 +32,9 @@ class _AlarmPageState extends State<AlarmPage> {
   bool _ringing = false;
   Timer? _ringWatch;
 
+  /// いま鳴いている鳥。ネイティブが実際に音を足したものだけが入る。
+  List<String> _singing = const [];
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +42,15 @@ class _AlarmPageState extends State<AlarmPage> {
     // 鳴り始めたら画面に「止める」を出す。通知を拒否していても止められるように。
     _ringWatch = Timer.periodic(const Duration(seconds: 2), (_) async {
       final r = await Alarm.isRinging();
-      if (mounted && r != _ringing) setState(() => _ringing = r);
+      // 夜明けのコーラスは1羽から始まって増える。誰が鳴いたかを追う。
+      final now = r ? await Alarm.ringingBirds() : const <String>[];
+      if (!mounted) return;
+      if (r != _ringing || !listEquals(now, _singing)) {
+        setState(() {
+          _ringing = r;
+          _singing = now;
+        });
+      }
     });
   }
 
@@ -180,8 +193,12 @@ class _AlarmPageState extends State<AlarmPage> {
               children: alarmBirds
                   .map((b) => RadioListTile<String>(
                         value: b.key,
-                        title: Text(b.name),
                         dense: true,
+                        secondary: _BirdIcon(b.key),
+                        title: _SingingName(
+                          name: b.name,
+                          singing: _singing.contains(b.key),
+                        ),
                       ))
                   .toList(),
             ),
@@ -249,4 +266,110 @@ class _AlarmPageState extends State<AlarmPage> {
       ),
     );
   }
+}
+
+/// 鳥の姿。ドット絵があればそれ、無ければ `BirdMark`。
+///
+/// 目覚ましの4種は4種とも絵がある。将来ここを増やしたときに、絵の無い種で
+/// **Flutter のマスコットが出ないように**代役を通す(2026-08-15 の指摘)。
+class _BirdIcon extends StatelessWidget {
+  final String birdId;
+  const _BirdIcon(this.birdId);
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 36,
+        height: 36,
+        child: Image.asset(
+          'assets/sprites/$birdId.png',
+          filterQuality: FilterQuality.none,
+          errorBuilder: (_, _, _) =>
+              const BirdMark(size: 30, color: Color(0xFF8A9A7B)),
+        ),
+      );
+}
+
+/// 鳴いている間だけ、名前が**ゆっくり息をする**。
+///
+/// CEO 2026-08-18「ラジオのような表現にしてほしい、鳴いてるトリの名前が
+/// ピヨピヨする感じ」。ラジオの `_BirdRow` と同じ考えで、
+/// **鳴っている鳥だけ**に色と動きを与える。
+///
+/// 動きはゆっくりにする(1.4秒で1往復)。速い点滅は急かす表示になり、
+/// 交渉不能の原則1「受動的である」に反する。眠りから覚める画面でもある。
+class _SingingName extends StatefulWidget {
+  final String name;
+  final bool singing;
+  const _SingingName({required this.name, required this.singing});
+
+  @override
+  State<_SingingName> createState() => _SingingNameState();
+}
+
+class _SingingNameState extends State<_SingingName>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.singing) _c.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_SingingName old) {
+    super.didUpdateWidget(old);
+    // 鳴き止んだら**必ず止める**。回りっぱなしにすると、鳴いていない鳥の
+    // 名前が動き続けて表示が嘘になる。
+    if (widget.singing && !_c.isAnimating) {
+      _c.repeat(reverse: true);
+    } else if (!widget.singing && _c.isAnimating) {
+      _c.stop();
+      _c.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final t = Curves.easeInOut.transform(_c.value);
+          return Row(children: [
+            // ラジオと同じ点。鳴っている間だけ色がつく。
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              width: 9,
+              height: 9,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.singing
+                    ? Color.lerp(const Color(0xFFBFD3B0), kGreen, t)
+                    : const Color(0xFFDCE3D4),
+              ),
+            ),
+            Flexible(
+              child: Text(
+                widget.name,
+                style: TextStyle(
+                  color: widget.singing
+                      ? Color.lerp(kSub, kGreen, t)
+                      : kInk,
+                  fontWeight:
+                      widget.singing ? FontWeight.w700 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ]);
+        },
+      );
 }

@@ -33,7 +33,7 @@ class GardenPage extends StatefulWidget {
 }
 
 class _GardenPageState extends State<GardenPage>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   Garden? _g;
   final Random _rng = Random();
 
@@ -57,7 +57,19 @@ class _GardenPageState extends State<GardenPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _boot();
+  }
+
+  /// 前面に戻ってきたら、留守のぶんを進める。
+  ///
+  /// 儀式の最中は触らない(鳥が近づいている途中で庭を作り直さない)。
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final g = _g;
+    if (state != AppLifecycleState.resumed || g == null) return;
+    if (_ritual != null) return;
+    _advance(g);
   }
 
   Future<void> _boot() async {
@@ -65,6 +77,17 @@ class _GardenPageState extends State<GardenPage>
     final d = await GardenData.load();
     final g = Garden(d);
     await g.restore();
+    await _advance(g);
+  }
+
+  /// 留守のあいだのぶんを進めて、「おかえり」を出す。
+  ///
+  /// ⚠️ **起動時だけでは足りない。**
+  /// `initState` は画面を作り直したときしか通らない。ホームに戻して数時間後に
+  /// 戻ってきても Flutter の処理は生きたままなので、ここを通らず庭が
+  /// 止まっていた。**「なんで到来全然しないの」の正体**(2026-08-18)。
+  /// OS がアプリを殺すまで、何時間放っておいても鳥は来なかった。
+  Future<void> _advance(Garden g) async {
     final before = g.lastSeenAt;
     // 開いた時点で、留守のあいだのぶんを進める。押させない。
     g.catchUp(_rng);
@@ -106,6 +129,7 @@ class _GardenPageState extends State<GardenPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ritual?.stop();
     super.dispose();
   }

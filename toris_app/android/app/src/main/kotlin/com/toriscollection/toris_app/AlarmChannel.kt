@@ -60,6 +60,8 @@ class AlarmChannel(private val activity: Activity) {
             }
             "hasNotificationPermission" -> result.success(hasNotificationPermission())
             "isRinging" -> result.success(BirdAlarmService.RINGING)
+            // いま鳴いている鳥(鳴き始めた順)。画面が名前を光らせるのに使う。
+            "ringingBirds" -> result.success(BirdAlarmService.SINGING.toList())
             "stopRinging" -> {
                 stopRinging()
                 result.success(true)
