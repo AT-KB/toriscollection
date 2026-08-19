@@ -234,7 +234,9 @@ class _GardenPageState extends State<GardenPage>
   Future<void> _listen() async {
     final g = _g;
     if (g == null || g.visiting.isEmpty) return;
-    final r = Ritual(List<String>.from(g.visiting), _rng);
+    // 餌台の連鎖(リス・鷹)を渡す。**開放型を選んでいる庭だけ**驚きが起きる。
+    // かご型ならリスが来ないので、儀式も静かなまま(選択がそのまま効く)。
+    final r = Ritual(List<String>.from(g.visiting), _rng, chain: g.chain);
     // この回が記録される儀式かどうかを、始めた時点で決める。
     _ritualCounts = g.ritualCounts;
     setState(() => _ritual = r);
@@ -259,10 +261,13 @@ class _GardenPageState extends State<GardenPage>
         }
       }
       setState(() {});
+      // 90秒で切り上げたら、こちらから畳む(押させない。原則1)。
+      if (r.timedOut && _ritual != null) _stopListening();
     }, assetOf: (b) => 'assets/birds/$b.mp3');
   }
 
   Future<void> _stopListening() async {
+    final flewOff = _ritual?.flewOff ?? const <String>{};
     final met = List<MetBird>.from(_metThisRitual);
     _metThisRitual.clear();
     _ritual?.stop();
@@ -279,6 +284,14 @@ class _GardenPageState extends State<GardenPage>
     if (mounted) setState(() => _ritual = null);
     if (g != null && met.isNotEmpty && mounted) {
       await showMetBirdPopup(context, g, met);
+    } else if (flewOff.isNotEmpty && mounted) {
+      // 会えないまま終わった回。**責めない言い方にする**(原則2)。
+      // 失ったものは無く、もう一度押せばやり直せる。
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(flewOff.length == 1
+            ? 'It kept its distance today.'
+            : 'They kept their distance today.'),
+      ));
     }
   }
 
@@ -334,6 +347,7 @@ class _GardenPageState extends State<GardenPage>
               // ── ① 裏庭の情景。ここが庭の顔。 ──
               // 餌台・リス・タカ・植生は、**選択とそのまま連動する**。
               TreeScene(
+                scare: _ritual?.scare,
                 plants: [
                   for (final p in g.planted)
                     (g.data.plants[p]?['icon'] as String?) ?? '🌱',

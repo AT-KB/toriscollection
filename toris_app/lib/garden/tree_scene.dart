@@ -105,9 +105,18 @@ class TreeScene extends StatefulWidget {
   /// 猛禽が居るか(空にタカを描く)。
   final bool hasRaptor;
 
+  /// いま驚かされているか。'squirrel' / 'hawk' / null。
+  ///
+  /// CEO 2026-08-18「リスや鷹が木に近づいて、鳥が逃げていくアクション」。
+  /// **鳥が下がるのは儀式側の仕事**(`Ritual._hop`)で、ここは
+  /// 「近づいてくる絵」だけを受け持つ。両方をここでやると、絵と記録が
+  /// ずれる(絵では逃げているのに数字は近づいたまま、になりうる)。
+  final String? scare;
+
   const TreeScene({
     super.key,
     required this.birds,
+    this.scare,
     this.plants = const [],
     this.feeder,
     this.hasSquirrel = false,
@@ -168,19 +177,27 @@ class _TreeSceneState extends State<TreeScene> {
       // リスとタカは**絵文字**で置く(CEO 2026-08-16「リス 鷹は絵文字のを
       // 庭に入れれないか」)。塗りで描いた版もあったが、小さくすると潰れ、
       // 大きくすると枝の鳥と紛れた。絵文字なら小さくても何か分かる。
+      // 驚かせている間は**木に寄る**。終われば元の場所へ戻る。
+      final scared = widget.scare;
       if (widget.feeder != null && widget.hasSquirrel) {
-        children.add(Positioned(
-          left: w * 0.20,
-          top: kGroundTop / 100 * kSceneHeight - 6,
-          child: const Text('🐿️', style: TextStyle(fontSize: 26)),
+        final near = scared == 'squirrel';
+        children.add(AnimatedPositioned(
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeOut,
+          left: near ? w * 0.42 : w * 0.20,
+          top: kGroundTop / 100 * kSceneHeight - (near ? 34 : 6),
+          child: Text('🐿️', style: TextStyle(fontSize: near ? 34 : 26)),
         ));
       }
       if (widget.hasRaptor) {
         // 空の右上。枝の届かないところ(重なると「大きい鳥」に見える)。
-        children.add(Positioned(
-          right: w * 0.05,
-          top: kSceneHeight * 0.06,
-          child: const Text('🦅', style: TextStyle(fontSize: 24)),
+        final near = scared == 'hawk';
+        children.add(AnimatedPositioned(
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeOut,
+          right: near ? w * 0.34 : w * 0.05,
+          top: near ? kSceneHeight * 0.20 : kSceneHeight * 0.06,
+          child: Text('🦅', style: TextStyle(fontSize: near ? 40 : 24)),
         ));
       }
 
