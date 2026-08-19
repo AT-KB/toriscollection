@@ -87,7 +87,23 @@ class _GardenPageState extends State<GardenPage>
   /// 戻ってきても Flutter の処理は生きたままなので、ここを通らず庭が
   /// 止まっていた。**「なんで到来全然しないの」の正体**(2026-08-18)。
   /// OS がアプリを殺すまで、何時間放っておいても鳥は来なかった。
+  /// 進めている最中か。**重ならないようにする。**
+  /// 「おかえり」を待っているあいだに前面へ戻ると、もう一度ここへ来て
+  /// 板が2枚開く。何も起きていなければ板は出ないので普段は起きないが、
+  /// 出来事があった直後に切り替えると起きうる。
+  bool _advancing = false;
+
   Future<void> _advance(Garden g) async {
+    if (_advancing) return;
+    _advancing = true;
+    try {
+      await _advanceInner(g);
+    } finally {
+      _advancing = false;
+    }
+  }
+
+  Future<void> _advanceInner(Garden g) async {
     final before = g.lastSeenAt;
     // 開いた時点で、留守のあいだのぶんを進める。押させない。
     g.catchUp(_rng);

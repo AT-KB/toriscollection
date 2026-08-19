@@ -37,8 +37,10 @@ class _RadioPageState extends State<RadioPage>
   @override
   void initState() {
     super.initState();
-    _engine
-        .load(observed: widget.observed, biomeId: widget.biomeId)
+    // 覚えていた環境音の設定を戻してから読み込む(順番を逆にすると、
+    // 既定の「Wind だけ」で鳴り始めてから切り替わる)。
+    _engine.restorePrefs().then((_) => _engine
+            .load(observed: widget.observed, biomeId: widget.biomeId))
         .then((_) {
       if (mounted) setState(() {});
     });
@@ -132,6 +134,7 @@ class _RadioPageState extends State<RadioPage>
                   onSelected: (on) {
                     setState(() => e.ambOn[k] = on);
                     e.applyAmbience();
+                    e.savePrefs();  // 触ったら覚える
                   },
                 ),
             ],
@@ -145,6 +148,8 @@ class _RadioPageState extends State<RadioPage>
                   setState(() => e.ambVol = v);
                   e.applyAmbience();
                 },
+                // つまみは動かしている間ずっと呼ばれる。**離した時だけ**書く。
+                onChangeEnd: (_) => e.savePrefs(),
               ),
             ),
           ]),

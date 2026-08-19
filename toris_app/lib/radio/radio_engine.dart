@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
@@ -277,6 +278,12 @@ class RadioEngine {
   final List<BirdVoice> birds = [];
   final Map<String, SoundHandle> _amb = {};
   final Map<String, Timer> _ambPause = {};
+  /// 環境音の入切。**端末に覚えさせる**(下の `restorePrefs` / `savePrefs`)。
+  ///
+  /// ⚠️ 2026-08-18 の監査で見つけた漏れ。ここは毎回作り直されるだけで、
+  /// どこにも保存していなかった。アプリを閉じるたびに「Wind だけ・音量0.55」に
+  /// 戻る。Streamlit 版はセッションが短いので同じ挙動でも目立たなかったが、
+  /// 携帯のアプリは1日に何度も開くので、そのたびに混ぜ直すことになっていた。
   final Map<String, bool> ambOn = {for (final k in kAmbienceKeys) k: k == 'wind'};
 
   bool ready = false;
@@ -325,6 +332,30 @@ class RadioEngine {
   }
 
   Map<String, int> _lastObserved = const {};
+
+  /// 覚えていた環境音の設定を戻す。**読み込みの前に呼ぶ。**
+  static const _kAmbOn = 'radio_amb_on';
+  static const _kAmbVol = 'radio_amb_vol';
+
+  Future<void> restorePrefs() async {
+    final p = await SharedPreferences.getInstance();
+    final on = p.getStringList(_kAmbOn);
+    if (on != null) {
+      for (final k in kAmbienceKeys) {
+        ambOn[k] = on.contains(k);
+      }
+    }
+    final v = p.getDouble(_kAmbVol);
+    if (v != null) ambVol = v.clamp(0.0, 1.0);
+  }
+
+  /// 触ったら覚える。
+  Future<void> savePrefs() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setStringList(
+        _kAmbOn, [for (final e in ambOn.entries) if (e.value) e.key]);
+    await p.setDouble(_kAmbVol, ambVol);
+  }
 
   Future<void> load(
       {Map<String, int> observed = const {}, String? biomeId}) async {
