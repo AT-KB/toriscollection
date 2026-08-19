@@ -39,7 +39,13 @@ class _AlarmPageState extends State<AlarmPage> {
   List<String> _singing = const [];
 
   /// 選んでいる1羽目。
-  String _first = alarmBirds.first.key;
+  late String _first = _choices.first.key;
+
+  /// 選べる鳥。**会えた鳥＋最初から居る3種**。
+  List<({String key, String name})> get _choices {
+    final list = selectableAlarmBirds(widget.met);
+    return list.isEmpty ? [alarmBirds.first] : list;
+  }
 
   @override
   void initState() {
@@ -159,6 +165,36 @@ class _AlarmPageState extends State<AlarmPage> {
             ),
             const SizedBox(height: 20),
           ],
+
+          // ── おはようコールの鳥たち ──
+          // CEO 2026-08-19「アラーム中に、鳴いてる鳥は名前とアイコンが出る
+          // (加わったタイミング以降で)とかにしてほしいな、おはようコールの
+          // 鳥たちとして」。
+          //
+          // ⚠️ **出すのは、ネイティブが実際に音を足した鳥だけ**。
+          // 予定を先に書くと、まだ鳴いていない鳥の名前が出る(原則4)。
+          // 1羽目から始まって、5分かけて2羽目・3羽目が増えていく。
+          if (_ringing && _singing.isNotEmpty) ...[
+            const Text('Your morning callers',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: kSub)),
+            const SizedBox(height: 8),
+            for (final k in _singing)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(children: [
+                  _BirdIcon(k),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SingingName(name: alarmBirdName(k), singing: true),
+                  ),
+                ]),
+              ),
+            const SizedBox(height: 20),
+          ],
           const PageTitle('Starts almost too quiet to hear, then grows.'),
 
           // ── 時刻 ──
@@ -197,8 +233,8 @@ class _AlarmPageState extends State<AlarmPage> {
           const SizedBox(height: 12),
 
           // ── 1羽目を選ぶ ──
-          // CEO 2026-08-19「選択はできるようにして」。2羽目・3羽目は
-          // **出会った鳥から**その朝ごとに選ばれるので、ここでは選ばせない。
+          // プルダウンにした(CEO 2026-08-19)。23行の一覧だと、下の設定まで
+          // 遠く、選ぶだけで画面が埋まっていた。
           const Text('First to sing',
               style: TextStyle(
                   fontSize: 13,
@@ -206,30 +242,40 @@ class _AlarmPageState extends State<AlarmPage> {
                   letterSpacing: 0.8,
                   color: kSub)),
           const SizedBox(height: 6),
-          RadioGroup<String>(
-            groupValue: _first,
-            onChanged: (v) => setState(() => _first = v!),
-            child: Column(
-              children: alarmBirds
-                  .map((b) => RadioListTile<String>(
-                        value: b.key,
-                        dense: true,
-                        secondary: _BirdIcon(b.key),
-                        title: _SingingName(
-                          name: b.name,
-                          singing: _singing.contains(b.key),
-                        ),
-                      ))
-                  .toList(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _first,
+                isExpanded: true,
+                borderRadius: BorderRadius.circular(14),
+                items: [
+                  for (final b in _choices)
+                    DropdownMenuItem(
+                      value: b.key,
+                      child: Row(children: [
+                        _BirdIcon(b.key),
+                        const SizedBox(width: 12),
+                        Flexible(
+                            child: Text(b.name,
+                                overflow: TextOverflow.ellipsis)),
+                      ]),
+                    ),
+                ],
+                onChanged: (v) => setState(() => _first = v!),
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          // 2羽目・3羽目の出どころを、事実として書く。
-          // **数は出すが、誰が来るかは朝までわからない**(それが良い)。
+          const SizedBox(height: 10),
+          // 何が選べるのかを、事実として書く。
           Text(
             widget.met.isEmpty
-                ? 'Two more join as it grows. Meet birds up close in your '
-                    'garden, and they will be the ones joining.'
+                ? 'Meet birds up close in your garden, and they join this '
+                    'list — and the chorus.'
                 : 'Two more join as it grows, drawn from the '
                     '${widget.met.length} birds you have met up close.',
             style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),

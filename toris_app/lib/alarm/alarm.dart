@@ -8,54 +8,78 @@ library;
 
 import 'package:flutter/services.dart';
 
-/// 目覚ましに選べる鳥。**並びはネイティブ側 `BirdAlarmSounds.KEYS` と同じ。**
+/// 目覚ましに鳴らせる鳥。**アルファベット順**(CEO 2026-08-19)。
 ///
-/// ## 2026-08-19 の作り直し(CEO)
-/// 「選択はできるようにして、最初の1羽とあとはランダムで3羽まで加わる作りに。
-///  ただしその加わる残り2羽は、出会った鳥であってほしい」
+/// ⚠️ これは「鳴らせる全部」であって、**選べるものではない**。
+/// 選べるのは [selectableAlarmBirds] — 会えた鳥＋最初から居る3種だけ。
 ///
-/// - **1羽目**: ここから選ぶ(23種)。
-/// - **2羽目・3羽目**: その朝ごとに、**近くで出会った鳥**から選ばれる。
-///   出会いが足りなければ既定の並びから埋める(目覚ましは起きるための道具で、
-///   始めたばかりの人の朝が薄い音になるのは避ける)。
+/// ## ここに入る条件
+/// (1) **さえずり(song)であること。** 地鳴き・警戒声(call)は入れない。
+///     McFarlane ら(2020)— 耳障りな音で起きると睡眠慣性が強まり、
+///     メロディのある音だけが注意の脱落を有意に減らした。
+/// (2) **ドット絵があること。** 顔が並ばないと選べない。
+///     Song Sparrow は絵が無いので入っていない。
 ///
-/// 23種になったのは、ネイティブが `res/raw` ではなく **Flutter の assets を
-/// 直に読む**ようにしたから。音を複製しないので APK も太らない。
+/// ⚠️ 土地では絞らない(CEO 2026-08-19「目覚ましは土地で絞らなくていい」)。
+/// 加わる2羽は会えた鳥＝その土地の鳥なので、1羽目を自由に選んでも
+/// 生態の嘘にはならない。
 ///
-/// **さえずり(song)のみ**。地鳴き・警戒声(call)は入れない。McFarlane ら
-/// (2020)は、耳障りな音で起きると睡眠慣性が強まり、**メロディのある音だけ**が
-/// 注意の脱落を有意に減らしたと報告している。アオカケスの "ジェー!" のような
-/// 叫びは、研究が名指しで避けるべきとしたものそのもの。
-///
-/// ⚠️ ドット絵がある種だけ。Song Sparrow は絵が無いので**入っていない**。
+/// ⚠️ 並びは**表示のため**のもの。ネイティブ側 `BirdAlarmSounds.KEYS` は
+/// **足りないときの埋め順**なので、順序は別。中身が同じことは試験で見ている。
 const List<({String key, String name})> alarmBirds = [
-  (key: 'northern_cardinal', name: 'Northern Cardinal'),
-  (key: 'american_robin', name: 'American Robin'),
   (key: 'american_goldfinch', name: 'American Goldfinch'),
+  (key: 'american_robin', name: 'American Robin'),
+  (key: 'tsubame', name: 'Barn Swallow'),
   (key: 'blue_jay', name: 'Blue Jay'),
+  (key: 'hiyodori', name: 'Brown-eared Bulbul'),
   (key: 'carolina_wren', name: 'Carolina Wren'),
+  (key: 'kawasemi', name: 'Common Kingfisher'),
   (key: 'downy_woodpecker', name: 'Downy Woodpecker'),
   (key: 'eastern_bluebird', name: 'Eastern Bluebird'),
-  (key: 'enaga', name: 'Long-tailed Tit'),
-  (key: 'hiyodori', name: 'Brown-eared Bulbul'),
   (key: 'kakesu', name: 'Eurasian Jay'),
-  (key: 'kawarahiwa', name: 'Oriental Greenfinch'),
-  (key: 'kawasemi', name: 'Common Kingfisher'),
-  (key: 'kibitaki', name: 'Narcissus Flycatcher'),
-  (key: 'kogera', name: 'Japanese Pygmy Woodpecker'),
-  (key: 'mejiro', name: 'Japanese White-eye'),
-  (key: 'mourning_dove', name: 'Mourning Dove'),
-  (key: 'pileated_woodpecker', name: 'Pileated Woodpecker'),
-  (key: 'shijukara', name: 'Japanese Tit'),
   (key: 'suzume', name: 'Eurasian Tree Sparrow'),
-  (key: 'tsubame', name: 'Barn Swallow'),
-  (key: 'tufted_titmouse', name: 'Tufted Titmouse'),
   (key: 'uguisu', name: 'Japanese Bush Warbler'),
+  (key: 'kogera', name: 'Japanese Pygmy Woodpecker'),
+  (key: 'shijukara', name: 'Japanese Tit'),
+  (key: 'mejiro', name: 'Japanese White-eye'),
+  (key: 'enaga', name: 'Long-tailed Tit'),
+  (key: 'mourning_dove', name: 'Mourning Dove'),
+  (key: 'kibitaki', name: 'Narcissus Flycatcher'),
+  (key: 'northern_cardinal', name: 'Northern Cardinal'),
+  (key: 'kawarahiwa', name: 'Oriental Greenfinch'),
+  (key: 'pileated_woodpecker', name: 'Pileated Woodpecker'),
+  (key: 'tufted_titmouse', name: 'Tufted Titmouse'),
   (key: 'yamagara', name: 'Varied Tit'),
 ];
 
+/// 何も会っていなくても最初から選べる3種。
+///
+/// CEO 2026-08-19「Bluejay、Northern Cardinal, Goldfinch だけ初期設定でいる感じ」。
+/// 目覚ましは**起きるための道具**なので、始めた初日から使えないと困る。
+const Set<String> kStarterAlarmBirds = {
+  'blue_jay',
+  'northern_cardinal',
+  'american_goldfinch',
+};
+
+/// いま選べる鳥。**会えた鳥＋最初から居る3種**(CEO 2026-08-19)。
+///
+/// [met] は近くで出会った鳥(儀式が成立した種)。順はアルファベットのまま。
+List<({String key, String name})> selectableAlarmBirds(Iterable<String> met) {
+  final allow = {...kStarterAlarmBirds, ...met};
+  return [for (final b in alarmBirds) if (allow.contains(b.key)) b];
+}
+
 /// 画面の名前は `alarmBirds` を使う。並びの一致は試験で見ている。
 const List<({String key, String name})> dawnChorus = alarmBirds;
+
+/// 鍵から表示名を引く。知らない鍵はそのまま返す。
+String alarmBirdName(String key) {
+  for (final b in alarmBirds) {
+    if (b.key == key) return b.name;
+  }
+  return key;
+}
 
 
 class AlarmSetting {
