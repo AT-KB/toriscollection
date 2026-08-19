@@ -399,10 +399,22 @@ class _OutLinks extends StatelessWidget {
   final Map bird;
   const _OutLinks(this.bird);
 
+  /// 外のブラウザで開く。
+  ///
+  /// ⚠️ `canLaunchUrl` の結果だけで諦めない。Android 11 以降は
+  /// AndroidManifest の `<queries>` に VIEW/https を宣言しないと false が
+  /// 返り、**押しても無言で何も起きない**(2026-08-19 に実機で発覚)。
+  /// 宣言は入れたが、ここでも**まず開いてみる**ようにして、同じ抜け方を防ぐ。
   Future<void> _open(String url) async {
     final u = Uri.parse(url);
+    try {
+      final ok = await launchUrl(u, mode: LaunchMode.externalApplication);
+      if (ok) return;
+    } catch (_) {
+      // 落ちたら下の道へ
+    }
     if (await canLaunchUrl(u)) {
-      await launchUrl(u, mode: LaunchMode.externalApplication);
+      await launchUrl(u);
     }
   }
 

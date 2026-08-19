@@ -79,5 +79,13 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- 図鑑の「実物の画像」「Wikipedia」を外のブラウザで開くために要る。
+             Android 11 以降、これを宣言しないと canLaunchUrl が false を返し、
+             **押しても何も起きない**(2026-08-19 に実機で発覚。無言で死ぬので
+             コードを読んでも気づけなかった)。 -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
     </queries>
 </manifest>
