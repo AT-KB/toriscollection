@@ -250,5 +250,9 @@ def summarize_events(events):
     if len(species) == 1:
         bid = next(iter(species))
         name = _bird_name(BIRDS.get(bid, {})) or bid
+        if n == 1:
+            # 「1 times」と出ていた(実機で確認、2026-08-18)。
+            # 英語だけの問題なので、日本語の言い回しは変えない。
+            return t("{name}が立ち寄りました", name=name)
         return t("{name}が{n}回立ち寄りました", name=name, n=n)
     return t("{n}件の立ち寄り({s}種)", n=n, s=len(species))

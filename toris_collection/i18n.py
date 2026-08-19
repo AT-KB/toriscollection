@@ -489,6 +489,7 @@ TRANSLATIONS: dict[str, str] = {
     '今しがた': 'Just now',
     '{n}分前': '{n} min ago',
     '{n}時間前': '{n} hr ago',
+    '{name}が立ち寄りました': '{name} stopped by once',
     '{name}が{n}回立ち寄りました': '{name} stopped by {n} times',
     '{bird_name}が来ました。{plant}に惹かれて立ち寄ったようです。': '{bird_name} came. It seems to have stopped by, drawn to {plant}.',
     '{bird_name}が来ました。{insect}を狙って立ち寄ったようです。': '{bird_name} came. It seems to have stopped by, after {insect}.',

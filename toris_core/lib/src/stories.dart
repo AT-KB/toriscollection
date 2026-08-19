@@ -79,6 +79,9 @@ String summarizeEvents(
   final n = birdIdsInOrder.length;
   final species = birdIdsInOrder.toSet();
   if (species.length == 1) {
+    // 1回のときに「1 times」と出ていた(実機で確認、2026-08-18)。
+    // Python 側も同じ誤りだったので、**両方**直してある。
+    if (n == 1) return '${nameOf(species.first)} stopped by once';
     return '${nameOf(species.first)} stopped by $n times';
   }
   return '$n visits (${species.length} species)';
