@@ -43,6 +43,13 @@ class _GardenPageState extends State<GardenPage>
   /// この儀式で出会えた鳥(終わったらポップアップで見せる)。
   final List<MetBird> _metThisRitual = [];
 
+  /// いま出会いの板を出しているか。**同時に2枚開かない。**
+  ///
+  /// CEO 2026-08-19「儀式で会えた時のポップが、あえた瞬間に出てほしい」。
+  /// 以前は「Enough」を押すまで溜めていたので、手前の枝に来たいちばん
+  /// いい瞬間と、知らせが出る瞬間がずれていた。
+  bool _showingMet = false;
+
   /// この回の儀式が「出会い」として記録されるか。始めた時点で決める。
   bool _ritualCounts = true;
 
@@ -261,9 +268,29 @@ class _GardenPageState extends State<GardenPage>
         }
       }
       setState(() {});
+      // **会えた瞬間に出す。** 儀式は止めない(他の鳥はまだ近づいてくる)。
+      _flushMet(g);
       // 90秒で切り上げたら、こちらから畳む(押させない。原則1)。
       if (r.timedOut && _ritual != null) _stopListening();
     }, assetOf: (b) => 'assets/birds/$b.mp3');
+  }
+
+  /// 溜まっている出会いを、順に見せる。
+  ///
+  /// 儀式は裏で続いているので、見せている間に次の出会いが増えうる。
+  /// 1枚ずつ出し切る。
+  Future<void> _flushMet(Garden g) async {
+    if (_showingMet || _metThisRitual.isEmpty || !mounted) return;
+    _showingMet = true;
+    try {
+      while (_metThisRitual.isNotEmpty && mounted) {
+        final batch = List<MetBird>.from(_metThisRitual);
+        _metThisRitual.clear();
+        await showMetBirdPopup(context, g, batch);
+      }
+    } finally {
+      _showingMet = false;
+    }
   }
 
   Future<void> _stopListening() async {
@@ -283,6 +310,7 @@ class _GardenPageState extends State<GardenPage>
     }
     if (mounted) setState(() => _ritual = null);
     if (g != null && met.isNotEmpty && mounted) {
+      // 会えた瞬間に出し切れなかったぶん(板を出している最中に終わった等)。
       await showMetBirdPopup(context, g, met);
     } else if (flewOff.isNotEmpty && mounted) {
       // 会えないまま終わった回。**責めない言い方にする**(原則2)。

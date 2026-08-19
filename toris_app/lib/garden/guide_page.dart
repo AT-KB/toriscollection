@@ -15,6 +15,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
 import '../ui/bird_mark.dart';
@@ -200,6 +201,7 @@ class _Entry extends StatelessWidget {
                         _Row('Likes', likes),
                         _Row('Home', home),
                         _Row('Fears', fears, note: fearsNote),
+                        _OutLinks(b),
                         // **なぜ来たか**の記録。あなたが組んだ関係が呼んだ証拠。
                         // 庭が痩せても、ここは消えない(原則2「罰しない」)。
                         ..._whyItCame(),
@@ -375,4 +377,73 @@ class _Row extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// 実物を見に行くための2つの入口。
+///
+/// ## なぜ足したか(2026-08-19 CEO)
+/// 「画像やウィキに飛ぶ奴、移行漏れてるよね図鑑の」。そのとおりで、
+/// `app.py` の図鑑には最初からこの2つが並んでいたのに、Flutter に来ていなかった。
+///
+/// **なぜ監査で気づけなかったか。** 台帳が数えているのは *公開関数* で、
+/// この2つは `app.py` の関数の**中に直接書かれた HTML**だった。関数ではないので
+/// 台帳に載りようがない。同じ穴を塞ぐ規則を `migration_audit.py` に足した
+/// (app.py の URL が、アプリ側かドロップ一覧のどちらかに必ずあること)。
+///
+/// 文言は `i18n.py` の出荷済みの英語をそのまま使う。
+///
+/// ⚠️ 画像検索の語だけは Python と変えてある。Python は **和名**＋学名で
+/// 引いていたが、アプリの表示は全部英語なので、英名＋学名で引く。
+/// 和名のまま引くと、英語で使っている人に日本語の検索結果が出る。
+class _OutLinks extends StatelessWidget {
+  final Map bird;
+  const _OutLinks(this.bird);
+
+  Future<void> _open(String url) async {
+    final u = Uri.parse(url);
+    if (await canLaunchUrl(u)) {
+      await launchUrl(u, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final en = '${bird['english'] ?? ''}'.trim();
+    final sci = '${bird['scientific'] ?? ''}'.trim();
+    if (en.isEmpty && sci.isEmpty) return const SizedBox.shrink();
+    final photoQ = Uri.encodeComponent('$en $sci'.trim());
+    final wikiQ = Uri.encodeComponent(sci.isNotEmpty ? sci : en);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Wrap(spacing: 8, runSpacing: 8, children: [
+        _Chip('🖼️ See a real photo',
+            () => _open('https://www.google.com/search?tbm=isch&q=$photoQ')),
+        _Chip(
+            '📖 Wikipedia (EN)',
+            () => _open('https://en.wikipedia.org/wiki/Special:Search'
+                '?search=$wikiQ')),
+      ]),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _Chip(this.label, this.onTap);
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F4EC),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(label,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF3A5A3A))),
+        ),
+      );
 }

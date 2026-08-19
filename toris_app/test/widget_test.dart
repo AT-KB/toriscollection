@@ -16,7 +16,7 @@ void main() {
     // 文字を減らしたので、見るのは「主なボタンが出ているか」だけにする
     // (CEO 2026-08-14「文字の量を少なくしよう」)。
     expect(find.text('Set'), findsOneWidget);
-    expect(find.text('The dawn chorus'), findsOneWidget);
+    expect(find.text('First to sing'), findsOneWidget);
   });
 
   testWidgets('コーラスの3羽が並ぶ(選ばせない)', (WidgetTester tester) async {
@@ -27,12 +27,12 @@ void main() {
     }
   });
 
-  test('並びはネイティブ側 BirdAlarmSounds.KEYS と同じ(=鳴き出す順)', () {
-    // 順序がそのまま「夜明けのコーラスで加わる順」になるため、ずれてはいけない。
-    expect(dawnChorus.map((b) => b.key).toList(), [
+  test('先頭の並びは変えない(既定の1羽目・2羽目)', () {
+    // 増やすときは**末尾に足す**。先頭を入れ替えると、既に設定している人の
+    // 目覚ましが変わる。
+    expect(dawnChorus.map((b) => b.key).take(2).toList(), [
       'northern_cardinal',
       'american_robin',
-      'song_sparrow',
     ]);
   });
 
@@ -46,17 +46,14 @@ void main() {
   /// ドット絵も見る(無い種は `BirdMark` の代役になり、鳥の顔が並ばない)。
   test('コーラスの鳥は、音とドット絵が実在する種だけ', () {
     for (final b in dawnChorus) {
-      expect(File('android/app/src/main/res/raw/alarm_${b.key}.mp3').existsSync(),
-          isTrue,
-          reason: '${b.key} の目覚まし音が res/raw に無い。'
-              '選ばせても Northern Cardinal が鳴いてしまう');
+      // ネイティブは **Flutter の assets を直に読む**(res/raw ではない)。
+      expect(File('assets/birds/${b.key}.mp3').existsSync(), isTrue,
+          reason: '${b.key} の鳴き声が assets に無い。'
+              '選ばせても既定の鳥が鳴いてしまう');
     }
-    // 絵は**まだ描けていない種がある**。無い種は `BirdMark` の代役になる
-    // (Flutter のマスコットではない)。ここでは「増やすときに気づける」
-    // ようにするだけで、既にある種を落とさない。
-    const noArtYet = {'song_sparrow'};
+    // 絵があることは**選ばせる条件**(CEO「アイコンもほしい」)。
+    // 例外は無い — Song Sparrow は絵が無いので一覧から外してある。
     for (final b in dawnChorus) {
-      if (noArtYet.contains(b.key)) continue;
       expect(File('assets/sprites/${b.key}.png').existsSync(), isTrue,
           reason: '${b.key} のドット絵が無い。選択肢に顔が並ばない');
     }
@@ -74,12 +71,25 @@ void main() {
       for (final r in creds.cast<Map<String, dynamic>>())
         '${r['id']}': '${r['license_class']}',
     };
-    // 例外は無い。選択をやめたことで CC BY-NC-ND の Carolina Wren は
-    // 誰も鳴らせなくなり、mp3 ごと外した(2026-08-18)。
+    // ⚠️ **商用ライセンスは条件から外した**(CEO 2026-08-19「商用にしないから
+    // 増やせ」)。23種のうち commercial は3種だけ。収益化する段になったら
+    // ここを戻すこと。いまは「何種が商用可か」を数えて記録するだけにする。
+    final ok = dawnChorus.where((b) => cls[b.key] == 'commercial').length;
+    expect(ok, greaterThanOrEqualTo(3),
+        reason: '商用可がこれ以下になったら、収益化のときに総取り替えになる');
+  });
+
+  test('目覚ましに使うのは、さえずり(song)だけ', () {
+    // 研究1: 耳障りな音で起きると睡眠慣性が強まる。call は入れない。
+    final creds = jsonDecode(
+        File('assets/birds/_credits.json').readAsStringSync()) as List;
+    final type = {
+      for (final r in creds.cast<Map<String, dynamic>>())
+        '${r['id']}': '${r['type']}',
+    };
     for (final b in dawnChorus) {
-      expect(cls[b.key], 'commercial',
-          reason: '${b.key} は ${cls[b.key]}。目覚まし音は切り出して res/raw に'
-              '置くので、NC/ND のままでは使えない');
+      expect(type[b.key], 'song',
+          reason: '${b.key} は ${type[b.key]}。地鳴き・警戒声で起こさない');
     }
   });
 
@@ -93,7 +103,7 @@ void main() {
   ///
   /// これまでは Dart 側の期待値を手で書いた試験しか無く、Java を
   /// 書き換えても気づけなかった。**実ファイルを読んで突き合わせる。**
-  test('Dart の dawnChorus と Java の KEYS が一致する', () {
+  test('Dart の alarmBirds と Java の KEYS が一致する', () {
     final java = File('android/app/src/main/java/com/toriscollection/'
             'toris_app/BirdAlarmSounds.java')
         .readAsStringSync();

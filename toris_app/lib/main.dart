@@ -71,7 +71,9 @@ class _HomeShellState extends State<HomeShell> {
       GardenPage(onChanged: (g) => setState(() => _garden = g)),
       GuidePage(garden: _garden),
       NetworkPage(garden: _garden),
-      const AlarmPage(),
+      // 2羽目・3羽目は**近くで出会った鳥**から選ばれるので、観察の記録を渡す
+      // (CEO 2026-08-19)。
+      AlarmPage(met: (_garden?.observed.keys ?? const <String>[]).toList()),
     ];
     // ── チュートリアル中は、庭だけ ──
     // 他のタブは押しても反応しない(CEO 2026-08-16「ほか押せない」)。

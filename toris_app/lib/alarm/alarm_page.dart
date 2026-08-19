@@ -15,7 +15,11 @@ import '../ui/theme.dart';
 import 'alarm.dart';
 
 class AlarmPage extends StatefulWidget {
-  const AlarmPage({super.key});
+  /// 近くで**出会った**鳥(儀式が成立した種)。
+  /// 2羽目・3羽目はここから選ばれる。空でも構わない(既定の並びで埋まる)。
+  final List<String> met;
+
+  const AlarmPage({super.key, this.met = const []});
 
   @override
   State<AlarmPage> createState() => _AlarmPageState();
@@ -33,6 +37,9 @@ class _AlarmPageState extends State<AlarmPage> {
 
   /// いま鳴いている鳥。ネイティブが実際に音を足したものだけが入る。
   List<String> _singing = const [];
+
+  /// 選んでいる1羽目。
+  String _first = alarmBirds.first.key;
 
   @override
   void initState() {
@@ -84,7 +91,8 @@ class _AlarmPageState extends State<AlarmPage> {
     if (!_notifyAllowed) {
       await Alarm.requestNotificationPermission();
     }
-    final ok = await Alarm.set(_time.hour, _time.minute);
+    final ok = await Alarm.set(_time.hour, _time.minute,
+        first: _first, met: widget.met);
     if (!mounted) return;
     if (!ok) {
       // Android 12+ で「正確なアラーム」が未許可。設定画面へ案内する。
@@ -176,27 +184,55 @@ class _AlarmPageState extends State<AlarmPage> {
           ),
           const SizedBox(height: 16),
 
-          // ── 夜明けのコーラス ──
-          // **選ばせない**(CEO 2026-08-18)。並びは決まっていて、
-          // 鳴き出した鳥から光っていく。
-          const Text('The dawn chorus',
+          // **設定は鳥の一覧より上に置く。** 選べる鳥が23種に増えたので、
+          // 下に置くと23羽ぶんスクロールしないと押せなくなる(2026-08-19)。
+          FilledButton.icon(
+            onPressed: _set,
+            icon: const Icon(Icons.alarm, size: 28),
+            label: const Text('Set'),
+          ),
+          const SizedBox(height: 10),
+          if (s?.enabled == true)
+            TextButton(onPressed: _cancel, child: const Text('Turn off')),
+          const SizedBox(height: 12),
+
+          // ── 1羽目を選ぶ ──
+          // CEO 2026-08-19「選択はできるようにして」。2羽目・3羽目は
+          // **出会った鳥から**その朝ごとに選ばれるので、ここでは選ばせない。
+          const Text('First to sing',
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   color: kSub)),
           const SizedBox(height: 6),
-          Column(
-            children: dawnChorus
-                .map((b) => ListTile(
-                      dense: true,
-                      leading: _BirdIcon(b.key),
-                      title: _SingingName(
-                        name: b.name,
-                        singing: _singing.contains(b.key),
-                      ),
-                    ))
-                .toList(),
+          RadioGroup<String>(
+            groupValue: _first,
+            onChanged: (v) => setState(() => _first = v!),
+            child: Column(
+              children: alarmBirds
+                  .map((b) => RadioListTile<String>(
+                        value: b.key,
+                        dense: true,
+                        secondary: _BirdIcon(b.key),
+                        title: _SingingName(
+                          name: b.name,
+                          singing: _singing.contains(b.key),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // 2羽目・3羽目の出どころを、事実として書く。
+          // **数は出すが、誰が来るかは朝までわからない**(それが良い)。
+          Text(
+            widget.met.isEmpty
+                ? 'Two more join as it grows. Meet birds up close in your '
+                    'garden, and they will be the ones joining.'
+                : 'Two more join as it grows, drawn from the '
+                    '${widget.met.length} birds you have met up close.',
+            style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
           ),
           const SizedBox(height: 16),
 
@@ -236,15 +272,6 @@ class _AlarmPageState extends State<AlarmPage> {
               ),
             ),
 
-          FilledButton.icon(
-            onPressed: _set,
-            icon: const Icon(Icons.alarm, size: 28),
-            label: const Text('Set'),
-          ),
-          const SizedBox(height: 10),
-          if (s?.enabled == true)
-            TextButton(onPressed: _cancel, child: const Text('Turn off')),
-          const SizedBox(height: 12),
 
           // ── いまの設定(ネイティブが持っているものをそのまま出す)──
           Center(

@@ -193,6 +193,31 @@ REQUIRED_IN_UI = [
      "前面に戻った時に庭を進めていない。初回生成でしか進まず鳥が来なくなる"),
 ]
 
+# ─────────────────────────────────────────────────────────────
+# app.py が開いている**外部リンク**が、アプリにもあるか。
+#
+# ## なぜ足したか(2026-08-19 CEO)
+# 「画像やウィキに飛ぶ奴、移行漏れてるよね図鑑の・なんで気づかないの?」
+#
+# 気づけなかった理由ははっきりしていて、**台帳は公開関数しか数えていない**。
+# あの2つのリンクは `app.py` の関数の**中に直接書かれた HTML** で、関数では
+# ないので台帳に載りようがなかった。画面リントも「出てはいけないもの」と
+# 「あるべき呼び出し」しか見ておらず、**Python 側にあってこちらに無いもの**を
+# 探す目が無かった。
+#
+# ここでは URL のホスト＋パスだけを見る。クエリは言語や学名で変わるため。
+URL_MUST_EXIST = {
+    "https://www.google.com/search": "図鑑の「実物の画像を見る」",
+    "https://en.wikipedia.org/wiki/": "図鑑の「Wikipedia(英)」",
+}
+
+# 意図して持ってこなかった外部リンク(理由つき)。
+URL_DROPPED = {
+    "https://toris-collection.onrender.com/": (
+        "Streamlit 版の配布先。Flutter は端末で動くので不要"),
+}
+
+
 # 画面に日本語が出ていないこと。**アプリの表示は全部英語**
 # (一度これで作り直しになった)。コメントと doc は日本語なので、
 # 文字列リテラルの中だけを見る。
@@ -253,6 +278,31 @@ def screen_audit() -> list:
         body = _strip_comments_all(open(path, encoding="utf-8").read())
         if not re.search(pat, body):
             problems.append(f"{rel} に {pat} が無い" + chr(10) + f"        {why}")
+
+    # app.py の外部リンクが、アプリにも来ているか。
+    app_py_path = os.path.join(PY_DIR, "app.py")
+    if os.path.exists(app_py_path):
+        src = open(app_py_path, encoding="utf-8").read()
+        found = set(re.findall(r"https://[a-zA-Z0-9./?=&{}_+-]*", src))
+        app_all = "".join(
+            open(f, encoding="utf-8").read() for f in _ui_files())
+        for u in sorted(found):
+            base = u.split("?")[0]
+            if base in URL_DROPPED:
+                continue
+            why = None
+            for known, label in URL_MUST_EXIST.items():
+                if base.startswith(known):
+                    why = label
+                    break
+            if why is None:
+                problems.append(
+                    f"app.py に台帳に無い外部リンク: {base}" + chr(10) + f""
+                    f"        URL_MUST_EXIST か URL_DROPPED に足すこと")
+            elif base.split("?")[0] not in app_all:
+                problems.append(
+                    f"app.py の外部リンクがアプリに無い: {base}" + chr(10) + f""
+                    f"        {why}")
 
     # 全37種に、絵か**代役の方針**があること。
     # 絵が無いこと自体は問題ではない(描き下ろしは順次)。

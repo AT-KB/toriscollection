@@ -27,10 +27,19 @@ public class BirdAlarmReceiver extends BroadcastReceiver {
 
     public static final String ACTION_FIRE = "com.toriscollection.toris_app.ALARM_FIRE";
 
+    /** 選んだ1羽目。 */
+    public static final String EXTRA_FIRST = "first";
+
+    /** 近くで出会った鳥(カンマ区切り)。2羽目・3羽目はここから選ぶ。 */
+    public static final String EXTRA_MET = "met";
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        // 鳥は選ばせない。鳴く並びは BirdAlarmSounds.chorusKeys() が持つ。
         Intent svc = new Intent(context, BirdAlarmService.class);
+        if (intent != null) {
+            svc.putExtra(EXTRA_FIRST, intent.getStringExtra(EXTRA_FIRST));
+            svc.putExtra(EXTRA_MET, intent.getStringExtra(EXTRA_MET));
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(svc);

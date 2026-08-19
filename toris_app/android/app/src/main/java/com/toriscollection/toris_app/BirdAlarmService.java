@@ -104,11 +104,17 @@ public class BirdAlarmService extends Service {
 
         raiseAlarmStreamIfMuted();
 
-        // 並びは1つだけ。選ばせないので、毎朝この順で明けていく。
-        final String[] chorus = BirdAlarmSounds.chorusKeys();
+        // 1羽目は選んだ鳥。2羽目・3羽目は**出会った鳥から**その朝ごとに選ぶ
+        // (CEO 2026-08-19)。出会いが足りなければ既定の並びから埋める。
+        String firstKey = intent != null
+                ? intent.getStringExtra(BirdAlarmReceiver.EXTRA_FIRST) : null;
+        String met = intent != null
+                ? intent.getStringExtra(BirdAlarmReceiver.EXTRA_MET) : null;
+        final String[] chorus =
+                BirdAlarmSounds.chorusFor(firstKey, met, new java.util.Random());
 
         // 1羽目。ここから夜明けが始まる。
-        MediaPlayer first = makePlayer(BirdAlarmSounds.resFor(chorus[0]));
+        MediaPlayer first = makePlayer(chorus[0]);
         if (first != null) {
             players.add(first);
         }
@@ -144,7 +150,7 @@ public class BirdAlarmService extends Service {
     }
 
     private void join(String key) {
-        MediaPlayer mp = makePlayer(BirdAlarmSounds.resFor(key));
+        MediaPlayer mp = makePlayer(key);
         if (mp != null) {
             // **鳴り出したときだけ**名簿に足す。
             java.util.List<String> next = new java.util.ArrayList<>(SINGING);
@@ -154,34 +160,78 @@ public class BirdAlarmService extends Service {
         }
     }
 
-    private MediaPlayer makePlayer(int resId) {
+    /**
+     * 鳴らす。**Flutter の assets から直に読む。**
+     *
+     * ## なぜ res/raw をやめたか(2026-08-19 CEO「なんでmp3は3個しかないの」)
+     * ネイティブが `res/raw` しか見ていなかったので、そこに置いた3本しか
+     * 鳴らせなかった。鳴き声そのものは `assets/birds/` に36種あるのに、
+     * **同じ音をもう一度 res/raw にコピーしないと使えない**作りだった。
+     * AssetManager なら Flutter の assets をそのまま開けるので、複製も要らず
+     * (APKが数MB太らない)、種を増やすのに手作業も要らない。
+     *
+     * ⚠️ **音の用途(USAGE_ALARM)は prepare より前に渡す。**
+     * 2026-08-13 実機(Android 16)で、後から属性を変えても効かず、アラームが
+     * 「メディア」扱いで**全ミュート**された。`MediaPlayer.create()` は生成と
+     * 同時に prepare まで済ませるのが原因だったので、ここでは自分で組み立てて
+     * setAudioAttributes → setDataSource → prepare の順を守る。
+     *
+     * ⚠️ **読めなかったら既定の音に落ちる。** 目覚ましが無音で鳴るのが
+     * いちばん悪い壊れ方なので、res/raw の1本だけは残してある。
+     */
+    private MediaPlayer makePlayer(String key) {
+        MediaPlayer mp = fromAsset(BirdAlarmSounds.assetFor(key));
+        if (mp == null) {
+            mp = fromRawFallback();
+        }
+        if (mp == null) {
+            return null;
+        }
+        mp.setLooping(true);
+        // 後から加わる層も、いまのカーブの音量で始める(唐突に大きく出さない)。
+        float p = Math.min(1f, (float) elapsed / (float) RAMP_MS);
+        float v = START_VOL + (1f - START_VOL) * p;
+        mp.setVolume(v, v);
+        mp.start();
+        return mp;
+    }
+
+    private AudioAttributes alarmAttrs() {
+        return new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+    }
+
+    private MediaPlayer fromAsset(String path) {
+        android.content.res.AssetFileDescriptor afd = null;
         try {
-            // ⚠ 音の用途(USAGE_ALARM)は**作るときに渡さないと効かない**。
-            // 2026-08-13 実機(Android 16)で発覚: 以前は `MediaPlayer.create(this, resId)`
-            // で作ってから setAudioAttributes() を呼んでいたが、create() は生成と同時に
-            // prepare まで済ませるため、後から属性を変えても反映されない。
-            // その結果アラームが「メディア」として鳴り、OS の audio hardening に
-            // **バックグラウンド再生として全ミュート**された
-            // (dumpsys: usage=USAGE_UNKNOWN / "background playback would be muted")。
-            // 目覚ましが無音で鳴るという最悪の壊れ方なので、属性を渡す方の
-            // create() を使う。
-            AudioAttributes attrs = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build();
+            afd = getAssets().openFd(path);
+            MediaPlayer mp = new MediaPlayer();
+            mp.setAudioAttributes(alarmAttrs());   // prepare より前
+            mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
+                    afd.getLength());
+            mp.prepare();
+            return mp;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (afd != null) {
+                try {
+                    afd.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
+    /** 最後の砦。assets が読めなくても、何かは鳴らす。 */
+    private MediaPlayer fromRawFallback() {
+        try {
             AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
             int session = am != null ? am.generateAudioSessionId() : 0;
-            MediaPlayer mp = MediaPlayer.create(this, resId, attrs, session);
-            if (mp == null) {
-                return null;
-            }
-            mp.setLooping(true);
-            // 後から加わる層も、いまのカーブの音量で始める(唐突に大きく出さない)。
-            float p = Math.min(1f, (float) elapsed / (float) RAMP_MS);
-            float v = START_VOL + (1f - START_VOL) * p;
-            mp.setVolume(v, v);
-            mp.start();
-            return mp;
+            return MediaPlayer.create(this, R.raw.alarm_northern_cardinal,
+                    alarmAttrs(), session);
         } catch (Exception e) {
             return null;
         }

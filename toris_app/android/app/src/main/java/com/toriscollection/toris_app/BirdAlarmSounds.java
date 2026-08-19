@@ -27,41 +27,122 @@ public final class BirdAlarmSounds {
     }
 
     /**
-     * **夜明けのコーラス。加わる順そのもの。**
+     * 目覚ましに使える種。**さえずり(song)で、かつドット絵がある種**だけ。
      *
-     * 2026-08-18、CEO「そもそも最初に起こす鳥を選ぶ必要はない」により
-     * **選択をやめた**。ここが唯一の並びで、1羽目→2羽目→3羽目に対応する。
-     * 3羽なのは設計書の決定(研究3「活動的な情景ほど回復効果が高い」)。
+     * ## なぜ増やせるようになったか(2026-08-19 CEO「なんでmp3は3個しかないの」)
+     * 前は `res/raw` に置いた3本しか鳴らせなかった。いまは AssetManager で
+     * Flutter の assets を直に読むので、**同梱の鳴き声をそのまま使える**。
+     * 音を複製しないので APK も太らない。
      *
-     * ⚠️ **順序を入れ替えない。** 音の役割で並んでいる
-     * (澄んだ口笛で開幕 → 朝の代表 → 短く明るいフレーズ)。
+     * ## ここに入る条件
+     * (1) **さえずり(song)であること。** 地鳴き・警戒声(call)は入れない。
+     *     McFarlane ら(2020)— 耳障りな音で起きると睡眠慣性が強まり、
+     *     メロディのある音だけが注意の脱落を有意に減らした。
+     * (2) **ドット絵があること。** 選択肢に顔が並ばないと選べない
+     *     (CEO 2026-08-18「アイコンもほしい」)。
      *
-     * ⚠️ Carolina Wren は CC BY-NC-ND のため**外した**。選択をやめたことで
-     * 誰も鳴らせなくなり、同梱する理由も無くなった(mp3 も削除)。
+     * ⚠️ 商用ライセンスは**条件から外した**(CEO 2026-08-19「商用にしないから
+     * 増やせ」)。23種のうち商用可は3種だけなので、収益化する段になったら
+     * ここを見直すこと。`_credits.json` の license_class に入っている。
+     *
+     * ⚠️ Song Sparrow は**ドット絵が無いので入っていない**。絵ができたら入る。
+     *
+     * 先頭2種の並びは変えないこと(既定の1羽目・2羽目)。
      */
     private static final String[] KEYS = {
-            "northern_cardinal",   // 澄んだ口笛。開幕に向く
-            "american_robin",      // 朝の代表。ゆるやかな節回し
-            "song_sparrow",        // 短く明るいフレーズ
+            "northern_cardinal",       // Northern Cardinal
+            "american_robin",          // American Robin
+            "american_goldfinch",      // American Goldfinch
+            "blue_jay",                // Blue Jay
+            "carolina_wren",           // Carolina Wren
+            "downy_woodpecker",        // Downy Woodpecker
+            "eastern_bluebird",        // Eastern Bluebird
+            "enaga",                   // Long-tailed Tit
+            "hiyodori",                // Brown-eared Bulbul
+            "kakesu",                  // Eurasian Jay
+            "kawarahiwa",              // Oriental Greenfinch
+            "kawasemi",                // Common Kingfisher
+            "kibitaki",                // Narcissus Flycatcher
+            "kogera",                  // Japanese Pygmy Woodpecker
+            "mejiro",                  // Japanese White-eye
+            "mourning_dove",           // Mourning Dove
+            "pileated_woodpecker",     // Pileated Woodpecker
+            "shijukara",               // Japanese Tit
+            "suzume",                  // Eurasian Tree Sparrow
+            "tsubame",                 // Barn Swallow
+            "tufted_titmouse",         // Tufted Titmouse
+            "uguisu",                  // Japanese Bush Warbler
+            "yamagara",                // Varied Tit
     };
 
-    /** 鳴く順に並んだ3羽。画面はこれを並べて、鳴いた鳥から光らせる。 */
-    public static String[] chorusKeys() {
+    /** Flutter の assets に置かれた鳴き声の場所。 */
+    public static String assetFor(String key) {
+        return "flutter_assets/assets/birds/" + keyOrDefault(key) + ".mp3";
+    }
+
+    /** 知らない鍵は既定の1羽目に寄せる。 */
+    public static String keyOrDefault(String key) {
+        for (String k : KEYS) {
+            if (k.equals(key)) {
+                return k;
+            }
+        }
+        return KEYS[0];
+    }
+
+    public static String[] keys() {
         return KEYS.clone();
     }
 
-    public static int resFor(String key) {
-        if (key == null) {
-            return R.raw.alarm_northern_cardinal;
+    /**
+     * 夜明けのコーラスの並びを組む。
+     *
+     * CEO 2026-08-19「最初の1羽とあとはランダムで3羽まで加わる。ただし
+     * その加わる残り2羽は、出会った鳥であってほしい」。
+     *
+     * @param first   選ばれた1羽目
+     * @param metCsv  **近くで出会った鳥**(儀式が成立した種)をカンマ区切りで
+     * @return 鳴き始める順に3羽
+     *
+     * ⚠️ 出会った鳥が足りないときは、既定の並びから埋める。
+     * **目覚ましは起きるための道具**なので、始めたばかりの人の朝が
+     * 1羽だけの薄い音になるのは避ける(層が増えることに研究上の根拠がある)。
+     */
+    public static String[] chorusFor(String first, String metCsv, java.util.Random rng) {
+        String head = keyOrDefault(first);
+        java.util.List<String> pool = new java.util.ArrayList<>();
+        if (metCsv != null) {
+            for (String raw : metCsv.split(",")) {
+                String k = raw.trim();
+                if (k.isEmpty() || k.equals(head)) {
+                    continue;
+                }
+                for (String known : KEYS) {   // 鳴らせる種だけ
+                    if (known.equals(k) && !pool.contains(k)) {
+                        pool.add(k);
+                    }
+                }
+            }
         }
-        switch (key) {
-            case "american_robin":
-                return R.raw.alarm_american_robin;
-            case "song_sparrow":
-                return R.raw.alarm_song_sparrow;
-            case "northern_cardinal":
-            default:
-                return R.raw.alarm_northern_cardinal;
+        java.util.Collections.shuffle(pool, rng);
+
+        java.util.List<String> out = new java.util.ArrayList<>();
+        out.add(head);
+        for (String k : pool) {
+            if (out.size() >= 3) {
+                break;
+            }
+            out.add(k);
         }
+        // 足りないぶんは既定の並びから。
+        for (String k : KEYS) {
+            if (out.size() >= 3) {
+                break;
+            }
+            if (!out.contains(k)) {
+                out.add(k);
+            }
+        }
+        return out.toArray(new String[0]);
     }
 }

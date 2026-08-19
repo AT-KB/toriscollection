@@ -36,6 +36,7 @@ class AlarmChannel(private val activity: Activity) {
         private const val K_ENABLED = "enabled"
         private const val K_HOUR = "hour"
         private const val K_MIN = "min"
+        private const val K_FIRST = "first"
         private const val REQUEST_CODE = 8101
     }
 
@@ -44,7 +45,9 @@ class AlarmChannel(private val activity: Activity) {
             "set" -> {
                 val hour = call.argument<Int>("hour") ?: 7
                 val minute = call.argument<Int>("minute") ?: 0
-                result.success(setAlarm(hour, minute))
+                val first = call.argument<String>("first")
+                val met = call.argument<String>("met")
+                result.success(setAlarm(hour, minute, first, met))
             }
             "cancel" -> {
                 cancelAlarm()
@@ -73,7 +76,7 @@ class AlarmChannel(private val activity: Activity) {
     }
 
     /** @return 実際に設定できたら true。正確なアラームが未許可なら false。 */
-    private fun setAlarm(hour: Int, minute: Int): Boolean {
+    private fun setAlarm(hour: Int, minute: Int, first: String?, met: String?): Boolean {
         val am = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             ?: return false
         if (!canScheduleExact()) return false
@@ -89,7 +92,7 @@ class AlarmChannel(private val activity: Activity) {
 
         try {
             am.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP, next.timeInMillis, pendingIntent()
+                AlarmManager.RTC_WAKEUP, next.timeInMillis, pendingIntent(first, met)
             )
         } catch (e: SecurityException) {
             return false
@@ -99,13 +102,14 @@ class AlarmChannel(private val activity: Activity) {
             .putBoolean(K_ENABLED, true)
             .putInt(K_HOUR, hour)
             .putInt(K_MIN, minute)
+            .putString(K_FIRST, first)
             .apply()
         return true
     }
 
     private fun cancelAlarm() {
         val am = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-        am?.cancel(pendingIntent())
+        am?.cancel(pendingIntent(null, null))
         prefs().edit().putBoolean(K_ENABLED, false).apply()
     }
 
@@ -116,6 +120,7 @@ class AlarmChannel(private val activity: Activity) {
             "enabled" to p.getBoolean(K_ENABLED, false),
             "hour" to p.getInt(K_HOUR, 7),
             "minute" to p.getInt(K_MIN, 0),
+            "first" to p.getString(K_FIRST, null),
         )
     }
 
@@ -171,11 +176,17 @@ class AlarmChannel(private val activity: Activity) {
         }
     }
 
-    private fun pendingIntent(): PendingIntent {
-        // 鳥は選ばせないので、ここで渡すものは無い
-        // (CEO 2026-08-18「そもそも最初に起こす鳥を選ぶ必要はない」)。
+    /**
+     * 1羽目と「出会った鳥」を積んだ PendingIntent。
+     *
+     * ⚠️ extras は PendingIntent の同一判定に**入らない**ので、cancel 側は
+     * null で作っても同じものを指す。
+     */
+    private fun pendingIntent(first: String?, met: String?): PendingIntent {
         val i = Intent(activity, BirdAlarmReceiver::class.java).apply {
             action = BirdAlarmReceiver.ACTION_FIRE
+            putExtra(BirdAlarmReceiver.EXTRA_FIRST, first)
+            putExtra(BirdAlarmReceiver.EXTRA_MET, met)
         }
         var flags = PendingIntent.FLAG_UPDATE_CURRENT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

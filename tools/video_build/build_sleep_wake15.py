@@ -21,8 +21,8 @@ CEO 2026-08-18「寝る起きるも作っていいよ」。
 2/3で3羽目が加わる。音量は 8%→100%。並びは `BirdAlarmSounds.KEYS` で
 Northern Cardinal → American Robin → Song Sparrow。
 だから「1羽で始まって、他が加わる」は本当。
-⚠️ Song Sparrow は**ドット絵がまだ無い**。無い絵をでっち上げないので、
-3羽目は影のまま出し、名前は最後に文字で3種そろえて出す。
+⚠️ 2026-08-19 に目覚ましの作りが変わった(1羽目は選ぶ／2羽目・3羽目は
+**出会った鳥から**その朝ごとに選ぶ)。**決まった3種を名指ししない。**
 
 実行:
     py -3 tools/video_build/build_sleep_wake15.py sleep
@@ -70,13 +70,22 @@ SLEEP_SPECIES = ["Downy Woodpecker", "Pileated Woodpecker",
 # ── 起きる ────────────────────────────────────────────────
 WAKE_L1 = "It starts with one bird."
 WAKE_L2 = "Then the others join."
-# `BirdAlarmSounds.KEYS` と同じ順。3羽目は絵が無いので影で出す。
-# **音もこの3種を実際に鳴らす**(目覚ましが鳴らしているのと同じ録音)。
+# ⚠️ **2026-08-19 に作り直した。**
+# 目覚ましは「1羽目は選ぶ / 2羽目・3羽目は**出会った鳥から**その朝ごとに選ぶ」
+# に変わったので、**決まった3種を名指ししてはいけない**(人によって違う)。
+# 名前の行も「出会った鳥が加わる」という事実に変えた。
+#
+# 絵は `alarmBirds` に居て**ドット絵がある**種から選ぶ。
+# Song Sparrow は絵が無く、選択肢にも入っていないので使わない。
+# 音もこの3種を実際に鳴らす(目覚ましが鳴らすのと同じ録音)。
 WAKE_CHORUS = [
     ("northern_cardinal", "Northern Cardinal", 4.2),
     ("american_robin", "American Robin", 7.6),
-    (None, "Song Sparrow", 10.4),
+    ("eastern_bluebird", "Eastern Bluebird", 10.4),
 ]
+
+# 最後に出す一行。**種を名指ししない。**
+WAKE_TAIL = "The birds you have met join in."
 
 
 def pick_radio(names):
@@ -239,7 +248,7 @@ def render_wake(t, credit):
     if t >= 11.6:
         k = ease((t - 11.6) / 0.8)
         f = ImageFont.truetype(FB, int(W * 0.029))
-        line = "  ·  ".join(n for _, n, _ in WAKE_CHORUS)
+        line = WAKE_TAIL
         tw = d.textlength(line, font=f)
         ty = int(H * 0.455)
         # 下地を敷く。芝の緑に淡い字を置いたら読めなかった。
@@ -263,8 +272,7 @@ def sleep_audio():
 
 def wake_audio():
     # **目覚ましが実際に鳴らしている3種**。画面の並びと同じ順に重なる。
-    return pick_app_songs([b for b, _n, _t in WAKE_CHORUS if b] +
-                          ["song_sparrow"])
+    return pick_app_songs([b for b, _n, _t in WAKE_CHORUS if b])
 
 
 FILMS = {

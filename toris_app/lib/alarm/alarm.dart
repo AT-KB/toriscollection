@@ -8,36 +8,69 @@ library;
 
 import 'package:flutter/services.dart';
 
-/// **夜明けのコーラス。鳴き始める順に並んでいる。**
+/// 目覚ましに選べる鳥。**並びはネイティブ側 `BirdAlarmSounds.KEYS` と同じ。**
 ///
-/// 2026-08-18、CEO「そもそも最初に起こす鳥を選ぶ必要はない」により
-/// **選ばせるのをやめた**。毎朝この順で、1羽ずつ増えていく。
-/// 画面はこの並びを出して、実際に鳴いた鳥から光らせる。
+/// ## 2026-08-19 の作り直し(CEO)
+/// 「選択はできるようにして、最初の1羽とあとはランダムで3羽まで加わる作りに。
+///  ただしその加わる残り2羽は、出会った鳥であってほしい」
 ///
-/// **さえずり(song)のみ**。
+/// - **1羽目**: ここから選ぶ(23種)。
+/// - **2羽目・3羽目**: その朝ごとに、**近くで出会った鳥**から選ばれる。
+///   出会いが足りなければ既定の並びから埋める(目覚ましは起きるための道具で、
+///   始めたばかりの人の朝が薄い音になるのは避ける)。
 ///
-/// 地鳴き・警戒声(call)は入れない。McFarlane ら(2020)は、耳障りな音で起きると
-/// 睡眠慣性(朝のぼんやり)が強まり、**メロディのある音だけ**が注意の脱落を有意に
-/// 減らしたと報告している。アオカケスの "ジェー!" のような叫びは、研究が名指しで
-/// 避けるべきとしたものそのもの。
+/// 23種になったのは、ネイティブが `res/raw` ではなく **Flutter の assets を
+/// 直に読む**ようにしたから。音を複製しないので APK も太らない。
 ///
-/// 並び順はネイティブ側 `BirdAlarmSounds.KEYS` と**同じにしておくこと**。
-/// その順序がそのまま「夜明けのコーラスで加わる順」になる。
-const List<({String key, String name})> dawnChorus = [
+/// **さえずり(song)のみ**。地鳴き・警戒声(call)は入れない。McFarlane ら
+/// (2020)は、耳障りな音で起きると睡眠慣性が強まり、**メロディのある音だけ**が
+/// 注意の脱落を有意に減らしたと報告している。アオカケスの "ジェー!" のような
+/// 叫びは、研究が名指しで避けるべきとしたものそのもの。
+///
+/// ⚠️ ドット絵がある種だけ。Song Sparrow は絵が無いので**入っていない**。
+const List<({String key, String name})> alarmBirds = [
   (key: 'northern_cardinal', name: 'Northern Cardinal'),
   (key: 'american_robin', name: 'American Robin'),
-  (key: 'song_sparrow', name: 'Song Sparrow'),
+  (key: 'american_goldfinch', name: 'American Goldfinch'),
+  (key: 'blue_jay', name: 'Blue Jay'),
+  (key: 'carolina_wren', name: 'Carolina Wren'),
+  (key: 'downy_woodpecker', name: 'Downy Woodpecker'),
+  (key: 'eastern_bluebird', name: 'Eastern Bluebird'),
+  (key: 'enaga', name: 'Long-tailed Tit'),
+  (key: 'hiyodori', name: 'Brown-eared Bulbul'),
+  (key: 'kakesu', name: 'Eurasian Jay'),
+  (key: 'kawarahiwa', name: 'Oriental Greenfinch'),
+  (key: 'kawasemi', name: 'Common Kingfisher'),
+  (key: 'kibitaki', name: 'Narcissus Flycatcher'),
+  (key: 'kogera', name: 'Japanese Pygmy Woodpecker'),
+  (key: 'mejiro', name: 'Japanese White-eye'),
+  (key: 'mourning_dove', name: 'Mourning Dove'),
+  (key: 'pileated_woodpecker', name: 'Pileated Woodpecker'),
+  (key: 'shijukara', name: 'Japanese Tit'),
+  (key: 'suzume', name: 'Eurasian Tree Sparrow'),
+  (key: 'tsubame', name: 'Barn Swallow'),
+  (key: 'tufted_titmouse', name: 'Tufted Titmouse'),
+  (key: 'uguisu', name: 'Japanese Bush Warbler'),
+  (key: 'yamagara', name: 'Varied Tit'),
 ];
+
+/// 画面の名前は `alarmBirds` を使う。並びの一致は試験で見ている。
+const List<({String key, String name})> dawnChorus = alarmBirds;
+
 
 class AlarmSetting {
   final bool enabled;
   final int hour;
   final int minute;
 
+  /// 選ばれている1羽目。未設定なら null。
+  final String? first;
+
   const AlarmSetting({
     required this.enabled,
     required this.hour,
     required this.minute,
+    this.first,
   });
 
   String get hhmm =>
@@ -49,10 +82,14 @@ class Alarm {
 
   /// 設定する。**false が返ったら**「正確なアラーム」が未許可なので、
   /// [openExactAlarmSettings] で設定画面へ案内する。
-  static Future<bool> set(int hour, int minute) async {
+  /// [first] は1羽目。[met] は**近くで出会った鳥**の並び(2羽目・3羽目の元)。
+  static Future<bool> set(int hour, int minute,
+      {required String first, required List<String> met}) async {
     final ok = await _ch.invokeMethod<bool>('set', {
       'hour': hour,
       'minute': minute,
+      'first': first,
+      'met': met.join(','),
     });
     return ok ?? false;
   }
@@ -65,6 +102,7 @@ class Alarm {
       enabled: (m?['enabled'] as bool?) ?? false,
       hour: (m?['hour'] as int?) ?? 7,
       minute: (m?['minute'] as int?) ?? 0,
+      first: m?['first'] as String?,
     );
   }
 
