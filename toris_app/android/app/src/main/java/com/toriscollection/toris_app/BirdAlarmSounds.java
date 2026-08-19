@@ -26,19 +26,29 @@ public final class BirdAlarmSounds {
     private BirdAlarmSounds() {
     }
 
-    /** さえずりのみ。順序はそのまま「夜明けのコーラス」で加わる順になる。 */
+    /**
+     * **夜明けのコーラス。加わる順そのもの。**
+     *
+     * 2026-08-18、CEO「そもそも最初に起こす鳥を選ぶ必要はない」により
+     * **選択をやめた**。ここが唯一の並びで、1羽目→2羽目→3羽目に対応する。
+     * 3羽なのは設計書の決定(研究3「活動的な情景ほど回復効果が高い」)。
+     *
+     * ⚠️ **順序を入れ替えない。** 音の役割で並んでいる
+     * (澄んだ口笛で開幕 → 朝の代表 → 短く明るいフレーズ)。
+     *
+     * ⚠️ Carolina Wren は CC BY-NC-ND のため**外した**。選択をやめたことで
+     * 誰も鳴らせなくなり、同梱する理由も無くなった(mp3 も削除)。
+     */
     private static final String[] KEYS = {
             "northern_cardinal",   // 澄んだ口笛。開幕に向く
             "american_robin",      // 朝の代表。ゆるやかな節回し
             "song_sparrow",        // 短く明るいフレーズ
-            "carolina_wren",       // よく通る。最後に加わる層向き
-            // 2026-08-18 追加。CEO「なんでこの4つしか選べないの？」
-            // **末尾に足す。** 並びは夜明けのコーラスで加わる順そのものなので、
-            // 間に挿すと既に設定している人のコーラスが変わってしまう。
-            "eastern_bluebird",    // やわらかく低い。目覚めを急かさない
-            // Carolina Chickadee は音は使えるが**ドット絵が無い**ので保留。
-            // 絵ができたらここに足す(選択肢に顔が並ばないと選べない)。
     };
+
+    /** 鳴く順に並んだ3羽。画面はこれを並べて、鳴いた鳥から光らせる。 */
+    public static String[] chorusKeys() {
+        return KEYS.clone();
+    }
 
     public static int resFor(String key) {
         if (key == null) {
@@ -49,59 +59,9 @@ public final class BirdAlarmSounds {
                 return R.raw.alarm_american_robin;
             case "song_sparrow":
                 return R.raw.alarm_song_sparrow;
-            case "carolina_wren":
-                return R.raw.alarm_carolina_wren;
-            case "eastern_bluebird":
-                return R.raw.alarm_eastern_bluebird;
             case "northern_cardinal":
             default:
                 return R.raw.alarm_northern_cardinal;
         }
-    }
-
-    public static String[] keys() {
-        return KEYS.clone();
-    }
-
-    /**
-     * 夜明けのコーラスで、指定の鳥に「後から加わる」2種を返す。
-     *
-     * 本物の dawn chorus と同じく、1種から始まって少しずつ増える。
-     * Ratcliffe ら(2013)は、回復効果が高いと評価された鳥の声は
-     * 「活動的な情景」と結びついていたと報告しており、単独で鳴らし続けるより
-     * 複数種が加わる方がその情景に近い。
-     */
-    /** 未指定・知らない鍵は、既定の1羽目に寄せる(`resFor` と同じ扱い)。 */
-    public static String keyOrDefault(String key) {
-        for (String k : KEYS) {
-            if (k.equals(key)) {
-                return k;
-            }
-        }
-        return KEYS[0];
-    }
-
-    public static int[] chorusAfter(String firstKey) {
-        String[] keys = chorusKeysAfter(firstKey);
-        return new int[]{resFor(keys[0]), resFor(keys[1])};
-    }
-
-    /**
-     * 上と同じ順序を、**鍵の名前で**返す。
-     *
-     * 画面に「いま鳴いている鳥」を出すために要る。音を選ぶ側と名前を出す側で
-     * 別々に並べ直すと、鳴いていない鳥の名前が光る(表示が嘘になる)ので、
-     * 順序の決定はここ一箇所だけにする。
-     */
-    public static String[] chorusKeysAfter(String firstKey) {
-        String first = firstKey == null ? "northern_cardinal" : firstKey;
-        String[] out = new String[2];
-        int n = 0;
-        for (String k : KEYS) {
-            if (!k.equals(first) && n < 2) {
-                out[n++] = k;
-            }
-        }
-        return out;
     }
 }

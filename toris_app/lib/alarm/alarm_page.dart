@@ -23,7 +23,6 @@ class AlarmPage extends StatefulWidget {
 
 class _AlarmPageState extends State<AlarmPage> {
   TimeOfDay _time = const TimeOfDay(hour: 7, minute: 0);
-  String _bird = alarmBirds.first.key;
   AlarmSetting? _current;
   bool _exactAllowed = true;
   bool _notifyAllowed = true;
@@ -71,7 +70,6 @@ class _AlarmPageState extends State<AlarmPage> {
       _notifyAllowed = notify;
       if (s.enabled) {
         _time = TimeOfDay(hour: s.hour, minute: s.minute);
-        _bird = s.sound;
       }
     });
   }
@@ -86,7 +84,7 @@ class _AlarmPageState extends State<AlarmPage> {
     if (!_notifyAllowed) {
       await Alarm.requestNotificationPermission();
     }
-    final ok = await Alarm.set(_time.hour, _time.minute, _bird);
+    final ok = await Alarm.set(_time.hour, _time.minute);
     if (!mounted) return;
     if (!ok) {
       // Android 12+ で「正確なアラーム」が未許可。設定画面へ案内する。
@@ -178,30 +176,27 @@ class _AlarmPageState extends State<AlarmPage> {
           ),
           const SizedBox(height: 16),
 
-          // ── 最初に鳴く鳥 ──
-          const Text('First to sing',
+          // ── 夜明けのコーラス ──
+          // **選ばせない**(CEO 2026-08-18)。並びは決まっていて、
+          // 鳴き出した鳥から光っていく。
+          const Text('The dawn chorus',
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   color: kSub)),
           const SizedBox(height: 6),
-          RadioGroup<String>(
-            groupValue: _bird,
-            onChanged: (v) => setState(() => _bird = v!),
-            child: Column(
-              children: alarmBirds
-                  .map((b) => RadioListTile<String>(
-                        value: b.key,
-                        dense: true,
-                        secondary: _BirdIcon(b.key),
-                        title: _SingingName(
-                          name: b.name,
-                          singing: _singing.contains(b.key),
-                        ),
-                      ))
-                  .toList(),
-            ),
+          Column(
+            children: dawnChorus
+                .map((b) => ListTile(
+                      dense: true,
+                      leading: _BirdIcon(b.key),
+                      title: _SingingName(
+                        name: b.name,
+                        singing: _singing.contains(b.key),
+                      ),
+                    ))
+                .toList(),
           ),
           const SizedBox(height: 16),
 

@@ -172,6 +172,27 @@ FORBIDDEN_IN_UI = [
      "空の文字。出さないなら widget ごと出さない"),
 ]
 
+# **無いと画面が黙って嘘をつく**もの。(ファイル, 正規表現, 説明)
+#
+# ## なぜ足したか(2026-08-18 の監査)
+# ここまでのリントは「出ていたら間違い」しか見ていなかった。ところが実際に
+# 漏れたのは逆で、**あるべきものが画面から落ちていた**:
+#
+#   - 図鑑の「こわいもの」。Python は属レベル(同属の近縁種の記録)のとき
+#     「(from records of close relatives)」と断っていたのに、Flutter は
+#     黙って種の事実として出していた(6種が該当)。原則4「生態に誠実」。
+#   - 庭が留守のぶんを進める処理。画面の初回生成でしか呼ばれず、
+#     ホームに戻して戻ってきても動かなかった。**鳥が来ない**の正体。
+#
+# どちらも「関数は移植済み」なので関数の台帳では検出できない。
+# **呼ばれているかどうか**を見る必要がある。
+REQUIRED_IN_UI = [
+    ("toris_app/lib/garden/guide_page.dart", r"predatorIsGenusLevel",
+     "図鑑が属レベルの但し書きを出していない。近縁種の記録を種の事実にしない"),
+    ("toris_app/lib/garden/garden_page.dart", r"didChangeAppLifecycleState",
+     "前面に戻った時に庭を進めていない。初回生成でしか進まず鳥が来なくなる"),
+]
+
 # 画面に日本語が出ていないこと。**アプリの表示は全部英語**
 # (一度これで作り直しになった)。コメントと doc は日本語なので、
 # 文字列リテラルの中だけを見る。
@@ -191,6 +212,12 @@ def _ui_files() -> list:
 def _strip_comments(line: str) -> str:
     i = line.find("//")
     return line[:i] if i >= 0 else line
+
+
+def _strip_comments_all(src: str) -> str:
+    """行コメントを落とす。**説明文に書いただけ**を「有る」と数えないため。"""
+    import re as _re
+    return _re.sub(r"//.*", "", src)
 
 
 def screen_audit() -> list:
@@ -216,6 +243,16 @@ def screen_audit() -> list:
                     problems.append(
                         f"{rel}:{n} 画面に日本語(アプリは全部英語)\n"
                         f"        {text[:60]}")
+
+    # あるべきものが落ちていないか。
+    for rel, pat, why in REQUIRED_IN_UI:
+        path = os.path.join(ROOT, rel.replace("/", os.sep))
+        if not os.path.exists(path):
+            problems.append(f"{rel} が無い({why})")
+            continue
+        body = _strip_comments_all(open(path, encoding="utf-8").read())
+        if not re.search(pat, body):
+            problems.append(f"{rel} に {pat} が無い" + chr(10) + f"        {why}")
 
     # 全37種に、絵か**代役の方針**があること。
     # 絵が無いこと自体は問題ではない(描き下ろしは順次)。

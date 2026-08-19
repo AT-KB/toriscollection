@@ -26,14 +26,11 @@ import android.os.Build;
 public class BirdAlarmReceiver extends BroadcastReceiver {
 
     public static final String ACTION_FIRE = "com.toriscollection.toris_app.ALARM_FIRE";
-    public static final String EXTRA_SOUND = "sound";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String sound = intent != null ? intent.getStringExtra(EXTRA_SOUND) : null;
-
+        // 鳥は選ばせない。鳴く並びは BirdAlarmSounds.chorusKeys() が持つ。
         Intent svc = new Intent(context, BirdAlarmService.class);
-        svc.putExtra(EXTRA_SOUND, sound);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(svc);

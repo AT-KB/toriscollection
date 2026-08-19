@@ -8,7 +8,13 @@ library;
 
 import 'package:flutter/services.dart';
 
-/// 目覚ましに使える鳥。**さえずり(song)のみ**。
+/// **夜明けのコーラス。鳴き始める順に並んでいる。**
+///
+/// 2026-08-18、CEO「そもそも最初に起こす鳥を選ぶ必要はない」により
+/// **選ばせるのをやめた**。毎朝この順で、1羽ずつ増えていく。
+/// 画面はこの並びを出して、実際に鳴いた鳥から光らせる。
+///
+/// **さえずり(song)のみ**。
 ///
 /// 地鳴き・警戒声(call)は入れない。McFarlane ら(2020)は、耳障りな音で起きると
 /// 睡眠慣性(朝のぼんやり)が強まり、**メロディのある音だけ**が注意の脱落を有意に
@@ -17,25 +23,21 @@ import 'package:flutter/services.dart';
 ///
 /// 並び順はネイティブ側 `BirdAlarmSounds.KEYS` と**同じにしておくこと**。
 /// その順序がそのまま「夜明けのコーラスで加わる順」になる。
-const List<({String key, String name})> alarmBirds = [
+const List<({String key, String name})> dawnChorus = [
   (key: 'northern_cardinal', name: 'Northern Cardinal'),
   (key: 'american_robin', name: 'American Robin'),
   (key: 'song_sparrow', name: 'Song Sparrow'),
-  (key: 'carolina_wren', name: 'Carolina Wren'),
-  (key: 'eastern_bluebird', name: 'Eastern Bluebird'),
 ];
 
 class AlarmSetting {
   final bool enabled;
   final int hour;
   final int minute;
-  final String sound;
 
   const AlarmSetting({
     required this.enabled,
     required this.hour,
     required this.minute,
-    required this.sound,
   });
 
   String get hhmm =>
@@ -47,11 +49,10 @@ class Alarm {
 
   /// 設定する。**false が返ったら**「正確なアラーム」が未許可なので、
   /// [openExactAlarmSettings] で設定画面へ案内する。
-  static Future<bool> set(int hour, int minute, String sound) async {
+  static Future<bool> set(int hour, int minute) async {
     final ok = await _ch.invokeMethod<bool>('set', {
       'hour': hour,
       'minute': minute,
-      'sound': sound,
     });
     return ok ?? false;
   }
@@ -64,7 +65,6 @@ class Alarm {
       enabled: (m?['enabled'] as bool?) ?? false,
       hour: (m?['hour'] as int?) ?? 7,
       minute: (m?['minute'] as int?) ?? 0,
-      sound: (m?['sound'] as String?) ?? 'northern_cardinal',
     );
   }
 

@@ -141,6 +141,13 @@ class _Entry extends StatelessWidget {
       for (final x in prof.home) '${g.data.biomes[x]?['name_en'] ?? x}',
     ];
     final fears = core.predatorLabels(id, g.data.predators);
+    // 属レベル(同属の近縁種の記録から採ったもの)は、**黙って種の事実にしない**。
+    // Python 側は同じ場所で「(from records of close relatives)」と断っていたのに、
+    // 移植で落ちていた(2026-08-18 の監査で発覚)。原則4「生態に誠実」。
+    // 文言は i18n.py の出荷済みの英語をそのまま使う。
+    final fearsNote = core.predatorIsGenusLevel(id, g.data.predators)
+        ? '(from records of close relatives)'
+        : null;
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -192,7 +199,7 @@ class _Entry extends StatelessWidget {
                         const _Rule(),
                         _Row('Likes', likes),
                         _Row('Home', home),
-                        _Row('Fears', fears),
+                        _Row('Fears', fears, note: fearsNote),
                         // **なぜ来たか**の記録。あなたが組んだ関係が呼んだ証拠。
                         // 庭が痩せても、ここは消えない(原則2「罰しない」)。
                         ..._whyItCame(),
@@ -331,7 +338,10 @@ class _Rule extends StatelessWidget {
 class _Row extends StatelessWidget {
   final String label;
   final List<String> items;
-  const _Row(this.label, this.items);
+
+  /// 値のあとに小さく添える但し書き。無ければ null。
+  final String? note;
+  const _Row(this.label, this.items, {this.note});
 
   @override
   Widget build(BuildContext context) {
@@ -350,8 +360,17 @@ class _Row extends StatelessWidget {
                   color: kSub)),
         ),
         Expanded(
-          child: Text(items.join('   ·   '),
-              style: const TextStyle(fontSize: 14, color: kInk, height: 1.6)),
+          child: Text.rich(
+            TextSpan(children: [
+              TextSpan(text: items.join('   ·   ')),
+              if (note != null)
+                TextSpan(
+                  text: '  $note',
+                  style: const TextStyle(fontSize: 11, color: kSub),
+                ),
+            ]),
+            style: const TextStyle(fontSize: 14, color: kInk, height: 1.6),
+          ),
         ),
       ]),
     );

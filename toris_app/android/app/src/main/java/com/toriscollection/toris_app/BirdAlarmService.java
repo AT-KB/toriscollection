@@ -102,22 +102,22 @@ public class BirdAlarmService extends Service {
             wakeLock.acquire(AUTO_STOP_MS + 30_000L);
         }
 
-        String key = intent != null ? intent.getStringExtra(BirdAlarmReceiver.EXTRA_SOUND) : null;
         raiseAlarmStreamIfMuted();
 
+        // 並びは1つだけ。選ばせないので、毎朝この順で明けていく。
+        final String[] chorus = BirdAlarmSounds.chorusKeys();
+
         // 1羽目。ここから夜明けが始まる。
-        MediaPlayer first = makePlayer(BirdAlarmSounds.resFor(key));
+        MediaPlayer first = makePlayer(BirdAlarmSounds.resFor(chorus[0]));
         if (first != null) {
             players.add(first);
         }
         SINGING = first == null
                 ? java.util.Collections.emptyList()
-                : java.util.Collections.singletonList(
-                        BirdAlarmSounds.keyOrDefault(key));
+                : java.util.Collections.singletonList(chorus[0]);
         // 2羽目・3羽目は後から加わる。
-        final String[] laterKeys = BirdAlarmSounds.chorusKeysAfter(key);
-        handler.postDelayed(() -> join(laterKeys[0]), JOIN2_MS);
-        handler.postDelayed(() -> join(laterKeys[1]), JOIN3_MS);
+        handler.postDelayed(() -> join(chorus[1]), JOIN2_MS);
+        handler.postDelayed(() -> join(chorus[2]), JOIN3_MS);
 
         tick();
         handler.postDelayed(this::stopSelf, AUTO_STOP_MS);
