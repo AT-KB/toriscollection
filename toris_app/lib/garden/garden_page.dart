@@ -302,8 +302,12 @@ class _GardenPageState extends State<GardenPage>
 
   Future<void> _stopListening() async {
     final flewOff = _ritual?.flewOff ?? const <String>{};
-    final met = List<MetBird>.from(_metThisRitual);
-    _metThisRitual.clear();
+    // ⚠️ **板が出ている最中は、ここで新しく開かない。**
+    // 90秒で畳むときに、まだ閉じられていない板の上へもう1枚重ねてしまい、
+    // 実機で2枚重なっているのを見た(2026-08-20)。残っているぶんは
+    // `_flushMet` の繰り返しが拾うので、そちらに任せる。
+    final met = _showingMet ? <MetBird>[] : List<MetBird>.from(_metThisRitual);
+    if (!_showingMet) _metThisRitual.clear();
     _ritual?.stop();
     final g = _g;
     if (g != null) {
