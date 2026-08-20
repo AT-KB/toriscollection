@@ -275,9 +275,81 @@ def wake_audio():
     return pick_app_songs([b for b, _n, _t in WAKE_CHORUS if b])
 
 
+# ── 儀式 ──────────────────────────────────────────────────
+# 型1 The Reveal。診断書がいちばん強いとしている型で、他の収集ゲームと
+# 違う点(捕まえない)がそのまま絵になる唯一の題材。
+#
+# ⚠️ **作り話をしない。** アプリの儀式は本当にこう動く:
+#   - 「Listen closely」を押すと、鳥が枝を移りながら近づいてくる
+#   - 2.5秒ごとに1歩。前へ行くとは限らず、**下がることもある**
+#   - 手前の枝に2歩とどまると「出会い」
+# だから字幕も「行ったり来たりして、やがて留まる」と言う。
+# 一直線に近づいてくる絵にすると、それは別のアプリの宣伝になる。
+RITUAL_L1 = "Listen closely."
+RITUAL_L2 = "It comes and goes. Then it stays."
+RITUAL_BIRD = "carolina_wren"
+
+# (時刻, 枝) 0=奥 1=中 2=手前。**下がる回**を入れてある。
+RITUAL_PATH = [(1.4, 1), (3.0, 0), (4.4, 1), (5.8, 2), (7.2, 1), (8.6, 2)]
+RITUAL_SETTLE = 9.6   # ここで手前に留まる = 出会い
+
+
+def _branch_seat(depth):
+    """枝の位置と大きさ。奥ほど小さく、高く、薄い。"""
+    if depth == 0:
+        return (BRANCH_X - 250, BRANCH_Y - 236, 110, 0.55)
+    if depth == 1:
+        return (BRANCH_X - 60, BRANCH_Y - 196, 150, 0.78)
+    return (BRANCH_X + 70, BRANCH_Y - 246, 210, 1.0)
+
+
+def render_ritual(t, credit):
+    im = Image.new("RGBA", (W, H), (226, 238, 243, 255))
+    d = ImageDraw.Draw(im)
+    draw_garden(d, 1.0)
+
+    # いまどの枝に居るか。**跳ぶ瞬間だけ動かす**(間はじっとしている)。
+    depth = 0
+    for at, br in RITUAL_PATH:
+        if t >= at:
+            depth = br
+    if t >= RITUAL_SETTLE:
+        depth = 2
+    x, y, size, alpha = _branch_seat(depth)
+
+    # 跳んだ直後だけ、ぴょこっと弾む。
+    hop = 0.0
+    for at, _br in RITUAL_PATH + [(RITUAL_SETTLE, 2)]:
+        if 0 <= t - at < 0.45:
+            hop = math.sin((t - at) / 0.45 * math.pi) * 26
+    sp = Image.open(os.path.join(SPRITES, f"{RITUAL_BIRD}.png")).convert("RGBA")
+    sp = sp.resize((size, size), Image.NEAREST)
+    if alpha < 1.0:
+        sp.putalpha(sp.getchannel("A").point(lambda v: int(v * alpha)))
+    im.alpha_composite(sp, (x, int(y - hop)))
+
+    # 留まったら、図鑑の絵で「出会えた」ことを見せる(アプリと同じ順番 —
+    # 手前に留まった瞬間に板が出る)。
+    if t >= RITUAL_SETTLE + 1.2:
+        im = zoom_to(im, BRANCH_X + 120, BRANCH_Y - 150,
+                     1.0 + 0.5 * ease((t - RITUAL_SETTLE - 1.2) / 1.4))
+        d = ImageDraw.Draw(im)
+
+    head = RITUAL_L1 if t < 6.6 else RITUAL_L2
+    ap = t / 0.6 if t < 6.6 else (t - 6.6) / 0.6
+    draw_band(im, d, head, None, credit, ap)
+    return im
+
+
+def ritual_audio():
+    # 近づいてくる鳥の声。**その鳥の録音**を鳴らす。
+    return pick_radio(["Downy Woodpecker", "Pileated Woodpecker"])
+
+
 FILMS = {
     "sleep": (render_sleep, "s09_sleep_15s_1080x1920.mp4", sleep_audio),
     "wake": (render_wake, "s10_wake_15s_1080x1920.mp4", wake_audio),
+    "ritual": (render_ritual, "s11_ritual_15s_1080x1920.mp4", ritual_audio),
 }
 
 
@@ -334,5 +406,5 @@ def build(kind):
 
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "both"
-    for k in (["sleep", "wake"] if what == "both" else [what]):
+    for k in (["sleep", "wake", "ritual"] if what == "both" else [what]):
         build(k)

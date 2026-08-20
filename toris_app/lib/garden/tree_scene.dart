@@ -93,7 +93,7 @@ class PerchedBird {
 class TreeScene extends StatefulWidget {
   final List<PerchedBird> birds;
 
-  /// 植えたもののアイコン(`plants.json` の icon)。地面にそのまま並べる。
+  /// 植えたもののアイコン(`plants.json` の icon)。芝から**少し立ち上げて**置く。
   final List<String> plants;
 
   /// 置いている餌台。`feeder_open` / `feeder_cage` / null。
@@ -163,13 +163,35 @@ class _TreeSceneState extends State<TreeScene> {
             ? 0.0
             : span / (widget.plants.length - 1);
         for (var i = 0; i < widget.plants.length; i++) {
+          // **茎で少し持ち上げる**(CEO 2026-08-20「今地面に置いている感じに
+          // なっていて、少しだけ高さほしい」)。絵文字だけだと芝に転がって
+          // 見えて、植わっている感じにならなかった。
+          //
+          // 長さは一定にしない。同じ丈で並ぶと生垣のように見える。
+          final stem = 11.0 + (i % 3) * 5.0;
+          // 足元は今までと同じ場所。**伸びた分だけ上に置き直す**ので、
+          // 並びの奥行き(手前・奥の振り分け)は変わらない。
+          final base = ground +
+              (kSceneHeight - ground) * (i.isEven ? 0.10 : 0.46) -
+              iconSize * 0.2;
           children.add(Positioned(
             left: from + step * i,
-            top: ground +
-                (kSceneHeight - ground) * (i.isEven ? 0.10 : 0.46) -
-                iconSize * 0.2,
-            child: Text(widget.plants[i],
-                style: const TextStyle(fontSize: iconSize)),
+            top: base - stem,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(widget.plants[i],
+                    style: const TextStyle(fontSize: iconSize)),
+                Container(
+                  width: 3,
+                  height: stem,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6E9A55),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
           ));
         }
       }
