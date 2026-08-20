@@ -249,12 +249,22 @@ class _GardenPageState extends State<GardenPage>
     setState(() => _ritual = r);
     await r.start(() {
       if (!mounted) return;
-      // 手前まで来た鳥とは「出会えた」。会うほど馴染む。
-      // **記録するのは、数える儀式のときだけ。** 眺めるだけの回は何も増えない。
-      if (!_ritualCounts) {
-        setState(() {});
+      setState(() {});
+
+      // ⚠️ **終わりの判定は、いちばん先に。**
+      // ここは以前 `if (!_ritualCounts) return;` の**下**にあったので、
+      // 記録されない回(同じ顔ぶれに二度目)では 90秒たっても畳まれず、
+      // 終わりが無いままだった(2026-08-20 実機で発覚)。
+      // 数えるかどうかと、終わるかどうかは別の話。
+      if (r.timedOut && _ritual != null) {
+        _stopListening();
         return;
       }
+
+      // 手前まで来た鳥とは「出会えた」。会うほど馴染む。
+      // **記録するのは、数える儀式のときだけ。** 眺めるだけの回は何も増えない。
+      if (!_ritualCounts) return;
+
       for (final b in r.met) {
         if (!g.metThisRitual.contains(b)) {
           // 「はじめまして」= **図鑑への新規登録かどうか**。観察回数では見ない
@@ -267,11 +277,8 @@ class _GardenPageState extends State<GardenPage>
           _metThisRitual.add(MetBird(b, isFirst));
         }
       }
-      setState(() {});
       // **会えた瞬間に出す。** 儀式は止めない(他の鳥はまだ近づいてくる)。
       _flushMet(g);
-      // 90秒で切り上げたら、こちらから畳む(押させない。原則1)。
-      if (r.timedOut && _ritual != null) _stopListening();
     }, assetOf: (b) => 'assets/birds/$b.mp3');
   }
 

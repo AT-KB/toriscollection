@@ -168,7 +168,10 @@ class _TreeSceneState extends State<TreeScene> {
           // 見えて、植わっている感じにならなかった。
           //
           // 長さは一定にしない。同じ丈で並ぶと生垣のように見える。
-          final stem = 11.0 + (i % 3) * 5.0;
+          // ⚠️ **芝より濃く、長めに。** 最初 3px・11〜21px・芝と同系色で
+          // 描いたら、実機では**まったく見えなかった**(2026-08-20)。
+          // 茎は芝の上に重なるので、明度差が無いと存在しないのと同じ。
+          final stem = 20.0 + (i % 3) * 7.0;
           // 足元は今までと同じ場所。**伸びた分だけ上に置き直す**ので、
           // 並びの奥行き(手前・奥の振り分け)は変わらない。
           final base = ground +
@@ -183,10 +186,10 @@ class _TreeSceneState extends State<TreeScene> {
                 Text(widget.plants[i],
                     style: const TextStyle(fontSize: iconSize)),
                 Container(
-                  width: 3,
+                  width: 4,
                   height: stem,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6E9A55),
+                    color: const Color(0xFF3F6B2E),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
