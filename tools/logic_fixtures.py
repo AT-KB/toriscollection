@@ -162,6 +162,15 @@ def main() -> None:
                 "mult": {str(w): round(
                     fc.wary_arrival_multiplier(w, r["raptors"]), 12)
                     for w in wariness_values},
+                # 餌台の到来加点。**気質(wariness)と食性で効きが変わる**ので、
+                # 種食/虫食 × 警戒心の組み合わせで総当たりする(2026-08-20)。
+                "bonus": {
+                    f"{w}|{int(seedy)}": round(fc.feeder_arrival_bonus(
+                        feats,
+                        {"wariness": w,
+                         "eats_plants": ["x"] if seedy else []}), 12)
+                    for w in wariness_values for seedy in (True, False)
+                },
             })
 
     # 画面に出る「一文」。ラジオの顔ぶれ・撹乱・留守の要約。

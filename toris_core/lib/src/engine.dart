@@ -332,6 +332,9 @@ TurnResult runTurn({
             raptors: raptors,
             centralities: centralities)
         .probability;
+    // 餌台の加点。**到来にだけ効く**(上の退去判定は加点前の p を使う)。
+    // 置いていなければ 0 なので、今までの庭は1ビットも変わらない。
+    p = min(1.0, p + feederArrivalBonus(placedFeatures, birdsData[bid]));
     if (arrivalBonusFn != null) {
       p = min(1.0, p + arrivalBonusFn(bid));
     }

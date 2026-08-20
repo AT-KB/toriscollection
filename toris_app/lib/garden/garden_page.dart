@@ -552,6 +552,19 @@ class _GardenPageState extends State<GardenPage>
                     ),
                 ],
               ),
+              // **どちらを選ぶと誰が来るのか**を書く(CEO 2026-08-20「意味づけも」)。
+              // 数字は出さない。選ぶのは「多いか少ないか」ではなく
+              // **誰に来てほしいか**で、平均の羽数はほぼ並ぶ。
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Open — bold birds crowd in. Squirrels reach it too, '
+                  'and a hawk follows them.\n'
+                  'Caged — shy birds feel safe enough to come. '
+                  'No squirrel, no hawk.',
+                  style: TextStyle(fontSize: 13, height: 1.5, color: kSub),
+                ),
+              ),
               // **短く。種名は絵文字で代用**(CEO 2026-08-16)。
               // 何が起きているかは庭の絵に出ているので、文はひとことでいい。
               if (g.chain.raptors.isNotEmpty)

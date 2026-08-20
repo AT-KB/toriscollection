@@ -165,7 +165,7 @@ void main() {
     expect(checked, 4440, reason: '4440通りを見ているはず');
   });
 
-  test('餌台の連鎖: 288通りで Python 版と一致する', () {
+  test('餌台の連鎖: 864通りで Python 版と一致する(抑制と加点)', () {
     // 餌台 → リス → タカ → 警戒心の強い鳥を抑制。
     // 分岐が細かい(かご型だけならリスは届かない/堅果は地面なので届く)ので総当たり。
     var checked = 0;
@@ -186,8 +186,26 @@ void main() {
             reason: '$label 警戒心$w の抑制が違う');
         checked++;
       });
+
+      // 餌台の到来加点。**気質と食性で効きが変わる**ので総当たりで見る。
+      // ここで Python の `or 0.5`(警戒心0.0 が偽になる)と Dart の
+      // `?? 0.5`(null のときだけ)の食い違いを捕まえた(2026-08-20)。
+      (c['bonus'] as Map<String, dynamic>).forEach((key, v) {
+        final parts = key.split('|');
+        final bird = {
+          'wariness': double.parse(parts[0]),
+          'eats_plants': parts[1] == '1' ? ['x'] : <String>[],
+        };
+        expect(feederArrivalBonus(feats, bird), closeTo(v as num, 1e-9),
+            reason: '$label 警戒心${parts[0]} '
+                '${parts[1] == '1' ? '種食' : '虫のみ'} の加点が違う');
+        checked++;
+      });
     }
-    expect(checked, 288, reason: '288通りを見ているはず');
+    // 288 = 6通りの餌台 × 8通りの庭 × 6通りの警戒心(抑制)。
+    // これに餌台の加点(警戒心6 × 種食/虫食2 = 12)が乗って 864 になる。
+    // **数が減ったら、突き合わせている範囲が狭まったということ。**
+    expect(checked, 864, reason: '864通りを見ているはず(減ったら手当てが要る)');
   });
 
   test('餌台: かご型ならリスは来ず、臆病な鳥も抑えられない', () {

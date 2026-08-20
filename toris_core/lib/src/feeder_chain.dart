@@ -1,3 +1,4 @@
+
 /// 餌台 → リス → タカ →(警戒心の強い鳥を抑制)の連鎖。`feeder_chain.py` の移植。
 ///
 /// アメリカ裏庭バードウォッチングの「餌台を置き、リスや猛禽との駆け引きで
@@ -14,20 +15,84 @@
 /// 計算そのものは Python と機械的に突き合わせてあるが、
 /// **到来確率への接続は Flutter 側で新たに入れたもの**(2026-08-14 CEO 承認)。
 library;
+import 'dart:math';
 
 /// 庭に置く餌台。`largeAccess` = 大型動物(リス)が中身に届くか。
+/// 置ける餌台。
+///
+/// `draws` は**どちらの気質の鳥を強く引くか**。'bold' は警戒心の低い鳥、
+/// 'shy' は警戒心の高い鳥。`bonus_max` はその効きの上限(pp)。
+///
+/// ## なぜ気質で分けるのか(2026-08-20 CEO承認)
+/// この仕組みは「餌台を置き、**リスや猛禽との駆け引き**で狙った鳥を呼ぶ」
+/// ためのものなのに、**代償(リス→鷹→抑制)だけが配線されていて、利点が
+/// 一度も入っていなかった。** 実測すると:
+///
+///   開放型   空の庭 11% / 平均 1.74羽  ← 一方的に損
+///   かご型   空の庭  5% / 平均 2.15羽  ← 「置かない」と1ビットも同じ
+///
+/// 選択肢が「無意味」か「自傷」の二択で、原則2「罰しない」に触れていた。
+///
+/// ## 量ではなく**顔ぶれ**で分ける
+/// 最初は加点の大小で差をつけようとしたが(開放+3/かご+2 など)、鷹が来ない
+/// ぶんかご型が常に勝ち、「安全な方が正解」で駆け引きにならなかった。
+///
+///   開放型 — 開けっぴろげで食べやすい。**大胆な鳥**が寄る。
+///            ただしリスが来て鷹を呼ぶので、**臆病な鳥は二重に遠のく**。
+///   かご型 — 囲われていて安全。**臆病な鳥**が安心して来る。鷹も来ない。
+///
+/// 実測(同じ庭。平均はほぼ並ぶ = どちらが得かではなく誰が来るかの差):
+///   開放型 2.75羽  robin.30 / cardinal.35 / jay.35 / dove.35
+///   かご型 2.78羽  finch.50 / thrasher.60 / wren.45 / waxwing.50
+///   置かない 2.25羽
+///
+/// ⚠️ 体格では分けない。`data.py` に体長・体重が無く、体格表をでっち上げる
+/// のは恣意的な指標になる(原則4。CEO 2026-08-20「今更体長のラベリングは
+/// 違うな」)。**wariness は元からあるデータ。**
 const Map<String, Map<String, Object>> kFeeders = {
   'feeder_open': {
     'english': 'Open feeder',
     'offers': 'seed',
     'large_access': true,
+    'draws': 'bold',
+    'bonus_max': 0.20,
   },
   'feeder_cage': {
     'english': 'Caged feeder',
     'offers': 'seed',
     'large_access': false,
+    'draws': 'shy',
+    'bonus_max': 0.20,
   },
 };
+
+/// 気質の効きが立ち上がる下限。ここを引いてから掛けるので、逆側の気質の鳥は
+/// ほとんど加点されない(0.2 未満は 0)。
+const double kLeanFloor = 0.2;
+
+/// 餌台が、この鳥の到来確率に足す値(pp)。
+///
+/// 種・実を食べる鳥(`eats_plants` が空でない)にだけ効く。虫だけを食べる鳥に
+/// 種を撒いても意味が無いので加点しない(原則4)。
+/// 置いていなければ 0.0 — **今までと1ビットも変わらない。**
+///
+/// ⚠️ **到来にだけ効く。退去には効かない**(garden_items の加点と同じ扱い)。
+double feederArrivalBonus(List<String> placedFeatures, Object? bird) {
+  if (placedFeatures.isEmpty) return 0.0;
+  final m = (bird as Map?) ?? const {};
+  if (((m['eats_plants'] as List?) ?? const []).isEmpty) return 0.0;
+  var w = (m['wariness'] as num?)?.toDouble() ?? 0.5;
+  w = w.clamp(0.0, 1.0);
+  var best = 0.0;
+  for (final f in placedFeatures) {
+    final meta = kFeeders[f];
+    if (meta == null) continue;
+    final lean = meta['draws'] == 'bold' ? 1.0 - w : w;
+    final v = (meta['bonus_max'] as num).toDouble() * max(0.0, lean - kLeanFloor);
+    if (v > best) best = v;
+  }
+  return best;
+}
 
 /// 種子を供給する植物(GloBI: これらを様々な動物が食べる)。
 const Set<String> kSeedPlants = {'sunflower'};
