@@ -1,832 +1,837 @@
 {
- "items": {
-  "absence_loop.build_reason_text": {
-   "dart": "buildReason",
-   "status": "done",
-   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
-  },
-  "absence_loop.estimate_tick_count": {
-   "dart": "estimateTickCount",
-   "status": "done",
-   "why": ""
-  },
-  "absence_loop.evolve_state": {
-   "dart": "evolveWhileAway",
-   "status": "done",
-   "why": ""
-  },
-  "absence_loop.humanize_delta": {
-   "dart": "humanizeDelta",
-   "status": "done",
-   "why": "CEO 2026-08-16「123やろう」。Just now / min / hr / days ago"
-  },
-  "absence_loop.parse_iso": {
-   "dart": "parseIso",
-   "status": "done",
-   "why": "読めなければ静かに null(例外を投げない)"
-  },
-  "absence_loop.summarize_events": {
-   "dart": "summarizeEvents",
-   "status": "done",
-   "why": "CEO 2026-08-16「123やろう」。1種なら名前で、複数種なら件数と種数で"
-  },
-  "ads.has_claimed_today": {
-   "dart": "",
-   "status": "todo"
-  },
-  "ads.is_radio_active": {
-   "dart": "",
-   "status": "todo"
-  },
-  "ads.mark_claimed_today": {
-   "dart": "",
-   "status": "todo"
-  },
-  "ads.render_admob_banner": {
-   "dart": "",
-   "status": "todo"
-  },
-  "ads.render_banner_placeholder": {
-   "dart": "",
-   "status": "todo"
-  },
-  "ads.render_garden_item_button": {
-   "dart": "",
-   "status": "todo"
-  },
-  "ads.render_pending_ad_loader": {
-   "dart": "",
-   "status": "todo"
-  },
-  "alarm_ui.render_alarm": {
-   "dart": "AlarmPage",
-   "status": "done",
-   "why": ""
-  },
-  "badges.badge_for_days": {
-   "dart": "badgeForDays",
-   "status": "done",
-   "why": ""
-  },
-  "badges.badge_message": {
-   "dart": "badgeMessage",
-   "status": "done",
-   "why": ""
-  },
-  "bird_profile.build": {
-   "dart": "buildBirdProfile",
-   "status": "done",
-   "why": "37種で突き合わせ"
-  },
-  "bird_profile.fears": {
-   "dart": "profileFears",
-   "status": "done",
-   "why": "37種で突き合わせ"
-  },
-  "bird_profile.home": {
-   "dart": "profileHome",
-   "status": "done",
-   "why": "37種で突き合わせ"
-  },
-  "bird_profile.likes": {
-   "dart": "profileLikes",
-   "status": "done",
-   "why": "37種で突き合わせ(順序も)"
-  },
-  "bird_profile.rows": {
-   "dart": "_Row",
-   "status": "done",
-   "why": ""
-  },
-  "centrality.get_centrality": {
-   "dart": "getCentrality",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。補正後を優先し、無ければ生の値"
-  },
-  "centrality.is_available": {
-   "dart": "centralityIsAvailable",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。データが手元にあるか。Python はファイルの有無、Dart は表の有無で見る"
-  },
-  "centrality.load_centralities": {
-   "dart": "loadCentralities",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。元データ(200-300MB)は同梱しない。`.centrality_cache.json` 相当の小さな表を渡す形にした"
-  },
-  "community.aggregate_atlas": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16「3は要らない」。集合アトラス(全ユーザーの庭を合算した図)は作らない"
-  },
-  "community.render_community_atlas": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16「3は要らない」。集合アトラス(全ユーザーの庭を合算した図)は作らない"
-  },
-  "daily.daily_seed": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
-  },
-  "daily.is_met": {
-   "dart": "observed",
-   "status": "done",
-   "why": "近くで会ったか = observed>0。Garden.observed が持っている"
-  },
-  "daily.render_todays_garden": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
-  },
-  "daily.todays_bird": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
-  },
-  "detail_sprites.detail_image_path": {
-   "dart": "detailSpriteFor",
-   "status": "done",
-   "why": ""
-  },
-  "detail_sprites.has_detail_image": {
-   "dart": "detailSpriteFor",
-   "status": "done",
-   "why": "同梱の絵から判定する"
-  },
-  "disturbance.apply_disturbance": {
-   "dart": "applyDisturbance",
-   "status": "done",
-   "why": ""
-  },
-  "disturbance.disturbance_story": {
-   "dart": "disturbanceStory",
-   "status": "done",
-   "why": "CEO 2026-08-16「123やろう」。倒れなかった回も語る"
-  },
-  "disturbance.plant_sensitivity": {
-   "dart": "plantSensitivity",
-   "status": "done",
-   "why": ""
-  },
-  "disturbance.roll_disturbance": {
-   "dart": "rollDisturbance",
-   "status": "done",
-   "why": ""
-  },
-  "eco_log.append_events": {
-   "dart": "appendEvents",
-   "status": "done",
-   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
-  },
-  "eco_log.entries_for_bird": {
-   "dart": "entriesForBird",
-   "status": "done",
-   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
-  },
-  "eco_log.is_founding_record": {
-   "dart": "isFoundingRecord",
-   "status": "done",
-   "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
-  },
-  "ecology.climate_overlap": {
-   "dart": "climateOverlap",
-   "status": "done",
-   "why": ""
-  },
-  "ecology.co_occurrence": {
-   "dart": "coOccurrence",
-   "status": "done",
-   "why": ""
-  },
-  "ecology.co_occurrence_matrix": {
-   "dart": "coOccurrenceMatrix",
-   "status": "done",
-   "why": ""
-  },
-  "ecology.diet_jaccard": {
-   "dart": "dietJaccard",
-   "status": "done",
-   "why": ""
-  },
-  "ecology.guild": {
-   "dart": "guild",
-   "status": "done",
-   "why": ""
-  },
-  "ecology.guild_groups": {
-   "dart": "guildGroups",
-   "status": "done",
-   "why": "CEO 2026-08-16「123やろう」。2羽以上のギルドだけ、多い順。同数は最初に現れた順"
-  },
-  "ecology.guild_label": {
-   "dart": "guildLabel",
-   "status": "done",
-   "why": "CEO 2026-08-16「123やろう」。ギルドの表示ラベル(英語)"
-  },
-  "ecology.lineup_story": {
-   "dart": "lineupStory",
-   "status": "done",
-   "why": "CEO 2026-08-16「123やろう」。**種類だけ**を返す(i18n 非依存)。文にするのは stories.dart"
-  },
-  "ecology.pick_lineup": {
-   "dart": "pickLineup",
-   "status": "done",
-   "why": ""
-  },
-  "engine.build_network": {
-   "dart": "buildFoodWeb",
-   "status": "done",
-   "why": ""
-  },
-  "engine.calculate_arrival_probability": {
-   "dart": "arrivalProbability",
-   "status": "done",
-   "why": ""
-  },
-  "engine.current_temperature": {
-   "dart": "currentTemperature",
-   "status": "done",
-   "why": ""
-  },
-  "engine.force_directed_layout": {
-   "dart": "shell",
-   "status": "done",
-   "why": ""
-  },
-  "engine.network_stats": {
-   "dart": "networkStats",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。植物→虫の辺も数える(build_network が張る)。40状況で突き合わせ"
-  },
-  "engine.run_turn": {
-   "dart": "runTurn",
-   "status": "done",
-   "why": ""
-  },
-  "engine.simulate_with_added_plant": {
-   "dart": "simulateWithAddedPlant",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。96通りで突き合わせ"
-  },
-  "engine.suggest_for_bird": {
-   "dart": "suggestForBird",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。提案の**順序も**比べる(直接→間接)。1480件で突き合わせ"
-  },
-  "engine.temperature_fit": {
-   "dart": "temperatureFit",
-   "status": "done",
-   "why": ""
-  },
-  "feeder_chain.animals_present": {
-   "dart": "animalsPresent",
-   "status": "done",
-   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
-  },
-  "feeder_chain.available_foods": {
-   "dart": "availableFoods",
-   "status": "done",
-   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
-  },
-  "feeder_chain.raptors_present": {
-   "dart": "raptorsPresent",
-   "status": "done",
-   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
-  },
-  "feeder_chain.resolve": {
-   "dart": "resolveFeeders",
-   "status": "done",
-   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
-  },
-  "feeder_chain.wary_arrival_multiplier": {
-   "dart": "waryArrivalMultiplier",
-   "status": "done",
-   "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
-  },
-  "flock.flock_cap": {
-   "dart": "flockCap",
-   "status": "done",
-   "why": ""
-  },
-  "flock.flock_size": {
-   "dart": "flockSize",
-   "status": "done",
-   "why": ""
-  },
-  "freesound_client.clear_cache": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
-  },
-  "freesound_client.get_ambient_path": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
-  },
-  "freesound_client.is_enabled": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
-  },
-  "garden_items.departure_bonus": {
-   "dart": "itemDepartureBonus",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.hours_remaining": {
-   "dart": "itemHoursRemaining",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.is_active": {
-   "dart": "itemIsActive",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。両端を含む"
-  },
-  "garden_items.is_available": {
-   "dart": "itemIsAvailable",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.is_item_boosted_arrival": {
-   "dart": "isItemBoostedArrival",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.make_arrival_bonus_fn": {
-   "dart": "makeArrivalBonusFn",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.place_item": {
-   "dart": "placeItem",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.target_bird_ids": {
-   "dart": "targetBirdIds",
-   "status": "done",
-   "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
-  },
-  "garden_items.unavailable_reason": {
-   "dart": "itemUnavailableReason",
-   "status": "done",
-   "why": "事実だけを言い、責める言い方にしない(原則2)。理由の文は出荷済みの英語だが、**アイテム名の英訳は i18n.py に存在しない**ため、名前はこちらで付けた。広告を入れる段で CEO に確認すること"
-  },
-  "globi_client.compare_with_seed": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
-  },
-  "globi_client.enrich_seed_with_globi": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
-  },
-  "globi_client.get_diet": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
-  },
-  "globi_client.get_diet_japan": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
-  },
-  "globi_client.get_interactions": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
-  },
-  "i18n.describe": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
-  },
-  "i18n.disp": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
-  },
-  "i18n.get_lang": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
-  },
-  "i18n.set_lang": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
-  },
-  "i18n.t": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
-  },
-  "mementos.all_possible_mementos": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.feather_id": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.make_id": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.memento_category": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.memento_display": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.memento_target": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.plume_id": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.possible_mementos_from_bird": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.roll_drop": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "mementos.twig_id": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
-  },
-  "observation_log.load_observation_counts": {
-   "dart": "observed",
-   "status": "done",
-   "why": ""
-  },
-  "observation_log.record_observation": {
-   "dart": "metThisRitual",
-   "status": "done",
-   "why": ""
-  },
-  "predators.categories": {
-   "dart": "kPredatorLabels",
-   "status": "done",
-   "why": ""
-  },
-  "predators.has_data": {
-   "dart": "predatorHasData",
-   "status": "done",
-   "why": "37種で突き合わせ"
-  },
-  "predators.is_genus_level": {
-   "dart": "predatorIsGenusLevel",
-   "status": "done",
-   "why": "37種で突き合わせ"
-  },
-  "predators.labels": {
-   "dart": "predatorLabels",
-   "status": "done",
-   "why": "**分類表ごと**突き合わせる。Dart 側に7分類を手で書いて、実データが使う crow/falcon/fox/rodent/weasel が抜けていた(2026-08-16 の監査で発覚)"
-  },
-  "radio.bird_in_season": {
-   "dart": "",
-   "status": "dropped",
-   "why": "季節での絞り込みは機能として廃止(2026-08-14)"
-  },
-  "radio.current_app_season": {
-   "dart": "",
-   "status": "dropped",
-   "why": "同上"
-  },
-  "radio.render_radio": {
-   "dart": "RadioPage",
-   "status": "done",
-   "why": ""
-  },
-  "radio.weeks_until_next_season": {
-   "dart": "",
-   "status": "dropped",
-   "why": "同上"
-  },
-  "ritual.render_ritual": {
-   "dart": "Ritual",
-   "status": "done",
-   "why": ""
-  },
-  "save_code.build_current_snapshot": {
-   "dart": "buildCurrentSnapshot",
-   "status": "done",
-   "why": ""
-  },
-  "save_code.decode_save": {
-   "dart": "decodeSave",
-   "status": "done",
-   "why": ""
-  },
-  "save_code.encode_current_state": {
-   "dart": "encodeCurrentState",
-   "status": "done",
-   "why": ""
-  },
-  "save_code.encode_save": {
-   "dart": "encodeSave",
-   "status": "done",
-   "why": ""
-  },
-  "screen.biome_choice": {
-   "dart": "setBiome",
-   "status": "done",
-   "why": ""
-  },
-  "screen.bird_sprites": {
-   "dart": "PerchedBird",
-   "status": "done",
-   "why": ""
-  },
-  "screen.garden_tree_scene": {
-   "dart": "TreeScene",
-   "status": "done",
-   "why": ""
-  },
-  "screen.login_screen": {
-   "dart": "",
-   "status": "dropped",
-   "why": "「新規スタート / セーブコードで再開」を選ばせる入口画面。Streamlit はサーバー側で動くため必要だったが、Flutter は端末に保存して**黙って再開する**。セーブコードでの再開は、庭の右上の受け渡しシート(showTransferSheet)が担う。ログイン・認証の概念は現行にも無い"
-  },
-  "screen.network_graph_view": {
-   "dart": "_WebPainter",
-   "status": "done",
-   "why": ""
-  },
-  "screen.popup_met_bird": {
-   "dart": "showMetBirdPopup",
-   "status": "done",
-   "why": "_obs_dialog の移植。はじめての判定は**図鑑への新規登録**で見る(観察回数ではない)"
-  },
-  "screen.ritual_meet_birds": {
-   "dart": "Ritual",
-   "status": "done",
-   "why": ""
-  },
-  "screen.save_code_ui": {
-   "dart": "showTransferSheet",
-   "status": "done",
-   "why": "庭の右上から開く受け渡しシート。現行は WebView の制約で手段が4つ並んでいたが、ネイティブでは**コピーする / 貼り付ける の2つだけ**で足りる(CEO 2026-08-15)"
-  },
-  "screen.tab_garden": {
-   "dart": "GardenPage",
-   "status": "done",
-   "why": ""
-  },
-  "screen.tab_guide": {
-   "dart": "GuidePage",
-   "status": "done",
-   "why": ""
-  },
-  "screen.tab_howto": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16「使い方タブは要らない」。説明が要らない作りにする"
-  },
-  "screen.tab_network": {
-   "dart": "NetworkPage",
-   "status": "done",
-   "why": ""
-  },
-  "screen.tab_plant": {
-   "dart": "GardenPage",
-   "status": "done",
-   "why": ""
-  },
-  "screen.tab_radio": {
-   "dart": "RadioPage",
-   "status": "done",
-   "why": ""
-  },
-  "screen.todays_garden": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
-  },
-  "sheets_client.add_memento": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.add_observation": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.add_planting": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.add_visit": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.get_client": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.get_spreadsheet": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.list_testers": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_active_plantings": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_active_plantings_with_time": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_all_collection": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_bird_days": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_bird_notes": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_collection_set": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_field_state": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_mementos": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_observation_counts": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.load_visit_calendar": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.log_access": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.now_iso": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.remove_all_plantings": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.remove_planting": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.reset_tester_data": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.save_bird_note": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.save_field_state": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.update_memento_note": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "sheets_client.upsert_collection": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
-  },
-  "tutorial.advance_step": {
-   "dart": "advanceTutorialStep",
-   "status": "done",
-   "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** "
-  },
-  "tutorial.is_done": {
-   "dart": "tutorialIsDone",
-   "status": "done",
-   "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** "
-  },
-  "tutorial.resolve_step": {
-   "dart": "resolveTutorialStep",
-   "status": "done",
-   "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** 実際にやったら繰り上がる仕組みは引き継いだ"
-  },
-  "tutorial.step_content": {
-   "dart": "tutorialStepContent",
-   "status": "done",
-   "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** 段は3→4、文言は作り直し(英語・短く)"
-  },
-  "xc_client.clear_failed_cache": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.download_audio": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.download_audio_variants": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.get_audio_url": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.get_audio_urls": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.get_citation": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.is_enabled": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.is_nc_only": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.license_class": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "xc_client.search_recordings": {
-   "dart": "",
-   "status": "dropped",
-   "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
-  },
-  "screen.popup_welcome_back": {
-   "dart": "showWelcomeBackPopup",
-   "status": "done",
-   "why": "_welcome_dialog の移植。留守に何かあった時だけ出す/来た鳥6件・去った鳥5件まで/2時間・48時間で言い方が変わる/Lost・Left はここにだけ出す"
+  "items": {
+    "absence_loop.build_reason_text": {
+      "dart": "buildReason",
+      "status": "done",
+      "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
+    },
+    "absence_loop.estimate_tick_count": {
+      "dart": "estimateTickCount",
+      "status": "done",
+      "why": ""
+    },
+    "absence_loop.evolve_state": {
+      "dart": "evolveWhileAway",
+      "status": "done",
+      "why": ""
+    },
+    "absence_loop.humanize_delta": {
+      "dart": "humanizeDelta",
+      "status": "done",
+      "why": "CEO 2026-08-16「123やろう」。Just now / min / hr / days ago"
+    },
+    "absence_loop.parse_iso": {
+      "dart": "parseIso",
+      "status": "done",
+      "why": "読めなければ静かに null(例外を投げない)"
+    },
+    "absence_loop.summarize_events": {
+      "dart": "summarizeEvents",
+      "status": "done",
+      "why": "CEO 2026-08-16「123やろう」。1種なら名前で、複数種なら件数と種数で"
+    },
+    "ads.has_claimed_today": {
+      "dart": "",
+      "status": "todo"
+    },
+    "ads.is_radio_active": {
+      "dart": "",
+      "status": "todo"
+    },
+    "ads.mark_claimed_today": {
+      "dart": "",
+      "status": "todo"
+    },
+    "ads.render_admob_banner": {
+      "dart": "",
+      "status": "todo"
+    },
+    "ads.render_banner_placeholder": {
+      "dart": "",
+      "status": "todo"
+    },
+    "ads.render_garden_item_button": {
+      "dart": "",
+      "status": "todo"
+    },
+    "ads.render_pending_ad_loader": {
+      "dart": "",
+      "status": "todo"
+    },
+    "alarm_ui.render_alarm": {
+      "dart": "AlarmPage",
+      "status": "done",
+      "why": ""
+    },
+    "badges.badge_for_days": {
+      "dart": "badgeForDays",
+      "status": "done",
+      "why": ""
+    },
+    "badges.badge_message": {
+      "dart": "badgeMessage",
+      "status": "done",
+      "why": ""
+    },
+    "bird_profile.build": {
+      "dart": "buildBirdProfile",
+      "status": "done",
+      "why": "37種で突き合わせ"
+    },
+    "bird_profile.fears": {
+      "dart": "profileFears",
+      "status": "done",
+      "why": "37種で突き合わせ"
+    },
+    "bird_profile.home": {
+      "dart": "profileHome",
+      "status": "done",
+      "why": "37種で突き合わせ"
+    },
+    "bird_profile.likes": {
+      "dart": "profileLikes",
+      "status": "done",
+      "why": "37種で突き合わせ(順序も)"
+    },
+    "bird_profile.rows": {
+      "dart": "_Row",
+      "status": "done",
+      "why": ""
+    },
+    "centrality.get_centrality": {
+      "dart": "getCentrality",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。補正後を優先し、無ければ生の値"
+    },
+    "centrality.is_available": {
+      "dart": "centralityIsAvailable",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。データが手元にあるか。Python はファイルの有無、Dart は表の有無で見る"
+    },
+    "centrality.load_centralities": {
+      "dart": "loadCentralities",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。元データ(200-300MB)は同梱しない。`.centrality_cache.json` 相当の小さな表を渡す形にした"
+    },
+    "community.aggregate_atlas": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16「3は要らない」。集合アトラス(全ユーザーの庭を合算した図)は作らない"
+    },
+    "community.render_community_atlas": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16「3は要らない」。集合アトラス(全ユーザーの庭を合算した図)は作らない"
+    },
+    "daily.daily_seed": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
+    },
+    "daily.is_met": {
+      "dart": "observed",
+      "status": "done",
+      "why": "近くで会ったか = observed>0。Garden.observed が持っている"
+    },
+    "daily.render_todays_garden": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
+    },
+    "daily.todays_bird": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
+    },
+    "detail_sprites.detail_image_path": {
+      "dart": "detailSpriteFor",
+      "status": "done",
+      "why": ""
+    },
+    "detail_sprites.has_detail_image": {
+      "dart": "detailSpriteFor",
+      "status": "done",
+      "why": "同梱の絵から判定する"
+    },
+    "disturbance.apply_disturbance": {
+      "dart": "applyDisturbance",
+      "status": "done",
+      "why": ""
+    },
+    "disturbance.disturbance_story": {
+      "dart": "disturbanceStory",
+      "status": "done",
+      "why": "CEO 2026-08-16「123やろう」。倒れなかった回も語る"
+    },
+    "disturbance.plant_sensitivity": {
+      "dart": "plantSensitivity",
+      "status": "done",
+      "why": ""
+    },
+    "disturbance.roll_disturbance": {
+      "dart": "rollDisturbance",
+      "status": "done",
+      "why": ""
+    },
+    "eco_log.append_events": {
+      "dart": "appendEvents",
+      "status": "done",
+      "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
+    },
+    "eco_log.entries_for_bird": {
+      "dart": "entriesForBird",
+      "status": "done",
+      "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
+    },
+    "eco_log.is_founding_record": {
+      "dart": "isFoundingRecord",
+      "status": "done",
+      "why": "「なぜ来たか」。一文は実データ1480通りで突き合わせ、重複除去は8段階で突き合わせた"
+    },
+    "ecology.climate_overlap": {
+      "dart": "climateOverlap",
+      "status": "done",
+      "why": ""
+    },
+    "ecology.co_occurrence": {
+      "dart": "coOccurrence",
+      "status": "done",
+      "why": ""
+    },
+    "ecology.co_occurrence_matrix": {
+      "dart": "coOccurrenceMatrix",
+      "status": "done",
+      "why": ""
+    },
+    "ecology.diet_jaccard": {
+      "dart": "dietJaccard",
+      "status": "done",
+      "why": ""
+    },
+    "ecology.guild": {
+      "dart": "guild",
+      "status": "done",
+      "why": ""
+    },
+    "ecology.guild_groups": {
+      "dart": "guildGroups",
+      "status": "done",
+      "why": "CEO 2026-08-16「123やろう」。2羽以上のギルドだけ、多い順。同数は最初に現れた順"
+    },
+    "ecology.guild_label": {
+      "dart": "guildLabel",
+      "status": "done",
+      "why": "CEO 2026-08-16「123やろう」。ギルドの表示ラベル(英語)"
+    },
+    "ecology.lineup_story": {
+      "dart": "lineupStory",
+      "status": "done",
+      "why": "CEO 2026-08-16「123やろう」。**種類だけ**を返す(i18n 非依存)。文にするのは stories.dart"
+    },
+    "ecology.pick_lineup": {
+      "dart": "pickLineup",
+      "status": "done",
+      "why": ""
+    },
+    "engine.build_network": {
+      "dart": "buildFoodWeb",
+      "status": "done",
+      "why": ""
+    },
+    "engine.calculate_arrival_probability": {
+      "dart": "arrivalProbability",
+      "status": "done",
+      "why": ""
+    },
+    "engine.current_temperature": {
+      "dart": "currentTemperature",
+      "status": "done",
+      "why": ""
+    },
+    "engine.force_directed_layout": {
+      "dart": "shell",
+      "status": "done",
+      "why": ""
+    },
+    "engine.network_stats": {
+      "dart": "networkStats",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。植物→虫の辺も数える(build_network が張る)。40状況で突き合わせ"
+    },
+    "engine.run_turn": {
+      "dart": "runTurn",
+      "status": "done",
+      "why": ""
+    },
+    "engine.simulate_with_added_plant": {
+      "dart": "simulateWithAddedPlant",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。96通りで突き合わせ"
+    },
+    "engine.suggest_for_bird": {
+      "dart": "suggestForBird",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。提案の**順序も**比べる(直接→間接)。1480件で突き合わせ"
+    },
+    "engine.temperature_fit": {
+      "dart": "temperatureFit",
+      "status": "done",
+      "why": ""
+    },
+    "feeder_chain.animals_present": {
+      "dart": "animalsPresent",
+      "status": "done",
+      "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
+    },
+    "feeder_chain.available_foods": {
+      "dart": "availableFoods",
+      "status": "done",
+      "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
+    },
+    "feeder_chain.raptors_present": {
+      "dart": "raptorsPresent",
+      "status": "done",
+      "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
+    },
+    "feeder_chain.resolve": {
+      "dart": "resolveFeeders",
+      "status": "done",
+      "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
+    },
+    "feeder_chain.wary_arrival_multiplier": {
+      "dart": "waryArrivalMultiplier",
+      "status": "done",
+      "why": "餌台→リス→タカ→警戒鳥の抑制。Python では一度も配線されていなかったため、計算は288通りで突き合わせ、到来確率への接続は Flutter 側で新規(2026-08-15 CEO承認)"
+    },
+    "feeder_chain.feeder_arrival_bonus": {
+      "dart": "feederArrivalBonus",
+      "status": "done",
+      "why": "餌台の到来加点。気質(wariness)と食性で効きが変わる。2026-08-20 に追加 — 代償(リス→鷹)だけが配線されていて 利点が無く、餌台の選択が「無意味」か「自傷」の二択に なっていたため。警戒心6通り×種食/虫食で突き合わせ済み"
+    },
+    "flock.flock_cap": {
+      "dart": "flockCap",
+      "status": "done",
+      "why": ""
+    },
+    "flock.flock_size": {
+      "dart": "flockSize",
+      "status": "done",
+      "why": ""
+    },
+    "freesound_client.clear_cache": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
+    },
+    "freesound_client.get_ambient_path": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
+    },
+    "freesound_client.is_enabled": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/freesound_ambience_pull.py が環境音の取得に使う。消さないこと。"
+    },
+    "garden_items.departure_bonus": {
+      "dart": "itemDepartureBonus",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.hours_remaining": {
+      "dart": "itemHoursRemaining",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.is_active": {
+      "dart": "itemIsActive",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。両端を含む"
+    },
+    "garden_items.is_available": {
+      "dart": "itemIsAvailable",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.is_item_boosted_arrival": {
+      "dart": "isItemBoostedArrival",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.make_arrival_bonus_fn": {
+      "dart": "makeArrivalBonusFn",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.place_item": {
+      "dart": "placeItem",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.target_bird_ids": {
+      "dart": "targetBirdIds",
+      "status": "done",
+      "why": "CEO 2026-08-16「呼ぶ確率とかのロジックは基本すべて移すこと、推測ではなく忠実に」。"
+    },
+    "garden_items.unavailable_reason": {
+      "dart": "itemUnavailableReason",
+      "status": "done",
+      "why": "事実だけを言い、責める言い方にしない(原則2)。理由の文は出荷済みの英語だが、**アイテム名の英訳は i18n.py に存在しない**ため、名前はこちらで付けた。広告を入れる段で CEO に確認すること"
+    },
+    "globi_client.compare_with_seed": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
+    },
+    "globi_client.enrich_seed_with_globi": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
+    },
+    "globi_client.get_diet": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
+    },
+    "globi_client.get_diet_japan": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
+    },
+    "globi_client.get_interactions": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — 食物網と天敵データの生成元。アプリは生成済みの birds.json / predators.json を読むだけ。消さないこと。"
+    },
+    "i18n.describe": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
+    },
+    "i18n.disp": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
+    },
+    "i18n.get_lang": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
+    },
+    "i18n.set_lang": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
+    },
+    "i18n.t": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\nアプリの表示は英語のみ(CEO 2026-08-09 に日本語表示を落としている)。文言は出荷済みの英語を直に持つ。多言語に戻す時だけ層を作る。"
+    },
+    "mementos.all_possible_mementos": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.feather_id": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.make_id": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.memento_category": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.memento_display": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.memento_target": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.plume_id": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.possible_mementos_from_bird": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.roll_drop": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "mementos.twig_id": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「落とし物は要らない」。現行でも表示は撤去済み"
+    },
+    "observation_log.load_observation_counts": {
+      "dart": "observed",
+      "status": "done",
+      "why": ""
+    },
+    "observation_log.record_observation": {
+      "dart": "metThisRitual",
+      "status": "done",
+      "why": ""
+    },
+    "predators.categories": {
+      "dart": "kPredatorLabels",
+      "status": "done",
+      "why": ""
+    },
+    "predators.has_data": {
+      "dart": "predatorHasData",
+      "status": "done",
+      "why": "37種で突き合わせ"
+    },
+    "predators.is_genus_level": {
+      "dart": "predatorIsGenusLevel",
+      "status": "done",
+      "why": "37種で突き合わせ"
+    },
+    "predators.labels": {
+      "dart": "predatorLabels",
+      "status": "done",
+      "why": "**分類表ごと**突き合わせる。Dart 側に7分類を手で書いて、実データが使う crow/falcon/fox/rodent/weasel が抜けていた(2026-08-16 の監査で発覚)"
+    },
+    "radio.bird_in_season": {
+      "dart": "",
+      "status": "dropped",
+      "why": "季節での絞り込みは機能として廃止(2026-08-14)"
+    },
+    "radio.current_app_season": {
+      "dart": "",
+      "status": "dropped",
+      "why": "同上"
+    },
+    "radio.render_radio": {
+      "dart": "RadioPage",
+      "status": "done",
+      "why": ""
+    },
+    "radio.weeks_until_next_season": {
+      "dart": "",
+      "status": "dropped",
+      "why": "同上"
+    },
+    "ritual.render_ritual": {
+      "dart": "Ritual",
+      "status": "done",
+      "why": ""
+    },
+    "save_code.build_current_snapshot": {
+      "dart": "buildCurrentSnapshot",
+      "status": "done",
+      "why": ""
+    },
+    "save_code.decode_save": {
+      "dart": "decodeSave",
+      "status": "done",
+      "why": ""
+    },
+    "save_code.encode_current_state": {
+      "dart": "encodeCurrentState",
+      "status": "done",
+      "why": ""
+    },
+    "save_code.encode_save": {
+      "dart": "encodeSave",
+      "status": "done",
+      "why": ""
+    },
+    "screen.biome_choice": {
+      "dart": "setBiome",
+      "status": "done",
+      "why": ""
+    },
+    "screen.bird_sprites": {
+      "dart": "PerchedBird",
+      "status": "done",
+      "why": ""
+    },
+    "screen.garden_tree_scene": {
+      "dart": "TreeScene",
+      "status": "done",
+      "why": ""
+    },
+    "screen.login_screen": {
+      "dart": "",
+      "status": "dropped",
+      "why": "「新規スタート / セーブコードで再開」を選ばせる入口画面。Streamlit はサーバー側で動くため必要だったが、Flutter は端末に保存して**黙って再開する**。セーブコードでの再開は、庭の右上の受け渡しシート(showTransferSheet)が担う。ログイン・認証の概念は現行にも無い"
+    },
+    "screen.network_graph_view": {
+      "dart": "_WebPainter",
+      "status": "done",
+      "why": ""
+    },
+    "screen.popup_met_bird": {
+      "dart": "showMetBirdPopup",
+      "status": "done",
+      "why": "_obs_dialog の移植。はじめての判定は**図鑑への新規登録**で見る(観察回数ではない)"
+    },
+    "screen.ritual_meet_birds": {
+      "dart": "Ritual",
+      "status": "done",
+      "why": ""
+    },
+    "screen.save_code_ui": {
+      "dart": "showTransferSheet",
+      "status": "done",
+      "why": "庭の右上から開く受け渡しシート。現行は WebView の制約で手段が4つ並んでいたが、ネイティブでは**コピーする / 貼り付ける の2つだけ**で足りる(CEO 2026-08-15)"
+    },
+    "screen.tab_garden": {
+      "dart": "GardenPage",
+      "status": "done",
+      "why": ""
+    },
+    "screen.tab_guide": {
+      "dart": "GuidePage",
+      "status": "done",
+      "why": ""
+    },
+    "screen.tab_howto": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16「使い方タブは要らない」。説明が要らない作りにする"
+    },
+    "screen.tab_network": {
+      "dart": "NetworkPage",
+      "status": "done",
+      "why": ""
+    },
+    "screen.tab_plant": {
+      "dart": "GardenPage",
+      "status": "done",
+      "why": ""
+    },
+    "screen.tab_radio": {
+      "dart": "RadioPage",
+      "status": "done",
+      "why": ""
+    },
+    "screen.todays_garden": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-15「今日ってか今の庭ね」。日付シードで全員共通の一羽を配るのはやめ、**今の庭＝木の情景**で足りると判断。絵が出ていなかったのは絵の無い12種のフォールバックが Flutter のマスコットだったためで、BirdMark で解決した"
+    },
+    "sheets_client.add_memento": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.add_observation": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.add_planting": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.add_visit": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.get_client": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.get_spreadsheet": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.list_testers": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_active_plantings": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_active_plantings_with_time": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_all_collection": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_bird_days": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_bird_notes": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_collection_set": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_field_state": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_mementos": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_observation_counts": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.load_visit_calendar": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.log_access": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.now_iso": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.remove_all_plantings": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.remove_planting": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.reset_tester_data": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.save_bird_note": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.save_field_state": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.update_memento_note": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "sheets_client.upsert_collection": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n現行でも**すでに使われていない**(app.py の _sheets_safe に「credentials.json 未配置は既定の想定内動作」と明記。ローカル保存＋セーブコードが本線)。道具としても要らない。"
+    },
+    "tutorial.advance_step": {
+      "dart": "advanceTutorialStep",
+      "status": "done",
+      "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** "
+    },
+    "tutorial.is_done": {
+      "dart": "tutorialIsDone",
+      "status": "done",
+      "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** "
+    },
+    "tutorial.resolve_step": {
+      "dart": "resolveTutorialStep",
+      "status": "done",
+      "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** 実際にやったら繰り上がる仕組みは引き継いだ"
+    },
+    "tutorial.step_content": {
+      "dart": "tutorialStepContent",
+      "status": "done",
+      "why": "CEO 2026-08-16「チュートリアルでちゃんとステップ踏んで導入できるように」「ポップアップの通り踏まないとほか押せない、次進めない」。**現行はブロックしない作りだったので、そこは意図して変えた。** 段は3→4、文言は作り直し(英語・短く)"
+    },
+    "xc_client.clear_failed_cache": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.download_audio": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.download_audio_variants": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.get_audio_url": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.get_audio_urls": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.get_citation": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.is_enabled": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.is_nc_only": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.license_class": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "xc_client.search_recordings": {
+      "dart": "",
+      "status": "dropped",
+      "why": "CEO 2026-08-16。**アプリには移さない。道具としては現役。**\nFlutter は端末に保存でき、音源とデータは同梱済みなので、アプリが実行時に外へ取りに行く必要が無い。\n**道具としては現役** — tools/bird_audio_collect.py と bird_audio_swap.py が鳴き声の取得・差し替えに使う。消さないこと。"
+    },
+    "screen.popup_welcome_back": {
+      "dart": "showWelcomeBackPopup",
+      "status": "done",
+      "why": "_welcome_dialog の移植。留守に何かあった時だけ出す/来た鳥6件・去った鳥5件まで/2時間・48時間で言い方が変わる/Lost・Left はここにだけ出す"
+    }
   }
- }
 }
