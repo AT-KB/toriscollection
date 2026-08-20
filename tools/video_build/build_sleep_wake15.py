@@ -346,10 +346,88 @@ def ritual_audio():
     return pick_radio(["Downy Woodpecker", "Pileated Woodpecker"])
 
 
+# ── 集める(図鑑) ──────────────────────────────────────────
+# 「?」が名前に変わっていくところを見せる。
+#
+# ⚠️ 言うことは実装どおり:
+#   - 庭に来た鳥は図鑑に載る(名前まで)。近くで会うのは儀式を経てから。
+#   - **記録は減らない。** 撹乱で庭が痩せても、図鑑も会った日数も減らない
+#     (交渉不能の原則2)。生態ログには消す関数が無く、試験で固定してある。
+# 「Nothing is ever taken away.」はここが根拠。煽りではなく仕様。
+COLLECT_L1 = "Meet a bird. It joins your guide."
+COLLECT_L2 = "Nothing is ever taken away."
+
+# (種, 表示名, 現れる時刻)。ドット絵がある種から。
+COLLECT_ROWS = [
+    ("carolina_wren", "Carolina Wren", 1.2),
+    ("northern_cardinal", "Northern Cardinal", 2.6),
+    ("blue_jay", "Blue Jay", 4.0),
+    ("american_goldfinch", "American Goldfinch", 5.4),
+    ("downy_woodpecker", "Downy Woodpecker", 6.8),
+    ("eastern_bluebird", "Eastern Bluebird", 8.2),
+]
+
+
+def render_collect(t, credit):
+    im = Image.new("RGBA", (W, H), (247, 250, 242, 255))
+    d = ImageDraw.Draw(im)
+
+    # 図鑑の版面。上に見出し、下に行。
+    fh = ImageFont.truetype(FT, int(W * 0.052))
+    shown = sum(1 for _b, _n, at in COLLECT_ROWS if t >= at)
+    d.text((int(W * 0.08), int(H * 0.085)), f"Guide  {shown}/37",
+           font=fh, fill=(31, 59, 36))
+
+    y = int(H * 0.17)
+    fn = ImageFont.truetype(FB, int(W * 0.040))
+    fq = ImageFont.truetype(FT, int(W * 0.046))
+    for bid, name, at in COLLECT_ROWS:
+        k = ease((t - at) / 0.55)
+        if k <= 0:
+            # まだ会っていない行。図鑑と同じ「?」。
+            d.text((int(W * 0.09), y + 18), "?", font=fq, fill=(214, 92, 82))
+            d.text((int(W * 0.20), y + 24), "???", font=fn,
+                   fill=(150, 165, 145))
+        else:
+            sp = Image.open(os.path.join(SPRITES, f"{bid}.png")).convert("RGBA")
+            s = int(84 * (0.7 + 0.3 * k))
+            sp = sp.resize((s, s), Image.NEAREST)
+            if k < 1.0:
+                sp.putalpha(sp.getchannel("A").point(lambda v: int(v * k)))
+            im.alpha_composite(sp, (int(W * 0.07), y + (84 - s) // 2))
+            d.text((int(W * 0.20), y + 24), name, font=fn, fill=(31, 59, 36))
+        y += int(H * 0.072)
+        d.line([(int(W * 0.07), y - 12), (int(W * 0.93), y - 12)],
+               fill=(226, 234, 220))
+
+    head = COLLECT_L1 if t < 9.4 else COLLECT_L2
+    ap = t / 0.6 if t < 9.4 else (t - 9.4) / 0.6
+    draw_band(im, d, head, None, credit, ap)
+    return im
+
+
+def collect_audio():
+    """音は**商用に使える録音だけ**。
+
+    ⚠️ アプリ本体は「商用にしないから」で条件を緩めたが(CEO 2026-08-19)、
+    **宣伝物はこちら側の判断で厳しいまま**にする。動画は配布物で、
+    無料アプリの宣伝でも非商用条項の解釈を賭けたくない。
+    ここで Carolina Wren を並べようとして pick_app_songs に止められた
+    (歯止めが効いた例)。
+
+    絵の方は種を選ばない — ドット絵は自前の素材なので条件が違う。
+    行は図鑑の一覧であって「いま鳴いている鳥」ではないので、
+    音と絵が別の種でも嘘にならない。
+    """
+    return pick_app_songs(
+        ["northern_cardinal", "american_robin", "eastern_bluebird"])
+
+
 FILMS = {
     "sleep": (render_sleep, "s09_sleep_15s_1080x1920.mp4", sleep_audio),
     "wake": (render_wake, "s10_wake_15s_1080x1920.mp4", wake_audio),
     "ritual": (render_ritual, "s11_ritual_15s_1080x1920.mp4", ritual_audio),
+    "collect": (render_collect, "s12_collect_15s_1080x1920.mp4", collect_audio),
 }
 
 
@@ -406,5 +484,5 @@ def build(kind):
 
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "both"
-    for k in (["sleep", "wake", "ritual"] if what == "both" else [what]):
+    for k in (["sleep", "wake", "ritual", "collect"] if what == "both" else [what]):
         build(k)
