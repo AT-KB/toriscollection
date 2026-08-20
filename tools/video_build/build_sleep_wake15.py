@@ -423,11 +423,100 @@ def collect_audio():
         ["northern_cardinal", "american_robin", "eastern_bluebird"])
 
 
+# ── ラジオ ────────────────────────────────────────────────
+# 型2 The Quiet Loop。cozy の隣にある「作業用・環境音」の検索需要に向く。
+#
+# ⚠️ 言うことは実装どおり:
+#   - 顔ぶれは**土地で絞る**(`RadioEngine._pickLineup` の biome 判定)。
+#   - **会った回数が重み**になる(radio.py の base_w = 1.0 + count*0.5 と同じ)。
+#     「会った鳥がラジオに加わる」とは言わない — 変わるのは近さと群れの厚み。
+#   - 鳴き声は xeno-canto の**実録音**。環境音は Freesound の CC0。
+#     どちらも合成音ではないので「Nothing generated.」は本当。
+RADIO_L1 = "The birds of your land."
+RADIO_L2 = "Real recordings. Nothing generated."
+
+# 画面に出す顔ぶれ = **実際に鳴らす録音**と同じ種にする(原則4)。
+RADIO_SPECIES = ["Downy Woodpecker", "Pileated Woodpecker",
+                 "Ruby-throated Hummingbird"]
+# ⚠️ **絵文字を入れない。** 動画は Windows のフォントで焼くので、
+# アプリの画面にある 🍃🌧💧 はここでは豆腐(□)になる(2026-08-20 に確認)。
+# 画面と同じ見た目にしたければ絵文字対応のフォントを足す必要があるが、
+# 文字だけでも意味は通るのでこうする。
+RADIO_AMB = ["Wind", "Rain", "Stream"]
+
+
+def radio_panel(im, d, t):
+    """鳴っている鳥と、重ねている環境音。ラジオ画面と同じ並べ方。"""
+    x = int(W * 0.09)
+    y = int(H * 0.30)
+    f = ImageFont.truetype(FB, int(W * 0.038))
+    for i, name in enumerate(RADIO_SPECIES):
+        k = ease((t - 0.6 - i * 1.1) / 0.7)
+        if k <= 0:
+            continue
+        cy = y + i * int(H * 0.058)
+        pulse = 0.70 + 0.30 * (0.5 + 0.5 * math.sin(t * 2.6 + i * 1.3))
+        r = int(11 * k)
+        d.ellipse([x - r, cy - r, x + r, cy + r],
+                  fill=(int(96 * pulse), int(170 * pulse), int(104 * pulse),
+                        int(255 * k)))
+        d.text((x + 34, cy - int(W * 0.023)), name, font=f,
+               fill=(38, 62, 40, int(255 * k)))
+        # 群れが育つと羽数が出る(1羽のときは何も出さない)。
+        if i == 0 and t > 7.0:
+            d.text((int(W * 0.80), cy - int(W * 0.023)), "×3", font=f,
+                   fill=(122, 150, 118, 255))
+
+    # 環境音のチップ。重ねられることが分かればいい。
+    cy = y + len(RADIO_SPECIES) * int(H * 0.058) + int(H * 0.03)
+    fx = x
+    fc = ImageFont.truetype(FB, int(W * 0.030))
+    for i, lab in enumerate(RADIO_AMB):
+        k = ease((t - 4.4 - i * 0.8) / 0.6)
+        if k <= 0:
+            continue
+        wdt = int(d.textlength(lab, font=fc)) + 40
+        chip = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ImageDraw.Draw(chip).rounded_rectangle(
+            [fx, cy, fx + wdt, cy + 62], 30,
+            fill=(226, 240, 218, int(235 * k)))
+        im.alpha_composite(chip)
+        ImageDraw.Draw(im).text((fx + 20, cy + 16), lab, font=fc,
+                                fill=(46, 74, 44))
+        fx += wdt + 16
+
+
+def render_radio(t, credit):
+    im = Image.new("RGBA", (W, H), (226, 238, 243, 255))
+    d = ImageDraw.Draw(im)
+    draw_garden(d, 1.0)
+    # 画面の下半分を、読めるように少しだけ明るく敷く。
+    # 名前が読める下地。**庭を塗りつぶさない**よう、角丸の札にとどめる。
+    panel = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(panel).rounded_rectangle(
+        [int(W * 0.05), int(H * 0.265), int(W * 0.95), int(H * 0.60)], 34,
+        fill=(247, 250, 242, 238))
+    im.alpha_composite(panel)
+    d = ImageDraw.Draw(im)
+    radio_panel(im, d, t)
+    d = ImageDraw.Draw(im)
+
+    head = RADIO_L1 if t < 8.0 else RADIO_L2
+    ap = t / 0.6 if t < 8.0 else (t - 8.0) / 0.6
+    draw_band(im, d, head, None, credit, ap)
+    return im
+
+
+def radio_audio():
+    return pick_radio(RADIO_SPECIES)
+
+
 FILMS = {
     "sleep": (render_sleep, "s09_sleep_15s_1080x1920.mp4", sleep_audio),
     "wake": (render_wake, "s10_wake_15s_1080x1920.mp4", wake_audio),
     "ritual": (render_ritual, "s11_ritual_15s_1080x1920.mp4", ritual_audio),
     "collect": (render_collect, "s12_collect_15s_1080x1920.mp4", collect_audio),
+    "radio": (render_radio, "s13_radio_15s_1080x1920.mp4", radio_audio),
 }
 
 
@@ -484,5 +573,5 @@ def build(kind):
 
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "both"
-    for k in (["sleep", "wake", "ritual", "collect"] if what == "both" else [what]):
+    for k in (["sleep", "wake", "ritual", "collect", "radio"] if what == "both" else [what]):
         build(k)
