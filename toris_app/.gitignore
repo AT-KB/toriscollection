@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 署名鍵は絶対にコミットしない
+/android/key.properties
+*.keystore
+*.jks
+
+# Gradle が android/ 直下にも build/ を作る(ルートの /build/ では拾えない)
+/android/build/

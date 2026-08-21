@@ -17,6 +17,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
@@ -273,6 +274,11 @@ class BirdVoice {
 }
 
 /// ラジオ全体。鳥3羽と環境音7層を持つ。
+/// いまラジオが鳴っているか。**広告バナーを黙らせるためだけ**に使う。
+/// `ads.py` の `is_radio_active` と同じ役割 — 声を聴いている間に広告を
+/// 出さない(交渉不能の原則3)。
+final ValueNotifier<bool> radioIsPlaying = ValueNotifier<bool>(false);
+
 class RadioEngine {
   final Random _rng = Random();
   final List<BirdVoice> birds = [];
@@ -424,6 +430,7 @@ class RadioEngine {
   void toggle(void Function() onChange) {
     if (!ready) return;
     running = !running;
+    radioIsPlaying.value = running;
     for (final v in birds) {
       running ? v.start(birds.length, onChange) : v.stop();
     }

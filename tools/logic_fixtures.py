@@ -154,10 +154,13 @@ def main() -> None:
     feeder_cases = []
     for feats in feeder_sets:
         for pset in fc_plant_sets:
-            r = fc.resolve(feats, pset)
+          # baffled = リス返し(garden_items)が効いている6時間。
+          # **餌台由来の large_access だけ**が落ち、地面の堅果は守れない。
+          for baffled in (False, True):
+            r = fc.resolve(feats, pset, baffled)
             feeder_cases.append({
-                "features": feats, "planted": pset,
-                "foods": sorted(fc.available_foods(feats, pset)),
+                "features": feats, "planted": pset, "baffled": baffled,
+                "foods": sorted(fc.available_foods(feats, pset, baffled)),
                 "animals": r["animals"], "raptors": r["raptors"],
                 "mult": {str(w): round(
                     fc.wary_arrival_multiplier(w, r["raptors"]), 12)
@@ -371,6 +374,12 @@ def main() -> None:
                 "item": item_id, "biome": biome_id,
                 "targets": sorted(gi.target_bird_ids(item_id, biome_id, birds)),
                 "available": gi.is_available(item_id, biome_id, birds),
+                # 餌台に依存するアイテム(継ぎ足し/リス返し)の可否。
+                "available_by_feeders": {
+                    "|".join(fs) or "none": gi.is_available(
+                        item_id, biome_id, birds, list(fs))
+                    for fs in ([], ["feeder_open"], ["feeder_cage"])
+                },
                 "effect_kind": gi.ITEMS[item_id]["effect_kind"],
                 "value": gi.ITEMS[item_id]["value"],
                 "emoji": gi.ITEMS[item_id]["emoji"],
@@ -395,6 +404,7 @@ def main() -> None:
             "item": item_id,
             "arrival": {bid: round(fn(bid), 12) for bid in ids},
             "departure": round(gi.departure_bonus(plc, at), 12),
+            "baffle": gi.is_baffle_active(plc, at),
             "boosted": sorted(b for b in ids
                               if gi.is_item_boosted_arrival(
                                   b, plc, "charlotte", birds, at)),
@@ -495,6 +505,18 @@ def main() -> None:
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump({"flock": flock_cases, "badges": badge_cases,
                    "ecology": eco, "guilds": guilds, "arrivals": arrivals,
+                   # **両言語に書いた定数**。ここに載せないと、書いてあっても
+                   # ずれに気づけない(2026-08-21 に抽選プールが 6種/3種 で
+                   # ずれていたのを取り逃した)。監査の SHARED_CONSTANTS が
+                   # 「載っているか」を見張っている。
+                   "constants": {
+                       "item_offered": gi.ITEM_OFFERED,
+                       "item_duration_hours": gi.DURATION_HOURS,
+                       "nyjer_targets": sorted(gi.NYJER_TARGET_BIRDS),
+                       "feeders": sorted(fc.FEEDERS),
+                       "feeder_meta": {k: fc.FEEDERS[k]
+                                       for k in sorted(fc.FEEDERS)},
+                   },
                    "feeder_chain": feeder_cases,
                    "centrality": cent_cases, "garden_items": item_bundle,
                    "helpers": helper_cases, "simulate": sim_cases,

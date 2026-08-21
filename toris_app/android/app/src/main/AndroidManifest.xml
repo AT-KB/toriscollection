@@ -16,12 +16,26 @@
     <!-- 端末を再起動しても目覚ましを鳴らせるようにするための下準備(受信は今後) -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- 広告(AdMob)。**v7 まではネットワークを一切使っていなかった**ので、
+         INTERNET はここで復活する。広告 ID は google_mobile_ads が
+         com.google.android.gms.permission.AD_ID を自動で足す。
+         ⚠️ Play Console 側で「広告が含まれる」に変更し、データセーフティを
+            出し直すこと(広告 ID の収集・第三者との共有)。 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
-        android:label="Toris (next)"
+        android:label="Toris Collection"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- AdMob のアプリ ID。**広告ユニット ID とは別物**(~ 区切り)。
+             これが無い / 形式が違うと、SDK 初期化時にアプリごと落ちる。
+             Capacitor 版(公開中 v6)の strings.xml と同じ値。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9002945296291643~1195899268" />
         <activity
-            android:name=".MainActivity"
+            android:name="com.toriscollection.toris_app.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -45,21 +59,21 @@
         <!-- 目覚まし: 発火を受け取る Receiver と、鳴らすフォアグラウンドサービス。
              再生を Receiver の中でやらないのは、Receiver が数秒で殺されるため。 -->
         <receiver
-            android:name=".BirdAlarmReceiver"
+            android:name="com.toriscollection.toris_app.BirdAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.toriscollection.toris_app.ALARM_FIRE" />
             </intent-filter>
         </receiver>
         <service
-            android:name=".BirdAlarmService"
+            android:name="com.toriscollection.toris_app.BirdAlarmService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
         <!-- ラジオを鳴らしている間だけ立てる。画面を消しても音を止めないため
              (背面に回ると OS がバックグラウンド再生とみなして絞る)。 -->
         <service
-            android:name=".RadioService"
+            android:name="com.toriscollection.toris_app.RadioService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 

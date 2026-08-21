@@ -15,6 +15,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../ads/ads.dart' as ads;
+import '../radio/radio_engine.dart' show radioIsPlaying;
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
@@ -36,6 +38,9 @@ class _GardenPageState extends State<GardenPage>
     with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   Garden? _g;
   final Random _rng = Random();
+
+  /// 広告を出している最中。二重に押させない。
+  bool _busy = false;
 
   /// 出会いの儀式。耳を澄ますと、鳥が枝を移りながら近づいてくる。
   Ritual? _ritual;
@@ -593,6 +598,24 @@ class _GardenPageState extends State<GardenPage>
                   ],
                 ),
               ],
+
+              // ── 今日の道具(広告リワード) ──
+              // 見なくても通常の到来確率は変わらない。6時間で消える(原則1)。
+              // チュートリアル中は出さない — やることを1つに保つ。
+              if (!g.tutorialRunning) ...[
+                const SizedBox(height: 20),
+                _todayTool(g),
+              ],
+
+              // ホーム下部の静かなバナー1枚。ラジオが鳴っている間は出ない(原則3)。
+              const SizedBox(height: 16),
+              Center(
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: radioIsPlaying,
+                  builder: (_, playing, _) =>
+                      ads.QuietBanner(radioPlaying: playing),
+                ),
+              ),
             ],
           ),
 
@@ -601,6 +624,83 @@ class _GardenPageState extends State<GardenPage>
         ],
       ),
     );
+  }
+
+  /// 今日の道具。**押さなくても何も損しない**ことが見て分かる置き方にする。
+  ///
+  ///  - 効いている間 → 何が効いていて、あと何時間かだけ出す(ボタンは出さない)
+  ///  - 今日もう受け取った → 静かに「また明日」
+  ///  - 候補が無い(餌台が無い等) → `itemUnavailableReason` の事実だけ出す
+  Widget _todayTool(Garden g) {
+    final active = core.itemIsActive(g.itemPlacement);
+    if (active) {
+      final id = g.itemPlacement!.itemId;
+      final hours = core.itemHoursRemaining(g.itemPlacement).ceil();
+      return Row(
+        children: [
+          Text(core.kGardenItems[id]!.emoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${core.kItemNames[id]} — ${hours}h left',
+              style: const TextStyle(fontSize: 13, color: kSub),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (ads.hasClaimedToday(g.lastItemClaimDay)) {
+      return const Text("Today's tool is used up. Another one tomorrow.",
+          style: TextStyle(fontSize: 13, color: kSub));
+    }
+
+    final pool = ads.offeredItems(g.biomeId, g.data.birds, g.feeders);
+    if (pool.isEmpty) {
+      // 何が足りないかを事実として言う。責める言い方にしない(原則2)。
+      return Text(
+        core.itemUnavailableReason('feeder', g.biomeId, g.data.birds),
+        style: const TextStyle(fontSize: 13, color: kSub),
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: OutlinedButton.icon(
+        icon: const Text('🎁'),
+        label: const Text('A tool for today'),
+        onPressed: _busy ? null : () => _claimTool(g),
+      ),
+    );
+  }
+
+  /// リワード動画を見せ、**報酬が確定したときだけ**1つ置く。
+  ///
+  /// 失敗しても何も奪わない。押した回数も数えない(原則2)。
+  Future<void> _claimTool(Garden g) async {
+    setState(() => _busy = true);
+    final r = await ads.showRewardedAd();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (r != ads.AdResult.success) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No tool this time. It will be here tomorrow too.'),
+      ));
+      return;
+    }
+    // 選ばせない = 候補からランダムに1つ(CEO確定仕様 2026-07-09)。
+    final id = ads.pickItem(g.biomeId, g.data.birds, g.feeders, rng: _rng);
+    if (id == null) return;
+    setState(() {
+      g.itemPlacement = core.placeItem(id);
+      g.lastItemClaimDay = ads.todayKey();
+    });
+    await _save();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('${core.kGardenItems[id]!.emoji} '
+          '${core.kItemNames[id]} — for the next 6 hours.'),
+    ));
   }
 
   /// いまの段の覆い。段によって、明るく残すものが変わる。

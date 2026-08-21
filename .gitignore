@@ -25,3 +25,7 @@ toris_collection/.globi_cache/
 
 # 動画ビルドの中間フレーム(1本あたり240枚。成果物はmp4だけでよい)
 tools/video_build/_*/
+
+# リリース成果物(89MB)は git に入れない。README だけ残す
+release/*.aab
+release/*.apk

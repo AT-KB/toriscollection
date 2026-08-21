@@ -593,8 +593,14 @@ def render_garden_item_button(session_state, biome_id, birds_data, place_fn,
             return  # 広告視聴中: 通常のボタンUIは隠す
 
         available_items = [
-            item_id for item_id in gi.ITEM_ORDER
-            if gi.is_available(item_id, biome_id, birds_data)
+            # **出す3種は ITEM_OFFERED**(CEO 2026-08-21)。6種すべてを回すと
+            # Flutter 版(kOfferedItems)と抽選プールがずれる。
+            item_id for item_id in gi.ITEM_OFFERED
+            # ⚠️ **この画面(Streamlit)には餌台が無い。** `feeder_chain` は
+            # app.py に一度も配線されていないので、餌台に依存する道具
+            # (継ぎ足し・リス返し)は当たっても**何も起きない**。
+            # 「餌台なし」を明示して外す(効かない報酬を出さない = 原則2)。
+            if gi.is_available(item_id, biome_id, birds_data, [])
         ]
         st.caption(t(
             "見ると、アメリカの裏庭インテリアショップから、ランダムで道具を"

@@ -128,15 +128,19 @@ const Map<String, Map<String, Object>> kRaptors = {
 ///
 /// `large_access` は、大型動物が届く供給(開放型の餌台・地面の堅果)が
 /// 1つでもあるときに入る。
+/// [baffled] = リス返しが効いている(`garden_items` の6時間リワード)。
+/// **餌台由来の large_access だけ**を落とす。地面に落ちた堅果はバッフルで
+/// 守れないので、white_oak を植えていればリスは来る(原則4)。
 Set<String> availableFoods(
-    List<String> placedFeatures, List<String> plantedPlants) {
+    List<String> placedFeatures, List<String> plantedPlants,
+    {bool baffled = false}) {
   final foods = <String>{};
   var large = false;
   for (final f in placedFeatures) {
     final meta = kFeeders[f];
     if (meta == null) continue;
     foods.add(meta['offers'] as String);
-    if (meta['large_access'] == true) large = true;
+    if (meta['large_access'] == true && !baffled) large = true;
   }
   if (plantedPlants.any(kSeedPlants.contains)) foods.add('seed');
   if (plantedPlants.any(kAcornPlants.contains)) {
@@ -149,8 +153,9 @@ Set<String> availableFoods(
 
 /// 庭の供給から、来る動物(リス等)を返す。
 List<String> animalsPresent(
-    List<String> placedFeatures, List<String> plantedPlants) {
-  final foods = availableFoods(placedFeatures, plantedPlants);
+    List<String> placedFeatures, List<String> plantedPlants,
+    {bool baffled = false}) {
+  final foods = availableFoods(placedFeatures, plantedPlants, baffled: baffled);
   final out = <String>[];
   for (final e in kAnimals.entries) {
     final eats = (e.value['eats'] as List).map((x) => '$x').toSet();
@@ -205,7 +210,8 @@ class FeederChain {
 
 /// 庭の状態から連鎖を一括で解く。UI・エンジンからはこれを呼ぶ。
 FeederChain resolveFeeders(
-        List<String> placedFeatures, List<String> plantedPlants) {
-  final animals = animalsPresent(placedFeatures, plantedPlants);
+        List<String> placedFeatures, List<String> plantedPlants,
+        {bool baffled = false}) {
+  final animals = animalsPresent(placedFeatures, plantedPlants, baffled: baffled);
   return FeederChain(animals, raptorsPresent(animals));
 }

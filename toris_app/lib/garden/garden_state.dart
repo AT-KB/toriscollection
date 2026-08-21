@@ -49,6 +49,15 @@ class Garden {
   /// かご型ならリスは届かない — これが唯一の駆け引き。
   final List<String> feeders = [];
 
+  /// **今日の道具**(広告リワード。6時間だけ効く)。`garden_items`。
+  ///
+  /// セーブコードには入れない — 6時間で消える端末ローカルの一時状態で、
+  /// 機種変更で持ち歩くものではない。Python 側の SAVE_KEYS を変えずに済む。
+  core.ItemPlacement? itemPlacement;
+
+  /// 最後にリワードを受け取った日(ISO の yyyy-MM-dd)。1日1回のゲート。
+  String? lastItemClaimDay;
+
   /// **近くで出会った回数**(儀式で手前の枝まで来た回数)。
   /// これがラジオの近さ・群れの厚みに効く(現行の観察回数)。
   /// 来訪しただけでは増えない — 会いに行くから馴染む。
@@ -237,7 +246,10 @@ class Garden {
   }
 
   /// いまの餌台から解けた連鎖(来ている動物と猛禽)。
-  core.FeederChain get chain => core.resolveFeeders(feeders, planted);
+  /// **リス返しが効いている間はリスが来ない**ので、
+  /// 庭の絵も画面の文もそれに従う(見た目と中身をずらさない)。
+  core.FeederChain get chain => core.resolveFeeders(feeders, planted,
+      baffled: core.isBaffleActive(itemPlacement));
 
   /// **留守のあいだのぶんを進める。** 画面を開いた時に一度だけ呼ぶ。
   ///
@@ -265,6 +277,12 @@ class Garden {
         biomes: data.biomes,
         seasonOffset: data.seasonOffset,
         placedFeatures: feeders,
+        // 今日の道具。置いていなければ全部「効かない」値になるので、
+        // 何も置いていない庭の確率は今までと1ビットも変わらない。
+        arrivalBonusFn: core.makeArrivalBonusFn(
+            itemPlacement, biomeId, data.birds),
+        departureBonus: core.itemDepartureBonus(itemPlacement),
+        baffled: core.isBaffleActive(itemPlacement),
       );
       lastTicks = r.ticks;
       visiting
@@ -380,16 +398,42 @@ class Garden {
 
   static const _key = 'toris_save';
   static const _tutorialKey = 'toris_tutorial_step';
+  static const _itemKey = 'toris_garden_item';
+  static const _claimKey = 'toris_item_claim_day';
 
   Future<void> save() async {
     final p = await SharedPreferences.getInstance();
     await p.setString(_key, core.encodeCurrentState(toState()));
     await p.setInt(_tutorialKey, tutorialStep);
+    final it = itemPlacement;
+    if (it == null) {
+      await p.remove(_itemKey);
+    } else {
+      await p.setString(_itemKey,
+          '${it.itemId}|${core.isoSeconds(it.placedAt)}');
+    }
+    final d = lastItemClaimDay;
+    if (d == null) {
+      await p.remove(_claimKey);
+    } else {
+      await p.setString(_claimKey, d);
+    }
   }
 
   Future<void> restore() async {
     final p = await SharedPreferences.getInstance();
     tutorialStep = p.getInt(_tutorialKey) ?? 0;
+    lastItemClaimDay = p.getString(_claimKey);
+    final raw = p.getString(_itemKey);
+    if (raw != null) {
+      final i = raw.indexOf('|');
+      final at = i < 0 ? null : DateTime.tryParse(raw.substring(i + 1));
+      // 期限切れは読んだ時点で捨てる(切れたものを持ち歩かない)。
+      if (at != null) {
+        final placed = core.placeItem(raw.substring(0, i), now: at);
+        if (core.itemIsActive(placed)) itemPlacement = placed;
+      }
+    }
     final code = p.getString(_key);
     if (code == null) return;
     final s = core.decodeSave(code);

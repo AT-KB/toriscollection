@@ -186,11 +186,86 @@ FORBIDDEN_IN_UI = [
 #
 # どちらも「関数は移植済み」なので関数の台帳では検出できない。
 # **呼ばれているかどうか**を見る必要がある。
+# ─────────────────────────────────────────────────────────────
+# **両言語に書いたのに、突き合わせていない定数**を捕まえる。
+#
+# ## なぜ足したか(2026-08-21)
+# `ITEM_OFFERED`(Python) と `kOfferedItems`(Dart) を両方に書いたのに
+# `logic_fixtures.py` へ足すのを忘れ、**抽選プールが 6種 と 3種 でずれていた**。
+# 台帳は「関数が宣言されているか」しか見ず、fixtures は足したものしか比べない。
+# つまり **定数は誰も見ていなかった**。
+#
+# ここでは (Python の定数, Dart の識別子) の組を並べ、
+#   1. Dart 側にその名前の宣言があるか
+#   2. **その値が logic.json に載っているか**(= 突き合わせの対象になっているか)
+# の2つを見る。値が載っていなければ、書いてあってもずれに気づけない。
+SHARED_CONSTANTS = [
+    ("garden_items.ITEM_OFFERED", "kOfferedItems"),
+    ("garden_items.DURATION_HOURS", "kItemDurationHours"),
+    ("garden_items.NYJER_TARGET_BIRDS", "kNyjerTargets"),
+    ("feeder_chain.FEEDERS", "kFeeders"),
+]
+
+# ─────────────────────────────────────────────────────────────
+# **起動を止めうる待ちが無いか。**
+#
+# ## なぜ足したか(2026-08-21)
+# `main()` で `await MobileAds.initialize()` していた。このアプリは
+# ネットワーク無しで全部動くのに、**電波が悪いと起動が固まる**状態だった。
+# 監査はシンボルの有無しか見ておらず、待ち切りかどうかは誰も見ていなかった。
+#
+# (ファイル, その中に必ず在るべき語, なぜ)
+MUST_NOT_BLOCK = [
+    # ⚠️ 「ファイルのどこかに timeout がある」では**弱すぎる**
+    #    (別の待ちに付いていても通ってしまい、実際に取り逃した)。
+    #    **初期化そのもの**に付いていることを見る。
+    ("toris_app/lib/ads/ads.dart", r"initialize\(\)\s*\.timeout\(",
+     "広告SDKの初期化に待ち切りが無い。電波が悪いと起動が固まる"),
+]
+
+def _normalize(value):
+    """比較しやすい形に。set/tuple は並べ替えた list、dict はキーの集合として見る。"""
+    if isinstance(value, (set, frozenset)):
+        return sorted(value)
+    if isinstance(value, dict):
+        return sorted(value)
+    if isinstance(value, tuple):
+        return list(value)
+    return value
+
+
+def _contains_value(blob, wanted) -> bool:
+    """logic.json のどこかにこの値が入っているか。**構造で**探す。
+
+    ⚠️ 文字列一致で見てはいけない。`json.dumps` の空白の入り方が
+    fixtures の書き方(indent=1)と違うだけで、載っているのに「無い」と
+    判定してしまう(2026-08-21 に実際にやった)。
+    """
+    if _normalize(blob) == wanted:
+        return True
+    if isinstance(blob, dict):
+        return any(_contains_value(v, wanted) for v in blob.values())
+    if isinstance(blob, list):
+        return any(_contains_value(v, wanted) for v in blob)
+    return False
+
+
 REQUIRED_IN_UI = [
     ("toris_app/lib/garden/guide_page.dart", r"predatorIsGenusLevel",
      "図鑑が属レベルの但し書きを出していない。近縁種の記録を種の事実にしない"),
     ("toris_app/lib/garden/garden_page.dart", r"didChangeAppLifecycleState",
      "前面に戻った時に庭を進めていない。初回生成でしか進まず鳥が来なくなる"),
+    # 広告(2026-08-21)。**移してあるのに誰も呼んでいない**を防ぐ。
+    ("toris_app/lib/garden/garden_state.dart", r"makeArrivalBonusFn",
+     "今日の道具の加点をエンジンに渡していない。置いても効かない"),
+    ("toris_app/lib/garden/garden_state.dart", r"isBaffleActive",
+     "リス返しが餌台の連鎖に渡っていない。置いてもリスが来続ける"),
+    ("toris_app/lib/garden/garden_page.dart", r"showRewardedAd",
+     "リワード広告を画面から呼んでいない。道具を受け取る導線が無い"),
+    ("toris_app/lib/garden/garden_page.dart", r"QuietBanner",
+     "バナーを画面に置いていない"),
+    ("toris_app/lib/ads/ads.dart", r"radioPlaying",
+     "ラジオ再生中にバナーを黙らせていない(原則3)"),
 ]
 
 # ─────────────────────────────────────────────────────────────
@@ -270,6 +345,38 @@ def screen_audit() -> list:
                         f"        {text[:60]}")
 
     # あるべきものが落ちていないか。
+    # 共有定数: Dart に宣言があり、かつ fixtures で突き合わせているか。
+    dart_src = dart_sources()
+    fx_path = os.path.join(ROOT, "toris_core", "test", "fixtures", "logic.json")
+    fx_obj = None
+    if os.path.exists(fx_path):
+        fx_obj = json.load(open(fx_path, encoding="utf-8"))
+    for py_ref, dart_name in SHARED_CONSTANTS:
+        mod_name, const_name = py_ref.split(".", 1)
+        try:
+            # 台帳は AST で読むが、定数は**実際の値**が要るので import する。
+            if PY_DIR not in sys.path:
+                sys.path.insert(0, PY_DIR)
+            value = getattr(__import__(mod_name), const_name)
+        except Exception as e:                       # noqa: BLE001
+            problems.append(f"{py_ref} を読めない({e})")
+            continue
+        if not is_declared(dart_name, dart_src):
+            problems.append(f"{py_ref} に当たる {dart_name} が Dart に無い")
+        if not _contains_value(fx_obj, _normalize(value)):
+            problems.append(
+                f"{py_ref} が fixtures で突き合わされていない" + chr(10)
+                + "        両方に書いてもずれに気づけない。"
+                  "logic_fixtures.py に足すこと")
+
+    # 起動を止めうる待ち。
+    for rel, pat, why in MUST_NOT_BLOCK:
+        path = os.path.join(ROOT, rel.replace("/", os.sep))
+        if not os.path.exists(path):
+            problems.append(f"{rel} が無い({why})")
+        elif not re.search(pat, open(path, encoding="utf-8").read()):
+            problems.append(f"{rel} に {pat} が無い" + chr(10) + f"        {why}")
+
     for rel, pat, why in REQUIRED_IN_UI:
         path = os.path.join(ROOT, rel.replace("/", os.sep))
         if not os.path.exists(path):

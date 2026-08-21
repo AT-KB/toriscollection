@@ -31,32 +31,32 @@
       "why": "CEO 2026-08-16「123やろう」。1種なら名前で、複数種なら件数と種数で"
     },
     "ads.has_claimed_today": {
-      "dart": "",
-      "status": "todo"
+      "dart": "hasClaimedToday",
+      "status": "done"
     },
     "ads.is_radio_active": {
-      "dart": "",
-      "status": "todo"
+      "dart": "radioIsPlaying",
+      "status": "done"
     },
     "ads.mark_claimed_today": {
-      "dart": "",
-      "status": "todo"
+      "dart": "todayKey",
+      "status": "done"
     },
     "ads.render_admob_banner": {
-      "dart": "",
-      "status": "todo"
+      "dart": "QuietBanner",
+      "status": "done"
     },
     "ads.render_banner_placeholder": {
-      "dart": "",
-      "status": "todo"
+      "dart": "QuietBanner",
+      "status": "done"
     },
     "ads.render_garden_item_button": {
-      "dart": "",
-      "status": "todo"
+      "dart": "offeredItems",
+      "status": "done"
     },
     "ads.render_pending_ad_loader": {
-      "dart": "",
-      "status": "todo"
+      "dart": "showRewardedAd",
+      "status": "done"
     },
     "alarm_ui.render_alarm": {
       "dart": "AlarmPage",
@@ -832,6 +832,10 @@
       "dart": "showWelcomeBackPopup",
       "status": "done",
       "why": "_welcome_dialog の移植。留守に何かあった時だけ出す/来た鳥6件・去った鳥5件まで/2時間・48時間で言い方が変わる/Lost・Left はここにだけ出す"
+    },
+    "garden_items.is_baffle_active": {
+      "dart": "isBaffleActive",
+      "status": "done"
     }
   }
 }

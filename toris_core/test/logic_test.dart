@@ -165,18 +165,51 @@ void main() {
     expect(checked, 4440, reason: '4440通りを見ているはず');
   });
 
-  test('餌台の連鎖: 864通りで Python 版と一致する(抑制と加点)', () {
+  // **両言語に書いた定数**そのものを突き合わせる。
+  //
+  // 2026-08-21: `ITEM_OFFERED` と `kOfferedItems` を両方に書いたのに
+  // fixtures へ足すのを忘れ、**抽選プールが 6種 と 3種 でずれていた**。
+  // 関数の入出力だけ見ていると、定数のずれは最後まで誰も気づかない。
+  test('両言語に書いた定数が一致する', () {
+    final fx = json
+        .decode(File('test/fixtures/logic.json').readAsStringSync())
+        .cast<String, dynamic>();
+    final c = fx['constants'] as Map<String, dynamic>;
+
+    expect(kOfferedItems, c['item_offered'], reason: '広告で出す3種がずれている');
+    expect(kItemDurationHours, c['item_duration_hours']);
+    expect(kNyjerTargets.toList()..sort(), c['nyjer_targets']);
+    expect(kFeeders.keys.toList()..sort(), c['feeders']);
+
+    // 餌台の中身(気質・大型アクセス・上限)まで見る。名前だけ合っていても、
+    // draws が入れ替わっていたら来る鳥が丸ごと変わる。
+    (c['feeder_meta'] as Map<String, dynamic>).forEach((id, meta) {
+      final m = kFeeders[id]!;
+      final e = meta as Map<String, dynamic>;
+      expect(m['offers'], e['offers'], reason: '$id の offers');
+      expect(m['large_access'], e['large_access'], reason: '$id の large_access');
+      expect(m['draws'], e['draws'], reason: '$id の draws');
+      expect((m['bonus_max'] as num).toDouble(),
+          closeTo((e['bonus_max'] as num).toDouble(), 1e-12),
+          reason: '$id の bonus_max');
+    });
+  });
+
+  test('餌台の連鎖: 1728通りで Python 版と一致する(抑制・加点・リス返し)', () {
     // 餌台 → リス → タカ → 警戒心の強い鳥を抑制。
     // 分岐が細かい(かご型だけならリスは届かない/堅果は地面なので届く)ので総当たり。
     var checked = 0;
     for (final c in fx['feeder_chain'] as List) {
       final feats = (c['features'] as List).map((e) => '$e').toList();
       final pset = (c['planted'] as List).map((e) => '$e').toList();
-      final label = '餌台=$feats 植えた=$pset';
+      // baffled = リス返しが効いている6時間。餌台由来の large_access だけが
+      // 落ち、**地面の堅果は守れない**ところまで突き合わせる(2026-08-21)。
+      final baffled = c['baffled'] as bool;
+      final label = '餌台=$feats 植えた=$pset baffled=$baffled';
 
-      expect(availableFoods(feats, pset).toList()..sort(), c['foods'],
-          reason: '$label の食べ物が違う');
-      final r = resolveFeeders(feats, pset);
+      expect(availableFoods(feats, pset, baffled: baffled).toList()..sort(),
+          c['foods'], reason: '$label の食べ物が違う');
+      final r = resolveFeeders(feats, pset, baffled: baffled);
       expect(r.animals, c['animals'], reason: '$label の動物が違う');
       expect(r.raptors, c['raptors'], reason: '$label の猛禽が違う');
 
@@ -203,9 +236,10 @@ void main() {
       });
     }
     // 288 = 6通りの餌台 × 8通りの庭 × 6通りの警戒心(抑制)。
-    // これに餌台の加点(警戒心6 × 種食/虫食2 = 12)が乗って 864 になる。
+    // これに餌台の加点(警戒心6 × 種食/虫食2 = 12)が乗って 864。
+    // 2026-08-21: リス返しの有無(baffled 2通り)を掛けて 1728 になった。
     // **数が減ったら、突き合わせている範囲が狭まったということ。**
-    expect(checked, 864, reason: '864通りを見ているはず(減ったら手当てが要る)');
+    expect(checked, 1728, reason: '1728通りを見ているはず(減ったら手当てが要る)');
   });
 
   test('餌台: かご型ならリスは来ず、臆病な鳥も抑えられない', () {
@@ -617,6 +651,12 @@ void main() {
           reason: '$item @ $biome の対象種が違う');
       expect(itemIsAvailable(item, biome, birds), c['available'],
           reason: '$item @ $biome の可否が違う');
+      // 餌台に依存するアイテム(継ぎ足し=餌台が要る / リス返し=開放型が要る)。
+      (c['available_by_feeders'] as Map<String, dynamic>).forEach((k, v) {
+        final feeders = k == 'none' ? <String>[] : k.split('|');
+        expect(itemIsAvailable(item, biome, birds, placedFeeders: feeders), v,
+            reason: '$item @ $biome 餌台=$k の可否が違う');
+      });
       expect(kGardenItems[item]!.effectKind, c['effect_kind']);
       expect(kGardenItems[item]!.value, closeTo(c['value'] as num, 1e-12));
       // **絵文字も突き合わせる。** 勘で書いて2件違っていた(🍬→🌺 / 🌰→🌾)。
@@ -657,6 +697,8 @@ void main() {
       });
       expect(itemDepartureBonus(p, at: at),
           closeTo(c['departure'] as num, 1e-12), reason: '$item の退去減算');
+      expect(isBaffleActive(p, at: at), c['baffle'],
+          reason: '$item のリス返し判定が違う');
       expect(
           [
             for (final bid in (c['arrival'] as Map).keys)

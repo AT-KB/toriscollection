@@ -554,6 +554,9 @@ TRANSLATIONS: dict[str, str] = {
     # ── garden_items.py(庭の道具) ──
     '{emoji} {name} — 今のこの庭では対象になる鳥がいません。': "{emoji} {name} — there's no target bird for this garden right now.",
     '{emoji} {name} — この庭にはハチドリが生息していないため使えません(シャーロットの庭で使えます)。': "{emoji} {name} — can't be used here, since hummingbirds don't live in this garden (it works in the Charlotte garden).",
+    # 餌台に依存するアイテム(2026-08-21)。**責める言い方にしない**(原則2)。
+    '{emoji} {name} — 継ぎ足す先がありません(餌台を置くと使えます)。': "{emoji} {name} — there's nothing to top up yet (place a feeder to use it).",
+    '{emoji} {name} — 守る相手がいません(開放型の餌台を置くと使えます)。': "{emoji} {name} — there's nothing to protect yet (place an open feeder to use it).",
     # ── disturbance.py(撹乱) ──
     '{icon} {label}が庭を通り過ぎたが、植物は持ちこたえた。': '{icon} {label} passed through the garden, but the plants held on.',
     '{icon} {label}が庭を通り過ぎ、{lost}が倒れた。': '{icon} {label} passed through the garden, and {lost} was knocked down.',

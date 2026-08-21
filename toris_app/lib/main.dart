@@ -17,12 +17,15 @@
 /// 簡素化のため移植しない。
 ///
 /// ## パッケージ名について
-/// いまは `com.toriscollection.toris_app`。製品版は `com.toriscollection.app`。
-/// **わざと別にしてある** — 同じにすると開発中のビルドが Play 版を潰すため。
+/// **release = `com.toriscollection.app`**(Play 公開済みと同じ。2026-08-20 に
+/// 揃えた。違うと更新として受け付けられない)。開発中のビルドが Play 版を
+/// 潰さないよう、**debug だけ `.dev` を足して別パッケージにしてある**
+/// (`android/app/build.gradle.kts` の applicationIdSuffix)。
 library;
 
 import 'package:flutter/material.dart';
 
+import 'ads/ads.dart';
 import 'alarm/alarm_page.dart';
 import 'garden/garden_page.dart';
 import 'garden/garden_state.dart';
@@ -31,7 +34,12 @@ import 'garden/network_page.dart';
 import 'radio/radio_page.dart';
 import 'ui/theme.dart';
 
-void main() => runApp(const TorisApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 広告 SDK。失敗しても投げない — 広告が無くてもアプリは全部動く(原則2)。
+  await initAds();
+  runApp(const TorisApp());
+}
 
 class TorisApp extends StatelessWidget {
   const TorisApp({super.key});

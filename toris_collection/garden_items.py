@@ -31,11 +31,6 @@ from i18n import t
 # 1回の配置が効果を持つ時間
 DURATION_HOURS = 6
 
-# 水系専門種の除外(⑥リス返し用)。カワセミは魚類・水生昆虫食で庭の給餌器文脈と
-# 無関係なため、wariness閾値だけで機械的に対象化すると不誠実な理由付けになる。
-# これは企画部の裁量判断であり、原則4(生態に誠実)を優先した結果(提案書§3)。
-WATER_SPECIALIST_EXCLUDE = {"kawasemi"}
-
 # ⑤ニジャーシードフィーダーの対象(ヒワの仲間限定)。
 # data.py にはGloBI由来の「属(genus)」情報が無いため、Fringillidae 内でも
 # 実際にニジャーシードを好む "goldfinch" 系統(Chloris/Spinus)だけを明示的に
@@ -47,15 +42,24 @@ NYJER_TARGET_BIRDS = {"kawarahiwa", "american_goldfinch"}
 EFFECT_ARRIVAL_BONUS = "arrival_bonus"
 EFFECT_DEPARTURE_REDUCTION = "departure_reduction"
 
+# リス返しだけは加点を持たない。**feeder_chain のリス→鷹の鎖を断つ**のが効果
+# (2026-08-21 CEO承認)。鎖は既にある仕組みなので、恣意的な加点を1つ減らせる。
+EFFECT_SQUIRREL_BAFFLE = "squirrel_baffle"
+
 ITEMS = {
     "feeder": {
         "emoji": "🌻",
-        "name": "バードフィーダー",
-        "subtitle": "ヒマワリ・混合シードの開放型給餌器",
+        "name": "シードの継ぎ足し",
+        "subtitle": "今日は餌台の中身が多め",
         "effect_kind": EFFECT_ARRIVAL_BONUS,
         "value": 0.010,  # +1.0pp
-        "hint": "種子を食べる鳥たちに、少しだけ来やすくなってもらう道具です。",
-        "culture_note": "いちばん定番の開放型。誰でも来られる分、代わり映えは控えめ。",
+        # 餌台が無い庭では継ぎ足す先が無い。
+        "requires_feeder": True,
+        "hint": "置いてある餌台に、今日はシードを多めに入れておきます。",
+        "culture_note": (
+            "道具が増えるのではなく**中身が増える**。どの餌台を置くか"
+            "(顔ぶれ)は無料の選択のままで、こちらは今日の量だけを変える。"
+        ),
     },
     "hummingbird_feeder": {
         "emoji": "🍬",
@@ -104,10 +108,14 @@ ITEMS = {
     "squirrel_baffle": {
         "emoji": "🛡",
         "name": "リス返し(スクワレルバッフル)",
-        "subtitle": "餌台への侵入を防ぐバッフル",
-        "effect_kind": EFFECT_ARRIVAL_BONUS,
-        "value": 0.030,  # +3.0pp
-        "hint": "警戒心の強い鳥だけに効く道具です。",
+        "subtitle": "開放型の餌台へのリスの侵入を防ぐ",
+        "effect_kind": EFFECT_SQUIRREL_BAFFLE,
+        # 直接の加点は持たない。効果は feeder_chain 側で鎖を断つこと。
+        "value": 0.0,
+        # かご型に付けても何も起きない(元からリスは届かない)。正直に、
+        # **開放型を置いているときだけ**選べる。
+        "requires_open_feeder": True,
+        "hint": "6時間だけ、開放型でもリスが餌台に届きません。",
         "culture_note": (
             "リスや大型を締め出す道具。実際、ハチドリ給餌器の砂糖水はリスや"
             "アリに横取りされやすく、バッフルは定番の対策。"
@@ -115,11 +123,12 @@ ITEMS = {
     },
 }
 
-# UI表示順(提案書の番号順)
-ITEM_ORDER = [
-    "feeder", "hummingbird_feeder", "suet_feeder",
-    "bird_bath", "nyjer_feeder", "squirrel_baffle",
-]
+# **いま広告リワードとして出す3種**(CEO 2026-08-21)。ここが抽選プールの唯一の正。
+# 外した3種は対象が狭すぎる: ハチドリ用はシャーロット限定、ニジャーは2種限定、
+# スエットはキツツキ限定。実データで数えた対象種数は提案書
+# `docs/team/proposals/2026-08-21_広告のFlutter移植_設計.md` §2 にある。
+# 定義自体は残してあるので、戻すのはこのリストに足すだけ。
+ITEM_OFFERED = ["feeder", "squirrel_baffle", "bird_bath"]
 
 
 def target_bird_ids(item_id: str, biome_id: str, birds_data: dict) -> set:
@@ -159,22 +168,33 @@ def target_bird_ids(item_id: str, biome_id: str, birds_data: dict) -> set:
         elif item_id == "nyjer_feeder":
             if bid in NYJER_TARGET_BIRDS:
                 out.add(bid)
-        elif item_id == "squirrel_baffle":
-            wariness = b.get("wariness") or 0
-            if wariness >= 0.55 and bid not in WATER_SPECIALIST_EXCLUDE:
-                out.add(bid)
+        # squirrel_baffle は対象種リストを持たない。効果は加点ではなく
+        # feeder_chain の鎖を断つことなので、誰に効くかは鎖の側が決める。
     return out
 
 
-def is_available(item_id: str, biome_id: str, birds_data: dict) -> bool:
+def is_available(item_id: str, biome_id: str, birds_data: dict,
+                 placed_feeders: list | None = None) -> bool:
     """このバイオームでこのアイテムに意味があるか(選べるか)。
 
     バードバスは全種共通(=このバイオームに鳥が1種でもいれば意味がある)。
     それ以外は対象種が1種以上いるかどうか。
+
+    2026-08-21 追加: 餌台に依存するアイテムは、庭に餌台が無ければ選べない。
+    継ぎ足しは**継ぎ足す先**が、リス返しは**守る対象(開放型)**が要る。
+    `placed_feeders` を渡さない呼び出しは、餌台の条件を見ない(従来どおり)。
     """
     item = ITEMS.get(item_id)
     if not item:
         return False
+    if placed_feeders is not None:
+        if item.get("requires_open_feeder") and "feeder_open" not in placed_feeders:
+            return False
+        if item.get("requires_feeder") and not placed_feeders:
+            return False
+    if item.get("effect_kind") == EFFECT_SQUIRREL_BAFFLE:
+        # 対象種ではなく鎖で効くので、上の餌台条件を満たせば意味がある。
+        return placed_feeders is None or "feeder_open" in placed_feeders
     if item_id == "bird_bath":
         return any(
             biome_id in (b.get("biome_pref") or []) for b in birds_data.values()
@@ -187,6 +207,12 @@ def unavailable_reason(item_id: str, biome_id: str, birds_data: dict) -> str:
     item = ITEMS.get(item_id)
     if not item:
         return ""
+    if item.get("requires_open_feeder"):
+        return t("{emoji} {name} — 守る相手がいません(開放型の餌台を置くと使えます)。",
+                 emoji=item['emoji'], name=t(item['name']))
+    if item.get("requires_feeder"):
+        return t("{emoji} {name} — 継ぎ足す先がありません(餌台を置くと使えます)。",
+                 emoji=item['emoji'], name=t(item['name']))
     if item_id == "hummingbird_feeder":
         return t(
             "{emoji} {name} — この庭にはハチドリが生息していないため使えません"
@@ -255,6 +281,14 @@ def make_arrival_bonus_fn(placement: dict | None, biome_id: str, birds_data: dic
     targets = target_bird_ids(item_id, biome_id, birds_data)
     value = item["value"]
     return lambda bid: value if bid in targets else 0.0
+
+
+def is_baffle_active(placement: dict | None, at_time: datetime | None = None) -> bool:
+    """いまリス返しが効いているか。`feeder_chain.animals_present(baffled=...)` に渡す。"""
+    if not is_active(placement, at_time):
+        return False
+    item = ITEMS.get(placement.get("item_id"))
+    return bool(item) and item["effect_kind"] == EFFECT_SQUIRREL_BAFFLE
 
 
 def departure_bonus(placement: dict | None, at_time: datetime | None = None) -> float:

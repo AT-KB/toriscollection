@@ -82,11 +82,17 @@ RAPTORS = {
 }
 
 
-def available_foods(placed_features: list[str], planted_plants: list[str]) -> set[str]:
+def available_foods(placed_features: list[str], planted_plants: list[str],
+                    baffled: bool = False) -> set[str]:
     """庭にある「動物向けの食べ物」種別と、大型アクセス可否の集合を返す。
 
     Returns 例: {"seed", "acorn", "large_access"}。large_access は
     大型動物が届く供給(開放餌台)が1つでもあるとき入る。
+
+    `baffled` = リス返しが効いている(garden_items の6時間リワード)。
+    **餌台由来の large_access だけ**を落とす。地面に落ちた堅果は
+    バッフルで守れないので、white_oak を植えていればリスは来る
+    (2026-08-21。守れないものを守れると言わない = 原則4)。
     """
     foods: set[str] = set()
     large = False
@@ -95,7 +101,7 @@ def available_foods(placed_features: list[str], planted_plants: list[str]) -> se
         if not meta:
             continue
         foods.add(meta["offers"])
-        if meta["large_access"]:
+        if meta["large_access"] and not baffled:
             large = True
     if any(p in _SEED_PLANTS for p in planted_plants):
         foods.add("seed")
@@ -107,9 +113,10 @@ def available_foods(placed_features: list[str], planted_plants: list[str]) -> se
     return foods
 
 
-def animals_present(placed_features: list[str], planted_plants: list[str]) -> list[str]:
+def animals_present(placed_features: list[str], planted_plants: list[str],
+                    baffled: bool = False) -> list[str]:
     """庭の供給から、来る動物(リス等)の ID リストを返す。"""
-    foods = available_foods(placed_features, planted_plants)
+    foods = available_foods(placed_features, planted_plants, baffled)
     out = []
     for aid, a in ANIMALS.items():
         if not (set(a["eats"]) & foods):
@@ -175,8 +182,9 @@ def wary_arrival_multiplier(wariness: float, raptors: list[str]) -> float:
     return max(0.0, 1.0 - strength * w)
 
 
-def resolve(placed_features: list[str], planted_plants: list[str]) -> dict:
+def resolve(placed_features: list[str], planted_plants: list[str],
+            baffled: bool = False) -> dict:
     """庭の状態から連鎖を一括解決。UI/エンジンからはこれを呼ぶ。"""
-    animals = animals_present(placed_features, planted_plants)
+    animals = animals_present(placed_features, planted_plants, baffled)
     raptors = raptors_present(animals)
     return {"animals": animals, "raptors": raptors}

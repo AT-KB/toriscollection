@@ -26778,10 +26778,79 @@
    }
   }
  ],
+ "constants": {
+  "item_offered": [
+   "feeder",
+   "squirrel_baffle",
+   "bird_bath"
+  ],
+  "item_duration_hours": 6,
+  "nyjer_targets": [
+   "american_goldfinch",
+   "kawarahiwa"
+  ],
+  "feeders": [
+   "feeder_cage",
+   "feeder_open"
+  ],
+  "feeder_meta": {
+   "feeder_cage": {
+    "name": "かご型の餌台",
+    "offers": "seed",
+    "large_access": false,
+    "draws": "shy",
+    "bonus_max": 0.2
+   },
+   "feeder_open": {
+    "name": "開放型の餌台",
+    "offers": "seed",
+    "large_access": true,
+    "draws": "bold",
+    "bonus_max": 0.2
+   }
+  }
+ },
  "feeder_chain": [
   {
    "features": [],
    "planted": [],
+   "baffled": false,
+   "foods": [],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [],
+   "planted": [],
+   "baffled": true,
    "foods": [],
    "animals": [],
    "raptors": [],
@@ -26819,6 +26888,47 @@
    "planted": [
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [],
+   "planted": [
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -26858,6 +26968,52 @@
    "planted": [
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [],
+   "planted": [
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access"
@@ -26903,6 +27059,54 @@
     "sunflower",
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [],
+   "planted": [
+    "sunflower",
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -26948,6 +27152,45 @@
    "planted": [
     "sakura"
    ],
+   "baffled": false,
+   "foods": [],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [],
+   "planted": [
+    "sakura"
+   ],
+   "baffled": true,
    "foods": [],
    "animals": [],
    "raptors": [],
@@ -26986,6 +27229,48 @@
     "sakura",
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [],
+   "planted": [
+    "sakura",
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -27025,6 +27310,94 @@
     "feeder_open"
    ],
    "planted": [],
+   "baffled": false,
+   "foods": [
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.05,
+    "0.55|0": 0.0,
+    "0.7|1": 0.02,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open"
+   ],
+   "planted": [],
+   "baffled": true,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.05,
+    "0.55|0": 0.0,
+    "0.7|1": 0.02,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open"
+   ],
+   "planted": [
+    "sunflower"
+   ],
+   "baffled": false,
    "foods": [
     "large_access",
     "seed"
@@ -27071,7 +27444,51 @@
    "planted": [
     "sunflower"
    ],
+   "baffled": true,
    "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.05,
+    "0.55|0": 0.0,
+    "0.7|1": 0.02,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open"
+   ],
+   "planted": [
+    "white_oak"
+   ],
+   "baffled": false,
+   "foods": [
+    "acorn",
     "large_access",
     "seed"
    ],
@@ -27117,6 +27534,7 @@
    "planted": [
     "white_oak"
    ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -27165,6 +27583,56 @@
     "sunflower",
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.05,
+    "0.55|0": 0.0,
+    "0.7|1": 0.02,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open"
+   ],
+   "planted": [
+    "sunflower",
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -27212,6 +27680,97 @@
    "planted": [
     "sakura"
    ],
+   "baffled": false,
+   "foods": [
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.05,
+    "0.55|0": 0.0,
+    "0.7|1": 0.02,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open"
+   ],
+   "planted": [
+    "sakura"
+   ],
+   "baffled": true,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.05,
+    "0.55|0": 0.0,
+    "0.7|1": 0.02,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open"
+   ],
+   "planted": [
+    "sakura",
+    "sunflower"
+   ],
+   "baffled": false,
    "foods": [
     "large_access",
     "seed"
@@ -27259,25 +27818,21 @@
     "sakura",
     "sunflower"
    ],
+   "baffled": true,
    "foods": [
-    "large_access",
     "seed"
    ],
-   "animals": [
-    "gray_squirrel"
-   ],
-   "raptors": [
-    "cooper_hawk"
-   ],
+   "animals": [],
+   "raptors": [],
    "mult": {
     "0.0": 1.0,
-    "0.25": 0.825,
-    "0.5": 0.65,
-    "0.55": 0.615,
-    "0.7": 0.51,
-    "1.0": 0.3,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
     "-0.3": 1.0,
-    "1.4": 0.3
+    "1.4": 1.0
    },
    "bonus": {
     "0.0|1": 0.16,
@@ -27303,6 +27858,47 @@
     "feeder_cage"
    ],
    "planted": [],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage"
+   ],
+   "planted": [],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -27344,6 +27940,49 @@
    "planted": [
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage"
+   ],
+   "planted": [
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -27385,6 +28024,55 @@
    "planted": [
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage"
+   ],
+   "planted": [
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -27433,6 +28121,56 @@
     "sunflower",
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage"
+   ],
+   "planted": [
+    "sunflower",
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -27480,6 +28218,49 @@
    "planted": [
     "sakura"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage"
+   ],
+   "planted": [
+    "sakura"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -27522,6 +28303,50 @@
     "sakura",
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage"
+   ],
+   "planted": [
+    "sakura",
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -27562,6 +28387,96 @@
     "feeder_cage"
    ],
    "planted": [],
+   "baffled": false,
+   "foods": [
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open",
+    "feeder_cage"
+   ],
+   "planted": [],
+   "baffled": true,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open",
+    "feeder_cage"
+   ],
+   "planted": [
+    "sunflower"
+   ],
+   "baffled": false,
    "foods": [
     "large_access",
     "seed"
@@ -27609,7 +28524,52 @@
    "planted": [
     "sunflower"
    ],
+   "baffled": true,
    "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open",
+    "feeder_cage"
+   ],
+   "planted": [
+    "white_oak"
+   ],
+   "baffled": false,
+   "foods": [
+    "acorn",
     "large_access",
     "seed"
    ],
@@ -27656,6 +28616,7 @@
    "planted": [
     "white_oak"
    ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -27705,6 +28666,57 @@
     "sunflower",
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open",
+    "feeder_cage"
+   ],
+   "planted": [
+    "sunflower",
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -27753,6 +28765,99 @@
    "planted": [
     "sakura"
    ],
+   "baffled": false,
+   "foods": [
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open",
+    "feeder_cage"
+   ],
+   "planted": [
+    "sakura"
+   ],
+   "baffled": true,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.16,
+    "0.0|0": 0.0,
+    "0.25|1": 0.11,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.16,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_open",
+    "feeder_cage"
+   ],
+   "planted": [
+    "sakura",
+    "sunflower"
+   ],
+   "baffled": false,
    "foods": [
     "large_access",
     "seed"
@@ -27801,25 +28906,21 @@
     "sakura",
     "sunflower"
    ],
+   "baffled": true,
    "foods": [
-    "large_access",
     "seed"
    ],
-   "animals": [
-    "gray_squirrel"
-   ],
-   "raptors": [
-    "cooper_hawk"
-   ],
+   "animals": [],
+   "raptors": [],
    "mult": {
     "0.0": 1.0,
-    "0.25": 0.825,
-    "0.5": 0.65,
-    "0.55": 0.615,
-    "0.7": 0.51,
-    "1.0": 0.3,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
     "-0.3": 1.0,
-    "1.4": 0.3
+    "1.4": 1.0
    },
    "bonus": {
     "0.0|1": 0.16,
@@ -27845,6 +28946,45 @@
     "nonexistent_feeder"
    ],
    "planted": [],
+   "baffled": false,
+   "foods": [],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "nonexistent_feeder"
+   ],
+   "planted": [],
+   "baffled": true,
    "foods": [],
    "animals": [],
    "raptors": [],
@@ -27884,6 +29024,49 @@
    "planted": [
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -27925,6 +29108,54 @@
    "planted": [
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access"
@@ -27972,6 +29203,56 @@
     "sunflower",
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sunflower",
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -28019,6 +29300,47 @@
    "planted": [
     "sakura"
    ],
+   "baffled": false,
+   "foods": [],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sakura"
+   ],
+   "baffled": true,
    "foods": [],
    "animals": [],
    "raptors": [],
@@ -28059,6 +29381,50 @@
     "sakura",
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.0,
+    "0.25|0": 0.0,
+    "0.5|1": 0.0,
+    "0.5|0": 0.0,
+    "0.55|1": 0.0,
+    "0.55|0": 0.0,
+    "0.7|1": 0.0,
+    "0.7|0": 0.0,
+    "1.0|1": 0.0,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.0,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sakura",
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -28099,6 +29465,48 @@
     "nonexistent_feeder"
    ],
    "planted": [],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage",
+    "nonexistent_feeder"
+   ],
+   "planted": [],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -28141,6 +29549,50 @@
    "planted": [
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage",
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -28183,6 +29635,56 @@
    "planted": [
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage",
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -28232,6 +29734,57 @@
     "sunflower",
     "white_oak"
    ],
+   "baffled": false,
+   "foods": [
+    "acorn",
+    "large_access",
+    "seed"
+   ],
+   "animals": [
+    "gray_squirrel"
+   ],
+   "raptors": [
+    "cooper_hawk"
+   ],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 0.825,
+    "0.5": 0.65,
+    "0.55": 0.615,
+    "0.7": 0.51,
+    "1.0": 0.3,
+    "-0.3": 1.0,
+    "1.4": 0.3
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage",
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sunflower",
+    "white_oak"
+   ],
+   "baffled": true,
    "foods": [
     "acorn",
     "large_access",
@@ -28280,6 +29833,50 @@
    "planted": [
     "sakura"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage",
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sakura"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -28323,6 +29920,51 @@
     "sakura",
     "sunflower"
    ],
+   "baffled": false,
+   "foods": [
+    "seed"
+   ],
+   "animals": [],
+   "raptors": [],
+   "mult": {
+    "0.0": 1.0,
+    "0.25": 1.0,
+    "0.5": 1.0,
+    "0.55": 1.0,
+    "0.7": 1.0,
+    "1.0": 1.0,
+    "-0.3": 1.0,
+    "1.4": 1.0
+   },
+   "bonus": {
+    "0.0|1": 0.0,
+    "0.0|0": 0.0,
+    "0.25|1": 0.01,
+    "0.25|0": 0.0,
+    "0.5|1": 0.06,
+    "0.5|0": 0.0,
+    "0.55|1": 0.07,
+    "0.55|0": 0.0,
+    "0.7|1": 0.1,
+    "0.7|0": 0.0,
+    "1.0|1": 0.16,
+    "1.0|0": 0.0,
+    "-0.3|1": 0.0,
+    "-0.3|0": 0.0,
+    "1.4|1": 0.16,
+    "1.4|0": 0.0
+   }
+  },
+  {
+   "features": [
+    "feeder_cage",
+    "nonexistent_feeder"
+   ],
+   "planted": [
+    "sakura",
+    "sunflower"
+   ],
+   "baffled": true,
    "foods": [
     "seed"
    ],
@@ -32011,6 +33653,11 @@
      "tufted_titmouse"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": false,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.01,
     "emoji": "🌻"
@@ -32034,6 +33681,11 @@
      "yamagara"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": false,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.01,
     "emoji": "🌻"
@@ -32045,6 +33697,11 @@
      "ruby_throated_hummingbird"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.06,
     "emoji": "🍬"
@@ -32054,6 +33711,11 @@
     "biome": "kyoto",
     "targets": [],
     "available": false,
+    "available_by_feeders": {
+     "none": false,
+     "feeder_open": false,
+     "feeder_cage": false
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.06,
     "emoji": "🍬"
@@ -32067,6 +33729,11 @@
      "red_bellied_woodpecker"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.025,
     "emoji": "🧈"
@@ -32078,6 +33745,11 @@
      "kogera"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.025,
     "emoji": "🧈"
@@ -32087,6 +33759,11 @@
     "biome": "charlotte",
     "targets": [],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "departure_reduction",
     "value": 0.05,
     "emoji": "💧"
@@ -32096,6 +33773,11 @@
     "biome": "kyoto",
     "targets": [],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "departure_reduction",
     "value": 0.05,
     "emoji": "💧"
@@ -32107,6 +33789,11 @@
      "american_goldfinch"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.05,
     "emoji": "🌰"
@@ -32118,6 +33805,11 @@
      "kawarahiwa"
     ],
     "available": true,
+    "available_by_feeders": {
+     "none": true,
+     "feeder_open": true,
+     "feeder_cage": true
+    },
     "effect_kind": "arrival_bonus",
     "value": 0.05,
     "emoji": "🌰"
@@ -32125,30 +33817,29 @@
    {
     "item": "squirrel_baffle",
     "biome": "charlotte",
-    "targets": [
-     "brown_thrasher",
-     "pileated_woodpecker",
-     "ruby_throated_hummingbird"
-    ],
+    "targets": [],
     "available": true,
-    "effect_kind": "arrival_bonus",
-    "value": 0.03,
+    "available_by_feeders": {
+     "none": false,
+     "feeder_open": true,
+     "feeder_cage": false
+    },
+    "effect_kind": "squirrel_baffle",
+    "value": 0.0,
     "emoji": "🛡"
    },
    {
     "item": "squirrel_baffle",
     "biome": "kyoto",
-    "targets": [
-     "ikaru",
-     "kakesu",
-     "kibitaki",
-     "mozu",
-     "shirohara",
-     "uguisu"
-    ],
+    "targets": [],
     "available": true,
-    "effect_kind": "arrival_bonus",
-    "value": 0.03,
+    "available_by_feeders": {
+     "none": false,
+     "feeder_open": true,
+     "feeder_cage": false
+    },
+    "effect_kind": "squirrel_baffle",
+    "value": 0.0,
     "emoji": "🛡"
    }
   ],
@@ -32193,12 +33884,12 @@
    {
     "item": "feeder",
     "biome": "charlotte",
-    "text": "🌻 NAME — there's no target bird for this garden right now."
+    "text": "🌻 NAME — there's nothing to top up yet (place a feeder to use it)."
    },
    {
     "item": "feeder",
     "biome": "kyoto",
-    "text": "🌻 NAME — there's no target bird for this garden right now."
+    "text": "🌻 NAME — there's nothing to top up yet (place a feeder to use it)."
    },
    {
     "item": "hummingbird_feeder",
@@ -32243,12 +33934,12 @@
    {
     "item": "squirrel_baffle",
     "biome": "charlotte",
-    "text": "🛡 NAME — there's no target bird for this garden right now."
+    "text": "🛡 NAME — there's nothing to protect yet (place an open feeder to use it)."
    },
    {
     "item": "squirrel_baffle",
     "biome": "kyoto",
-    "text": "🛡 NAME — there's no target bird for this garden right now."
+    "text": "🛡 NAME — there's nothing to protect yet (place an open feeder to use it)."
    }
   ],
   "bonus": [
@@ -32294,6 +33985,7 @@
      "yamagara": 0.0
     },
     "departure": 0.0,
+    "baffle": false,
     "boosted": [
      "american_goldfinch",
      "american_robin",
@@ -32354,6 +34046,7 @@
      "yamagara": 0.0
     },
     "departure": 0.0,
+    "baffle": false,
     "boosted": [
      "ruby_throated_hummingbird"
     ],
@@ -32401,6 +34094,7 @@
      "yamagara": 0.0
     },
     "departure": 0.0,
+    "baffle": false,
     "boosted": [
      "downy_woodpecker",
      "pileated_woodpecker",
@@ -32450,6 +34144,7 @@
      "yamagara": 0.0
     },
     "departure": 0.05,
+    "baffle": false,
     "boosted": [],
     "expired_departure": 0.0
    },
@@ -32495,6 +34190,7 @@
      "yamagara": 0.0
     },
     "departure": 0.0,
+    "baffle": false,
     "boosted": [
      "american_goldfinch"
     ],
@@ -32507,7 +34203,7 @@
      "american_robin": 0.0,
      "aoji": 0.0,
      "blue_jay": 0.0,
-     "brown_thrasher": 0.03,
+     "brown_thrasher": 0.0,
      "carolina_chickadee": 0.0,
      "carolina_wren": 0.0,
      "cedar_waxwing": 0.0,
@@ -32529,9 +34225,9 @@
      "mourning_dove": 0.0,
      "mozu": 0.0,
      "northern_cardinal": 0.0,
-     "pileated_woodpecker": 0.03,
+     "pileated_woodpecker": 0.0,
      "red_bellied_woodpecker": 0.0,
-     "ruby_throated_hummingbird": 0.03,
+     "ruby_throated_hummingbird": 0.0,
      "shijukara": 0.0,
      "shirohara": 0.0,
      "song_sparrow": 0.0,
@@ -32542,11 +34238,8 @@
      "yamagara": 0.0
     },
     "departure": 0.0,
-    "boosted": [
-     "brown_thrasher",
-     "pileated_woodpecker",
-     "ruby_throated_hummingbird"
-    ],
+    "baffle": true,
+    "boosted": [],
     "expired_departure": 0.0
    }
   ],

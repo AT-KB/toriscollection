@@ -279,12 +279,15 @@ TurnResult runTurn({
   double Function(String)? arrivalBonusFn,
   /// 同・退去率の減算。0 なら一切効かない。
   double departureBonus = 0.0,
+  /// リス返し(`garden_items`)が効いている間は、開放型でもリスが餌台に届かない。
+  bool baffled = false,
   int maxResidents = 4,
   int maxArrivalsPerTurn = 1,
 }) {
   // 餌台の連鎖。開放型を置くとリスが来て、リスがタカを呼ぶ。
   // 空なら猛禽は居らず、確率は今まで通り。
-  final raptors = resolveFeeders(placedFeatures, plantedPlants).raptors;
+  final raptors =
+      resolveFeeders(placedFeatures, plantedPlants, baffled: baffled).raptors;
 
   final web = buildFoodWeb(
     plantedPlants: plantedPlants,
@@ -416,6 +419,7 @@ AbsenceResult evolveWhileAway({
   Map<String, Centrality>? centralities,
   double Function(String)? arrivalBonusFn,
   double departureBonus = 0.0,
+  bool baffled = false,
 }) {
   final hours = now.difference(lastSeenAt).inSeconds / 3600.0;
   final ticks = hours <= 0 ? 0 : estimateTickCount(hours);
@@ -457,6 +461,7 @@ AbsenceResult evolveWhileAway({
       centralities: centralities,
       arrivalBonusFn: arrivalBonusFn,
       departureBonus: departureBonus,
+      baffled: baffled,
     );
     cur = r.residents;
     arrivals.addAll(r.arrivals);

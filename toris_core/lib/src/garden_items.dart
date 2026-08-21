@@ -22,6 +22,11 @@ const int kItemDurationHours = 6;
 const String kEffectArrivalBonus = 'arrival_bonus';
 const String kEffectDepartureReduction = 'departure_reduction';
 
+/// リス返しだけは加点を持たない。**`feeder_chain` のリス→鷹の鎖を断つ**のが
+/// 効果(2026-08-21 CEO承認)。既にある仕組みで説明できるので、恣意的な加点が
+/// 1つ減る。`garden_items.EFFECT_SQUIRREL_BAFFLE` と同じ値。
+const String kEffectSquirrelBaffle = 'squirrel_baffle';
+
 class GardenItem {
   final String emoji;
   final String effectKind;
@@ -31,8 +36,16 @@ class GardenItem {
 
   /// 1種だけを狙うアイテムはここに種ID。無ければ null。
   final String? singleTarget;
+
+  /// 餌台が無いと意味が無い(継ぎ足す先が無い)。
+  final bool requiresFeeder;
+
+  /// **開放型**の餌台が無いと意味が無い(守る相手が居ない)。
+  final bool requiresOpenFeeder;
   const GardenItem(this.emoji, this.effectKind, this.value,
-      {this.singleTarget});
+      {this.singleTarget,
+      this.requiresFeeder = false,
+      this.requiresOpenFeeder = false});
 
   /// Python は `if "single_target" in item` で見る(値ではなく**キーの有無**)。
   bool get hasSingleTarget => singleTarget != null;
@@ -43,22 +56,22 @@ class GardenItem {
 /// ⚠️ 絵文字を勘で書かないこと。🍬 を 🌺、🌰 を 🌾 と書いていて、
 /// 突き合わせのテストを足した時に落ちた(2026-08-16)。
 const Map<String, GardenItem> kGardenItems = {
-  'feeder': GardenItem('🌻', kEffectArrivalBonus, 0.010),
+  // 🌻 は「道具」ではなく**今日のシードの継ぎ足し**(2026-08-21)。
+  // 無料の餌台選択(顔ぶれ)と役割が重ならないようにするため。
+  'feeder': GardenItem('🌻', kEffectArrivalBonus, 0.010,
+      requiresFeeder: true),
   'hummingbird_feeder': GardenItem('🍬', kEffectArrivalBonus, 0.060,
       singleTarget: 'ruby_throated_hummingbird'),
   'suet_feeder': GardenItem('🧈', kEffectArrivalBonus, 0.025),
   'bird_bath': GardenItem('💧', kEffectDepartureReduction, 0.050),
   'nyjer_feeder': GardenItem('🌰', kEffectArrivalBonus, 0.050),
-  'squirrel_baffle': GardenItem('🛡', kEffectArrivalBonus, 0.030),
+  'squirrel_baffle': GardenItem('🛡', kEffectSquirrelBaffle, 0.0,
+      requiresOpenFeeder: true),
 };
 
 /// ニジャーシードを好むのは goldfinch 系統だけ。
 /// データに属(genus)が無いため、対象を明示する(提案書§3 の裁量判断)。
 const Set<String> kNyjerTargets = {'kawarahiwa', 'american_goldfinch'};
-
-/// 水系専門種の除外。カワセミは魚食で庭の給餌器と無関係なので、
-/// 警戒心の閾値だけで機械的に対象にすると不誠実な理由付けになる。
-const Set<String> kWaterSpecialistExclude = {'kawasemi'};
 
 /// このアイテムが、この土地で効果を持つ鳥ID。
 Set<String> targetBirdIds(
@@ -97,19 +110,32 @@ Set<String> targetBirdIds(
       case 'nyjer_feeder':
         if (kNyjerTargets.contains(bid)) out.add(bid);
         break;
-      case 'squirrel_baffle':
-        final w = (m['wariness'] as num?)?.toDouble() ?? 0.0;
-        if (w >= 0.55 && !kWaterSpecialistExclude.contains(bid)) out.add(bid);
-        break;
+      // squirrel_baffle は対象種リストを持たない。効果は加点ではなく
+      // feeder_chain の鎖を断つことなので、誰に効くかは鎖の側が決める。
     }
   });
   return out;
 }
 
 /// この土地でこのアイテムに意味があるか(選べるか)。
+/// [placedFeeders] を渡すと、餌台に依存するアイテムの条件も見る
+/// (継ぎ足しは継ぎ足す先が、リス返しは守る対象=開放型が要る)。
+/// 渡さない呼び出しは従来どおり餌台を見ない。
 bool itemIsAvailable(
-    String itemId, String biomeId, Map<String, dynamic> birdsData) {
-  if (!kGardenItems.containsKey(itemId)) return false;
+    String itemId, String biomeId, Map<String, dynamic> birdsData,
+    {List<String>? placedFeeders}) {
+  final it = kGardenItems[itemId];
+  if (it == null) return false;
+  if (placedFeeders != null) {
+    if (it.requiresOpenFeeder && !placedFeeders.contains('feeder_open')) {
+      return false;
+    }
+    if (it.requiresFeeder && placedFeeders.isEmpty) return false;
+  }
+  if (it.effectKind == kEffectSquirrelBaffle) {
+    // 対象種ではなく鎖で効くので、上の餌台条件を満たせば意味がある。
+    return placedFeeders == null || placedFeeders.contains('feeder_open');
+  }
   if (itemId == 'bird_bath') {
     return birdsData.values.any((b) =>
         (((b as Map?)?['biome_pref'] as List?) ?? const [])
@@ -162,6 +188,13 @@ double Function(String) makeArrivalBonusFn(
   return (bid) => targets.contains(bid) ? item.value : 0.0;
 }
 
+/// いまリス返しが効いているか。`resolveFeeders(..., baffled:)` に渡す。
+bool isBaffleActive(ItemPlacement? p, {DateTime? at}) {
+  if (!itemIsActive(p, at: at)) return false;
+  final item = kGardenItems[p!.itemId];
+  return item != null && item.effectKind == kEffectSquirrelBaffle;
+}
+
 /// `runTurn` に渡す退去率の減算値。効いていなければ 0。
 double itemDepartureBonus(ItemPlacement? p, {DateTime? at}) {
   if (!itemIsActive(p, at: at)) return 0.0;
@@ -199,6 +232,14 @@ String itemUnavailableReason(
   final item = kGardenItems[itemId];
   if (item == null) return '';
   final name = kItemNames[itemId] ?? itemId;
+  if (item.requiresOpenFeeder) {
+    return "${item.emoji} $name — there's nothing to protect yet "
+        '(place an open feeder to use it).';
+  }
+  if (item.requiresFeeder) {
+    return "${item.emoji} $name — there's nothing to top up yet "
+        '(place a feeder to use it).';
+  }
   if (itemId == 'hummingbird_feeder') {
     return "${item.emoji} $name — can't be used here, since hummingbirds "
         "don't live in this garden (it works in the Charlotte garden).";
@@ -209,10 +250,16 @@ String itemUnavailableReason(
 
 /// アイテムの名前。**出荷済みの英語ではない**(上の注意を参照)。
 const Map<String, String> kItemNames = {
-  'feeder': 'Bird feeder',
+  'feeder': 'A top-up of seed',
   'hummingbird_feeder': 'Hummingbird feeder',
   'suet_feeder': 'Suet feeder',
   'bird_bath': 'Bird bath',
   'nyjer_feeder': 'Nyjer seed feeder',
   'squirrel_baffle': 'Squirrel baffle',
 };
+
+/// **いま広告リワードとして出す3種**(CEO 2026-08-21)。
+/// 外した3種は対象が狭すぎる(ハチドリ用=シャーロット限定 / ニジャー=2種 /
+/// スエット=キツツキ限定)。定義は残してあるので、戻すのはここに足すだけ。
+/// `garden_items.ITEM_OFFERED` と同じ並び。
+const List<String> kOfferedItems = ['feeder', 'squirrel_baffle', 'bird_bath'];
