@@ -35,9 +35,32 @@ class AdUnits {
   static const rewardTest = 'ca-app-pub-3940256099942544/5224354917';
 }
 
-/// テスト用ユニットを使うか。**実機確認の間は true。**
-/// 公開ビルドで true のまま出すと収益が出ないので、上げる前に false に戻す。
-const bool kUseTestAds = true;
+/// **広告を出すかどうかの元スイッチ。** `ads.py` の `ADMOB_ENABLED` の移植で、
+/// 現行の本番設定と同じく **既定は false**(= 広告を一切出さない)。
+///
+/// false のあいだは SDK を初期化せず、バナーも「今日の道具」も画面に出さない。
+/// **掲載中のスクリーンショットと同じ中身**になる。
+///
+/// true にする前に必要なもの(引継ぎ 2026-08-21 §5):
+///   1. `kUseTestAds` を false に(本番ユニットへ)
+///   2. Play Console で「広告が含まれる」に変更 + データセーフティを出し直す
+///   3. ストアのスクショを撮り直す(バナーと🎁が写る)
+///   4. versionCode を上げて再アップロード — **アプリを更新しないと変わらない**
+const bool kAdsEnabled = true;
+
+/// テスト用ユニットを使うか。**公開ビルドは false**(本番ユニットで配信する)。
+///
+/// ⚠️ **自分の広告をクリックすると規約違反**になる。本番ユニットのまま実機で
+/// 触るために、下の `kTestDeviceIds` に端末を登録してある — 登録された端末は
+/// 本番ユニットでも**テスト広告**が返るので、無効なトラフィックにならない。
+const bool kUseTestAds = false;
+
+/// 開発者の実機。`Ads` のログが出す ID をそのまま入れる。
+/// (Pixel 6a。logcat の "Use RequestConfiguration.Builder().setTestDeviceIds" 行)
+/// ⚠️ **ID はアプリごとに変わる。** 別の版で拾った ID を使い回して、
+/// テスト扱いにならず no-fill になった(2026-08-21)。**必ず実機のログで確認する**:
+///   adb logcat -d | grep setTestDeviceIds
+const List<String> kTestDeviceIds = ['2A01E481D0F33C1370C283B384772638'];
 
 String get bannerUnitId => kUseTestAds ? AdUnits.bannerTest : AdUnits.banner;
 String get rewardUnitId => kUseTestAds ? AdUnits.rewardTest : AdUnits.reward;
@@ -46,10 +69,14 @@ String get rewardUnitId => kUseTestAds ? AdUnits.rewardTest : AdUnits.reward;
 ///
 /// 失敗しても投げない — 広告が無くてもアプリは全部動く(原則2)。
 Future<void> initAds() async {
+  if (!kAdsEnabled) return;   // 出さないなら SDK にも触らない
   try {
     // ⚠️ **待ち切らない。** このアプリはネットワーク無しで全部動くのに、
     // 広告 SDK の初期化を待って起動が止まったら本末転倒(原則1・2)。
     // 電波が悪いと initialize() は数十秒返らないことがある。
+    // 開発者の実機では、本番ユニットでもテスト広告が返るようにする。
+    await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(testDeviceIds: kTestDeviceIds));
     await MobileAds.instance
         .initialize()
         .timeout(const Duration(seconds: 5));
@@ -174,7 +201,7 @@ class _QuietBannerState extends State<QuietBanner> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (kAdsEnabled) _load();
   }
 
   void _load() {
@@ -204,7 +231,7 @@ class _QuietBannerState extends State<QuietBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.radioPlaying || !_loaded || _ad == null) {
+    if (!kAdsEnabled || widget.radioPlaying || !_loaded || _ad == null) {
       return const SizedBox.shrink();
     }
     return SizedBox(

@@ -28,13 +28,20 @@
 
 `.aab` は 89MB あるので `.gitignore` 済み。この README だけ管理する。
 
-## ⚠️ いま置いてある AAB は「広告なし」の版
+## いま置いてあるもの
 
-`toris-collection-2.0.0-7.aab` は **2026-08-20 のビルドで、広告は入っていない**。
-そのまま Play に上げてよい。
+`toris-collection-2.0.0-8.aab` — **広告あり・本番ユニット**の Flutter 版。
 
-**その後（2026-08-21）に広告を実装した。** いま `flutter build appbundle` で
-作り直すと**テスト用の広告ユニット**が入った版になる（`lib/ads/ads.dart` の
-`kUseTestAds = true`）。広告版を出すときは、
-`toris_collection/docs/team/proposals/2026-08-21_広告のFlutter移植_設計.md` §10
-の「公開の前にやること」を先に片づけること。
+- versionCode **8**(7 はアップロード済みだが「非アクティブ」で再利用できない)
+- `kAdsEnabled = true` / `kUseTestAds = false`(本番ユニット)
+- 開発機(Pixel 6a)は `kTestDeviceIds` に登録済み。**本番ユニットでもテスト広告**が
+  返るので、自分で触っても無効なトラフィックにならない。
+  ⚠️ **ID はアプリごとに変わる。** 実機のログで毎回確かめること:
+  `adb logcat -d | grep setTestDeviceIds`
+
+### Play Console で必要なこと(広告を入れたので)
+
+1. **「広告が含まれる」に変更**
+2. **データセーフティを出し直す**(広告 ID の収集・第三者との共有)
+3. **製品版**のリリースに 8 を入れて公開する — 7 は非アクティブのままなので
+   端末には古い 6 が配られ続ける

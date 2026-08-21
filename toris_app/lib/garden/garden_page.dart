@@ -602,7 +602,7 @@ class _GardenPageState extends State<GardenPage>
               // ── 今日の道具(広告リワード) ──
               // 見なくても通常の到来確率は変わらない。6時間で消える(原則1)。
               // チュートリアル中は出さない — やることを1つに保つ。
-              if (!g.tutorialRunning) ...[
+              if (ads.kAdsEnabled && !g.tutorialRunning) ...[
                 const SizedBox(height: 20),
                 _todayTool(g),
               ],

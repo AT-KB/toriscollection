@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 目覚まし。Capacitor 版(android_app)と同じ権限一式を宣言する。
          USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM: 朝の時刻に正確に鳴らすため。
@@ -22,6 +23,7 @@
          ⚠️ Play Console 側で「広告が含まれる」に変更し、データセーフティを
             出し直すこと(広告 ID の収集・第三者との共有)。 -->
     <uses-permission android:name="android.permission.INTERNET" />
+
 
     <application
         android:label="Toris Collection"
