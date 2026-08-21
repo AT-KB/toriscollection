@@ -26778,6 +26778,253 @@
    }
   }
  ],
+ "radio_cast": [
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {},
+   "expected": []
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0
+   },
+   "expected": []
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "northern_cardinal": 1
+   },
+   "expected": [
+    "northern_cardinal"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "northern_cardinal": 1
+   },
+   "expected": [
+    "northern_cardinal"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "blue_jay": 2
+   },
+   "expected": [
+    "blue_jay"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "blue_jay": 2
+   },
+   "expected": [
+    "blue_jay"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "northern_cardinal": 1,
+    "blue_jay": 2
+   },
+   "expected": [
+    "northern_cardinal",
+    "blue_jay"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "northern_cardinal": 1,
+    "blue_jay": 2
+   },
+   "expected": [
+    "northern_cardinal",
+    "blue_jay"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "suzume": 3
+   },
+   "expected": [
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "suzume": 3
+   },
+   "expected": [
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "northern_cardinal": 1,
+    "suzume": 3
+   },
+   "expected": [
+    "northern_cardinal",
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "northern_cardinal": 1,
+    "suzume": 3
+   },
+   "expected": [
+    "northern_cardinal",
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "blue_jay": 2,
+    "suzume": 3
+   },
+   "expected": [
+    "blue_jay",
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "blue_jay": 2,
+    "suzume": 3
+   },
+   "expected": [
+    "blue_jay",
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "northern_cardinal": 1,
+    "blue_jay": 2,
+    "suzume": 3
+   },
+   "expected": [
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ]
+  },
+  {
+   "biome_birds": [
+    "american_goldfinch",
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ],
+   "observed": {
+    "american_goldfinch": 0,
+    "northern_cardinal": 1,
+    "blue_jay": 2,
+    "suzume": 3
+   },
+   "expected": [
+    "northern_cardinal",
+    "blue_jay",
+    "suzume"
+   ]
+  }
+ ],
  "constants": {
   "item_offered": [
    "feeder",

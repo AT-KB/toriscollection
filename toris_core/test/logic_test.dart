@@ -165,6 +165,29 @@ void main() {
     expect(checked, 4440, reason: '4440通りを見ているはず');
   });
 
+  // ラジオは**会った鳥だけ**で鳴る。`radio.py` 冒頭の背骨で、
+  // コレクション性の構造的な保証そのもの。
+  //
+  // 2026-08-21: 移植でこの絞り込みが丸ごと落ちていて、**初回起動から
+  // 未観察の鳥が鳴いていた**(CEO が発見)。掲載文の
+  // "A radio made only of birds you've met" もここが支えている。
+  test('ラジオの顔ぶれ: 会った鳥だけが鳴く(Python 版と一致)', () {
+    final fx = json
+        .decode(File('test/fixtures/logic.json').readAsStringSync())
+        .cast<String, dynamic>();
+    var checked = 0;
+    for (final c in fx['radio_cast'] as List) {
+      final pool = (c['biome_birds'] as List).map((e) => '$e').toList();
+      final obs = (c['observed'] as Map)
+          .map((k, v) => MapEntry('$k', (v as num).toInt()));
+      expect(observedInBiome(pool, obs), c['expected'],
+          reason: 'observed=$obs のときの顔ぶれが違う');
+      checked++;
+    }
+    // **記録はあるが count=0** の鳥を弾くところまで見ている(16通り)。
+    expect(checked, 16, reason: '16通りを見ているはず');
+  });
+
   // **両言語に書いた定数**そのものを突き合わせる。
   //
   // 2026-08-21: `ITEM_OFFERED` と `kOfferedItems` を両方に書いたのに

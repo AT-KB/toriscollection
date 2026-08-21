@@ -365,6 +365,22 @@ def main() -> None:
     finally:
         engine._CENTRALITIES, engine._CENTRALITY_LOADED = _saved
 
+    # ラジオの顔ぶれ(radio.observed_in_biome)。count=0 や欠けた鳥も混ぜる。
+    import radio as rd  # noqa: E402
+    radio_cast_cases = []
+    _pool = ["american_goldfinch", "northern_cardinal", "blue_jay", "suzume"]
+    for mask in range(16):
+        obs = {}
+        for i, bid in enumerate(_pool):
+            if mask & (1 << i):
+                obs[bid] = {"count": i}          # i=0 は「記録はあるが0回」
+        radio_cast_cases.append({
+            "biome_birds": _pool,
+            # Dart 側は {id: count} なので、比較しやすい形も持たせる
+            "observed": {k: v["count"] for k, v in obs.items()},
+            "expected": rd.observed_in_biome(_pool, obs),
+        })
+
     # 今日の庭アイテム(garden_items)。到来確率と退去率に効く部分。
     from datetime import datetime, timedelta
     item_cases = []
@@ -509,6 +525,10 @@ def main() -> None:
                    # ずれに気づけない(2026-08-21 に抽選プールが 6種/3種 で
                    # ずれていたのを取り逃した)。監査の SHARED_CONSTANTS が
                    # 「載っているか」を見張っている。
+                   # ラジオの顔ぶれ: **会った鳥だけが鳴く**(radio.py の背骨)。
+                   # 移植でここが落ちて、初回から未観察の鳥が鳴いていた
+                   # (2026-08-21)。二度と落とさないよう総当たりで固定する。
+                   "radio_cast": radio_cast_cases,
                    "constants": {
                        "item_offered": gi.ITEM_OFFERED,
                        "item_duration_hours": gi.DURATION_HOURS,

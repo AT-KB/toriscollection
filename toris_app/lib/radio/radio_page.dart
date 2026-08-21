@@ -92,13 +92,27 @@ class _RadioPageState extends State<RadioPage>
           // 今の庭は庭のタブにある。
 
           // ── 主役: 鳴らす/止める ──
-          FilledButton.icon(
-            onPressed:
-                e.ready ? () => _engine.toggle(() => setState(() {})) : null,
-            icon: Icon(e.running ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                size: 30),
-            label: Text(e.running ? 'Stop' : 'Listen'),
-          ),
+          //
+          // **まだ誰にも会っていないうちは鳴らせない。** ラジオは会った鳥で
+          // できているので(`radio.py` 冒頭「観察した鳥だけが鳴く」)、
+          // 空のまま Listen を出すと、押しても何も起きないか、会っていない鳥が
+          // 鳴いてしまう。文言は出荷済みの英語をそのまま使う。
+          if (e.ready && e.birds.isEmpty)
+            Text(
+              'Once you meet birds in '
+              '${widget.biomeId == 'kyoto' ? 'Kyoto' : 'Charlotte'}, '
+              "you can hear their voices here.",
+              style: const TextStyle(fontSize: 15, height: 1.4, color: kSub),
+            )
+          else
+            FilledButton.icon(
+              onPressed:
+                  e.ready ? () => _engine.toggle(() => setState(() {})) : null,
+              icon: Icon(
+                  e.running ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                  size: 30),
+              label: Text(e.running ? 'Stop' : 'Listen'),
+            ),
           if (e.error != null) ...[
             const SizedBox(height: 8),
             Text(e.error!,

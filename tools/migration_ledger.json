@@ -836,6 +836,10 @@
     "garden_items.is_baffle_active": {
       "dart": "isBaffleActive",
       "status": "done"
+    },
+    "radio.observed_in_biome": {
+      "dart": "observedInBiome",
+      "status": "done"
     }
   }
 }

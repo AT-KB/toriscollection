@@ -191,6 +191,20 @@ def _fetch_radio_audio(args: tuple) -> tuple:
 
 # ── メインレンダラ ──────────────────────────────────────────────
 
+def observed_in_biome(biome_birds: list, observed: dict) -> list:
+    """このバイオームで**実際に会った**鳥だけを返す。
+
+    **ラジオはこれで鳴る。** 会っていない鳥は鳴らない — 冒頭のとおり
+    「観察した鳥だけが鳴く」であり、コレクション性の構造的な保証そのもの。
+
+    `observed` は {bird_id: {count, first, last}}。count が 0 なら会っていない。
+    """
+    return [
+        bid for bid in biome_birds
+        if bid in observed and observed[bid].get("count", 0) > 0
+    ]
+
+
 def render_radio(
     biome_id: str,
     observed: dict,          # {bird_id: {count, first, last}}
@@ -299,19 +313,16 @@ def render_radio(
         bid for bid, bird in birds_data.items()
         if chosen in bird.get("biome_pref", [])
     ]
-    observed_in_biome = [
-        bid for bid in biome_birds
-        if bid in observed and observed[bid].get("count", 0) > 0
-    ]
+    observed_in_biome_ids = observed_in_biome(biome_birds, observed)
 
-    if not observed_in_biome:
+    if not observed_in_biome_ids:
         st.info(t("{biome}で鳥に出会うと、ここで声が聴けるようになります。",
                   biome=biome_labels[chosen]))
         return
 
     # 季節内・外に分ける
-    in_season  = [bid for bid in observed_in_biome if bird_in_season(bid, season)]
-    out_season = [bid for bid in observed_in_biome if not bird_in_season(bid, season)]
+    in_season  = [bid for bid in observed_in_biome_ids if bird_in_season(bid, season)]
+    out_season = [bid for bid in observed_in_biome_ids if not bird_in_season(bid, season)]
 
     in_season.sort(key=lambda b: -observed.get(b, {}).get("count", 0))
 

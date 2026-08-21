@@ -410,9 +410,21 @@ class RadioEngine {
           id
     ];
     if (ids.isEmpty) return [];
+
+    // ⚠️ **観察した鳥だけが鳴く。** `radio.py` の observed_in_biome と同じ。
+    //
+    // ラジオは「蓄積するコレクション」で、**これがコレクション性の構造的な
+    // 保証**(radio.py 冒頭)。会っていない鳥が最初から鳴いていたら、
+    // 集める意味も、掲載文の "A radio made only of birds you've met" も嘘になる。
+    //
+    // 2026-08-21 CEO「なんで初回からいきなりラジオ聞けるの？」で発覚。
+    // 移植でこの絞り込みが丸ごと落ちていた(観察回数は重みにしか効いておらず、
+    // 未観察の鳥も weight 1.0 で選ばれていた)。
+    final met = core.observedInBiome(ids, observed);
+    if (met.isEmpty) return [];
     final chosen = core.pickLineup(
-      ids, _birdsData, kMaxBirds, _rng.nextDouble,
-      baseWeight: {for (final id in ids) id: 1.0 + (observed[id] ?? 0) * 0.5},
+      met, _birdsData, kMaxBirds, _rng.nextDouble,
+      baseWeight: {for (final id in met) id: 1.0 + (observed[id] ?? 0) * 0.5},
     );
     // 「なぜこの顔ぶれか」。共起モデルが言える範囲だけを語る(原則4)。
     final story = core.lineupStory(chosen, _birdsData);
