@@ -223,6 +223,67 @@ MUST_NOT_BLOCK = [
      "広告SDKの初期化に待ち切りが無い。電波が悪いと起動が固まる"),
 ]
 
+# ─────────────────────────────────────────────────────────────
+# **「移した」と言っているのに、誰も突き合わせていない関数**を数える。
+#
+# ## なぜ足したか(2026-08-21)
+# CEO「なんでこの前監査したのにこれ気づけないのか」。ラジオが会っていない鳥まで
+# 鳴らしていた件を、監査は3回目のすり抜けとして見逃した。
+#
+# 原因は個別の見落としではなく**構造**だった:
+#   ・台帳は「Dart に**宣言があるか**」しか見ない。中身が違っても通る。
+#   ・fixtures は「**誰かが足したもの**」しか比べない。足し忘れは検出できない。
+# 実際に数えると、「移した」100件のうち **35件が一度も突き合わせられていない**。
+# 移植面の3分の1が未検証のまま「済み」と表示されていた。
+#
+# ## 対策: 個別の grep を増やすのではなく、**未検証の数を測って増やさせない**
+# 全部を一度に埋めるのは非現実的なので、**ラチェット**にする。
+# いまの数を基準として記録し、**増えたら落とす**。減らすぶんには自由。
+# こうすると「新しく移したのに突き合わせを書かない」が必ず引っかかる。
+UNVERIFIED_KEY = "unverified_baseline"
+
+
+def _test_sources() -> str:
+    """突き合わせに使っているテストを全部つなげたもの。"""
+    out = []
+    for base in ("toris_core/test", "toris_app/test"):
+        root = os.path.join(ROOT, base.replace("/", os.sep))
+        for dp, _, fs in os.walk(root):
+            for f in fs:
+                if f.endswith(".dart"):
+                    out.append(open(os.path.join(dp, f), encoding="utf-8").read())
+    return chr(10).join(out)
+
+
+def _mentions(blob: str, sym: str) -> bool:
+    """`sym` が**単語として**出てくるか。正規表現は使わない(エスケープ事故を避ける)。"""
+    def word_char(c: str) -> bool:
+        return c.isalnum() or c == "_"
+
+    i = blob.find(sym)
+    while i != -1:
+        before = blob[i - 1] if i > 0 else " "
+        j = i + len(sym)
+        after = blob[j] if j < len(blob) else " "
+        if not word_char(before) and not word_char(after):
+            return True
+        i = blob.find(sym, i + 1)
+    return False
+
+
+def unverified_ports(items: dict) -> list:
+    """`done` なのに、どのテストからも名前が出てこない関数。"""
+    blob = _test_sources()
+    out = []
+    for k, v in items.items():
+        if v.get("status") != "done":
+            continue
+        sym = v.get("dart") or snake_to_camel(k.split(".", 1)[1])
+        if not _mentions(blob, sym):
+            out.append(k)
+    return sorted(out)
+
+
 def _normalize(value):
     """比較しやすい形に。set/tuple は並べ替えた list、dict はキーの集合として見る。"""
     if isinstance(value, (set, frozenset)):
@@ -372,6 +433,21 @@ def screen_audit() -> list:
                 f"{py_ref} が fixtures で突き合わされていない" + chr(10)
                 + "        両方に書いてもずれに気づけない。"
                   "logic_fixtures.py に足すこと")
+
+    # 「移したのに突き合わせていない」数のラチェット。
+    ledger_path = os.path.join(ROOT, "tools", "migration_ledger.json")
+    ledger = json.load(open(ledger_path, encoding="utf-8"))
+    unver = unverified_ports(ledger.get("items", {}))
+    base = ledger.get(UNVERIFIED_KEY)
+    if base is None:
+        problems.append(
+            f"台帳に {UNVERIFIED_KEY} が無い(いまの数は {len(unver)})")
+    elif len(unver) > base:
+        added = (chr(10) + "        ").join(unver[:10])
+        problems.append(
+            f"突き合わせていない移植が {base} 件 -> {len(unver)} 件に増えた"
+            + chr(10) + "        新しく移したなら、fixtures かテストに足すこと"
+            + chr(10) + f"        {added}")
 
     # 起動を止めうる待ち。
     for rel, pat, why in MUST_NOT_BLOCK:
@@ -565,7 +641,9 @@ def main() -> None:
 
     print(f"Python の公開関数 {sum(len(v) for v in api.values())} 件"
           f" + 画面 {len(SCREENS)} 件 = {len(keys)} 件")
-    print(f"  移した      : {len(done)}")
+    _unver = unverified_ports(items)
+    print(f"  移した      : {len(done)}"
+          f"(うち突き合わせ無し {len(_unver)})")
     print(f"  未着手      : {len(todo)}")
     print(f"  やらない    : {len(dropped)}")
     if broken:
