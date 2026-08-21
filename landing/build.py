@@ -10,6 +10,12 @@ Reads page.html (content body with __ICON__ / __PLATE__ tokens) and produces:
 Images are embedded as base64 data URIs so the result is a single self-contained
 file — trivial to host (one file + CNAME).
 
+⚠️ **このリポジトリの landing/ は原稿で、ここを直しても本番には出ない。**
+torriscollection.com は **`AT-KB/aviation-note-site`** の GitHub Pages
+(CNAME=torriscollection.com、main:/ 配信)。公開はそのリポジトリへ
+**生成した index.html をコピーして push** する。CNAME と app-ads.txt は
+向こうに置いてあるので、**index.html 以外は触らないこと**。
+
 `app-ads.txt` はこのスクリプトが生成するものではなく、手で置いた固定ファイル。
 AdMob がアプリを確認するために `https://<ドメイン>/app-ads.txt` を直接クロールするので、
 サイトのルートに素のまま公開されている必要がある(ビルドで加工してはいけない)。
