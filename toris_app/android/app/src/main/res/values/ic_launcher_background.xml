@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- アプリアイコン(アダプティブ)の背景色。Toris Collection のセージ色。
-         公開中だった Capacitor 版と同じ値。ここを変えると、丸や角丸に
-         切り抜かれたときの地色が変わる。 -->
-    <color name="ic_launcher_background">#ecf1e3</color>
+    <!-- アダプティブアイコンの背景。**白**。
+         前景(ic_launcher_foreground)は `素材/ヘッダー.png` を中央の安全域に
+         縮めたもので、元絵の地が白。背景も白にしておかないと、丸く切られた
+         ときに**白い四角が浮いて見える**。
+         生成は tools/gen_app_icons.py。 -->
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>
