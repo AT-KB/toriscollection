@@ -22,7 +22,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 
 ICON  = os.path.join(REPO, "toris_collection", "static", "icons", "icon-512.png")
-PLATE = os.path.join(REPO, "ヘッダー.png")
+# CEO が 2026-08-21 に素材フォルダへ移したので、こちらを見る
+# (リポジトリ直下にあった頃のパスのままだとビルドが落ちる)
+PLATE = os.path.join(REPO, "marketing", "phase-1", "SNS部", "素材", "ヘッダー.png")
 MEDIA = os.path.join(HERE, "media")
 DOMAIN = "torriscollection.com"
 
@@ -48,6 +50,11 @@ for token, fname in (
     ("__S_PROFILE__", "s_profile.jpg"),
     ("__S_RADIO__",   "s_radio.jpg"),
     ("__S_NETWORK__", "s_network.jpg"),
+    # 目覚まし / 寝落ち / 餌台 / 留守中の到来(2026-08-21 追加)
+    ("__S_WAKE__",    "s_wake.jpg"),
+    ("__S_SLEEP__",   "s_sleep.jpg"),
+    ("__S_FEEDER__",  "s_feeder.jpg"),
+    ("__S_AWAY__",    "s_away.jpg"),
 ):
     body = body.replace(token, data_uri(os.path.join(MEDIA, fname), "image/jpeg"))
 
