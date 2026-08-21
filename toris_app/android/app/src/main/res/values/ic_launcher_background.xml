@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- アプリアイコン(アダプティブ)の背景色。Toris Collection のセージ色。
+         公開中だった Capacitor 版と同じ値。ここを変えると、丸や角丸に
+         切り抜かれたときの地色が変わる。 -->
+    <color name="ic_launcher_background">#ecf1e3</color>
+</resources>

@@ -28,7 +28,8 @@
     <application
         android:label="Toris Collection"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
 
         <!-- AdMob のアプリ ID。**広告ユニット ID とは別物**(~ 区切り)。
              これが無い / 形式が違うと、SDK 初期化時にアプリごと落ちる。
