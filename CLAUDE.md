@@ -48,7 +48,13 @@
   (構文チェック→AppTestで起動時例外0→tests全pass→ラジオJSはNode `--check`+Playwrightで実挙動確認)
   を必ず実行する。詳細は `toris_collection/docs/team/03_開発部.md` を参照。
 
-定義は `.claude/agents/kikaku.md` / `.claude/agents/sns.md` / `.claude/agents/dev.md`。
+- **監査**(`kansa`): **部署ではなく横断機能。** 成果物を作らず、
+  「言っていることと、あるものが合っているか」だけを見る。コードも、
+  **外への言い切り(ストア掲載文・LP・動画字幕)も**対象。規約は
+  `toris_collection/docs/team/06_監査.md`。
+
+定義は `.claude/agents/kikaku.md` / `.claude/agents/sns.md` / `.claude/agents/dev.md` /
+`.claude/agents/kansa.md`。
 
 ## 検討・提案前の一次情報確認(全部署共通)
 
