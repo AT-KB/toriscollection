@@ -696,14 +696,21 @@ LOUD_I, LOUD_TP, LOUD_LRA = -16.0, -1.5, 11.0
 # なので**測ってから当てる2パス**にする。`linear=true` で一定の利得になり、
 # 静かに始まって育つという目覚ましの形も崩れない。
 def _loudnorm(measured=None):
+    # ⚠️ **後ろに aresample を必ず付ける。**
+    # loudnorm は、測った LRA が目標より大きいと `linear=true` を諦めて
+    # dynamic モードに落ち、そのとき**出力を 96k/192kHz に変える**。
+    # すると後段の `afade=t=out:st=14.6` が実時間の 1/2〜1/4 の位置に落ちて、
+    # **動画の途中から音が消える**。2026-08-25 に q02 がこれで
+    # 「3秒以降まるごと無音」で書き出された(見た目には何も出ない)。
+    tail = ",aresample=48000"
     base = (f"loudnorm=I={LOUD_I}:TP={LOUD_TP}:LRA={LOUD_LRA}")
     if measured is None:
-        return base + ":print_format=json"
+        return base + ":print_format=json" + tail
     return (base + f":measured_I={measured['input_i']}"
             f":measured_LRA={measured['input_lra']}"
             f":measured_TP={measured['input_tp']}"
             f":measured_thresh={measured['input_thresh']}"
-            f":offset={measured['target_offset']}:linear=true")
+            f":offset={measured['target_offset']}:linear=true" + tail)
 
 
 def _measure(ff, silent, ain, mix_core):
