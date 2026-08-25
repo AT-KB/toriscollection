@@ -53,6 +53,24 @@ class _RadioPageState extends State<RadioPage>
     });
   }
 
+  /// ⚠️ **庭は非同期に読み込まれる。** 最初の build では `observed` が空で、
+  /// `initState` の `load` はその空を掴んだまま二度と読み直さなかった
+  /// (2026-08-25 実機で発覚。Listen が一度も出ない)。
+  /// 入ってきたら組み直す。
+  @override
+  void didUpdateWidget(RadioPage old) {
+    super.didUpdateWidget(old);
+    void done(void _) {
+      if (mounted) setState(() {});
+    }
+
+    if (widget.biomeId != old.biomeId) {
+      _engine.reload(widget.biomeId).then(done);
+    } else {
+      _engine.refreshObserved(widget.observed).then(done);
+    }
+  }
+
   @override
   void dispose() {
     _watch?.cancel();

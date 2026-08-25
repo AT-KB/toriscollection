@@ -276,8 +276,11 @@ class _AlarmPageState extends State<AlarmPage> {
             widget.met.isEmpty
                 ? 'Meet birds up close in your garden, and they join this '
                     'list — and the chorus.'
+                // 1羽のときに "the 1 birds" になっていた(2026-08-25 実機で発覚)。
                 : 'Two more join as it grows, drawn from the '
-                    '${widget.met.length} birds you have met up close.',
+                    '${widget.met.length} '
+                    '${widget.met.length == 1 ? "bird" : "birds"} '
+                    'you have met up close.',
             style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
           ),
           const SizedBox(height: 16),

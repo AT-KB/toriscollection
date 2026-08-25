@@ -337,6 +337,45 @@ class RadioEngine {
     if (wasRunning && ready) toggle(() {});
   }
 
+  /// 会った鳥が増えた(または初めて入ってきた)ときに組み直す。
+  ///
+  /// ⚠️ **これが無くて、ラジオは起動のたび空のままだった**(2026-08-25 実機で発覚)。
+  /// `RadioPage` は `initState` で1回だけ `load` する。そのとき `main.dart` の
+  /// `_garden` はまだ null で、渡ってくる `observed` は `const {}`。
+  /// 庭を読み終えて `observed` が入っても engine は読み直さないので、
+  /// 顔ぶれが空のまま = **Listen が一度も出ない**。
+  ///
+  /// ストア掲載文とLPは「会った鳥の声が聴けるラジオ」と言っている。
+  /// ここが空だと、**外に出している言い切りがそのまま成り立たない**
+  /// (2026-08-21 の "A radio made only of birds you've met" と同じ種類の事故)。
+  Future<void> refreshObserved(Map<String, int> observed) async {
+    if (_sameObserved(observed, _lastObserved)) return;
+    final wasRunning = running;
+    if (running) toggle(() {});
+    for (final v in birds) {
+      v.stop();
+    }
+    birds.clear();
+    ready = false;
+    await load(observed: observed, biomeId: biomeId);
+    if (wasRunning && ready) toggle(() {});
+  }
+
+  /// 試験から中身を見るための窓。**本番のコードからは使わない。**
+  /// `refreshObserved` は音を鳴らす層(SoLoud)まで触るので、
+  /// 「読み直すと判断するか」だけを切り出して確かめられるようにしてある。
+  Map<String, int> get lastObservedForTest => _lastObserved;
+  bool observedChangedForTest(Map<String, int> o) => !_sameObserved(o, _lastObserved);
+  void rememberObservedForTest(Map<String, int> o) => _lastObserved = o;
+
+  static bool _sameObserved(Map<String, int> a, Map<String, int> b) {
+    if (a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
   Map<String, int> _lastObserved = const {};
 
   /// 覚えていた環境音の設定を戻す。**読み込みの前に呼ぶ。**
