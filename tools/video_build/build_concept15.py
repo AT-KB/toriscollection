@@ -162,13 +162,22 @@ def draw_garden(d, plants_in):
     d.polygon([(fx - 80, int(H * 0.40)), (fx + 80, int(H * 0.40)),
                (fx, int(H * 0.355))], fill=(122, 96, 70))
 
-    # 植えたもの。**もう咲いている**(植える動きは見せない。本題は鳥が来ること)。
-    for i, px in enumerate([0.30, 0.40, 0.66, 0.74]):
-        cx = int(W * px)
-        d.rectangle([cx - 4, GROUND - 30, cx + 4, GROUND + 40],
-                    fill=(96, 148, 78))
-        d.ellipse([cx - 20, GROUND - 50, cx + 20, GROUND - 10],
-                  fill=(226, 142, 176) if i % 2 == 0 else (150, 106, 190))
+    # 植えたもの。この動画では**もう咲いている**(植える動きは見せない。
+    # 本題は鳥が来ること)ので、呼ぶ側は plants_in=1.0 を渡す。
+    #
+    # [plants_in] は前からここに書いてあったが、**実装されていなかった**
+    # (常に咲いた姿を描いていた)。`build_variants15.py` の「植えたら来る」で
+    # せり上がりが要るので入れた。**1.0 のときの絵は前と同じ**
+    # (int(30*1.0)=30 / int(20*1.0)=20 で、座標が一致する)。
+    if plants_in > 0:
+        g = max(0.0, min(1.0, plants_in))
+        for i, px in enumerate([0.30, 0.40, 0.66, 0.74]):
+            cx = int(W * px)
+            top = GROUND - int(30 * g)
+            r = int(20 * g)
+            d.rectangle([cx - 4, top, cx + 4, GROUND + 40], fill=(96, 148, 78))
+            d.ellipse([cx - r, top - r, cx + r, top + r],
+                      fill=(226, 142, 176) if i % 2 == 0 else (150, 106, 190))
 
 
 def draw_band(im, d, head, sub, credit, appear):
