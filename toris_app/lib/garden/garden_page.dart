@@ -78,8 +78,26 @@ class _GardenPageState extends State<GardenPage>
   /// 儀式の最中は触らない(鳥が近づいている途中で庭を作り直さない)。
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ⚠️ **前面から外れたら、儀式を止める。**
+    //
+    // CEO 2026-08-28「アプリ切ってもずっと流れてる音が。それやめてほしい」。
+    // 儀式は鳥の声を looping で鳴らしっぱなしにするが、止めていたのは
+    // 「Enough」を押したときと `dispose` のときだけ。
+    // `wantKeepAlive` があるのでタブを移っても `dispose` は来ないし、
+    // ホームに戻しても来ない。**アプリを離れたあとも90秒鳴り続けていた。**
+    //
+    // 儀式は「見ている前で近づいてくる」ものなので、
+    // 見ていないあいだに進む意味がない(原則1「受動的」— 裏で走らせない)。
+    //
+    // ⚠️ **ラジオはここで止めない。** 画面が暗くなっても鳴り続けるのが
+    // 寝落ちの機能そのもの(`sleep_mode.dart`)。止めたら商品が壊れる。
+    if (state != AppLifecycleState.resumed) {
+      if (_ritual != null) _stopListening();
+      return;
+    }
+
     final g = _g;
-    if (state != AppLifecycleState.resumed || g == null) return;
+    if (g == null) return;
     if (_ritual != null) return;
     _advance(g);
   }
