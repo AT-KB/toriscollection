@@ -32,16 +32,23 @@ CEO 2026-08-25「後乗せとかもやっておいて」。
 
 **(3) CTA は帯の中の1行。** クイズと同じ。最後に札を出して尺を食わない。
 
-🔴 **未解決(2026-08-25)**:  は**音が4秒以降ならない**。
-フィルタ([2:a]asplit=4[c0]..[c3] → 各 atrim/adelay → amix)は正しく
-組めていて、ffmpeg もエラーを返さないのに、鳴るのは最初の1回だけ。
- + 大きな  の組み合わせを疑っている。
-**回避案**: クイズ側と同じく  を回数ぶん渡す
-(あちらはその形で動いている)。絵は問題ないので、音だけの話。
-それまで  は書き出さない。
+## 踏んだ罠(3つとも、エラーが出ないまま間違ったものが書き出された)
+
+1. **実機録画は可変フレームレート。** そのまま重ねたら 22.21fps / 16.93秒に
+   なった(15秒にならない)。→ 重ねる前に `fps=30` を挟む。
+2. **同じ音源を何度も鳴らすのに `asplit` は使えない。**
+   `[2:a]asplit=4` で枝分かれさせたら、鳴ったのは最初の1回だけで
+   **4秒以降が丸ごと無音**。ffmpeg はエラーを返さない。
+   → **同じファイルを `-i` で回数ぶん渡す**(`build_quiz15` と同じ形)。
+3. **押したつもりのタイルが点いていなかった。** 環境音を6層鳴らしていたが、
+   書き出した絵では ✓ が3つしか付いていなかった。
+   **画面に無い音を鳴らしていた。** → 鳴らす層を画面に合わせ、字幕も直した。
+
+**どれも「書き出してから音と絵を測る」までは気づけなかった。**
+出したら必ず、区間ごとの `volumedetect` と 1コマずつの絵を見ること。
 
 実行:
-    py -3 tools/video_build/build_real15.py ambience   # いま出せるのはこちら
+    py -3 tools/video_build/build_real15.py            # 2本
     py -3 tools/video_build/build_real15.py alarm      # 1本だけ
 """
 import json
@@ -69,18 +76,24 @@ CROP_TOP = 100
 VIDEO_H = H - int(H * 0.245)
 
 
-def _amb_credit():
-    """環境音の出典。**全部 CC0 だが、それでも書く**(アプリ内でもそうしている)。"""
+def _amb_credit(layers):
+    """環境音の出典。**全部 CC0 だが、それでも書く**(アプリ内でもそうしている)。
+
+    ⚠️ **実際に鳴らした層の録音者だけ**を書く。最初は7層ぶん全部並べていて、
+    使っていない waves の録音者まで載っていた。
+    """
     rows = json.load(open(os.path.join(AMB_DIR, "_credits.json"),
                           encoding="utf-8"))
     bad = [r for r in rows if "publicdomain/zero" not in (r.get("license") or "")]
     if bad:
         raise SystemExit(f"CC0 でない環境音がある: {[r['layer'] for r in bad]}")
+    by = {r["layer"]: r for r in rows}
     who = []
-    for r in rows:
-        if r.get("user") and r["user"] not in who:
-            who.append(r["user"])
-    return "Ambience: Freesound CC0 — " + ", ".join(who[:4])
+    for layer in layers:
+        u = (by.get(layer) or {}).get("user")
+        if u and u not in who:
+            who.append(u)
+    return "Ambience: Freesound CC0 — " + ", ".join(who)
 
 
 # ══════════════════════════════════════════════════════════
@@ -95,9 +108,30 @@ ALARM_L1 = "Wake up to a real bird."
 ALARM_L2 = "It starts almost too quiet to hear."
 
 
+_ALARM_PLAN = None
+
+
+def _alarm_plan():
+    """ひと節を、いつ・何回鳴らすか。**音源と時刻を1か所で決める。**"""
+    global _ALARM_PLAN
+    if _ALARM_PLAN is None:
+        used, credit = pick_app_songs(["northern_cardinal"])
+        onset, seg = _segment(used[0])
+        times, at = [], 0.2
+        while at + seg <= DUR:
+            times.append(at)
+            at += seg + 0.55
+        _ALARM_PLAN = (used[0], credit, onset, seg, times or [0.2])
+    return _ALARM_PLAN
+
+
 def alarm_audio():
-    used, credit = pick_app_songs(["northern_cardinal"])
-    return used, credit + "   ·   (real screen)"
+    # ⚠️ **同じ音源を、鳴らす回数ぶん `-i` で渡す。**
+    # `asplit` で枝分かれさせたら、鳴ったのは最初の1回だけで
+    # **4秒以降が無音**になった(ffmpeg はエラーを出さない)。
+    # `build_quiz15` は同じファイルを複数回渡す形で動いているので、そちらに合わせる。
+    src, credit, _o, _s, times = _alarm_plan()
+    return [src] * len(times), credit + "   ·   (real screen)"
 
 
 def alarm_filters(ain_index, used):
@@ -109,27 +143,13 @@ def alarm_filters(ain_index, used):
     繰り返しながら音量を上げるのは、実装の
     「8% から 5分かけて上げる / 1羽が鳴き続ける」に沿っている。
     """
-    onset, seg = _segment(used[0])
-    times = []
-    at = 0.2
-    while at + seg <= DUR:
-        times.append(at)
-        at += seg + 0.55
-    if not times:
-        times = [0.2]
-
-    # ⚠️ **同じ入力を何度も使うには `asplit` が要る。**
-    # `[2:a]` を4回書いたら、鳴ったのは1回目だけで **7秒以降が無音**になった
-    # (ffmpeg はエラーを出さない)。クイズ側は同じ音源を `-i` で複数回
-    # 渡していたので踏まなかった。
-    parts = [f"[{ain_index}:a]asplit={len(times)}"
-             + "".join(f"[c{i}]" for i in range(len(times)))]
-    tags = []
+    _src, _c, onset, seg, times = _alarm_plan()
+    parts, tags = [], []
     for i, t0 in enumerate(times):
         # 後の回ほど大きく(0.35 → 1.0)。**静かに始まって育つ。**
         vol = 0.35 + 0.65 * min(1.0, t0 / (DUR - 2.0))
         parts.append(
-            f"[c{i}]atrim=start={onset:.3f}:end={onset + seg:.3f},"
+            f"[{ain_index + i}:a]atrim=start={onset:.3f}:end={onset + seg:.3f},"
             f"asetpts=PTS-STARTPTS,volume={vol:.2f},"
             f"adelay={int(t0 * 1000)}|{int(t0 * 1000)}[m{i}]")
         tags.append(f"[m{i}]")
@@ -143,11 +163,16 @@ def alarm_filters(ain_index, used):
 # 録画で押した順にタイルが灯る。**その順に、その環境音を重ねる。**
 # Wind は最初から入っていた(録画開始時点で ✓)。
 AMB_L1 = "Seven sounds you can layer."
-AMB_L2 = "Rain, wind, a stream, a fire."
+AMB_L2 = "Rain, wind, a stream — no music."
 
-# (層, 入る時刻, 音量)。時刻は録画でタイルが灯る瞬間に合わせてある。
-AMB_LAYERS = [("wind", 0.0, 0.50), ("rain", 0.6, 0.45), ("stream", 2.2, 0.42),
-              ("waves", 3.8, 0.38), ("fire", 5.4, 0.34), ("drips", 7.0, 0.30)]
+# (層, 入る時刻, 音量)。**時刻は録画でタイルに ✓ が点く瞬間**に合わせてある。
+#
+# ⚠️ **画面で点いていない層は鳴らさない。**
+# 最初は録画で「押したつもり」の6層(waves / fire / drips 込み)を鳴らしていたが、
+# 書き出した絵を見たら**タップが外れていて ✓ が付いていなかった**。
+# 画面に無い音が鳴るのは、鳴っていない鳥の名前を光らせるのと同じ誤り。
+# 字幕からも fire を外した。
+AMB_LAYERS = [("wind", 0.0, 0.50), ("rain", 0.3, 0.46), ("stream", 3.5, 0.44)]
 
 
 def amb_audio():
@@ -157,7 +182,7 @@ def amb_audio():
         if not os.path.exists(p):
             raise SystemExit(f"環境音が無い: {p}")
         files.append(p)
-    return files, _amb_credit() + "   ·   (real screen)"
+    return files, _amb_credit([l for l, _a, _v in AMB_LAYERS]) + "   ·   (real screen)"
 
 
 def amb_filters(first_index, used):
