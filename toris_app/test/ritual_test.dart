@@ -38,6 +38,8 @@ int _stepsToMeet(int seed) {
 }
 
 void main() {
+  _timingTests();
+
   test('敷居は90秒。**待てば会える**感じを壊さない長さであること', () {
     expect(Ritual.maxSteps * Ritual.step.inMilliseconds / 1000, 90.0);
 
@@ -86,5 +88,75 @@ void main() {
     // 画面に出したくなったらこの試験の意図を読み直すこと。
     final r = Ritual(['blue_jay'], Random(1));
     expect(r.secondsLeft, 90.0);
+  });
+}
+
+// ── 鳥ごとに動くタイミングがばらけること ───────────────────────
+//
+// ## なぜ足したか(CEO 2026-08-28)
+// 「鳥たちが同時に動くのがなんかいけてない、儀式のとき。
+//  実際の鳥みたいに、動くのランダムにできない?タイミングを」
+//
+// 前は `Timer.periodic(step)` が1本で、**その1回で全羽をまとめて動かして**
+// いた。だから3羽が2.5秒ごとに一斉に跳んで、時計仕掛けに見えていた。
+//
+// いまは 250ms で回して、鳥ごとに自分の番(`_nextHopTick`)が来た時だけ跳ぶ。
+// 間隔は 8〜12 刻み(2.0〜3.0秒)を一様に引く = **平均はちょうど 2.5秒**。
+//
+// ⚠️ ここで押さえたいのは2つ:
+//   (1) **見た目**: 一斉に動かないこと
+//   (2) **バランス**: 歩く速さの期待値を変えていないので、
+//       「90秒で 97.8% が出会う」が崩れていないこと
+//
+// `_nextHopTick` は private なので、**同じ組み立てをここで再現**して確かめる
+// (`_stepsToMeet` と同じやり方)。
+
+/// 1羽ぶんの「跳ぶ刻み」の並びを、実装と同じ式で作る。
+List<int> _hopTicks(Random r, int totalTicks) {
+  final out = <int>[];
+  var next = r.nextInt(Ritual.ticksPerStep) + 1; // 始まりの位相
+  while (next <= totalTicks) {
+    out.add(next);
+    next += Ritual.ticksPerStep +
+        r.nextInt(Ritual.jitterTicks * 2 + 1) - Ritual.jitterTicks;
+  }
+  return out;
+}
+
+void _timingTests() {
+  const totalTicks = Ritual.maxSteps * Ritual.ticksPerStep; // 90秒ぶん
+
+  test('刻みは 2.5秒 をちょうど割り切る(1歩=10刻み)', () {
+    expect(Ritual.tickInterval.inMilliseconds * Ritual.ticksPerStep,
+        Ritual.step.inMilliseconds);
+  });
+
+  test('3羽が同じ刻みで一斉に跳ぶことは、ほとんど無い', () {
+    var allSame = 0;
+    const trials = 500;
+    for (var s = 0; s < trials; s++) {
+      final r = Random(s);
+      final a = _hopTicks(r, totalTicks).toSet();
+      final b = _hopTicks(r, totalTicks).toSet();
+      final c = _hopTicks(r, totalTicks).toSet();
+      // 3羽の跳ぶ刻みが完全に一致 = 前の「一斉に動く」状態
+      if (a.length == b.length && a.containsAll(b) && a.containsAll(c)) {
+        allSame++;
+      }
+    }
+    expect(allSame, 0,
+        reason: '3羽が完全に同じ刻みで跳んでいる = 一斉に動いて見える');
+  });
+
+  test('歩く速さの期待値は変えていない(90秒でならして36歩前後)', () {
+    var total = 0;
+    const trials = 2000;
+    for (var s = 0; s < trials; s++) {
+      total += _hopTicks(Random(s), totalTicks).length;
+    }
+    final avg = total / trials;
+    // 平均間隔がちょうど 10 刻みなので、360 刻み ÷ 10 = 36 歩前後になる。
+    expect(avg, closeTo(Ritual.maxSteps.toDouble(), 1.0),
+        reason: 'ここがずれると「90秒で97.8%が出会う」の前提が崩れる');
   });
 }

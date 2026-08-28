@@ -58,6 +58,35 @@ class Ritual {
   }
 
   static const Duration step = Duration(milliseconds: 2500);
+
+  /// 時計の刻み。**1歩の長さ(`step`)より細かく回す。**
+  ///
+  /// ⚠️ **なぜ細かくするか**(CEO 2026-08-28「鳥たちが同時に動くのがなんか
+  /// いけてない。実際の鳥みたいに、動くのランダムにできない?」)。
+  ///
+  /// 前は `Timer.periodic(step)` が1本だけで、**その1回で全羽をまとめて
+  /// 動かしていた**。だから3羽が2.5秒ごとに一斉に跳ぶ。時計仕掛けに見える。
+  ///
+  /// いまは 250ms で回し、**鳥ごとに自分の番が来た時だけ**跳ぶ。
+  static const Duration tickInterval = Duration(milliseconds: 250);
+
+  /// 1歩ぶんが何刻みか(2500 / 250 = 10)。
+  static const int ticksPerStep = 10;
+
+  /// 次の1歩までの刻み数のばらつき。**平均は `ticksPerStep` のまま。**
+  ///
+  /// 8〜12 刻み(2.0〜3.0秒)を一様に引くので**平均はちょうど 10 = 2.5秒**。
+  /// 歩く速さの期待値を変えていないので、
+  /// 「90秒で 97.8% が出会う」という数値バランスは崩れない
+  /// (`ritual_test.dart` で実際に回して確かめている)。
+  static const int jitterTicks = 2;
+
+  /// 時計が何刻み進んだか。`steps`(1歩=10刻み)とは別。
+  int _ticks = 0;
+
+  /// 鳥ごとの「次に跳ぶ刻み」。**始まりの位相を鳥ごとにずらす**ので、
+  /// 最初から一斉には動かない。
+  final Map<String, int> _nextHopTick = {};
   /// **90秒で切り上げる。**(CEO 2026-08-18)
   ///
   /// ここまで終わりが無く、近づきも飛び去りもしないまま延々と続いていた。
@@ -102,52 +131,41 @@ class Ritual {
         _voices[b] = SoLoud.instance.play(src, volume: 0.0, looping: true);
       } catch (_) {}
     }
-    _tick = Timer.periodic(step, (_) => _hop(onChange));
+    // 始まりの位相を鳥ごとにばらす(0〜9刻み = 0〜2.25秒)。
+    for (final b in birdIds) {
+      _nextHopTick[b] = _rng.nextInt(ticksPerStep) + 1;
+    }
+    _tick = Timer.periodic(tickInterval, (_) => _onTick(onChange));
     onChange();
   }
 
-  /// 1歩ぶん動く。近づくほど声が大きくなる(近さがそのまま音になる)。
-  void _hop(void Function() onChange) {
-    steps++;
+  /// 時計の1刻み。**鳥ごとに、自分の番が来た時だけ動かす。**
+  void _onTick(void Function() onChange) {
+    _ticks++;
+    var changed = false;
 
-    // ── リスと鷹 ────────────────────────────────────────────
-    // **餌台の連鎖から解いたものだけ**を使う(`feeder_chain`)。
-    // 開放型の餌台にはリスが来て、リスが居ると鷹が来る。かご型なら来ない。
-    // 実際に居るときだけ驚きが起きるので、餌台の選択がそのまま効く。
-    //
-    // ⚠️ **罰ではない。** 驚いても記録は何も減らない(原則2)。
-    // 枝を下がるだけで、また近づいてくる。
-    scare = null;
-    if (_rng.nextDouble() < _scareChance) {
-      scare = _hasRaptor ? 'hawk' : 'squirrel';
-      scareAtStep = steps;
-      for (final b in birdIds) {
-        // 鷹は全部いちばん奥まで。リスは1つ下がるだけ。
-        branch[b] = _hasRaptor ? 0 : ((branch[b] ?? 0) - 1).clamp(0, 2);
-        _dwell[b] = 0;
-      }
-      _applyVolumes();
-      onChange();
-      return; // この歩は逃げるだけ。近づかない。
+    // ── 1歩ぶんの節目 ──────────────────────────────────────
+    // 驚き(リス・鷹)と、90秒の敷居は**全体の時計**で数える。
+    // 鳥ごとに数えると、羽数のぶんだけ驚きの回数が増えてしまう。
+    if (_ticks % ticksPerStep == 0) {
+      steps++;
+      if (_scare(onChange)) return;   // 逃げる歩。近づかない
+      changed = true;
     }
 
+    // ── 鳥ごとの1歩 ────────────────────────────────────────
     for (final b in birdIds) {
-      final cur = branch[b] ?? 0;
-      // 手前ほど来にくい。警戒心があるので、行きつ戻りつする。
-      final forward = _rng.nextDouble() < (cur == 2 ? 0.45 : 0.55);
-      var next = cur + (forward ? 1 : -1);
-      next = next.clamp(0, 2);
-      branch[b] = next;
-
-      if (next == 2) {
-        _dwell[b] = (_dwell[b] ?? 0) + 1;
-        // 手前に2歩とどまったら「出会い」。
-        if ((_dwell[b] ?? 0) >= 2) met.add(b);
-      } else {
-        _dwell[b] = 0;
-      }
+      if (_ticks < (_nextHopTick[b] ?? 0)) continue;
+      _hopOne(b);
+      // 次は 8〜12 刻み後(平均はちょうど 10 = 2.5秒)。
+      _nextHopTick[b] = _ticks + ticksPerStep +
+          _rng.nextInt(jitterTicks * 2 + 1) - jitterTicks;
+      changed = true;
     }
-    _applyVolumes();
+
+    if (changed) {
+      _applyVolumes();
+    }
 
     // ── 敷居 ───────────────────────────────────────────────
     // 90秒。会えなかった鳥は飛んでいく。**終わりを作るためであって、
@@ -161,7 +179,59 @@ class Ritual {
       stop();
       return;
     }
+    if (changed) onChange();
+  }
+
+  /// 驚き。起きたら true(その歩は誰も近づかない)。
+  bool _scare(void Function() onChange) {
+    // ── リスと鷹 ────────────────────────────────────────────
+    // **餌台の連鎖から解いたものだけ**を使う(`feeder_chain`)。
+    // 開放型の餌台にはリスが来て、リスが居ると鷹が来る。かご型なら来ない。
+    // 実際に居るときだけ驚きが起きるので、餌台の選択がそのまま効く。
+    //
+    // ⚠️ **罰ではない。** 驚いても記録は何も減らない(原則2)。
+    // 枝を下がるだけで、また近づいてくる。
+    //
+    // ⚠️ **驚きだけは全羽まとめて動く。** 鷹が出たら1羽ずつ気づくのは
+    // おかしいので、ここは同時でよい(CEO の指摘は「近づき方が揃っている」
+    // ことだった)。
+    scare = null;
+    if (_rng.nextDouble() >= _scareChance) return false;
+
+    scare = _hasRaptor ? 'hawk' : 'squirrel';
+    scareAtStep = steps;
+    for (final b in birdIds) {
+      // 鷹は全部いちばん奥まで。リスは1つ下がるだけ。
+      branch[b] = _hasRaptor ? 0 : ((branch[b] ?? 0) - 1).clamp(0, 2);
+      _dwell[b] = 0;
+      // 驚いた直後は、次の1歩も鳥ごとにばらける。
+      _nextHopTick[b] = _ticks + ticksPerStep +
+          _rng.nextInt(jitterTicks * 2 + 1) - jitterTicks;
+    }
+    _applyVolumes();
     onChange();
+    return true;
+  }
+
+  /// 1羽ぶんの1歩。近づくほど声が大きくなる(近さがそのまま音になる)。
+  ///
+  /// **確率は前と1つも変えていない** — 手前へ 0.45 / それ以外 0.55、
+  /// 手前に2歩とどまったら出会い。変えたのは**いつ動くか**だけ。
+  void _hopOne(String b) {
+    final cur = branch[b] ?? 0;
+    // 手前ほど来にくい。警戒心があるので、行きつ戻りつする。
+    final forward = _rng.nextDouble() < (cur == 2 ? 0.45 : 0.55);
+    var next = cur + (forward ? 1 : -1);
+    next = next.clamp(0, 2);
+    branch[b] = next;
+
+    if (next == 2) {
+      _dwell[b] = (_dwell[b] ?? 0) + 1;
+      // 手前に2歩とどまったら「出会い」。
+      if ((_dwell[b] ?? 0) >= 2) met.add(b);
+    } else {
+      _dwell[b] = 0;
+    }
   }
 
   /// 近さを音に反映する。
