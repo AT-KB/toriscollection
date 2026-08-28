@@ -65,8 +65,9 @@ from build_feature15 import INK, ON, SUB, card, emo, mix, sprite, text_a  # noqa
 DUR = 15.0
 OUT_DIR = F.OUT_DIR
 
-# 帯の中に常設する1行。**最後の札の代わり。**
-BRAND = "TORIS COLLECTION   ·   Free on Google Play"
+# 帯の上の小さい行。**Play の案内は `play_banner` の札が言う**ので、
+# ここは製品名だけ(同じ文を2か所に出さない)。
+BRAND = "TORIS COLLECTION"
 
 # 下に薄く敷く環境音。**アプリのラジオと同じ構成**(環境音 + 鳥)。
 # 答え合わせの数秒がまるごと無音になるのを埋めるためでもある。
@@ -374,6 +375,7 @@ def build(key, remux=False):
     if not (remux and os.path.exists(silent)):
         for f in range(int(DUR * FPS)):
             im = render(f / FPS, credit, q, fact, env)
+            F.draw_cta(im, f / FPS)   # Google Play の常設バナー
             im.convert("RGB").save(os.path.join(tmp, f"f{f:04d}.png"))
         r = subprocess.run(
             [ff, "-y", "-framerate", str(FPS),

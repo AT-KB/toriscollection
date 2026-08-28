@@ -226,6 +226,7 @@ def band_frames(film, credit, tmp):
         head = film["l1"] if t < film["switch"] else film["l2"]
         ap = t / 0.6 if t < film["switch"] else (t - film["switch"]) / 0.6
         draw_band(im, ImageDraw.Draw(im), head, None, credit, ap, brand=BRAND)
+        F.draw_cta(im, t)   # Google Play の常設バナー
         im.save(os.path.join(tmp, f"b{f:04d}.png"))
     return n
 

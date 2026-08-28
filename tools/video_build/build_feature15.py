@@ -126,9 +126,33 @@ def sprite(im, bird_id, size, x, y, a=1.0, detail=False):
     im.alpha_composite(sp, (int(x), int(y)))
 
 
+_BANNER = None
+
+
 def draw_cta(im, t):
-    """最後に出す札。**クレジットの行は隠さない**(BY-SA は表示が条件)。"""
-    if not CTA or t < CTA_AT:
+    """**Google Play の札を、最初から最後まで**出す(CEO 2026-08-25)。
+
+    以前は最後の2.8秒に大きなカードを出していた。15秒の19%を広告に使うと
+    完走の直前に離脱の理由を置くことになるので、
+    **尺を1秒も食わない常設の札**に替えた。実装は `play_banner.py`。
+    `CTA = True` のあいだは、こちらが呼ばれる。
+    """
+    global _BANNER
+    if not CTA:
+        return
+    if _BANNER is None:
+        import play_banner  # 循環参照を避けるため、ここで読む
+        _BANNER = play_banner.banner_layer()
+    im.alpha_composite(_BANNER)
+
+
+def draw_end_card(im, t):
+    """(旧)最後に出す大きな札。**いまは使っていない。**
+
+    残してあるのは、比べたくなった時に戻せるようにするため。
+    **クレジットの行は隠さない**(BY-SA は表示が条件)。
+    """
+    if t < CTA_AT:
         return
     k = ease((t - CTA_AT) / 0.35)
     top = BTOP + int(BANDH * 0.06)
