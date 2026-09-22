@@ -6,6 +6,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../ui/theme.dart';
@@ -135,6 +136,15 @@ class _RadioPageState extends State<RadioPage>
             const SizedBox(height: 8),
             Text(e.error!,
                 style: const TextStyle(fontSize: 12, color: Colors.red)),
+          ],
+          // ── 音声の本数(デバッグ版だけ)──
+          // **鳥3 + 環境音7 = 10 で張り付くのが正しい**(`radio_engine.dart`)。
+          // 増え続けていたら、読み込みが二重に走って解放し損ねている。
+          // 2026-09-22 の直しが効いているかを実機で目で見るための窓。
+          if (kDebugMode && e.ready) ...[
+            const SizedBox(height: 4),
+            Text('voices ${e.voiceCount}',
+                style: const TextStyle(fontSize: 11, color: kSub)),
           ],
           const SizedBox(height: 22),
 

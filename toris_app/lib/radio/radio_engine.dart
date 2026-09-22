@@ -280,6 +280,38 @@ class BirdVoice {
     SoLoud.instance.setPause(h, true);
   }
 
+  /// **作ったものを確実に手放す。** `stop()` は一時停止するだけなので、
+  /// 読み込み直すときはこちらを使う。
+  ///
+  /// ⚠️ ここが無かったので、読み込みが途中で落ちると音声ハンドルが
+  /// 解放されずに残っていた(2026-09-22)。
+  Future<void> dispose() async {
+    _cycle?.cancel();
+    _cycle = null;
+    singing = false;
+    for (final fh in _flockHandles) {
+      try {
+        await SoLoud.instance.stop(fh);
+      } catch (_) {}
+    }
+    _flockHandles.clear();
+    _flockDelays.clear();
+    final h = _handle;
+    _handle = null;
+    if (h != null) {
+      try {
+        await SoLoud.instance.stop(h);
+      } catch (_) {}
+    }
+    final src = _source;
+    _source = null;
+    if (src != null) {
+      try {
+        await SoLoud.instance.disposeSource(src);
+      } catch (_) {}
+    }
+  }
+
   /// 眠りに落ちるときの減衰。1.0 で通常、0 で無音。
   double _scale = 1.0;
 
@@ -342,6 +374,44 @@ const double kAmbVolDefault = 0.45;
 /// 見えていないか」)。
 bool showBirdVolume(List<BirdVoice> birds) => birds.isNotEmpty;
 
+/// **一度に1本だけ**走らせるための行列。
+///
+/// ## なぜ要るか(2026-09-22 実機で発覚)
+/// ラジオ画面を開くと `SoLoudNotInitializedException` が赤字で出ていた。
+/// 原因は `load()` が**2経路から並行に呼ばれていた**こと:
+///   1. `radio_page.dart` の `initState`(このとき `observed` は空)
+///   2. 庭を読み終えたあとの `didUpdateWidget` → `refreshObserved`
+///
+/// `SoLoud.init()` は、**すでに初期化済みの状態で呼ばれると deinit してから
+/// 入れ直す**(flutter_soloud 4.1.7 `soloud.dart` の `_initialize`:
+/// `nativeIsInitialized` なら `_deinitAsync` → 再 init)。
+/// つまり2本目の init が1本目の足元を外し、1本目の `loadAsset` / `play` が
+/// `SoLoudNotInitializedException` で落ちる。
+///
+/// **進行中のものを待ってから次を始める。二重に走らせない。**
+class TaskQueue {
+  Future<void> _chain = Future<void>.value();
+  bool _busy = false;
+
+  /// いま何か走っているか。
+  bool get busy => _busy;
+
+  /// 前のものが終わってから [body] を走らせる。
+  /// **前のものが失敗しても、次は止めない**(目覚ましと違い、やり直しが効く)。
+  Future<void> add(Future<void> Function() body) {
+    final next = _chain.then((_) async {
+      _busy = true;
+      try {
+        await body();
+      } finally {
+        _busy = false;
+      }
+    });
+    _chain = next.catchError((Object _) {});
+    return next;
+  }
+}
+
 /// ラジオ全体。鳥3羽と環境音7層を持つ。
 /// いまラジオが鳴っているか。**広告バナーを黙らせるためだけ**に使う。
 /// `ads.py` の `is_radio_active` と同じ役割 — 声を聴いている間に広告を
@@ -352,7 +422,17 @@ class RadioEngine {
   final Random _rng = Random();
   final List<BirdVoice> birds = [];
   final Map<String, SoundHandle> _amb = {};
+  /// 環境音の音源。**解放するために持つ。** これが無いと、読み込み直すたびに
+  /// 古い音源が残って `voiceCount` が 10 から増えていく。
+  final Map<String, AudioSource> _ambSrc = {};
   final Map<String, Timer> _ambPause = {};
+
+  /// 読み込みを直列化する行列。`load` / `reload` / `refreshObserved` は
+  /// **必ずここを通す**(内側では `_loadInner` を直接呼ぶ。通すと自分待ちになる)。
+  final TaskQueue _queue = TaskQueue();
+
+  /// いま読み込み中か。画面が「待っている」と分かるように。
+  bool get loading => _queue.busy;
   /// 環境音の入切。**端末に覚えさせる**(下の `restorePrefs` / `savePrefs`)。
   ///
   /// ⚠️ 2026-08-18 の監査で見つけた漏れ。ここは毎回作り直されるだけで、
@@ -397,18 +477,13 @@ class RadioEngine {
   String biomeId = 'charlotte';
 
   /// 土地を替える。鳴っていたら、いったん止めてから組み直す。
-  Future<void> reload(String biome) async {
-    if (biome == biomeId) return;
-    final wasRunning = running;
-    if (running) toggle(() {});
-    for (final v in birds) {
-      v.stop();
-    }
-    birds.clear();
-    ready = false;
-    await load(observed: _lastObserved, biomeId: biome);
-    if (wasRunning && ready) toggle(() {});
-  }
+  Future<void> reload(String biome) => _queue.add(() async {
+        if (biome == biomeId) return;
+        final wasRunning = running;
+        if (running) toggle(() {});
+        await _loadInner(observed: _lastObserved, biomeId: biome);
+        if (wasRunning && ready) toggle(() {});
+      });
 
   /// 会った鳥が増えた(または初めて入ってきた)ときに組み直す。
   ///
@@ -421,18 +496,14 @@ class RadioEngine {
   /// ストア掲載文とLPは「会った鳥の声が聴けるラジオ」と言っている。
   /// ここが空だと、**外に出している言い切りがそのまま成り立たない**
   /// (2026-08-21 の "A radio made only of birds you've met" と同じ種類の事故)。
-  Future<void> refreshObserved(Map<String, int> observed) async {
-    if (_sameObserved(observed, _lastObserved)) return;
-    final wasRunning = running;
-    if (running) toggle(() {});
-    for (final v in birds) {
-      v.stop();
-    }
-    birds.clear();
-    ready = false;
-    await load(observed: observed, biomeId: biomeId);
-    if (wasRunning && ready) toggle(() {});
-  }
+  Future<void> refreshObserved(Map<String, int> observed) =>
+      _queue.add(() async {
+        if (_sameObserved(observed, _lastObserved)) return;
+        final wasRunning = running;
+        if (running) toggle(() {});
+        await _loadInner(observed: observed, biomeId: biomeId);
+        if (wasRunning && ready) toggle(() {});
+      });
 
   /// 試験から中身を見るための窓。**本番のコードからは使わない。**
   /// `refreshObserved` は音を鳴らす層(SoLoud)まで触るので、
@@ -479,12 +550,25 @@ class RadioEngine {
     await p.setDouble(_kBirdVol, birdVol);
   }
 
+  /// 読み込む。**直列化してある** — 進行中のものを待ってから始まる。
   Future<void> load(
+          {Map<String, int> observed = const {}, String? biomeId}) =>
+      _queue.add(() => _loadInner(observed: observed, biomeId: biomeId));
+
+  /// 読み込みの中身。**行列の中からしか呼ばない。**
+  Future<void> _loadInner(
       {Map<String, int> observed = const {}, String? biomeId}) async {
     if (biomeId != null) this.biomeId = biomeId;
     _lastObserved = observed;
+    // 前の読み込みの残りを必ず片付けてから始める。
+    await _releaseAll();
     try {
-      await SoLoud.instance.init();
+      // ⚠️ **すでに初期化済みなら init() を呼ばない。**
+      // flutter_soloud は init 済みで呼ばれると deinit してから入れ直すので、
+      // 読み込み中の音源を巻き込んで `SoLoudNotInitializedException` になる。
+      if (!SoLoud.instance.isInitialized) {
+        await SoLoud.instance.init();
+      }
       _birdsData = await loadBirdsData();
       final all = await loadBirdAssets();
       final lineup = _pickLineup(all, observed);
@@ -497,17 +581,63 @@ class RadioEngine {
         // 左右に均等配置(現行の left = 20 + i/(n-1) * 60 を -1..1 に写す)
         final t = lineup.length > 1 ? i / (lineup.length - 1) : 0.5;
         v.pan = ((20 + t * 60) - 50) / 50.0;
-        await v.load();
+        // ⚠️ **読む前に登録する。** 途中で落ちても、作りかけのハンドルを
+        // `_releaseAll` が拾って解放できる。
         birds.add(v);
+        await v.load();
       }
       for (final k in kAmbienceKeys) {
         final src = await SoLoud.instance.loadAsset('assets/ambience/$k.mp3');
-        _amb[k] = SoLoud.instance.play(src, volume: 0, looping: true, paused: true);
+        _ambSrc[k] = src;
+        _amb[k] =
+            SoLoud.instance.play(src, volume: 0, looping: true, paused: true);
       }
-      ready = true;
+      recordLoadResult(null);
     } catch (e) {
-      error = '$e';
+      recordLoadResult(e);
+      // 途中で落ちたものを残さない。残すと次に読んだとき二重になる。
+      await _releaseAll();
     }
+  }
+
+  /// 読み込みの結果を記録する。
+  ///
+  /// ⚠️ **成功したら `error` を null に戻す。** 前はここで書きっぱなしだったので、
+  /// 一度出た赤字が画面に**永久に残っていた**(force-stop しても消えない、と
+  /// 見えていたのはこれ。実際は毎回1本目が落ちて、そのたび書き直されていた)。
+  void recordLoadResult(Object? failure) {
+    if (failure == null) {
+      ready = true;
+      error = null;
+    } else {
+      ready = false;
+      error = '$failure';
+    }
+  }
+
+  /// 作ったものを全部手放す。**失敗したときも必ず通る。**
+  Future<void> _releaseAll() async {
+    for (final t in _ambPause.values) {
+      t.cancel();
+    }
+    _ambPause.clear();
+    for (final v in birds) {
+      await v.dispose();
+    }
+    birds.clear();
+    for (final h in _amb.values) {
+      try {
+        await SoLoud.instance.stop(h);
+      } catch (_) {}
+    }
+    _amb.clear();
+    for (final src in _ambSrc.values) {
+      try {
+        await SoLoud.instance.disposeSource(src);
+      } catch (_) {}
+    }
+    _ambSrc.clear();
+    ready = false;
   }
 
   /// 顔ぶれを選ぶ。**共起ネットワーク**に沿って選ぶ(現行 ecology.pick_lineup)。
@@ -662,7 +792,17 @@ class RadioEngine {
 
   /// いま鳴っている音声の本数。増え続けていたら作りを間違えている
   /// (鳥3 + 環境音7 = 10 で張り付くのが正しい)。
-  int get voiceCount => ready ? SoLoud.instance.getActiveVoiceCount() : 0;
+  ///
+  /// **デバッグ版の画面に出してある**(`radio_page.dart`)。読み込みが二重に
+  /// 走っていた 2026-09-22 の不具合は、ここが 10 を超えることで見える。
+  int get voiceCount {
+    if (!ready) return 0;
+    try {
+      return SoLoud.instance.getActiveVoiceCount();
+    } catch (_) {
+      return 0;
+    }
+  }
 
   void dispose() {
     cancelSleep();
