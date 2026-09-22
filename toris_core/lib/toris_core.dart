@@ -11,7 +11,6 @@ export 'src/bird_profile.dart';
 export 'src/centrality.dart';
 export 'src/garden_items.dart';
 export 'src/radio_cast.dart';
-export 'src/eco_log.dart';
 export 'src/ecology.dart';
 export 'src/feeder_chain.dart';
 export 'src/engine.dart';

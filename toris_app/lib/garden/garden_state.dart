@@ -116,19 +116,12 @@ class Garden {
   /// 観察回数ではなく discovered で見る(現行と同じ判定軸)。
   final Set<String> lastFirstTimers = {};
 
-  /// **「なぜ来たか」の記録。** あなたが組んだ関係が鳥を呼んだ証拠。
-  /// 撹乱で植物が失われても消さない(原則2「罰しない」)。
-  List<core.EcoEntry> ecoLog = [];
-
   /// 留守のあいだに来た鳥・去った鳥(画面に出すため)。
   List<String> lastArrivals = [];
 
   /// 直近の `catchUp` で**何コマ進んだか**。0 なら何も起きていない。
   int lastTicks = 0;
   List<String> lastDepartures = [];
-
-  /// 留守のあいだの到来と、その理由(庭の画面にそのまま出す)。
-  List<core.ArrivalEvent> lastReasons = [];
 
   /// 留守のあいだに撹乱で倒れた植物と、その出来事。
   /// 倒れたぶんは**純減**で、自動では植え直さない(現行と同じ)。
@@ -261,7 +254,6 @@ class Garden {
     lastTicks = 0;
     lastArrivals = [];
     lastDepartures = [];
-    lastReasons = [];
     if (last != null && planted.isNotEmpty) {
       final r = core.evolveWhileAway(
         plantedPlants: planted,
@@ -302,9 +294,6 @@ class Garden {
         ..clear()
         ..addAll(r.arrivals.where((b) => !discovered.contains(b)));
       discovered.addAll(r.arrivals);
-      // 「なぜ来たか」を溜める。同じ鳥の同じ理由は1件だけ。
-      ecoLog = core.appendEvents(ecoLog, r.reasons);
-      lastReasons = r.reasons;
     }
     // 会った日数は**鳥ごとに**1日1カウント。いま庭にいる鳥ぶんだけ増える。
     final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
@@ -341,8 +330,6 @@ class Garden {
           for (final e in birdDays.entries)
             e.key: {'days': e.value, 'last': lastMetDay[e.key] ?? ''}
         },
-        // 「なぜ来たか」。Python 側も SAVE_KEYS に持っている。
-        'eco_log': [for (final e in ecoLog) e.toJson()],
         'saved_at': core.isoSeconds(lastSeenAt ?? DateTime.now()),
       };
 
@@ -363,10 +350,10 @@ class Garden {
     discovered
       ..clear()
       ..addAll(((s['discovered'] as Iterable?) ?? const []).map((e) => '$e'));
-    ecoLog = [
-      for (final e in ((s['eco_log'] as List?) ?? const []))
-        if (core.EcoEntry.fromJson(e) != null) core.EcoEntry.fromJson(e)!
-    ];
+    // ⚠️ **`eco_log` は読まない**(2026-09-22 に「なぜ来たか」を製品から
+    // 外した)。古いセーブコードには `eco_log` が入っているが、
+    // `save_code.dart` の `saveKeys` には残してあるので**読めて落ちない**。
+    // 単に使わないだけ。SAVE_KEYS を触ると Python 版との互換が崩れる。
     birdDays.clear();
     lastMetDay.clear();
     final days = s['bird_days'];

@@ -11,10 +11,8 @@ library;
 import 'dart:math';
 
 import 'centrality.dart';
-import 'eco_log.dart';
 import 'feeder_chain.dart';
 import 'py_coerce.dart';
-import 'save_code.dart' show isoSeconds;
 
 /// その土地・月の気温。
 /// 南半球では季節を半年ずらす(北半球の対応する月のオフセットを使う)。
@@ -389,12 +387,8 @@ class AbsenceResult {
   /// 撹乱を反映した最終的な植生。
   final List<String> plantedFinal;
 
-  /// 到来イベント(「なぜ来たか」の一文つき)。到着した順。
-  final List<ArrivalEvent> reasons;
-
   const AbsenceResult(this.residents, this.arrivals, this.departures,
-      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal,
-      [this.reasons = const []]);
+      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal);
 }
 
 /// 前回見たときから今までを進める。`absence_loop.evolve_state` に当たる。
@@ -429,13 +423,9 @@ AbsenceResult evolveWhileAway({
   final planted = List<String>.from(plantedPlants);
   final lost = <String>[];
   final events = <Disturbance>[];
-  final reasons = <ArrivalEvent>[];
   if (planted.isEmpty || ticks == 0) {
     return AbsenceResult(cur, arrivals, departures, 0, lost, events, planted);
   }
-  // 何コマぶんを、いつの出来事として記録するか。
-  // 均等割りにして、古い到来ほど古い時刻になるようにする。
-  final span = now.difference(lastSeenAt);
   for (var i = 0; i < ticks; i++) {
     // 現行と同じ順序: 先に撹乱、そのあとで1サイクル。植生が変わるので、
     // **確率はコマごとに計算し直される**(runTurn が毎回 buildFoodWeb する)。
@@ -466,21 +456,9 @@ AbsenceResult evolveWhileAway({
     cur = r.residents;
     arrivals.addAll(r.arrivals);
     departures.addAll(r.departures);
-    final at = isoSeconds(
-        lastSeenAt.add(Duration(seconds: span.inSeconds * (i + 1) ~/ ticks)));
-    for (final bid in r.arrivals) {
-      reasons.add(buildReason(
-        birdId: bid,
-        web: r.web,
-        arrivedAt: at,
-        birdsData: birdsData,
-        plantsData: plantsData,
-        insectsData: insectsData,
-      ));
-    }
   }
   return AbsenceResult(
-      cur, arrivals, departures, ticks, lost, events, planted, reasons);
+      cur, arrivals, departures, ticks, lost, events, planted);
 }
 
 /// 撹乱(嵐・落雷・伐採)。`toris_collection/disturbance.py` の移植。

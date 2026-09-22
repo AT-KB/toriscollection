@@ -202,9 +202,6 @@ class _Entry extends StatelessWidget {
                         _Row('Home', home),
                         _Row('Fears', fears, note: fearsNote),
                         _OutLinks(b),
-                        // **なぜ来たか**の記録。あなたが組んだ関係が呼んだ証拠。
-                        // 庭が痩せても、ここは消えない(原則2「罰しない」)。
-                        ..._whyItCame(),
                         if (b['description_en'] != null) ...[
                           const _Rule(),
                           Text(b['description_en'] as String,
@@ -250,35 +247,6 @@ class _Entry extends StatelessWidget {
             ),
         ],
       );
-
-  /// この鳥について記録された「なぜ来たか」。古い順。
-  ///
-  /// 最初の1件には印を付ける — **その関係が、この鳥と出会うきっかけだった**という
-  /// 意味。近くで出会った鳥にだけ付ける(`is_founding_record` と同じ判定)。
-  List<Widget> _whyItCame() {
-    final entries = core.entriesForBird(g.ecoLog, id);
-    if (entries.isEmpty) return const [];
-    final observedFirst = (g.observed[id] ?? 0) > 0 ? 'yes' : null;
-    return [
-      const _Rule(),
-      const Text('WHY IT CAME',
-          style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.0,
-              color: kSub)),
-      const SizedBox(height: 6),
-      for (final e in entries)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            (core.isFoundingRecord(e, entries, observedFirst) ? '🌱 ' : '·  ') +
-                e.text,
-            style: const TextStyle(fontSize: 13, color: kInk, height: 1.6),
-          ),
-        ),
-    ];
-  }
 
   /// 図版。**近くで会う前はアイコン、会ったら詳細画に入れ替わる。**
   ///
