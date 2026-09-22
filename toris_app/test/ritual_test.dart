@@ -55,6 +55,28 @@ void main() {
             'これを下回るなら、待てば会えるという約束が壊れている');
   });
 
+  test('90秒で会える割合は、**どのスタイルでも** 97% を下回らない', () {
+    // ⚠️ 2026-09-22 で歩く速さが鳥ごとに変わった。**固定36歩ではもう測れない。**
+    // 90秒で打てる歩数はスタイルごとに違うので、その歩数で切って数える。
+    //
+    // 遅いスタイルを作ると歩数が減り、そのぶん成立率が落ちる(企画 A-3 の表)。
+    // いちばん遅い calm が現行と同じ 36.0歩・97.75% なので、**最悪ケースが
+    // 現状と同じ**になっている。ここが崩れたら「待てば会える」が痩せている。
+    const totalTicks = Ritual.maxSteps * Ritual.ticksPerStep;
+    for (final st in HopStyle.all) {
+      var ok = 0;
+      for (var s = 0; s < 20000; s++) {
+        final hops = _hopTicks(Random(s), totalTicks, st).length;
+        if (_stepsToMeet(s) <= hops) ok++;
+      }
+      final rate = ok / 20000;
+      expect(rate, greaterThan(0.97),
+          reason: '${st.name} で 90秒に会える割合が 97% を切った '
+              '(実測 quick 98.50 / steady 98.02 / calm 97.75%)。'
+              'テンポを遅くすると歩数が減ってここが落ちる');
+    }
+  });
+
   test('餌台が無ければ、驚きは一度も起きない', () {
     final r = Ritual(['blue_jay'], Random(1));
     expect(r.chain.animals, isEmpty);
@@ -111,14 +133,17 @@ void main() {
 // `_nextHopTick` は private なので、**同じ組み立てをここで再現**して確かめる
 // (`_stepsToMeet` と同じやり方)。
 
-/// 1羽ぶんの「跳ぶ刻み」の並びを、実装と同じ式で作る。
-List<int> _hopTicks(Random r, int totalTicks) {
+/// 1羽ぶんの「跳ぶ刻み」の並びを作る。
+///
+/// ⚠️ **式を書き写さない。** 実装の `HopStyle.firstHop` / `nextHop` を
+/// そのまま呼ぶ。手で再現すると、実装を直したときに試験だけ古いまま通る
+/// (HANDOFF_00 §2「テストは落ちることを確かめてから信じる」)。
+List<int> _hopTicks(Random r, int totalTicks, HopStyle st) {
   final out = <int>[];
-  var next = r.nextInt(Ritual.ticksPerStep) + 1; // 始まりの位相
+  var next = st.firstHop(r);
   while (next <= totalTicks) {
     out.add(next);
-    next += Ritual.ticksPerStep +
-        r.nextInt(Ritual.jitterTicks * 2 + 1) - Ritual.jitterTicks;
+    next = st.nextHop(r, next);
   }
   return out;
 }
@@ -136,9 +161,9 @@ void _timingTests() {
     const trials = 500;
     for (var s = 0; s < trials; s++) {
       final r = Random(s);
-      final a = _hopTicks(r, totalTicks).toSet();
-      final b = _hopTicks(r, totalTicks).toSet();
-      final c = _hopTicks(r, totalTicks).toSet();
+      final a = _hopTicks(r, totalTicks, HopStyle.quick).toSet();
+      final b = _hopTicks(r, totalTicks, HopStyle.steady).toSet();
+      final c = _hopTicks(r, totalTicks, HopStyle.calm).toSet();
       // 3羽の跳ぶ刻みが完全に一致 = 前の「一斉に動く」状態
       if (a.length == b.length && a.containsAll(b) && a.containsAll(c)) {
         allSame++;
@@ -148,15 +173,47 @@ void _timingTests() {
         reason: '3羽が完全に同じ刻みで跳んでいる = 一斉に動いて見える');
   });
 
-  test('歩く速さの期待値は変えていない(90秒でならして36歩前後)', () {
-    var total = 0;
+  test('どのスタイルも、90秒で36歩以上は打つ', () {
+    // ⚠️ **期待値は 2026-09-22 に変わった。** 前は全羽が平均 2.5秒ちょうどで
+    // 「36歩前後」だったが、いまは quick / steady を**速く**してある。
+    // 遅い側は作っていないので、**下限は calm の 36.0歩**。
+    // (企画 A-3: 実効平均を 2.50秒より遅くしない = 歩数を減らさない)
+    const expected = {'quick': 40.3, 'steady': 37.6, 'calm': 36.0};
     const trials = 2000;
-    for (var s = 0; s < trials; s++) {
-      total += _hopTicks(Random(s), totalTicks).length;
+    for (final st in HopStyle.all) {
+      var total = 0;
+      for (var s = 0; s < trials; s++) {
+        total += _hopTicks(Random(s), totalTicks, st).length;
+      }
+      final avg = total / trials;
+      expect(avg, closeTo(expected[st.name]!, 1.0),
+          reason: '${st.name} の歩数が想定(${expected[st.name]})から外れた');
+      expect(avg, greaterThanOrEqualTo(Ritual.maxSteps - 1.0),
+          reason: '${st.name} が現行(36.0歩)より遅い。'
+              '遅い鳥を作ると成立率が落ちる(企画 A-3)');
     }
-    final avg = total / trials;
-    // 平均間隔がちょうど 10 刻みなので、360 刻み ÷ 10 = 36 歩前後になる。
-    expect(avg, closeTo(Ritual.maxSteps.toDouble(), 1.0),
-        reason: 'ここがずれると「90秒で97.8%が出会う」の前提が崩れる');
+  });
+
+  test('3羽以下なら、基本テンポが全部ちがう', () {
+    // ⚠️ **ここが 2026-09-22 の直しの本体。** 位相をずらしても、周期が全員
+    // 同じなら目は「同じ拍」として拾う(企画 A-0)。
+    // ここが壊れたら、8/28 以前に戻ったのと同じ。
+    for (var s = 0; s < 200; s++) {
+      final r = Ritual(['a', 'b', 'c'], Random(s));
+      final bases = {for (final b in r.birdIds) r.style[b]!.base};
+      expect(bases.length, 3,
+          reason: '3羽の基本テンポが揃っている = 時計仕掛けに見える');
+    }
+    // 2羽でも全員ちがう。
+    final two = Ritual(['a', 'b'], Random(7));
+    expect({for (final b in two.birdIds) two.style[b]!.base}.length, 2);
+  });
+
+  test('4羽以上は配り直す(i mod 3)。誰も割り当て漏れしない', () {
+    final r = Ritual(['a', 'b', 'c', 'd', 'e'], Random(11));
+    for (final b in r.birdIds) {
+      expect(r.style[b], isNotNull,
+          reason: '割り当てが漏れると、その鳥だけ既定のテンポで歩く');
+    }
   });
 }

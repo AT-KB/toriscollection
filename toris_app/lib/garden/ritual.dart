@@ -51,9 +51,14 @@ class Ritual {
 
   Ritual(this.birdIds, this._rng,
       {this.chain = core.FeederChain.empty}) {
-    for (final b in birdIds) {
+    // 3つのスタイルを毎回シャッフルして先頭から配る。
+    // **3羽以下なら必ず全員ちがうスタイル**になる(4羽以上は i mod 3)。
+    final deck = [...HopStyle.all]..shuffle(_rng);
+    for (var i = 0; i < birdIds.length; i++) {
+      final b = birdIds[i];
       branch[b] = 0; // みんな奥から始まる
       _dwell[b] = 0;
+      style[b] = deck[i % deck.length];
     }
   }
 
@@ -73,13 +78,13 @@ class Ritual {
   /// 1歩ぶんが何刻みか(2500 / 250 = 10)。
   static const int ticksPerStep = 10;
 
-  /// 次の1歩までの刻み数のばらつき。**平均は `ticksPerStep` のまま。**
+  /// 鳥ごとの**歩き方(スタイル)**。`_styleOf` で1羽ずつ割り当てる。
   ///
-  /// 8〜12 刻み(2.0〜3.0秒)を一様に引くので**平均はちょうど 10 = 2.5秒**。
-  /// 歩く速さの期待値を変えていないので、
-  /// 「90秒で 97.8% が出会う」という数値バランスは崩れない
-  /// (`ritual_test.dart` で実際に回して確かめている)。
-  static const int jitterTicks = 2;
+  /// ⚠️ **ここが 2026-09-22 の直しの本体。** 位相をずらすだけでは足りない
+  /// (企画『2026-09-22_実機4件_仕様』A-0 の実測: 現行は既に「一斉」ではないが、
+  /// 3羽とも周期が同じ 2.5秒なので、目は「同じ拍」として拾う)。
+  /// **周期そのものを鳥ごとに変える。**
+  final Map<String, HopStyle> style = {};
 
   /// 時計が何刻み進んだか。`steps`(1歩=10刻み)とは別。
   int _ticks = 0;
@@ -131,9 +136,9 @@ class Ritual {
         _voices[b] = SoLoud.instance.play(src, volume: 0.0, looping: true);
       } catch (_) {}
     }
-    // 始まりの位相を鳥ごとにばらす(0〜9刻み = 0〜2.25秒)。
+    // 最初に跳ぶ刻みは、スタイルの基本間隔ぶんの幅から引く。
     for (final b in birdIds) {
-      _nextHopTick[b] = _rng.nextInt(ticksPerStep) + 1;
+      _nextHopTick[b] = _styleOf(b).firstHop(_rng);
     }
     _tick = Timer.periodic(tickInterval, (_) => _onTick(onChange));
     onChange();
@@ -157,9 +162,8 @@ class Ritual {
     for (final b in birdIds) {
       if (_ticks < (_nextHopTick[b] ?? 0)) continue;
       _hopOne(b);
-      // 次は 8〜12 刻み後(平均はちょうど 10 = 2.5秒)。
-      _nextHopTick[b] = _ticks + ticksPerStep +
-          _rng.nextInt(jitterTicks * 2 + 1) - jitterTicks;
+      // 次に跳ぶのは、その鳥のスタイルが決める。
+      _nextHopTick[b] = _styleOf(b).nextHop(_rng, _ticks);
       changed = true;
     }
 
@@ -204,14 +208,17 @@ class Ritual {
       // 鷹は全部いちばん奥まで。リスは1つ下がるだけ。
       branch[b] = _hasRaptor ? 0 : ((branch[b] ?? 0) - 1).clamp(0, 2);
       _dwell[b] = 0;
-      // 驚いた直後は、次の1歩も鳥ごとにばらける。
-      _nextHopTick[b] = _ticks + ticksPerStep +
-          _rng.nextInt(jitterTicks * 2 + 1) - jitterTicks;
+      // 驚いた直後も**同じ式**で掛け直す。全羽が同じ式だと、驚いたあとに
+      // 周期が揃ってしまう(企画の仕様 A-2)。
+      _nextHopTick[b] = _styleOf(b).nextHop(_rng, _ticks);
     }
     _applyVolumes();
     onChange();
     return true;
   }
+
+  /// その鳥の歩き方。割り当てが無ければ steady(ふつう)。
+  HopStyle _styleOf(String b) => style[b] ?? HopStyle.steady;
 
   /// 1羽ぶんの1歩。近づくほど声が大きくなる(近さがそのまま音になる)。
   ///
@@ -260,4 +267,83 @@ class Ritual {
 
   /// 枝の番号を、絵の側の呼び名に直す。
   static String depthName(int b) => b >= 2 ? 'b1' : (b == 1 ? 'b2' : 'b3');
+}
+
+/// 鳥1羽ぶんの**歩き方**。「いつ跳ぶか」だけを決める。
+///
+/// ## なぜスタイルを分けたか(CEO 2026-08-28 / 企画 2026-09-22)
+/// 8/28 に「鳥ごとに自分の番が来た時だけ跳ぶ」に直したが、CEO はまだ
+/// 「同時」と感じていた。企画部が2万回まわして数えたところ、**同じ刻みで
+/// 2羽以上が跳ぶのは90秒に 10.1回**しかなく、既に一斉ではない。
+/// それでも時計仕掛けに見えるのは、**3羽の周期が全員おなじ 2.5秒**だから。
+/// 同じテンポの振り子が3つ並んでいると、目は「同じ拍」として拾う。
+///
+/// → 直すのは位相ではなく**周期**。quick と calm は1歩ごとに必ず 0.5秒ずつ
+/// 開き、5歩で1周期(2.5秒)ぶんずれて、そのまま回り続ける。
+///
+/// ## 数字の根拠(企画『2026-09-22_実機4件_仕様』A-1 / A-3、2万回の実測)
+/// 制約は「90秒で出会いが成立する割合を 97.8% から実質下げないこと」。
+/// 効くのは**90秒のあいだに何歩打てるか**だけなので、
+/// **どのスタイルも実効平均を 2.50秒より遅くしない**。
+/// 遅い鳥を作るのではなく、**速い鳥を作る**ことで差をつける。
+///
+/// | | base | jitter | 立ち止まり | 実効平均 | 90秒の歩数 | 成立率 |
+/// |---|---|---|---|---|---|---|
+/// | quick  | 8  | ±2 | 0.12 / +8 | 2.24秒 | 40.3歩 | 98.50% |
+/// | steady | 9  | ±3 | 0.10 / +6 | 2.40秒 | 37.6歩 | 98.02% |
+/// | calm   | 10 | ±4 | —         | 2.50秒 | 36.0歩 | 97.75% |
+///
+/// いちばん遅い calm が現行とぴったり同じ(36.0歩・97.75%)なので、
+/// **最悪ケースが現状と同じ**になる(原則2「罰しない」)。
+///
+/// ⚠️ **スタイルは種(species)に固定しない。** 種ごとに歩き方を決めると
+/// 「この種はこう歩く」という**データの裏づけが無い主張**をアプリが出すことに
+/// なる(原則4「生態に誠実」)。**その回のその1羽の気分**として毎回配り直す。
+class HopStyle {
+  /// 見分けるための名前(試験と記録用。画面には出さない)。
+  final String name;
+
+  /// 基本間隔(刻み)。1刻み = 250ms。
+  final int base;
+
+  /// ゆらぎ(±刻み)。
+  final int jitter;
+
+  /// ときどき立ち止まる確率。
+  ///
+  /// 小鳥の実際の動きは「素早く数歩 → ぴたりと止まって周りを見る」。
+  /// **速い鳥にだけ付ける** — 歩数に余裕があるので、止まりの代金を
+  /// 成立率で払わずに済む。calm に足すと 96.92% まで落ちるので足さない。
+  final double pauseChance;
+
+  /// 立ち止まる長さ(刻み)。
+  final int pauseTicks;
+
+  const HopStyle(
+      this.name, this.base, this.jitter, this.pauseChance, this.pauseTicks);
+
+  /// せっかち。1.50〜2.50秒(止まると 3.50〜4.50秒)。
+  static const HopStyle quick = HopStyle('quick', 8, 2, 0.12, 8);
+
+  /// ふつう。1.50〜3.00秒(止まると 3.00〜4.50秒)。
+  static const HopStyle steady = HopStyle('steady', 9, 3, 0.10, 6);
+
+  /// のんびり。1.50〜3.50秒。間隔の幅(2.3倍)そのものが「ときどき溜める」に見える。
+  static const HopStyle calm = HopStyle('calm', 10, 4, 0.0, 0);
+
+  static const List<HopStyle> all = [quick, steady, calm];
+
+  /// 最初に跳ぶ刻み。1〜base。
+  int firstHop(Random r) => 1 + r.nextInt(base);
+
+  /// 次に跳ぶ刻み。**下限は1刻み**(必ず前に進む)。
+  int nextHop(Random r, int now) {
+    var d = base + r.nextInt(jitter * 2 + 1) - jitter;
+    if (r.nextDouble() < pauseChance) d += pauseTicks;
+    if (d < 1) d = 1;
+    return now + d;
+  }
+
+  @override
+  String toString() => 'HopStyle($name)';
 }
