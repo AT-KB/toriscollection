@@ -57,27 +57,52 @@ public class BirdAlarmService extends Service {
     // CEO 実機 2026-09-22「目覚ましは鳥の前に何か置いたほうがいい」。
     // 企画『2026-09-22_実機4件_仕様』B。
     //
-    // T(設定時刻)から風だけが鳴り、T+60秒で鳥が入る。設定した時刻に
+    // T(設定時刻)から環境音だけが鳴り、T+60秒で鳥が入る。設定した時刻に
     // **何かが始まる**ことは保たれる(現行の設計は T = 起床時刻ではなく
     // 「そっと起こし始める時刻」)。
 
-    /** 鳴らすのは wind 1層だけ。**重ねない** — 層を重ねるほど広帯域になり、
+    /** 鳴らすのは**1層だけ**。**重ねない** — 層を重ねるほど広帯域になり、
      *  さえずり(2〜8kHz)をマスクする。起こす仕事をするのはメロディの側
-     *  (McFarlane ら 2020)なので、さえずりの通り道を空けておく。 */
+     *  (McFarlane ら 2020)なので、さえずりの通り道を空けておく。
+     *
+     *  ⚠️ **実機で CEO が選び直した音**(2026-09-22)。
+     *  企画の指示書は wind を採り、lake は「中高域の水音でさえずりを
+     *  マスクする」として外していた。ところが実機で鳴らすと
+     *  **「風は苦しかった。砂嵐みたいで」** — wind はピンクノイズ寄りの
+     *  素材(`_credits.json`: "Wind in pine trees, slow light, forest,
+     *  pink noise")なので、目覚ましの音量帯では砂嵐に聞こえた。
+     *  CEO の指示は「ラジオの Lake とかにしよう。ただ、Lake でいいよ」。
+     *  マスクの懸念は AMB_BED 0.09(鳥より 24.9dB 下)で吸収する見込みで、
+     *  **次の実機で確かめる**。
+     *
+     *  lake.mp3 は Freesound #326097(kvgarlic)/ **CC0** = 商用可
+     *  (`assets/ambience/_credits.json`)。
+     *
+     *  ⚠️ **選べるようにはしていない。** CEO は「これも選べたらいいんだけど
+     *  ね、ラジオみたいに。ただ、Lake でいいよ」と言っており、今回は固定。
+     *  やり残しとして HANDOFF_00 §7 に記録してある。 */
     private static final String AMB_ASSET =
-            "flutter_assets/assets/ambience/wind.mp3";
+            "flutter_assets/assets/ambience/lake.mp3";
     /** 鳥が入るまでの前置き。フェードイン40秒 + 保持20秒 = 60秒。
      *  「鳴り出したことが分かる」には、上がり切ってから保持する時間が要る。 */
     private static final long AMB_PRE_MS = 60_000L;
     /** 0.00 から AMB_PEAK までの直線。 */
     private static final long AMB_FADE_MS = 40_000L;
-    /** 前置きのあいだの風。素材 -23 LUFS x 0.35 = -32.1 LUFS。 */
-    private static final float AMB_PEAK = 0.35f;
-    /** 鳥が入ったあと、風が退いて落ち着く高さ。-37.9 LUFS。
-     *  最大時の鳥(-19.0 LUFS)より **18.9dB 下**。
+    /** 前置きのあいだの環境音。素材 -23 LUFS x 0.20 = -37.0 LUFS。
+     *
+     *  ⚠️ **実機で鳴らして下げた値**(2026-09-22 19:00、CEO が耳で確認)。
+     *  机上の計算では 0.35(-32.1 LUFS)だったが、実機では
+     *  「雑音、つまり BGM が大きい気がするな音量」だった。
+     *  前置きは**音楽ではなく気配**。無音から立ち上がるので 0.20 でも
+     *  十分に聞こえる。 */
+    private static final float AMB_PEAK = 0.20f;
+    /** 鳥が入ったあと、環境音が退いて落ち着く高さ。素材 -23 LUFS x 0.09
+     *  = -43.9 LUFS。最大時の鳥(-19.0 LUFS)より **24.9dB 下**。
+     *
      *  ⚠️ **この差がこの設計でいちばん大事な数字。** 起床の瞬間に
-     *  さえずりがマスクされていたら研究1を裏切る。 */
-    private static final float AMB_BED = 0.18f;
+     *  さえずりがマスクされていたら研究1を裏切る。
+     *  同じく実機で 0.18(18.9dB 差)から下げた。 */
+    private static final float AMB_BED = 0.09f;
     /** AMB_PEAK から AMB_BED への直線。**鳥が入った瞬間**が起点。 */
     private static final long AMB_DUCK_MS = 120_000L;
 
@@ -155,9 +180,9 @@ public class BirdAlarmService extends Service {
                 BirdAlarmSounds.chorusFor(firstKey, met, new java.util.Random());
 
         // -- 夜明け前の庭 ---------------------------------------------
-        // 風だけを先に鳴らし、AMB_PRE_MS 後に鳥が入る。
+        // 環境音だけを先に鳴らし、AMB_PRE_MS 後に鳥が入る。
         //
-        // ⚠️ **風が読めなかったら、鳥を待たせない。**(仕様 B-6-1)
+        // ⚠️ **環境音が読めなかったら、鳥を待たせない。**(仕様 B-6-1)
         // 前置きのせいで目覚ましが60秒遅れる、は絶対に作らない。
         // `fromAsset` は例外を握って null を返すので、その null で分岐する。
         ambience = fromAsset(AMB_ASSET);
@@ -405,7 +430,7 @@ public class BirdAlarmService extends Service {
             }
         }
         players.clear();
-        // 前置きの風も必ず止めて解放する(players に入っていないので別に書く)。
+        // 前置きの環境音も必ず止めて解放する(players に入っていないので別に書く)。
         if (ambience != null) {
             try {
                 ambience.stop();

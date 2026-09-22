@@ -18,6 +18,7 @@
 library;
 
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -112,16 +113,32 @@ void main() {
     expect(k['AMB_PRE_MS']! - k['AMB_FADE_MS']!, 20000.0);
   });
 
-  test('風は鳥の邪魔をしない: 入場後に必ず退き、最大時は鳥より下', () {
+  test('前置きの環境音は鳥の邪魔をしない: 入場後に必ず退き、最大時は鳥より下', () {
     expect(k['AMB_BED']!, lessThan(k['AMB_PEAK']!),
-        reason: '鳥が入っても風が退かないと、さえずりがマスクされる'
+        reason: '鳥が入っても環境音が退かないと、さえずりがマスクされる'
             '(研究1: 起こす仕事をするのはメロディ)');
     expect(k['AMB_DUCK_MS']!, lessThanOrEqualTo(k['RAMP_MS']!),
-        reason: '鳥が最大になるより後まで風が退き切らないのはおかしい');
-    // 最大時: 鳥 1.00 に対して風 AMB_BED。素材は鳥 -19 / 環境音 -23 LUFS
-    // なので、実効で鳥が 18.9dB 上になる。
-    expect(k['AMB_BED']!, lessThan(0.25),
-        reason: '起床の瞬間にさえずりが埋もれる');
+        reason: '鳥が最大になるより後まで環境音が退き切らないのはおかしい');
+
+    // ── 最大時の差を dB で見る ──
+    // 素材は鳥 -19.0 LUFS / 環境音 -23.0 LUFS(`tools/bird_audio_prep.py`)。
+    // 最大時は鳥の係数が 1.00、環境音が AMB_BED なので、実効の差は
+    //   (-19.0) - (-23.0 + 20*log10(AMB_BED)) = 4.0 - 20*log10(AMB_BED)
+    // **20dB 以上**空いていること。ここが埋まると研究1を裏切る。
+    final gapDb = 4.0 - 20 * (log(k['AMB_BED']!) / ln10);
+    expect(gapDb, greaterThan(20.0),
+        reason: '起床の瞬間にさえずりが埋もれる(いまの差 '
+            '${gapDb.toStringAsFixed(1)}dB)');
+  });
+
+  test('前置きの環境音は、実機で下げた値のまま(机上の計算に戻していない)', () {
+    // 2026-09-22 19:00、実機(.dev)で鳴らして CEO が耳で確認。
+    // 「雑音、つまり BGM が大きい気がするな音量」→ 0.35 → 0.20 / 0.18 → 0.09。
+    // **机上の計算(-32.1 / -37.9 LUFS)より実機の耳を優先する。**
+    // 戻したくなったら、まず実機で鳴らすこと。
+    expect(k['AMB_PEAK'], closeTo(0.20, 1e-6),
+        reason: '前置きは音楽ではなく気配。0.35 は実機で大きすぎた');
+    expect(k['AMB_BED'], closeTo(0.09, 1e-6));
   });
 
   test('2羽目・3羽目はランプの 1/3・2/3 のまま(据え置き)', () {
@@ -131,29 +148,45 @@ void main() {
         reason: '最大音量に達したあとに加わる鳥がいるのは設計と違う');
   });
 
-  test('風が読めなければ、鳥は遅れずに鳴く(目覚ましの信頼性)', () {
+  test('前置きが読めなければ、鳥は遅れずに鳴く(目覚ましの信頼性)', () {
     // 企画 B-6-1。**前置きのせいで目覚ましが60秒遅れる、は絶対に作らない。**
     // `fromAsset` は例外を握って null を返すので、その null で分岐している。
     expect(src.contains('long birdDelay = 0L;'), isTrue,
-        reason: '既定の遅延が0でないと、風が読めない朝に鳥が遅れる');
+        reason: '既定の遅延が0でないと、前置きが読めない朝に鳥が遅れる');
     expect(
         RegExp(r'if\s*\(ambience != null\)\s*\{[^}]*birdDelay = AMB_PRE_MS;')
             .hasMatch(src),
         isTrue,
-        reason: '遅らせるのは、風が実際に読めたときだけであること');
+        reason: '遅らせるのは、前置きが実際に読めたときだけであること');
   });
 
-  test('前置きに使う音は、実際に同梱されている wind.mp3', () {
-    expect(src.contains('"flutter_assets/assets/ambience/wind.mp3"'), isTrue,
-        reason: '前置きは wind 1層だけ(企画 B-2)。'
-            'rain / stream などはさえずり(2〜8kHz)をマスクするので採らない');
-    expect(File('assets/ambience/wind.mp3').existsSync(), isTrue,
-        reason: '同梱していない音を指していたら、毎朝 fromAsset が null になる');
+  test('前置きに使う音は、実際に同梱されている1層', () {
+    // ⚠️ **アセット名を直書きしない。** Java の `AMB_ASSET` から取る。
+    // 直書きすると、音を差し替えたときに試験が空振りする
+    // (2026-09-22 に wind -> lake へ差し替えたときに実際そうなりかけた)。
+    final m = RegExp(r'AMB_ASSET\s*=\s*\n?\s*"([^"]+)"').firstMatch(src);
+    expect(m, isNotNull, reason: 'AMB_ASSET を読み出せていない');
+    final path = m!.group(1)!;
+
+    // Java は AssetManager 経由で読むので `flutter_assets/` の前置きが要る
+    // (`BirdAlarmSounds.assetFor` と同じ)。
+    expect(path.startsWith('flutter_assets/assets/ambience/'), isTrue,
+        reason: '前置きは同梱の環境音から1層だけ選ぶ(企画 B-2)。'
+            '前置きを間違えると、毎朝 fromAsset が null になって前置きが消える');
+    final asset = path.substring('flutter_assets/'.length);
+    expect(File(asset).existsSync(), isTrue,
+        reason: '同梱していない音を指している($asset)。'
+            '毎朝 fromAsset が null になり、前置きが丸ごと消える');
+
+    // **1層だけ。** 重ねるとさえずり(2〜8kHz)をマスクする。
+    expect(RegExp('AMB_ASSET').allMatches(src).length, 2,
+        reason: 'AMB_ASSET の宣言と使用で2回のはず。'
+            '増えていたら層を重ねていないか確かめること');
   });
 
   test('鳴っている鳥の名簿は、前置きのあいだ空のまま', () {
     // 企画 B-6-2。画面が「まだ鳴いていない鳥」を光らせないための歯止め(原則4)。
-    // 風は鳥ではないので名簿に入れない。
+    // 前置きの環境音は鳥ではないので名簿に入れない。
     final from = src.indexOf('ambience = fromAsset(AMB_ASSET);');
     final to = src.indexOf('handler.postDelayed(() -> startBirds(chorus)');
     expect(from, greaterThan(0));
