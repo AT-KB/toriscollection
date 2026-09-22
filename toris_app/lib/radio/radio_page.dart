@@ -154,6 +154,39 @@ class _RadioPageState extends State<RadioPage>
           ],
           const SizedBox(height: 26),
 
+          // ── 鳥の音量 ──
+          //
+          // ## なぜ足したか(CEO 実機 2026-09-22)
+          // 「鳥の声が全然聞こえない。音量メーターは BGM だけにかかってるよね?」
+          // → **その通りだった。** 下の Slider は `ambVol` だけを動かしていて、
+          // 鳥の音量は `kDepthGain` 固定で触る手段が無かった。
+          //
+          // **鳴っているものから並べる。** つまみは触らなくても成立する
+          // (既定 0.80 × kBirdGainMax 1.6 = 現行比 +2.1dB。原則1「受動的」)。
+          //
+          // ⚠️ 会った鳥が0なら**セクションごと出さない**。鳴りようのない
+          // ものの音量つまみを出すことになる(`showBirdVolume`)。
+          if (showBirdVolume(e.birds)) ...[
+            _SectionLabel('Birds'),
+            Row(children: [
+              const Icon(Icons.music_note_rounded, color: kSub),
+              const SizedBox(width: 8),
+              const Text('Birds', style: TextStyle(fontSize: 14, color: kSub)),
+              Expanded(
+                child: Slider(
+                  value: e.birdVol,
+                  onChanged: (v) {
+                    setState(() => e.birdVol = v);
+                    e.applyBirdVolume();
+                  },
+                  // つまみは動かしている間ずっと呼ばれる。**離した時だけ**書く。
+                  onChangeEnd: (_) => e.savePrefs(),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 18),
+          ],
+
           _SectionLabel('Ambience'),
           Wrap(
             spacing: 10,
@@ -171,8 +204,12 @@ class _RadioPageState extends State<RadioPage>
                 ),
             ],
           ),
+          // ⚠️ 行にはスピーカーのアイコンしか無く、**何にかかっている
+          // メーターか画面から読めなかった**(CEO の疑問がそのまま画面の欠陥)。
           Row(children: [
             const Icon(Icons.volume_up_rounded, color: kSub),
+            const SizedBox(width: 8),
+            const Text('Ambience', style: TextStyle(fontSize: 14, color: kSub)),
             Expanded(
               child: Slider(
                 value: e.ambVol,

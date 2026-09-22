@@ -37,6 +37,18 @@ const double kRestMaxS = 20.0;
 /// (2026-08-11 に 6 -> 3 へ)。
 const int kMaxBirds = 3;
 
+/// 鳥の音量つまみ(`RadioEngine.birdVol`)を一杯に上げたときの倍率。
+///
+/// ## なぜ足したか(CEO 実機 2026-09-22「鳥の声が全然聞こえない。
+/// 音量メーターは BGM だけにかかってるよね?」→ **その通りだった**)
+/// `radio_page.dart` の Slider は `ambVol` だけを動かしていて、鳥の音量は
+/// `kDepthGain[depth]` 固定。**ユーザーが触れる手段が存在しなかった。**
+///
+/// ⚠️ **`kDepthGain` は掛け算の内側に残す。**「よく会った鳥ほど手前で鳴く」
+/// (動画字幕 `g03_song` / 監査台帳)は 1.12 / 1.00 / 0.85 の**比**で成立して
+/// いる。外側に一律のゲインを掛けても比は変わらないので、この言い切りは壊れない。
+const double kBirdGainMax = 1.6;
+
 /// 奥行きごとの音量と残響の深さ。現行の D(gain/wet) と同じ値。
 const Map<String, double> kDepthGain = {'b1': 1.12, 'b2': 1.00, 'b3': 0.85};
 const Map<String, double> kDepthWet = {'b1': 0.01, 'b2': 0.09, 'b3': 0.20};
@@ -136,6 +148,13 @@ class BirdVoice {
 
   double get _peak => kDepthGain[depth] ?? 1.0;
 
+  /// 鳥の音量つまみ(0.0〜1.0)。`RadioEngine.birdVol` から配られる。
+  double birdVol = kBirdVolDefault;
+
+  /// 実際に鳴らす音量。**近さ(`_peak`)は内側に残す**ので、
+  /// 「よく会った鳥ほど手前で鳴く」の比は変わらない。
+  double get _gain => _peak * _scale * birdVol * kBirdGainMax;
+
   double pan = 0.0;
 
   Future<void> load({bool reverb = true}) async {
@@ -183,7 +202,7 @@ class BirdVoice {
     }
     singing = true;
     onChange();
-    SoLoud.instance.fadeVolume(h, _peak * _scale, const Duration(milliseconds: 400));
+    SoLoud.instance.fadeVolume(h, _gain, const Duration(milliseconds: 400));
 
     // 群れは本体と同じ場所から、決めたぶんだけ遅れて鳴く
     final posMs = SoLoud.instance.getPosition(h).inMilliseconds;
@@ -194,7 +213,7 @@ class BirdVoice {
       if (back > 0) {
         SoLoud.instance.seek(fh, Duration(milliseconds: back));
       }
-      SoLoud.instance.fadeVolume(fh, _peak * _scale * _flockGain(i + 1),
+      SoLoud.instance.fadeVolume(fh, _gain * _flockGain(i + 1),
           const Duration(milliseconds: 400));
     }
   }
@@ -266,12 +285,62 @@ class BirdVoice {
 
   void fadeScale(double k) {
     _scale = k;
+    if (!singing) return;
     final h = _handle;
-    if (h != null && singing) {
-      SoLoud.instance.setVolume(h, _peak * _scale);
+    if (h != null) {
+      SoLoud.instance.setVolume(h, _gain);
+    }
+    // ⚠️ **群れが抜けていた。** ここは `_handle` にしか音量を設定しておらず、
+    // 睡眠モードで沈めても**群れだけ鳴り続けていた**(2026-09-22 に発見)。
+    // 鳥の音量つまみも同じ経路を通るので、直さないとつまみが群れに効かない。
+    for (var i = 0; i < _flockHandles.length; i++) {
+      SoLoud.instance
+          .setVolume(_flockHandles[i], _gain * _flockGain(i + 1));
+    }
+  }
+
+  /// 鳥の音量つまみを反映する。**いま鳴いている鳥だけ**に効く。
+  /// 鳴いていない鳥は、次に鳴き出すときに新しい値で立ち上がる。
+  void applyBirdVolume(double v) {
+    birdVol = v;
+    if (!singing) return;
+    const d = Duration(milliseconds: 200);
+    final h = _handle;
+    if (h != null) {
+      SoLoud.instance.fadeVolume(h, _gain, d);
+    }
+    for (var i = 0; i < _flockHandles.length; i++) {
+      SoLoud.instance.fadeVolume(_flockHandles[i], _gain * _flockGain(i + 1), d);
     }
   }
 }
+
+/// 鳥の音量つまみの既定値。
+///
+/// **つまみが端に寄っていると「もう上げられない」と見える**ので、上にも下にも
+/// 動かせる位置に置く。0.80 は目盛りの上寄りだが、`kBirdGainMax` = 1.6 が
+/// あるので上げしろが +2dB 残っている。そして**触らなくても現行より大きい**
+/// (0.80 × 1.6 = 1.28 = 現行 1.00 比 +2.1dB) — CEO はつまみを探さなくてよい。
+const double kBirdVolDefault = 0.80;
+
+/// 環境音の音量の既定値。
+///
+/// 2026-09-22 に 0.55 から下げた。**保存済みの人は変わらない**
+/// (`restorePrefs` が保存値を優先する)。効くのは新規インストールと、
+/// まだ一度もつまみを触っていない人だけ。
+/// `kBirdVolDefault` と合わせて 鳥 : 環境音 = +3.8dB 改善する
+/// (1.28/1.00 × 0.55/0.45 = 1.53)。
+///
+/// ⚠️ **`kAmbMax` は触っていない。** 変えたのはそれに掛ける係数の初期値だけ。
+const double kAmbVolDefault = 0.45;
+
+/// 鳥の音量つまみを画面に出すか。
+///
+/// **会った鳥が0なら出さない。** 鳴る鳥が0なら(`observedInBiome`)、
+/// 鳴りようのないものの音量つまみを出すことになる
+/// (`zero_state_test.dart`「何もしていない人に、持っている人向けのものが
+/// 見えていないか」)。
+bool showBirdVolume(List<BirdVoice> birds) => birds.isNotEmpty;
 
 /// ラジオ全体。鳥3羽と環境音7層を持つ。
 /// いまラジオが鳴っているか。**広告バナーを黙らせるためだけ**に使う。
@@ -294,7 +363,11 @@ class RadioEngine {
 
   bool ready = false;
   bool running = false;
-  double ambVol = 0.55;
+  double ambVol = kAmbVolDefault;
+
+  /// 鳥の音量つまみ(0.0〜1.0)。実際のゲインは `birdVol * kBirdGainMax`。
+  double birdVol = kBirdVolDefault;
+
   String? error;
 
   /// 鳴らす顔ぶれを選んで読み込む。
@@ -381,6 +454,7 @@ class RadioEngine {
   /// 覚えていた環境音の設定を戻す。**読み込みの前に呼ぶ。**
   static const _kAmbOn = 'radio_amb_on';
   static const _kAmbVol = 'radio_amb_vol';
+  static const _kBirdVol = 'radio_bird_vol';
 
   Future<void> restorePrefs() async {
     final p = await SharedPreferences.getInstance();
@@ -392,6 +466,8 @@ class RadioEngine {
     }
     final v = p.getDouble(_kAmbVol);
     if (v != null) ambVol = v.clamp(0.0, 1.0);
+    final bv = p.getDouble(_kBirdVol);
+    if (bv != null) birdVol = bv.clamp(0.0, 1.0);
   }
 
   /// 触ったら覚える。
@@ -400,6 +476,7 @@ class RadioEngine {
     await p.setStringList(
         _kAmbOn, [for (final e in ambOn.entries) if (e.value) e.key]);
     await p.setDouble(_kAmbVol, ambVol);
+    await p.setDouble(_kBirdVol, birdVol);
   }
 
   Future<void> load(
@@ -415,7 +492,8 @@ class RadioEngine {
         final b = lineup[i];
         final count = observed[b.id] ?? 0;
         final v = BirdVoice(b, obsToDepth(count), _rng,
-            flock: core.flockSize(b.id, count, _birdsData));
+            flock: core.flockSize(b.id, count, _birdsData))
+          ..birdVol = birdVol;
         // 左右に均等配置(現行の left = 20 + i/(n-1) * 60 を -1..1 に写す)
         final t = lineup.length > 1 ? i / (lineup.length - 1) : 0.5;
         v.pan = ((20 + t * 60) - 50) / 50.0;
@@ -553,6 +631,13 @@ class RadioEngine {
     if (await RadioNative.stopRequested()) {
       await RadioNative.clearStopRequest();
       toggle(onChange);
+    }
+  }
+
+  /// 鳥の音量つまみを、いま鳴いている鳥に即反映する。
+  void applyBirdVolume() {
+    for (final v in birds) {
+      v.applyBirdVolume(birdVol);
     }
   }
 

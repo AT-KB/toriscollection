@@ -23,7 +23,47 @@ void main() {
     final e = RadioEngine();
     await e.restorePrefs();
     expect(e.ambOn['wind'], isTrue);
-    expect(e.ambVol, closeTo(0.55, 1e-9));
+    // ⚠️ 2026-09-22 に 0.55 から下げた。**保存済みの人は変わらない**
+    // (下の試験)。効くのは新規と、まだ触っていない人だけ。
+    expect(e.ambVol, closeTo(kAmbVolDefault, 1e-9));
+    expect(kAmbVolDefault, closeTo(0.45, 1e-9));
+  });
+
+  test('鳥の音量は、既定 0.80 で、触れば次に開いた時も残る', () async {
+    // ## なぜ要るか(CEO 実機 2026-09-22「鳥の声が全然聞こえない」)
+    // 音量つまみは環境音にしかかかっておらず、鳥の音量はユーザーが触れる
+    // 手段が無かった。つまみを足した以上、**環境音と同じように覚える**。
+    final a = RadioEngine();
+    await a.restorePrefs();
+    expect(a.birdVol, closeTo(kBirdVolDefault, 1e-9));
+    expect(kBirdVolDefault, closeTo(0.80, 1e-9),
+        reason: 'つまみが端に寄っていると「もう上げられない」と見える。'
+            '上にも下にも動かせる位置に置く');
+    // 触らなくても現行(1.00)より大きい。CEO はつまみを探さなくてよい。
+    expect(kBirdVolDefault * kBirdGainMax, greaterThan(1.0),
+        reason: '既定で現行より小さくなると、直したことにならない');
+
+    a.birdVol = 0.35;
+    await a.savePrefs();
+
+    final b = RadioEngine();
+    await b.restorePrefs();
+    expect(b.birdVol, closeTo(0.35, 1e-9),
+        reason: '毎回また下げ直すことになる');
+    // 環境音のつまみを巻き込んでいないこと。
+    expect(b.ambVol, closeTo(kAmbVolDefault, 1e-9));
+  });
+
+  test('既定値を下げても、保存済みの人の環境音は変わらない', () async {
+    final a = RadioEngine();
+    await a.restorePrefs();
+    a.ambVol = 0.55;   // 前の既定をそのまま使っていた人
+    await a.savePrefs();
+
+    final b = RadioEngine();
+    await b.restorePrefs();
+    expect(b.ambVol, closeTo(0.55, 1e-9),
+        reason: '保存値より既定が優先されると、人が決めた音量を勝手に変える');
   });
 
   test('選んだ環境音と音量が、次に開いた時も残る', () async {
