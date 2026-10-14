@@ -1,5 +1,23 @@
 # ストア掲載文言2案＋スクショ構成案（Phase S / 元指示書 2-3 成果物A）
 
+> ⚠️ **注記 2026-10-15（SNS部）— この文書は 2026-07-20 の下書きで、現状と合わない箇所がある。**
+> 当時は「クローズドテスト中・公開前」だったが、いまは **Play で公開中**（versionCode 8 / 2.0.0）。
+> 文中の `Currently in Android closed testing` と `[LP_URL]` は、そのまま使えない。
+>
+> 🔴 **「なぜ来たか」の削除（CEO 2026-09-22 / commit `885a6ee`）との関係を確かめた。**
+> B案の **`Every arrival has a real reason.`**（:80）と A案の
+> `Which bird comes, and why, follows a real food web…`（:45）、
+> `hook_bank.md` の D-02 / D-05、`script_templates.md` の :103 / :115 は、
+> いずれも **「どの鳥が来るかを食物網が決める」という仕組みの話**であって、
+> 削除された「図鑑に理由の一文が出る」機能の話ではない。**仕組みは生きている**
+> （`toris_core/lib/src/engine.dart:207` の `arrivalProbability` が `web.birdFood` を読む／
+> `toris_app/lib/garden/network_page.dart` の食物網の図も健在）。**嘘にはなっていない。**
+>
+> ただし **`Every arrival has a real reason.` は「アプリが到来の理由を文章で教えてくれる」とも
+> 読める。** その機能はもう無い。**この一文を実際に入稿するなら、B案は
+> A案の `Which bird comes, and why, follows a real food web from GloBI.` のような
+> 仕組みの言い方に寄せること**（原則4）。
+
 **担当: SNS部（文言）＋開発部（スクショ実素材の書き出し）｜公開はしない＝準備のみ（決定3-3: クローズドテスト完了後の別指示で公開）｜言語: 英語ファースト｜作成 2026-07-20**
 
 ## 読んだ一次情報（このドキュメントの根拠）
