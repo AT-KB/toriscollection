@@ -36,7 +36,7 @@
              Capacitor 版(公開中 v6)の strings.xml と同じ値。 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9002945296291643~1195899268" />
+            android:value="ca-app-pub-3571053447722259~2296719134" />
         <activity
             android:name="com.toriscollection.toris_app.MainActivity"
             android:exported="true"

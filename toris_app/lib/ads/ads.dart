@@ -21,13 +21,13 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
-/// AdMob の広告ユニット(CEO 提供・2026-08-21)。
+/// AdMob の広告ユニット(CEO 提供・2026-10-18。pub-3571 へ一本化)。
 ///
-/// アプリ ID `ca-app-pub-9002945296291643~1195899268` は
+/// アプリ ID `ca-app-pub-3571053447722259~2296719134` は
 /// `AndroidManifest.xml` の meta-data に書く(ここではない)。
 class AdUnits {
-  static const banner = 'ca-app-pub-9002945296291643/4334445334';
-  static const reward = 'ca-app-pub-9002945296291643/7956060372';
+  static const banner = 'ca-app-pub-3571053447722259/3300563637';
+  static const reward = 'ca-app-pub-3571053447722259/9945863035';
 
   /// Google 公式のテスト用ユニット。実機で自分の広告を叩かないため、
   /// 動作確認はこちらでやる(自分の広告をクリックすると規約違反になる)。
