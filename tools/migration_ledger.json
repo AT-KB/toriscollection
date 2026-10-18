@@ -13,7 +13,7 @@
     "absence_loop.evolve_state": {
       "dart": "evolveWhileAway",
       "status": "done",
-      "why": ""
+      "why": "**意図した部分移植。** Python の evolve_state は到着ごとに events(arrived_at / bird_id / reason_text / related_plant_id / related_insect_id / memento_id)を返すが、Dart の evolveWhileAway が返す AbsenceResult は residents / arrivals(鳥 id だけ) / departures / ticks / lostPlants / disturbances / plantedFinal の7つで、**events に当たるものを持たない**。\n落とした中身と、落とした理由:\n・reason_text / related_plant_id / related_insect_id — 「なぜ来たか」。CEO 2026-09-22 の判断で製品から削除(885a6ee)。生成側の absence_loop.build_reason_text と eco_log.* は同時に status=dropped にしてある。\n・memento_id — 落とし物。CEO 2026-08-15「落とし物は要らない」で mementos.* ごと dropped。\n・arrived_at — 到着の時刻。Dart は「留守のあいだに誰が来て誰が去ったか」しか画面に出さず(popups.dart の Welcome back)、1件ずつの時刻を使う先が無い。\n**時間の進み方そのもの(刻み数・撹乱・到来/退去の判定)は移してあり、突き合わせ済み** — logic_test.dart「留守のあいだの進み方: 区切りが Python 版と同じ」/「撹乱: 定数と判定の境目が Python 版と同じ」。Python 側は論理の正として events ごと残っているので、戻すなら AbsenceResult に足し直す形になる。"
     },
     "absence_loop.humanize_delta": {
       "dart": "humanizeDelta",

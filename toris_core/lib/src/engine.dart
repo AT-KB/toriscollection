@@ -393,9 +393,12 @@ class AbsenceResult {
 
 /// 前回見たときから今までを進める。`absence_loop.evolve_state` に当たる。
 ///
-/// 到着した鳥には「なぜ来たか」の一文が付く(`reasons`)。理由は
-/// **そのサイクルの食物網**から組む — 撹乱で植生が変わるので、あとから
-/// まとめて組むと嘘になる。
+/// ⚠️ **意図した部分移植。** Python は到着ごとに `events`
+/// (`reason_text` / `related_plant_id` / `related_insect_id` / `memento_id` /
+/// `arrived_at`)を返すが、こちらが返すのは**誰が来て誰が去ったか**まで。
+/// 「なぜ来たか」は 2026-09-22 に製品から削除し(`885a6ee`)、落とし物は
+/// 2026-08-15 に落としている。落とした理由は
+/// `tools/migration_ledger.json` の `absence_loop.evolve_state` の `why`。
 AbsenceResult evolveWhileAway({
   required List<String> plantedPlants,
   required String biomeId,
