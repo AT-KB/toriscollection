@@ -20,6 +20,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
@@ -85,7 +86,7 @@ Future<void> showMetBirdPopup(
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('🪶 You met a bird'),
+      title: Text(t('🪶 You met a bird')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +111,7 @@ Future<void> showMetBirdPopup(
                         const SizedBox(height: 4),
                         Text(
                           m.first
-                              ? '✨ Nice to meet you! Newly added to your guide'
+                              ? t('✨ Nice to meet you! Newly added to your guide')
                               : "Met again. Another mark in your guide's log.",
                           style: const TextStyle(
                               fontSize: 13, height: 1.4, color: kSub),
@@ -125,7 +126,7 @@ Future<void> showMetBirdPopup(
       ),
       actions: [
         FilledButton(
-            onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+            onPressed: () => Navigator.pop(ctx), child: Text(t('Close'))),
       ],
     ),
   );
@@ -146,7 +147,7 @@ Future<void> showWelcomeBackPopup(
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('🌿 Welcome back'),
+      title: Text(t('🌿 Welcome back')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -176,9 +177,13 @@ Future<void> showWelcomeBackPopup(
                     Expanded(
                       child: Text(
                         a.first
-                            ? '✨ Nice to meet you, ${_name(g, a.id)}! '
-                                'Newly added to your guide'
-                            : '${_name(g, a.id)} had come by',
+                            ? '✨ ${L10n.lang.value == Lang.ja ? "はじめまして、" : "Nice to meet you, "}'
+                                '${_name(g, a.id)}'
+                                '${L10n.lang.value == Lang.ja ? "。" : "! "}'
+                                '${t('Newly added to your guide')}'
+                            : (L10n.lang.value == Lang.ja
+                                ? '${_name(g, a.id)} が来ていました'
+                                : '${_name(g, a.id)} had come by'),
                         style: const TextStyle(
                             fontSize: 14, height: 1.4, color: kInk),
                       ),
@@ -224,7 +229,7 @@ Future<void> showWelcomeBackPopup(
       actions: [
         FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('View the garden')),
+            child: Text(t('View the garden'))),
       ],
     ),
   );

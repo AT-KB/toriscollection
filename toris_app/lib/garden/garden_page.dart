@@ -10,6 +10,7 @@
 /// 前回からの経過ぶんだけ庭が動いている。押して進める仕掛けは置かない。
 library;
 
+import '../i18n.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -219,7 +220,7 @@ class _GardenPageState extends State<GardenPage>
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             children: [
               Text(
-                'Plant  ${g.planted.length}/${g.maxPlants}',
+                '${t('Plant')}  ${g.planted.length}/${g.maxPlants}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -363,7 +364,7 @@ class _GardenPageState extends State<GardenPage>
     final g = _g;
     if (g == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Garden')),
+        appBar: AppBar(title: Text(t('Garden'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -384,7 +385,7 @@ class _GardenPageState extends State<GardenPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Garden'),
+        title: Text(t('Garden')),
         actions: [
           // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。
           IconButton(
@@ -436,8 +437,8 @@ class _GardenPageState extends State<GardenPage>
               // (CEO 2026-08-16「land の鳥も insects みたいに名前とアイコンを
               // 下に出して」)。木の上の鳥は小さいので、ここで誰か分かる。
               if (g.visiting.isEmpty)
-                const Text(
-                  'No one yet.',
+                Text(
+                  t('No one yet.'),
                   style: TextStyle(color: kSub, fontSize: 15),
                 )
               else
@@ -468,15 +469,15 @@ class _GardenPageState extends State<GardenPage>
                     _ritual == null ? Icons.hearing : Icons.stop_rounded,
                     size: 26,
                   ),
-                  label: Text(_ritual == null ? 'Listen closely' : 'Enough'),
+                  label: Text(_ritual == null ? t('Listen closely') : t('Enough')),
                 ),
                 // 眺めるのはいつでもできる。**記録にならない**時だけ、静かに断る。
                 if (!g.ritualCounts)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Text(
-                      "🌙 You've listened closely enough for today. "
-                      'When a new bird comes, you can go and meet it again.',
+                      t("🌙 You've listened closely enough for today. "
+                      'When a new bird comes, you can go and meet it again.'),
                       style: TextStyle(fontSize: 12, height: 1.4, color: kSub),
                     ),
                   ),
@@ -489,7 +490,7 @@ class _GardenPageState extends State<GardenPage>
               // 庭に常設すると、痩せたことをずっと突きつけることになる。
 
               // ── ③ 土地 ──
-              const _Label('Your land'),
+              _Label(t('Your land')),
               Wrap(
                 key: _landKey,
                 spacing: 10,
@@ -521,20 +522,20 @@ class _GardenPageState extends State<GardenPage>
               Row(
                 children: [
                   Expanded(
-                    child: _Label('Plant  ${g.planted.length}/${g.maxPlants}'),
+                    child: _Label('${t('Plant')}  ${g.planted.length}/${g.maxPlants}'),
                   ),
                   if (g.planted.length < g.maxPlants)
                     TextButton.icon(
                       key: _plantKey,
                       onPressed: () => _openPlantPicker(g),
                       icon: const Icon(Icons.add, size: 20),
-                      label: const Text('Add'),
+                      label: Text(t('Add')),
                     ),
                 ],
               ),
               if (g.planted.isEmpty)
                 Text(
-                  'Nothing planted yet.',
+                  t('Nothing planted yet.'),
                   style: TextStyle(color: kSub, fontSize: 14),
                 )
               else
@@ -582,19 +583,19 @@ class _GardenPageState extends State<GardenPage>
               // **短く。種名は絵文字で代用**(CEO 2026-08-16)。
               // 何が起きているかは庭の絵に出ているので、文はひとことでいい。
               if (g.chain.raptors.isNotEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Text(
-                    'The squirrel drew a hawk. '
-                    'Shy birds keep their distance.',
+                    t('The squirrel drew a hawk. '
+                    'Shy birds keep their distance.'),
                     style: TextStyle(fontSize: 13, height: 1.4, color: kSub),
                   ),
                 )
               else if (g.chain.animals.isNotEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Text(
-                    'A squirrel is taking the seed.',
+                    t('A squirrel is taking the seed.'),
                     style: TextStyle(fontSize: 13, color: kSub),
                   ),
                 ),
@@ -686,7 +687,7 @@ class _GardenPageState extends State<GardenPage>
       alignment: Alignment.centerLeft,
       child: OutlinedButton.icon(
         icon: const Text('🎁'),
-        label: const Text('A tool for today'),
+        label: Text(t('A tool for today')),
         onPressed: _busy ? null : () => _claimTool(g),
       ),
     );
@@ -701,8 +702,8 @@ class _GardenPageState extends State<GardenPage>
     if (!mounted) return;
     setState(() => _busy = false);
     if (r != ads.AdResult.success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No tool this time. It will be here tomorrow too.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(t('No tool this time. It will be here tomorrow too.')),
       ));
       return;
     }

@@ -4,6 +4,7 @@
 /// 説明を足したくなったら、まず作りを疑う。
 library;
 
+import '../i18n.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -84,7 +85,7 @@ class _RadioPageState extends State<RadioPage>
     super.build(context);
     final e = _engine;
     return Scaffold(
-      appBar: AppBar(title: const Text('Garden radio')),
+      appBar: AppBar(title: Text(t('Garden radio'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
@@ -130,7 +131,7 @@ class _RadioPageState extends State<RadioPage>
                 e.ready ? () => _engine.toggle(() => setState(() {})) : null,
             icon: Icon(e.running ? Icons.stop_rounded : Icons.play_arrow_rounded,
                 size: 30),
-            label: Text(e.running ? 'Stop' : 'Listen'),
+            label: Text(e.running ? t('Stop') : t('Listen')),
           ),
           if (e.error != null) ...[
             const SizedBox(height: 8),
@@ -177,11 +178,11 @@ class _RadioPageState extends State<RadioPage>
           // ⚠️ 会った鳥が0なら**セクションごと出さない**。鳴りようのない
           // ものの音量つまみを出すことになる(`showBirdVolume`)。
           if (showBirdVolume(e.birds)) ...[
-            _SectionLabel('Birds'),
+            _SectionLabel(t('Birds')),
             Row(children: [
               const Icon(Icons.music_note_rounded, color: kSub),
               const SizedBox(width: 8),
-              const Text('Birds', style: TextStyle(fontSize: 14, color: kSub)),
+              Text(t('Birds'), style: const TextStyle(fontSize: 14, color: kSub)),
               Expanded(
                 child: Slider(
                   value: e.birdVol,
@@ -197,14 +198,14 @@ class _RadioPageState extends State<RadioPage>
             const SizedBox(height: 18),
           ],
 
-          _SectionLabel('Ambience'),
+          _SectionLabel(t('Ambience')),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               for (final k in kAmbienceKeys)
                 FilterChip(
-                  label: Text(kAmbienceLabel[k] ?? k),
+                  label: Text(t(kAmbienceLabel[k] ?? k)),
                   selected: e.ambOn[k] == true,
                   onSelected: (on) {
                     setState(() => e.ambOn[k] = on);
@@ -219,7 +220,7 @@ class _RadioPageState extends State<RadioPage>
           Row(children: [
             const Icon(Icons.volume_up_rounded, color: kSub),
             const SizedBox(width: 8),
-            const Text('Ambience', style: TextStyle(fontSize: 14, color: kSub)),
+            Text(t('Ambience'), style: const TextStyle(fontSize: 14, color: kSub)),
             Expanded(
               child: Slider(
                 value: e.ambVol,
@@ -235,14 +236,14 @@ class _RadioPageState extends State<RadioPage>
           const SizedBox(height: 18),
 
           // ── 睡眠モード ──
-          _SectionLabel('Sleep'),
+          _SectionLabel(t('Sleep')),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               for (final m in kSleepMinutes)
                 ChoiceChip(
-                  label: Text('$m min'),
+                  label: Text(L10n.lang.value == Lang.ja ? '$m 分' : '$m min'),
                   selected: false,
                   onSelected: e.ready
                       ? (_) => e.startSleep(m, () => setState(() {}))

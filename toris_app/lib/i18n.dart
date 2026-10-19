@@ -117,6 +117,48 @@ class L10n {
     'Close': 'とじる',
     'View the garden': '庭を見る',
 
+    // ── 庭(garden_page.dart) ──
+    'A tool for today': 'きょうの道具',
+    'No tool this time. It will be here tomorrow too.':
+        'きょうは道具がありませんでした。あすもここにあります。',
+    'Add': '足す',
+    'Feeder': '餌台',
+    'No one yet.': 'まだ誰も来ていません。',
+    'Listen closely': '耳を澄ます',
+    'Enough': 'おしまい',
+    "🌙 You've listened closely enough for today. When a new bird comes, you can go and meet it again.":
+        '🌙 きょうはもう十分に耳を澄ましました。新しい鳥が来たら、また会いに行けます。',
+    'Your land': 'あなたの土地',
+    'Plant': '植えたもの',
+    'Nothing planted yet.': 'まだ何も植えていません。',
+    'The squirrel drew a hawk. Shy birds keep their distance.':
+        'リスが鷹を呼びました。警戒心の強い鳥は近づきません。',
+    'A squirrel is taking the seed.': 'リスが種を食べています。',
+
+    // ── 出会い・おかえり(popups.dart) ──
+    '✨ Nice to meet you! Newly added to your guide':
+        '✨ はじめまして。図鑑に加わりました',
+
+    // ── ラジオ(radio_page.dart) ──
+    'Garden radio': '庭のラジオ',
+    'Listen': '聴く',
+    'Stop': '止める',
+    'Birds': '鳥の声',
+    'Ambience': '環境音',
+    'Sleep': '寝落ち',
+
+    // ── 環境音の名前(radio_engine.dart の kAmbienceLabel) ──
+    '🌧 Rain': '🌧 雨',
+    '🍃 Wind': '🍃 風',
+    '💧 Stream': '💧 せせらぎ',
+    '🌊 Waves': '🌊 波',
+    '🏞 Lake': '🏞 湖',
+    '🔥 Fire': '🔥 焚き火',
+    '🕳 Cave': '🕳 洞窟',
+
+    // ── つながり(network_page.dart) ──
+    'Bird': '鳥',
+
     // ── 言語の切り替え(guide_page.dart の先頭) ──
     'Language': '言語',
     'English': 'English',
