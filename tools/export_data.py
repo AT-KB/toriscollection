@@ -27,9 +27,12 @@ OUT = os.path.join(OUT_DIR, "birds.json")
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "..",
                            "toris_core", "test", "fixtures")
 
-# Flutter 版で使う項目だけ。表示は英語のみなので、日本語の名前と説明は運ばない
-# (製品版は 2026-08-09 に日本語表示を落としている)。
-FIELDS = ("scientific", "english", "description_en", "color",
+# Flutter 版で使う項目だけ。
+# ⚠️ **日本語の説明文(`description`)も運ぶ**(CEO 2026-10-19「日本語に
+# 切り替えってできない?」→「やれ」)。37種すべてに和文があるので、
+# でっち上げて訳す必要がない(原則4「生態に誠実」)。
+# 日本語の**名前**は運ばない — 図鑑は英名と学名で並べる作りのままなので。
+FIELDS = ("scientific", "english", "description_en", "description", "color",
           "eats_plants", "eats_insects", "temp_fit", "biome_pref",
           "rarity", "wariness")
 

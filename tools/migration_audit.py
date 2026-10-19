@@ -361,9 +361,31 @@ URL_DROPPED = {
 }
 
 
-# 画面に日本語が出ていないこと。**アプリの表示は全部英語**
-# (一度これで作り直しになった)。コメントと doc は日本語なので、
-# 文字列リテラルの中だけを見る。
+# 画面の日本語。
+#
+# ⚠️ **2026-10-19 に意味が変わった。** それまでは「アプリの表示は全部英語」で、
+# 画面の文字列に日本語があること自体が問題だった(一度これで作り直しになった)。
+# CEO の判断で**日本語への切り替えを入れた**ので、いまの約束はこう変わる:
+#
+#   **英語を選んでいる人に、日本語が漏れないこと。**
+#
+# 日本語があってよいのは2つだけ:
+#   1. 辞書そのもの(`lib/i18n.dart`)
+#   2. **言語で分岐している行** — 日本語で語順が変わる文は辞書に載せられないので、
+#      `L10n.lang.value == Lang.ja ? ... : ...` の形で持っている
+#
+# それ以外の場所の日本語は、**英語の人の画面に出る**ので問題。
+JP_ALLOWED_FILES = ("i18n.dart",)
+JP_GUARDED = ("L10n.lang.value == Lang.ja", "L10n.lang.value==Lang.ja")
+
+# 分岐は**数行上**にあることがある(三項演算子が複数行に折れるため)。
+# この行数だけさかのぼって目印を探す。
+JP_GUARD_LOOKBACK = 4
+
+# 英語の画面でも日本語のままでよい文字列。
+# 言語の名前は、その言語で書くのが世界共通のやり方(英語の人が探せなくなる)。
+JP_ALLOWED_TEXT = ("日本語",)
+
 JP = r"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]"
 
 
@@ -404,12 +426,22 @@ def screen_audit() -> list:
             for pat, why in FORBIDDEN_IN_UI:
                 if re.search(pat, line):
                     problems.append(f"{rel}:{n} {why}\n        {line.strip()[:90]}")
-            # 表示文字列の中の日本語だけを見る
+            # 表示文字列の中の日本語だけを見る。
+            # 辞書そのものと、言語で分岐している行は除く(上の説明を読むこと)。
+            if any(a in rel for a in JP_ALLOWED_FILES):
+                continue
+            # 言語で分岐しているか。三項演算子が折れている場合に備えて、
+            # 数行さかのぼって目印を探す。
+            window = "".join(lines[max(0, n - 1 - JP_GUARD_LOOKBACK):n])
+            if any(g in window for g in JP_GUARDED):
+                continue
             for lit in re.findall(r"'([^'\\]*)'|\"([^\"\\]*)\"", line):
                 text = lit[0] or lit[1]
+                if text in JP_ALLOWED_TEXT:
+                    continue
                 if re.search(JP, text):
                     problems.append(
-                        f"{rel}:{n} 画面に日本語(アプリは全部英語)\n"
+                        f"{rel}:{n} 英語を選んでいる人に日本語が漏れる\n"
                         f"        {text[:60]}")
 
     # あるべきものが落ちていないか。

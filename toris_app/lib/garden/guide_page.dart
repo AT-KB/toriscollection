@@ -223,9 +223,15 @@ class _Entry extends StatelessWidget {
                         _Row(t('Home'), home),
                         _Row(t('Fears'), fears, note: fearsNote),
                         _OutLinks(b),
+                        // 説明文は**種データに両方入っている**(`export_data.py` の
+                        // FIELDS)。和文が欠けている種は英文に落とす。
                         if (b['description_en'] != null) ...[
                           const _Rule(),
-                          Text(b['description_en'] as String,
+                          Text(
+                              (L10n.lang.value == Lang.ja
+                                      ? (b['description'] ?? b['description_en'])
+                                      : b['description_en'])
+                                  as String,
                               style: const TextStyle(
                                   fontSize: 14, color: kInk, height: 1.7)),
                         ],
@@ -261,10 +267,12 @@ class _Entry extends StatelessWidget {
           Text(days > 0 ? '$stars   ${_badge(days)}' : stars,
               style: const TextStyle(fontSize: 12, color: kSub)),
           if (!observed)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Listen closely in the garden to see it up close.',
-                  style: TextStyle(fontSize: 12, height: 1.45, color: kSub)),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                  t('Listen closely in the garden to see it up close.'),
+                  style: const TextStyle(
+                      fontSize: 12, height: 1.45, color: kSub)),
             ),
         ],
       );
@@ -341,12 +349,17 @@ class _Row extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SizedBox(
-          width: 62,
-          child: Text(label.toUpperCase(),
-              style: const TextStyle(
-                  fontSize: 10,
+          // ⚠️ 幅は**言語で変える**。62 は英語の LIKES / HOME / FEARS に
+          // 合わせた値で、日本語の「好きな場所」「苦手なもの」は入らず
+          // 値とくっついて出る(2026-10-20 に実機で発覚)。
+          // 日本語は字間を詰めず、大文字化もしない(漢字かなには効かない)。
+          width: L10n.lang.value == Lang.ja ? 84 : 62,
+          child: Text(
+              L10n.lang.value == Lang.ja ? label : label.toUpperCase(),
+              style: TextStyle(
+                  fontSize: L10n.lang.value == Lang.ja ? 11 : 10,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
+                  letterSpacing: L10n.lang.value == Lang.ja ? 0 : 1.0,
                   height: 2.1,
                   color: kSub)),
         ),
@@ -417,10 +430,10 @@ class _OutLinks extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Wrap(spacing: 8, runSpacing: 8, children: [
-        _Chip('🖼️ See a real photo',
+        _Chip(t('🖼️ See a real photo'),
             () => _open('https://www.google.com/search?tbm=isch&q=$photoQ')),
         _Chip(
-            '📖 Wikipedia (EN)',
+            t('📖 Wikipedia (EN)'),
             () => _open('https://en.wikipedia.org/wiki/Special:Search'
                 '?search=$wikiQ')),
       ]),
