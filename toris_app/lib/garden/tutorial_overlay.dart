@@ -17,6 +17,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../i18n.dart';
 import '../ui/theme.dart';
 
 /// 覆いの1枚ぶん。
@@ -234,7 +235,7 @@ class _Card extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            t(title),
             style: const TextStyle(
               fontSize: 20,
               height: 1.25,
@@ -244,14 +245,14 @@ class _Card extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            body,
+            t(body),
             style: const TextStyle(fontSize: 15, height: 1.5, color: kSub),
           ),
           if (nextLabel != null) ...[
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(onPressed: onNext, child: Text(nextLabel!)),
+              child: FilledButton(onPressed: onNext, child: Text(t(nextLabel!))),
             ),
           ],
         ],

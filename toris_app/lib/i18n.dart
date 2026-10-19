@@ -129,7 +129,7 @@ class L10n {
     "🌙 You've listened closely enough for today. When a new bird comes, you can go and meet it again.":
         '🌙 きょうはもう十分に耳を澄ましました。新しい鳥が来たら、また会いに行けます。',
     'Your land': 'あなたの土地',
-    'Plant': '植えたもの',
+    'Planted': '植えたもの',
     'Nothing planted yet.': 'まだ何も植えていません。',
     'The squirrel drew a hawk. Shy birds keep their distance.':
         'リスが鷹を呼びました。警戒心の強い鳥は近づきません。',
@@ -158,6 +158,56 @@ class L10n {
 
     // ── つながり(network_page.dart) ──
     'Bird': '鳥',
+
+    // ── チュートリアル(文言は `toris_core/src/tutorial.dart` にある。
+    //    **core は触らず、表示側で包んでいる**) ──
+    'Choose your land': '土地をえらぶ',
+    'Charlotte or Kyoto. You can change it any time.':
+        'シャーロットか京都。あとでいつでも変えられます。',
+    'Plant something': '何か植えてみる',
+    'Plants bring insects. Insects bring birds.':
+        '植物が虫を呼び、虫が鳥を呼びます。',
+    'Insects came': '虫が来ました',
+    'Birds come for these.': 'これを目当てに鳥が来ます。',
+    'I see': 'なるほど',
+    'No insects yet': 'まだ虫が来ていません',
+    'They need the right temperature too. Another plant may help.':
+        '虫は気温も選びます。もう一種類 植えると来るかもしれません。',
+    'Now close the app': 'いったんアプリを閉じて',
+    'Time passes on its own. Come back later and birds will have visited.':
+        '時間はひとりでに進みます。あとで開くと、鳥が来ています。',
+    'Start': 'はじめる',
+
+    // ── 顔ぶれの一言(`toris_core/src/stories.dart` の固定文。同じく表示側で包む) ──
+    '🐛  Insect-eaters today': '🐛  きょうは虫を食べる鳥たち',
+    '🍇  Berry and nectar lovers today': '🍇  きょうは実と蜜の好きな鳥たち',
+    '🍃  A bit of everything today': '🍃  きょうは何でも食べる鳥たち',
+    '🐦  Each their own way today': '🐦  きょうはそれぞれの食べ方で',
+    '🌡  Same climate, different tastes': '🌡  同じ気候、ちがう好み',
+    '🌿  Gathered by this garden': '🌿  この庭が集めた顔ぶれ',
+
+    // ── つながり(network_page.dart) ──
+    'Plant something first.\nThen you can see who it feeds.':
+        'まず何か植えてみてください。\n何を養っているかが見えます。',
+    'Plant': '植物',
+    'Insect': '虫',
+
+    // ── 引っ越しコード(transfer_sheet.dart) ──
+    'Move your garden': '庭を引っ越す',
+    'Your garden is saved on this phone. You only need a code to move it to another one.':
+        'この庭はこの端末に保存されています。別の端末に移すときだけ、コードが要ります。',
+    'Copy my code': 'コードをコピー',
+    'I have a code': 'コードを持っている',
+    'Paste the code here': 'ここにコードを貼る',
+    'Bring it back': '戻す',
+    'Code copied.': 'コードをコピーしました。',
+    'Garden restored.': '庭を戻しました。',
+    "That code doesn't look right.": 'そのコードは正しくないようです。',
+    'Replace this garden?': 'この庭を置きかえますか？',
+    'The garden on this phone will be replaced by the one in the code.':
+        'この端末の庭が、コードの中の庭に置きかわります。',
+    'Cancel': 'やめる',
+    'Replace': '置きかえる',
 
     // ── 言語の切り替え(guide_page.dart の先頭) ──
     'Language': '言語',

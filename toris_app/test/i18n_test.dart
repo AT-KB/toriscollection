@@ -74,7 +74,14 @@ void main() {
       if (f.path.endsWith('i18n.dart')) continue; // 辞書そのものは除く
       scanned++;
       for (final m in call.allMatches(f.readAsStringSync())) {
-        final k = m.group(1) ?? m.group(2)!;
+        // ⚠️ ソースを読む方式なので、改行の書き方(バックスラッシュ + n)は
+        // **2文字のまま**拾われる。辞書の鍵は Dart が評価したあとの文字列
+        // (本物の改行)なので、ここで戻しておかないと、**ある鍵を「無い」と
+        // 誤って言う**(2026-10-20 に実際にそうなった)。
+        final k = (m.group(1) ?? m.group(2)!)
+            .replaceAll(r'\n', '\n')
+            .replaceAll(r'\t', '\t')
+            .replaceAll(r"\'", "'");
         keys.putIfAbsent(k, () => []).add(f.path);
       }
     }

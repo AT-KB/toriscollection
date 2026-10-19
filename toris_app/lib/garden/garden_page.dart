@@ -220,7 +220,7 @@ class _GardenPageState extends State<GardenPage>
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             children: [
               Text(
-                '${t('Plant')}  ${g.planted.length}/${g.maxPlants}',
+                '${t('Planted')}  ${g.planted.length}/${g.maxPlants}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -522,7 +522,7 @@ class _GardenPageState extends State<GardenPage>
               Row(
                 children: [
                   Expanded(
-                    child: _Label('${t('Plant')}  ${g.planted.length}/${g.maxPlants}'),
+                    child: _Label('${t('Planted')}  ${g.planted.length}/${g.maxPlants}'),
                   ),
                   if (g.planted.length < g.maxPlants)
                     TextButton.icon(

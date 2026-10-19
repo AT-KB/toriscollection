@@ -159,7 +159,7 @@ class _RadioPageState extends State<RadioPage>
           // (CEO 2026-08-16「文字多くて読みにくい。もっと少なく、大きく」)。
           if (e.birds.isNotEmpty && e.lineupStory.isNotEmpty) ...[
             const SizedBox(height: 18),
-            Text(e.lineupStory,
+            Text(t(e.lineupStory),
                 style: const TextStyle(
                     fontSize: 16, height: 1.3, color: kInk)),
           ],
