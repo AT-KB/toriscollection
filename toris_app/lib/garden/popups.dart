@@ -140,9 +140,16 @@ Future<void> showMetBirdPopup(
 Future<void> showWelcomeBackPopup(
     BuildContext context, Garden g, AwayReport r) {
   final h = r.hoursAway;
+  final ja = L10n.lang.value == Lang.ja;
   final lead = h >= 48
-      ? "It's been ${(h / 24).floor()} days. While you were away —"
-      : (h >= 2 ? "It's been a little while. While you were away —" : null);
+      ? (ja
+          ? awayLeadJa(h)
+          : "It's been ${(h / 24).floor()} days. While you were away —")
+      : (h >= 2
+          ? (ja
+              ? awayLeadJa(h)
+              : "It's been a little while. While you were away —")
+          : null);
 
   return showDialog<void>(
     context: context,
@@ -160,7 +167,10 @@ Future<void> showWelcomeBackPopup(
             ],
             // 立ち寄りの要約(1種なら名前で、複数種なら件数と種数で)
             if (r.summary.isNotEmpty) ...[
-              Text(core.awayHeadline(r.summary),
+              Text(
+                  ja
+                      ? awayHeadlineJa(r.summary)
+                      : core.awayHeadline(r.summary),
                   style: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: kInk)),
               const SizedBox(height: 12),

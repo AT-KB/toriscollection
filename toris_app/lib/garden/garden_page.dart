@@ -164,10 +164,15 @@ class _GardenPageState extends State<GardenPage>
             for (final p in g.lastLostPlants) _name(g.data.plants, p),
           ]),
       ],
-      summary: core.summarizeEvents(
-        g.lastArrivals,
-        (b) => _name(g.data.birds, b),
-      ),
+      // ⚠️ 要約は **core が英語で組み立てる可変文**(`summarizeEvents`)。
+      // 辞書では引けないので、日本語のときだけ**同じ材料から**組み直す。
+      // core は触らない(Python との突き合わせを壊さないため)。
+      summary: L10n.lang.value == Lang.ja
+          ? summaryJa(g.lastArrivals, (b) => _name(g.data.birds, b))
+          : core.summarizeEvents(
+              g.lastArrivals,
+              (b) => _name(g.data.birds, b),
+            ),
     );
     if (report.worthShowing && mounted) {
       await showWelcomeBackPopup(context, g, report);

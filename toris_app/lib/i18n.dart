@@ -215,3 +215,33 @@ class L10n {
     '日本語': '日本語',
   };
 }
+
+/// ── 可変文(辞書で引けないもの)────────────────────────────────
+///
+/// ⚠️ **日本語はここに置く。** 画面側に直接書くと、監査の
+/// 「英語を選んでいる人に日本語が漏れる」に正しく引っかかる
+/// (関数の中は、呼び出し側の言語分岐から離れてしまうため)。
+/// `toris_core` が英語で組み立てている文は、**同じ材料から**ここで組み直す。
+/// core は触らない — Python との突き合わせを壊さないため。
+
+/// 留守のあいだの立ち寄りの要約。`toris_core` の `summarizeEvents` と
+/// **同じ材料・同じ区切り**。英語は「1回なら once / それ以外は N times」と
+/// 単複が変わるが、日本語は助数詞なので「N回」で揃う。
+String summaryJa(List<String> birdIdsInOrder, String Function(String) nameOf) {
+  if (birdIdsInOrder.isEmpty) return '';
+  final n = birdIdsInOrder.length;
+  final species = birdIdsInOrder.toSet();
+  if (species.length == 1) {
+    final name = nameOf(species.first);
+    return n == 1 ? '$name が1回 立ち寄りました' : '$name が$n回 立ち寄りました';
+  }
+  return '$n回の立ち寄り(${species.length}種)';
+}
+
+/// 留守のあいだの見出し。`toris_core` の `awayHeadline` に当たる。
+String awayHeadlineJa(String summary) => '🌙 留守のあいだに: $summary';
+
+/// 「◯日ぶりですね」。時間は画面側が持っているので、文だけを組む。
+String awayLeadJa(double hoursAway) => hoursAway >= 48
+    ? '${(hoursAway / 24).floor()}日ぶりですね。留守のあいだに —'
+    : 'しばらくぶりですね。留守のあいだに —';
