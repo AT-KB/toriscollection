@@ -275,13 +275,18 @@ class _AlarmPageState extends State<AlarmPage> {
           // 何が選べるのかを、事実として書く。
           Text(
             widget.met.isEmpty
-                ? 'Meet birds up close in your garden, and they join this '
-                    'list — and the chorus.'
+                ? t('Meet birds up close in your garden, and they join this '
+                    'list — and the chorus.')
                 // 1羽のときに "the 1 birds" になっていた(2026-08-25 実機で発覚)。
-                : 'Two more join as it grows, drawn from the '
-                    '${widget.met.length} '
-                    '${widget.met.length == 1 ? "bird" : "birds"} '
-                    'you have met up close.',
+                // 日本語は数え方が違うので、**文ごと差し替える**(英語の語順に
+                // 寄せると不自然になる)。
+                : (L10n.lang.value == Lang.ja
+                    ? '庭で近くで出会った ${widget.met.length} 羽の中から、'
+                        'もう2羽が加わります。'
+                    : 'Two more join as it grows, drawn from the '
+                        '${widget.met.length} '
+                        '${widget.met.length == 1 ? "bird" : "birds"} '
+                        'you have met up close.'),
             style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
           ),
           const SizedBox(height: 16),
@@ -329,7 +334,7 @@ class _AlarmPageState extends State<AlarmPage> {
               s == null
                   ? '…'
                   : (s.enabled
-                      ? '⏰ Set for ${s.hhmm}'
+                      ? '⏰ ${s.hhmm}${L10n.lang.value == Lang.ja ? " にセット" : ""}'
                       : t('Not set right now')),
               style: const TextStyle(color: Color(0xFF3F5C37)),
             ),

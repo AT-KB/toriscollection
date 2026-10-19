@@ -56,7 +56,11 @@ class TorisApp extends StatelessWidget {
     builder: (context, _, child) => MaterialApp(
       title: 'Toris Collection',
       theme: buildTheme(),
-      home: const HomeShell(),
+      // ⚠️ **const を付けない。** const にすると同じインスタンスとみなされ、
+      // 親が建て直しても**この下が丸ごと飛ばされる**。実機で「日本語を押しても
+      // 画面が英語のまま」になった原因がこれ(2026-10-19)。
+      // 毎回新しい widget を作れば、State は保ったまま下まで建て直される。
+      home: HomeShell(),
     ),
   );
 }

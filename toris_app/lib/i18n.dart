@@ -94,6 +94,8 @@ class L10n {
     'Permission needed for exact timing': '正確な時刻で鳴らすには許可が要ります',
     'Not now': 'いまはしない',
     'Open settings': '設定を開く',
+    'Meet birds up close in your garden, and they join this list — and the chorus.':
+        '庭で鳥と近くで出会うと、この一覧に加わって、朝のコーラスにも入ります。',
 
     // ── 図鑑(guide_page.dart) ──
     'By region': '地域順',
