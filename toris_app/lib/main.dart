@@ -6,8 +6,9 @@
 /// `toris_collection/docs/team/proposals/2026-08-11_技術方針_Flutter移行の判断.md`。
 ///
 /// ## 守ること
-/// - **表示は英語のみ。** 製品版は 2026-08-09 に日本語表示を落としている。
-///   文言は i18n.py の TRANSLATIONS にある出荷済みの英語を引き写す。
+/// - **既定は英語。日本語に切り替えられる**(CEO 2026-10-19「日本語に切り替えって
+///   できない?」→「やれ」)。辞書と切替は `i18n.dart`、切替の置き場所は図鑑の先頭。
+///   **画面にある英語そのものが辞書の鍵**で、辞書に無い文言は英語のまま出る。
 /// - **文字は少なく、ボタンは大きく**(CEO 2026-08-14)。決めごとは `ui/theme.dart`。
 /// - **セーブコードの互換。** 進行データはサーバーに無く、あの文字列としてのみ
 ///   ユーザーの手元にある(`toris_core` で双方向の一致を確認済み)。
@@ -31,6 +32,7 @@ import 'garden/garden_page.dart';
 import 'garden/garden_state.dart';
 import 'garden/guide_page.dart';
 import 'garden/network_page.dart';
+import 'i18n.dart';
 import 'radio/radio_page.dart';
 import 'ui/theme.dart';
 
@@ -38,6 +40,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 広告 SDK。失敗しても投げない — 広告が無くてもアプリは全部動く(原則2)。
   await initAds();
+  // 覚えていた言語を戻す。**画面を建てる前**に読む(英語で一瞬出てから
+  // 日本語に化けるのを避ける)。読めなければ既定の英語のまま。
+  await L10n.restore();
   runApp(const TorisApp());
 }
 
@@ -45,10 +50,14 @@ class TorisApp extends StatelessWidget {
   const TorisApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Toris Collection',
-    theme: buildTheme(),
-    home: const HomeShell(),
+  Widget build(BuildContext context) => ValueListenableBuilder<Lang>(
+    // 言語が変わったら、画面を丸ごと建て直す。
+    valueListenable: L10n.lang,
+    builder: (context, _, child) => MaterialApp(
+      title: 'Toris Collection',
+      theme: buildTheme(),
+      home: const HomeShell(),
+    ),
   );
 }
 
@@ -98,24 +107,26 @@ class _HomeShellState extends State<HomeShell> {
           child: NavigationBar(
             selectedIndex: tutorial ? 1 : _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
+            // ⚠️ const を外してある — 名前が言語で変わるため。
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.graphic_eq),
-                label: 'Radio',
+                icon: const Icon(Icons.graphic_eq),
+                label: t('Radio'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.park_outlined),
-                label: 'Garden',
+                icon: const Icon(Icons.park_outlined),
+                label: t('Garden'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.menu_book_outlined),
-                label: 'Guide',
+                icon: const Icon(Icons.menu_book_outlined),
+                label: t('Guide'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.hub_outlined),
-                label: 'Network',
+                icon: const Icon(Icons.hub_outlined),
+                label: t('Network'),
               ),
-              NavigationDestination(icon: Icon(Icons.alarm), label: 'Wake'),
+              NavigationDestination(
+                  icon: const Icon(Icons.alarm), label: t('Wake')),
             ],
           ),
         ),

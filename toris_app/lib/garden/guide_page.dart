@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
@@ -44,7 +45,7 @@ class _GuidePageState extends State<GuidePage> {
     final g = widget.garden;
     if (g == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Guide')),
+        appBar: AppBar(title: Text(t('Guide'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -73,14 +74,34 @@ class _GuidePageState extends State<GuidePage> {
         .length;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Guide  $found/${ids.length}')),
+      appBar: AppBar(title: Text('${t('Guide')}  $found/${ids.length}')),
       body: Column(children: [
+        // ── 言語の切り替え ──
+        // 設定画面が無く、図鑑は**文字を読む画面**なので、言語の切替はここが
+        // いちばん自然に収まる。庭やラジオの上に出すと、静かな画面に操作子が
+        // 増えて原則5「かわいさ優先」に障る(PJ管理部長 2026-10-19)。
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(children: [
+            const Icon(Icons.translate_rounded, size: 18, color: kSub),
+            const SizedBox(width: 8),
+            SegmentedButton<Lang>(
+              segments: const [
+                ButtonSegment(value: Lang.en, label: Text('English')),
+                ButtonSegment(value: Lang.ja, label: Text('日本語')),
+              ],
+              selected: {L10n.lang.value},
+              showSelectedIcon: false,
+              onSelectionChanged: (v) => L10n.set(v.first),
+            ),
+          ]),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'region', label: Text('By region')),
-              ButtonSegment(value: 'rarity', label: Text('By rarity')),
+            segments: [
+              ButtonSegment(value: 'region', label: Text(t('By region'))),
+              ButtonSegment(value: 'rarity', label: Text(t('By rarity'))),
             ],
             selected: {_sort},
             onSelectionChanged: (s) => setState(() => _sort = s.first),
@@ -147,7 +168,7 @@ class _Entry extends StatelessWidget {
     // 移植で落ちていた(2026-08-18 の監査で発覚)。原則4「生態に誠実」。
     // 文言は i18n.py の出荷済みの英語をそのまま使う。
     final fearsNote = core.predatorIsGenusLevel(id, g.data.predators)
-        ? '(from records of close relatives)'
+        ? t('(from records of close relatives)')
         : null;
 
     return Theme(
@@ -169,12 +190,12 @@ class _Entry extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
             child: !discovered
                 // まだ来ていない鳥は、何も明かさない。
-                ? const Align(
+                ? Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(4, 0, 4, 10),
-                      child: Text('Not yet in your garden.',
-                          style: TextStyle(color: kSub)),
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+                      child: Text(t('Not yet in your garden.'),
+                          style: const TextStyle(color: kSub)),
                     ),
                   )
                 // ── 図鑑の1ページ ──
@@ -198,9 +219,9 @@ class _Entry extends StatelessWidget {
                           ],
                         ),
                         const _Rule(),
-                        _Row('Likes', likes),
-                        _Row('Home', home),
-                        _Row('Fears', fears, note: fearsNote),
+                        _Row(t('Likes'), likes),
+                        _Row(t('Home'), home),
+                        _Row(t('Fears'), fears, note: fearsNote),
                         _OutLinks(b),
                         if (b['description_en'] != null) ...[
                           const _Rule(),
