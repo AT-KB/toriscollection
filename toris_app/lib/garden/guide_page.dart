@@ -316,11 +316,17 @@ class _Entry extends StatelessWidget {
   }
 
   /// 会った日数の節目。`badges.py` と同じ区切り。
+  ///
+  /// ⚠️ **「1 days」と出ていた**(2026-10-20、ストア用スクショを撮って発覚)。
+  /// 英語は1日だけ単数。日本語は助数詞なので単複の区別が無い。
   String _badge(int days) {
-    if (days >= 100) return '🏅 $days days together';
-    if (days >= 30) return '🌿 $days days together';
-    if (days >= 10) return '🌱 $days days together';
-    return '$days days';
+    final ja = L10n.lang.value == Lang.ja;
+    final unit = ja ? '日' : (days == 1 ? 'day' : 'days');
+    final together = ja ? 'いっしょに$days$unit' : '$days $unit together';
+    if (days >= 100) return '🏅 $together';
+    if (days >= 30) return '🌿 $together';
+    if (days >= 10) return '🌱 $together';
+    return ja ? '$days$unit' : '$days $unit';
   }
 }
 
