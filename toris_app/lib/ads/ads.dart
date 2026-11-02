@@ -117,6 +117,20 @@ List<String> offeredItems(
   ];
 }
 
+/// 道具ごとの効き目の説明(英語。訳は `i18n.dart`)。
+///
+/// **`toris_core/garden_items.dart` の計算にあることだけを言う**(原則4)。
+///  - 継ぎ足し: `eats_plants` を持つ鳥の到来に +1pp
+///  - 水浴び場: 全種の退去率から −5%
+///  - リスよけ: `feeder_chain` のリス→タカの鎖を断つ
+const Map<String, String> kItemEffects = {
+  'feeder': 'Seed-eating birds come a little more often.',
+  'bird_bath': 'Birds that come stay a little longer.',
+  'squirrel_baffle':
+      'Keeps squirrels off the open feeder, so the hawk that follows them '
+          'stays away and shy birds come closer.',
+};
+
 /// ランダムに1つ選ぶ。候補が無ければ null。
 String? pickItem(
     String biomeId, Map<String, dynamic> birdsData, List<String> feeders,

@@ -1,4 +1,5 @@
 /// 表示言語の切り替え。**英語が既定**(CEO 承認・`HANDOFF_I18N_2026-07-17.md` §1)。
+/// ただし**まだ選んでいない人は端末の言語に合わせる**(CEO 2026-11-03)。
 ///
 /// ## なぜ辞書が「英語 → 日本語」なのか
 /// 現行(Streamlit)の `i18n.py` は **日本語原文 → 英訳** を持っている。
@@ -15,6 +16,8 @@
 /// 直訳しない。**急かさない。命令形を足さない。** 英語の原文が静かなら
 /// 日本語も静かに。事務的な言い回しは避ける。
 library;
+
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,11 +45,21 @@ class L10n {
         lang.value = Lang.ja;
       } else if (v == 'en') {
         lang.value = Lang.en;
+      } else if (deviceLanguage() == 'ja') {
+        // まだ選んでいない人は、端末の言語に合わせる(CEO 2026-11-03)。
+        // 日本語の端末で英語から始まると、切替が図鑑の奥にあって
+        // 気づかれない。**保存はしない** — 選んだのは本人ではないので。
+        lang.value = Lang.ja;
       }
     } catch (_) {
       // 端末の保存が読めないことがある。既定(EN)のまま続ける。
     }
   }
+
+  /// 端末の言語。試験で差し替えられるよう窓にしてある。
+  @visibleForTesting
+  static String Function() deviceLanguage =
+      () => ui.PlatformDispatcher.instance.locale.languageCode;
 
   /// 切り替えて覚える。
   static Future<void> set(Lang l) async {
@@ -209,6 +222,49 @@ class L10n {
     'Cancel': 'やめる',
     'Replace': '置きかえる',
 
+    // ── 2026-11-03 に見つけた取り残し ──
+    'It kept its distance today.': 'きょうは、距離をとられました。',
+    'They kept their distance today.': 'きょうは、距離をとられました。',
+    "Met again. Another mark in your guide's log.":
+        'また会えました。図鑑の記録がひとつ増えました。',
+    "🎙 A new voice has joined the radio's cast. Come have a listen.":
+        '🎙 ラジオに新しい声が加わりました。よかったら聴いてみてください。',
+    'Allow "Alarms & reminders" in Android settings. '
+            'Without it, the time can drift while your phone sleeps.':
+        'Android の設定で「アラームとリマインダー」を許可してください。'
+            '許可がないと、スマホが眠っているあいだに時刻がずれることがあります。',
+
+    // 庭の見出しと餌台。辞書には 'Feeder' があったのに、画面が `const` のまま
+    // `t()` を通っていなかった(10/20 の const の罠の取り残し)
+    'Insects': '虫',
+    'Open feeder': '開いた餌台',
+    'Caged feeder': 'かご型の餌台',
+
+    // ── きょうの道具(広告リワード。garden_page.dart / ads.dart) ──
+    "Today's tool is used up. Another one tomorrow.":
+        'きょうの道具は使いました。あすまた届きます。',
+    'Watch a short ad and one tool is set out in your garden for 6 hours. '
+            'Once a day. Skipping it changes nothing — '
+            'the voices, the radio and your guide stay just the same.':
+        '短い広告を見ると、道具がひとつ庭に置かれて、6時間だけ効きます(1日1回)。'
+            '見なくても何も変わりません。鳥の声も、ラジオも、図鑑もそのままです。',
+    'One of these, picked at random:': 'このうちどれかひとつが届きます:',
+    // 道具の名前(`toris_core` の kItemNames。core は触らず表示側で包む)
+    'A top-up of seed': '種の継ぎ足し',
+    'Hummingbird feeder': 'ハチドリ用の餌台',
+    'Suet feeder': '脂の餌台',
+    'Bird bath': '水浴び場',
+    'Nyjer seed feeder': 'ニジャーの餌台',
+    'Squirrel baffle': 'リスよけ',
+    // 道具の効き目(ads.dart の kItemEffects)。**計算にあることだけ言う**(原則4)
+    'Seed-eating birds come a little more often.':
+        '種や実を食べる鳥が、少し来やすくなります。',
+    'Birds that come stay a little longer.': '来た鳥が、少し長くいてくれます。',
+    'Keeps squirrels off the open feeder, so the hawk that follows them '
+            'stays away and shy birds come closer.':
+        '開いた餌台にリスが来なくなり、リスを追うタカも寄りません。'
+            '用心深い鳥が近づきやすくなります。',
+
     // ── 言語の切り替え(guide_page.dart の先頭) ──
     'Language': '言語',
     'English': 'English',
@@ -240,6 +296,34 @@ String summaryJa(List<String> birdIdsInOrder, String Function(String) nameOf) {
 
 /// 留守のあいだの見出し。`toris_core` の `awayHeadline` に当たる。
 String awayHeadlineJa(String summary) => '🌙 留守のあいだに: $summary';
+
+/// 道具が効いているあいだの1行。英語は「name — 3h left」。
+String itemLeftJa(String name, int hours) => '$name — あと$hours時間';
+
+/// 道具を受け取った直後の知らせ。英語は「name — for the next 6 hours.」。
+String itemPlacedJa(String emoji, String name) =>
+    '$emoji $name — これから6時間、効きます。';
+
+/// 道具が選べない理由。`toris_core` の `itemUnavailableReason` と**同じ分岐**。
+/// 事実だけを言い、責める言い方にしない(原則2)。
+String itemUnavailableJa(String itemId, String emoji, String name) =>
+    switch (itemId) {
+      'squirrel_baffle' => '$emoji $name — まだ守る餌台がありません'
+          '(開いた餌台を置くと使えます)。',
+      'feeder' => '$emoji $name — まだ継ぎ足す餌台がありません'
+          '(餌台を置くと使えます)。',
+      'hummingbird_feeder' => '$emoji $name — この庭にはハチドリが'
+          '住んでいないので使えません(シャーロットの庭で効きます)。',
+      _ => '$emoji $name — いまこの庭に、効く相手の鳥がいません。',
+    };
+
+/// まだ誰にも会っていないときのラジオ。英語は土地名が文の途中に入る。
+String radioEmptyJa(String biomeId) =>
+    '${biomeId == 'kyoto' ? '京都' : 'シャーロット'}で鳥に出会うと、'
+    'ここでその声が聴けます。';
+
+/// おやすみタイマーの終わり。英語は「Until 23:30」。
+String untilJa(String time) => '$time まで';
 
 /// 「◯日ぶりですね」。時間は画面側が持っているので、文だけを組む。
 String awayLeadJa(double hoursAway) => hoursAway >= 48

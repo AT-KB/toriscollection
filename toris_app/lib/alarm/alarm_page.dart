@@ -107,9 +107,9 @@ class _AlarmPageState extends State<AlarmPage> {
         context: context,
         builder: (c) => AlertDialog(
           title: Text(t('Permission needed for exact timing')),
-          content: const Text(
-            'Allow "Alarms & reminders" in Android settings. '
-            'Without it, the time can drift while your phone sleeps.',
+          content: Text(
+            t('Allow "Alarms & reminders" in Android settings. '
+                'Without it, the time can drift while your phone sleeps.'),
           ),
           actions: [
             TextButton(

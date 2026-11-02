@@ -357,8 +357,8 @@ class _GardenPageState extends State<GardenPage>
       // 失ったものは無く、もう一度押せばやり直せる。
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(flewOff.length == 1
-            ? 'It kept its distance today.'
-            : 'They kept their distance today.'),
+            ? t('It kept its distance today.')
+            : t('They kept their distance today.')),
       ));
     }
   }
@@ -394,7 +394,7 @@ class _GardenPageState extends State<GardenPage>
         actions: [
           // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。
           IconButton(
-            tooltip: 'Move your garden',
+            tooltip: t('Move your garden'),
             icon: const Icon(Icons.ios_share_rounded),
             onPressed: () => showTransferSheet(
               context,
@@ -566,13 +566,13 @@ class _GardenPageState extends State<GardenPage>
               // 開放型を置くとリスが届き、リスがタカを呼び、臆病な鳥が来にくくなる。
               // かご型ならリスは届かない。**これが唯一の駆け引き**で、罰ではなく選択。
               const SizedBox(height: 20),
-              const _Label('Feeder'),
+              _Label(t('Feeder')),
               Wrap(
                 spacing: 10,
                 children: [
                   for (final f in ['feeder_open', 'feeder_cage'])
                     ChoiceChip(
-                      label: Text(core.kFeeders[f]!['english'] as String),
+                      label: Text(t(core.kFeeders[f]!['english'] as String)),
                       selected: g.feeders.contains(f),
                       onSelected: (on) async {
                         setState(() => g.setFeeder(on ? f : null));
@@ -608,7 +608,7 @@ class _GardenPageState extends State<GardenPage>
               // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
               if (web.insects.isNotEmpty) ...[
                 const SizedBox(height: 20),
-                const _Label('Insects'),
+                _Label(t('Insects')),
                 Wrap(
                   key: _insectKey,
                   spacing: 8,
@@ -656,18 +656,29 @@ class _GardenPageState extends State<GardenPage>
   ///  - 今日もう受け取った → 静かに「また明日」
   ///  - 候補が無い(餌台が無い等) → `itemUnavailableReason` の事実だけ出す
   Widget _todayTool(Garden g) {
+    final ja = L10n.lang.value == Lang.ja;
+    const sub = TextStyle(fontSize: 13, height: 1.4, color: kSub);
     final active = core.itemIsActive(g.itemPlacement);
     if (active) {
       final id = g.itemPlacement!.itemId;
       final hours = core.itemHoursRemaining(g.itemPlacement).ceil();
+      final name = t(core.kItemNames[id]!);
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(core.kGardenItems[id]!.emoji, style: const TextStyle(fontSize: 20)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              '${core.kItemNames[id]} — ${hours}h left',
-              style: const TextStyle(fontSize: 13, color: kSub),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(ja ? itemLeftJa(name, hours) : '$name — ${hours}h left',
+                    style: sub),
+                // 何が効いているのかを、効いているあいだ見えるようにする。
+                if (ads.kItemEffects[id] != null)
+                  Text(t(ads.kItemEffects[id]!),
+                      style: sub.copyWith(fontSize: 12)),
+              ],
             ),
           ),
         ],
@@ -675,26 +686,54 @@ class _GardenPageState extends State<GardenPage>
     }
 
     if (ads.hasClaimedToday(g.lastItemClaimDay)) {
-      return const Text("Today's tool is used up. Another one tomorrow.",
-          style: TextStyle(fontSize: 13, color: kSub));
+      return Text(t("Today's tool is used up. Another one tomorrow."),
+          style: sub);
     }
 
     final pool = ads.offeredItems(g.biomeId, g.data.birds, g.feeders);
     if (pool.isEmpty) {
       // 何が足りないかを事実として言う。責める言い方にしない(原則2)。
+      final it = core.kGardenItems['feeder']!;
       return Text(
-        core.itemUnavailableReason('feeder', g.biomeId, g.data.birds),
-        style: const TextStyle(fontSize: 13, color: kSub),
+        ja
+            ? itemUnavailableJa('feeder', it.emoji, t(core.kItemNames['feeder']!))
+            : core.itemUnavailableReason('feeder', g.biomeId, g.data.birds),
+        style: sub,
       );
     }
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: OutlinedButton.icon(
-        icon: const Text('🎁'),
-        label: Text(t('A tool for today')),
-        onPressed: _busy ? null : () => _claimTool(g),
-      ),
+    // 押す前に「何が起きるか」と「押さなくても損しない」を言っておく(原則1)。
+    // 候補は**いまこの庭で選べるものだけ**見せる — 届かないものを並べない。
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        OutlinedButton.icon(
+          icon: const Text('🎁'),
+          label: Text(t('A tool for today')),
+          onPressed: _busy ? null : () => _claimTool(g),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          t('Watch a short ad and one tool is set out in your garden for 6 hours. '
+              'Once a day. Skipping it changes nothing — '
+              'the voices, the radio and your guide stay just the same.'),
+          style: sub.copyWith(fontSize: 12),
+        ),
+        if (pool.length > 1) ...[
+          const SizedBox(height: 6),
+          Text(t('One of these, picked at random:'),
+              style: sub.copyWith(fontSize: 12)),
+        ],
+        for (final id in pool)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '${core.kGardenItems[id]!.emoji} ${t(core.kItemNames[id]!)} — '
+              '${t(ads.kItemEffects[id] ?? '')}',
+              style: sub.copyWith(fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 
@@ -721,9 +760,12 @@ class _GardenPageState extends State<GardenPage>
     });
     await _save();
     if (!mounted) return;
+    final emoji = core.kGardenItems[id]!.emoji;
+    final name = t(core.kItemNames[id]!);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('${core.kGardenItems[id]!.emoji} '
-          '${core.kItemNames[id]} — for the next 6 hours.'),
+      content: Text(L10n.lang.value == Lang.ja
+          ? itemPlacedJa(emoji, name)
+          : '$emoji $name — for the next 6 hours.'),
     ));
   }
 

@@ -112,7 +112,7 @@ Future<void> showMetBirdPopup(
                         Text(
                           m.first
                               ? t('✨ Nice to meet you! Newly added to your guide')
-                              : "Met again. Another mark in your guide's log.",
+                              : t("Met again. Another mark in your guide's log."),
                           style: const TextStyle(
                               fontSize: 13, height: 1.4, color: kSub),
                         ),
@@ -227,9 +227,9 @@ Future<void> showWelcomeBackPopup(
                   color: const Color(0xFFE8F1DE),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                    "🎙 A new voice has joined the radio's cast. "
-                    'Come have a listen.',
+                child: Text(
+                    t("🎙 A new voice has joined the radio's cast. "
+                        'Come have a listen.'),
                     style: TextStyle(fontSize: 13, height: 1.4, color: kInk)),
               ),
             ],

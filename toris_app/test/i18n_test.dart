@@ -15,12 +15,16 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toris_app/ads/ads.dart' as ads;
 import 'package:toris_app/i18n.dart';
+import 'package:toris_core/toris_core.dart' as core;
 
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     L10n.lang.value = Lang.en;
+    // 試験機の言語に左右されないよう、既定は英語の端末にしておく。
+    L10n.deviceLanguage = () => 'en';
   });
 
   test('既定は英語。英語のときは、鍵がそのまま返る', () {
@@ -57,6 +61,31 @@ void main() {
     await L10n.restore();
     expect(L10n.lang.value, Lang.en,
         reason: '英語に戻した人が、開き直すと日本語になってしまう');
+  });
+
+  test('まだ選んでいない人は、日本語の端末なら日本語で始まる', () async {
+    L10n.deviceLanguage = () => 'ja';
+    await L10n.restore();
+    expect(L10n.lang.value, Lang.ja);
+    final p = await SharedPreferences.getInstance();
+    expect(p.getString('app_lang'), isNull,
+        reason: '本人が選んでいないのに保存すると、端末の言語を変えても追従しない');
+  });
+
+  test('一度英語を選んだ人は、日本語の端末でも英語のまま', () async {
+    await L10n.set(Lang.en);
+    L10n.deviceLanguage = () => 'ja';
+    await L10n.restore();
+    expect(L10n.lang.value, Lang.en);
+  });
+
+  test('きょうの道具の名前と効き目は、全部日本語になる', () {
+    // t(変数) で引いているので、下の「画面の鍵」試験では拾えない。
+    for (final id in core.kOfferedItems) {
+      expect(L10n.dictionary, contains(core.kItemNames[id]), reason: id);
+      expect(ads.kItemEffects, contains(id), reason: '$id の効き目の説明が無い');
+      expect(L10n.dictionary, contains(ads.kItemEffects[id]), reason: id);
+    }
   });
 
   // ── ここが本題 ────────────────────────────────────────────

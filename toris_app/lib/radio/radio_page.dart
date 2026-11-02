@@ -119,9 +119,11 @@ class _RadioPageState extends State<RadioPage>
           // 環境音だけ流すでいいよ、案内建てといて」)。原則3「癒しは無料」。
           if (e.ready && e.birds.isEmpty) ...[
             Text(
-              'Once you meet birds in '
-              '${widget.biomeId == 'kyoto' ? 'Kyoto' : 'Charlotte'}, '
-              "you can hear their voices here.",
+              L10n.lang.value == Lang.ja
+                  ? radioEmptyJa(widget.biomeId)
+                  : 'Once you meet birds in '
+                      '${widget.biomeId == 'kyoto' ? 'Kyoto' : 'Charlotte'}, '
+                      "you can hear their voices here.",
               style: const TextStyle(fontSize: 15, height: 1.4, color: kSub),
             ),
             const SizedBox(height: 14),
@@ -252,8 +254,13 @@ class _RadioPageState extends State<RadioPage>
               if (e.sleepEndsAt != null)
                 ActionChip(
                   avatar: const Icon(Icons.close_rounded, size: 18),
-                  label: Text(
-                      'Until ${TimeOfDay.fromDateTime(e.sleepEndsAt!).format(context)}'),
+                  label: Text(() {
+                    final time =
+                        TimeOfDay.fromDateTime(e.sleepEndsAt!).format(context);
+                    return L10n.lang.value == Lang.ja
+                        ? untilJa(time)
+                        : 'Until $time';
+                  }()),
                   onPressed: () => setState(() => e.cancelSleep()),
                 ),
             ],
