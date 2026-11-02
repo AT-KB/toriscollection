@@ -129,3 +129,21 @@ CEO「リワードの説明を拡充してほしい」。
 
 審査中の 2.0.4+12 は 10/18 のビルドなので、**日本語化(10/19〜)も今回の変更も入っていない**。
 次の版(2.0.5+13)で出す。広告の ID は同じなので、AdMob の審査には影響しない。
+
+---
+
+## 6. 🔴 未完 — 種名・土地名まで日本語にする(CEO 2026-11-03「全部実装するまで変更申請はしない」)
+
+**2.0.5 の申請は、ここが終わるまで出さない。** 調べ終わった段階で中断した(着手前、コードは未変更)。
+
+- 和名は `toris_collection/data.py` の `name` に**全部ある**(鳥37・植物・虫・土地 `京都` 等)
+- `tools/export_data.py` が `name` を運んでいない → `FIELDS` / plants / insects / biomes に `"name"` を足して再出力
+  (アセットと `toris_core/test/fixtures` の両方に書かれる。core の試験を回すこと)
+- `i18n.dart` に `nameOf(entry, id, {enKey})`(ja なら `name`、無ければ英名)を置き、次を差し替える:
+  `garden_page.dart:197,506` / `guide_page.dart:66-67,129,142,163,251` / `network_page.dart:86-88` /
+  `popups.dart:81` / `radio_engine.dart:473`(`englishOf`)
+- 目覚ましの鳥(`alarm.dart` の `alarmBirds`)は庭のデータを持たない → 起動時に birds.json から
+  id→和名を `L10n` に登録して `alarmBirdName` で引く。日本語の直書きは監査で落ちるので不可
+- 天敵の分類名 `kPredatorLabels`(Hawks 等12)を `t()` に通して辞書へ
+- 図鑑の「📖 Wikipedia (EN)」は ja なら ja.wikipedia を和名で
+- 切替の場所は今も**図鑑タブの先頭**。CEO が気づいていない可能性あり、目立つ場所を相談
