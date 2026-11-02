@@ -53,13 +53,19 @@ const bool kAdsEnabled = true;
 /// ⚠️ **自分の広告をクリックすると規約違反**になる。本番ユニットのまま実機で
 /// 触るために、下の `kTestDeviceIds` に端末を登録してある — 登録された端末は
 /// 本番ユニットでも**テスト広告**が返るので、無効なトラフィックにならない。
-const bool kUseTestAds = false;
+///
+/// 未承認のあいだ本番ユニットは no fill(エラー3)しか返さないので、
+/// 表示とクリックの確認は `--dart-define=TEST_ADS=true` で作った版でやる。
+const bool kUseTestAds = bool.fromEnvironment('TEST_ADS');
 
 /// 開発者の実機。`Ads` のログが出す ID をそのまま入れる。
 /// (Pixel 6a。logcat の "Use RequestConfiguration.Builder().setTestDeviceIds" 行)
 /// ⚠️ **ID はアプリごとに変わる。** 別の版で拾った ID を使い回して、
 /// テスト扱いにならず no-fill になった(2026-08-21)。**必ず実機のログで確認する**:
 ///   adb logcat -d | grep setTestDeviceIds
+/// ⚠️ **ファンの端末は入れない。** 2026-11-03 に確認で使った Pixel 6a
+/// (`CE2D…`)は友人の端末だった。登録するとその人の普段の利用が
+/// テスト扱いになり、リクエストにも収益にも数えられない。
 const List<String> kTestDeviceIds = ['2A01E481D0F33C1370C283B384772638'];
 
 String get bannerUnitId => kUseTestAds ? AdUnits.bannerTest : AdUnits.banner;
