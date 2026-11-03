@@ -40,8 +40,9 @@ int _stepsToMeet(int seed) {
 void main() {
   _timingTests();
 
-  test('敷居は90秒。**待てば会える**感じを壊さない長さであること', () {
-    expect(Ritual.maxSteps * Ritual.step.inMilliseconds / 1000, 90.0);
+  test('敷居は120秒。**待てば会える**感じを壊さない長さであること', () {
+    // 2026-11-03 に 90 → 120秒(歩くテンポを遅くしたぶん、敷居を延ばした)
+    expect(Ritual.maxSteps * Ritual.step.inMilliseconds / 1000, 120.0);
 
     // 2万回まわして、90秒(36歩)以内に成立する割合を見る。
     // ここが大きく下がるようなら、歩き方か敷居のどちらかを変えている。
@@ -55,7 +56,7 @@ void main() {
             'これを下回るなら、待てば会えるという約束が壊れている');
   });
 
-  test('90秒で会える割合は、**どのスタイルでも** 97% を下回らない', () {
+  test('敷居までに会える割合は、**どのスタイルでも** 97% を下回らない', () {
     // ⚠️ 2026-09-22 で歩く速さが鳥ごとに変わった。**固定36歩ではもう測れない。**
     // 90秒で打てる歩数はスタイルごとに違うので、その歩数で切って数える。
     //
@@ -71,8 +72,8 @@ void main() {
       }
       final rate = ok / 20000;
       expect(rate, greaterThan(0.97),
-          reason: '${st.name} で 90秒に会える割合が 97% を切った '
-              '(実測 quick 98.50 / steady 98.02 / calm 97.75%)。'
+          reason: '${st.name} で 120秒に会える割合が 97% を切った '
+              '(実測 quick 99.6 / steady 98.9 / calm 98.0%)。'
               'テンポを遅くすると歩数が減ってここが落ちる');
     }
   });
@@ -109,7 +110,7 @@ void main() {
     // 急かす表示を作らないための歯止め(原則1)。値は持つが、
     // 画面に出したくなったらこの試験の意図を読み直すこと。
     final r = Ritual(['blue_jay'], Random(1));
-    expect(r.secondsLeft, 90.0);
+    expect(r.secondsLeft, 120.0); // 2026-11-03 に 90 → 120秒
   });
 }
 
@@ -149,7 +150,7 @@ List<int> _hopTicks(Random r, int totalTicks, HopStyle st) {
 }
 
 void _timingTests() {
-  const totalTicks = Ritual.maxSteps * Ritual.ticksPerStep; // 90秒ぶん
+  const totalTicks = Ritual.maxSteps * Ritual.ticksPerStep; // 120秒ぶん
 
   test('刻みは 2.5秒 をちょうど割り切る(1歩=10刻み)', () {
     expect(Ritual.tickInterval.inMilliseconds * Ritual.ticksPerStep,
@@ -173,12 +174,14 @@ void _timingTests() {
         reason: '3羽が完全に同じ刻みで跳んでいる = 一斉に動いて見える');
   });
 
-  test('どのスタイルも、90秒で36歩以上は打つ', () {
+  test('どのスタイルも、敷居までに36歩以上は打つ', () {
+    // ⚠️ 2026-11-03: テンポを遅くし(2.0 / 2.75 / 3.25秒)、敷居を120秒に延ばした。
+    // **下限は前と同じ 36歩**(歩数が減ると成立率が落ちる)。
     // ⚠️ **期待値は 2026-09-22 に変わった。** 前は全羽が平均 2.5秒ちょうどで
     // 「36歩前後」だったが、いまは quick / steady を**速く**してある。
     // 遅い側は作っていないので、**下限は calm の 36.0歩**。
     // (企画 A-3: 実効平均を 2.50秒より遅くしない = 歩数を減らさない)
-    const expected = {'quick': 40.3, 'steady': 37.6, 'calm': 36.0};
+    const expected = {'quick': 54.0, 'steady': 41.4, 'calm': 36.9};
     const trials = 2000;
     for (final st in HopStyle.all) {
       var total = 0;
@@ -188,7 +191,7 @@ void _timingTests() {
       final avg = total / trials;
       expect(avg, closeTo(expected[st.name]!, 1.0),
           reason: '${st.name} の歩数が想定(${expected[st.name]})から外れた');
-      expect(avg, greaterThanOrEqualTo(Ritual.maxSteps - 1.0),
+      expect(avg, greaterThanOrEqualTo(35.0),
           reason: '${st.name} が現行(36.0歩)より遅い。'
               '遅い鳥を作ると成立率が落ちる(企画 A-3)');
     }
