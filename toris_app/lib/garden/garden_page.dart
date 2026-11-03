@@ -396,6 +396,10 @@ class _GardenPageState extends State<GardenPage>
         actions: [
           const LangButton(),
           // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。
+          // **チュートリアル中は出さない**(2026-11-03)。Play の審査担当者が
+          // 案内の途中でここを開き、コード欄をログイン画面と判定して却下した。
+          // チュートリアルは「やることを1つに保つ」ので、ここも隠すのが筋。
+          if (!g.tutorialRunning)
           IconButton(
             tooltip: t('Move your garden'),
             icon: const Icon(Icons.ios_share_rounded),

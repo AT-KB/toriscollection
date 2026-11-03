@@ -210,9 +210,13 @@ class L10n {
     'Your garden is saved on this phone. You only need a code to move it to another one.':
         'この庭はこの端末に保存されています。別の端末に移すときだけ、コードが要ります。',
     'Copy my code': 'コードをコピー',
-    'I have a code': 'コードを持っている',
-    'Paste the code here': 'ここにコードを貼る',
-    'Bring it back': '戻す',
+    // 2026-11-03 Play の審査で「ログイン画面」と判定された(LoginWall.png)。
+    // アカウントが要らないことを言い切り、入れる側は「別の端末から」と限定する。
+    'No account or sign-in. This is only for moving to a new phone.':
+        'アカウントやログインはありません。新しい端末に移すときだけ使います。',
+    'I have a code from my old phone': '前の端末のコードを持っている',
+    "Paste your old phone's code here": '前の端末のコードをここに貼る',
+    'Restore this garden': 'この庭に戻す',
     'Code copied.': 'コードをコピーしました。',
     'Garden restored.': '庭を戻しました。',
     "That code doesn't look right.": 'そのコードは正しくないようです。',
