@@ -161,7 +161,9 @@ class _GardenPageState extends State<GardenPage>
       // 撹乱は種類ごとに一文で語る。倒れた植物はその文の中に入る。
       disturbanceStories: [
         for (final d in g.lastDisturbances)
-          core.disturbanceStory(d.type, d.icon, [
+          // core は英語で組む可変文。日本語は同じ材料から i18n.dart で組み直す。
+          (L10n.lang.value == Lang.ja ? disturbanceStoryJa : core.disturbanceStory)(
+              d.type, d.icon, [
             for (final p in g.lastLostPlants) _name(g.data.plants, p),
           ]),
       ],

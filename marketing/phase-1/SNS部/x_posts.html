@@ -57,6 +57,9 @@ h1 { font-family: var(--display); font-weight: 700; font-size: 26px; line-height
 .post h2 { font-family: var(--display); font-size: 19px; margin: 0; }
 .when { font-size: 12px; color: var(--sub); letter-spacing: .02em; }
 .attach { font-size: 13px; color: var(--sub); margin: 0; }
+.shot { display: flex; flex-direction: column; gap: 6px; }
+.shot img { width: 100%; max-width: 360px; border-radius: 10px; border: 1px solid var(--line); display: block; }
+.shot small { font-size: 12px; color: var(--sub); }
 .attach b { color: var(--ink); font-weight: 500; }
 .sheet { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .sheet .label {
@@ -93,7 +96,7 @@ button.done { background: var(--paper); color: var(--leaf); }
     <ul>
       <li><b>2.0.5(日本語版)が Google Play で公開されてから</b>出す。いまの版は画面が英語です</li>
       <li>Play のリンクは<b>本文ではなくリプ欄</b>に置く(本文にリンクがあると届く範囲が下がるため)</li>
-      <li>動画・画像は X に直接アップロードする。1日1本、まず2週間</li>
+      <li>画像は各投稿の下にあります。右クリック(スマホは長押し)で保存して、X に直接アップロードする。PC なら <code>marketing/phase-1/SNS部/素材/x/</code> にも同じものがあります。1日1本、まず2週間</li>
       <li>ハッシュタグは1本に2〜3個まで。付けすぎると宣伝っぽく見えて、かえって読まれにくくなります</li>
     </ul>
   </div>
@@ -116,56 +119,65 @@ const POSTS = [
   {
     title: "① 固定ポスト",
     when: "1日目。投稿したらプロフィールに固定",
-    attach: "鳥が庭に来て、鳴いて、図鑑に入るまでの10秒ほどの動画(日本語の画面・音あり)",
+    attach: "下の画像(日本語の庭。鳥が2羽来ている実機の画面)",
+    img: "img/01.png",
     body: "庭に植物を植えると、虫が来て、その虫を食べる鳥がやってくる。\nそんな小さな生態系を育てるアプリを、個人で作りました🐦\n\n鳴き声は、世界中の録音者が残した本物の録音です。\n会えた鳥だけが、あなたのラジオで歌います。\n\nAndroid版・無料(リンクはリプ欄に)\n\n#個人開発 #アプリ開発 #Android",
     reply: "Google Play はこちらです👇\n" + PLAY + "\n\nごめんなさい、iPhone版はまだありません。\n「iPhoneでも欲しい」と思ってもらえたら、ひとこと残してもらえるとうれしいです。"
   },
   {
     title: "② 鳴き声クイズ",
     when: "2日目。答えは翌日、同じポストのリプ欄に",
-    attach: "シジュウカラの録音が流れる動画(絵は図鑑の「???」で隠す)",
+    attach: "下の画像(シルエット)。答えのリプには2枚目の画像",
+    img: "img/02.png",
+    replyImg: "img/02b.png",
     body: "この声、だれでしょう?🐦\n日本の庭でもよく聞く鳥です。\n\n答えは明日、リプ欄で。\n\n#野鳥 #生物多様性",
     reply: "答えは「シジュウカラ」でした🐦\n京都の庭に来てくれます。\n\n録音: Peter Boesman / xeno-canto XC285681(CC BY-NC-ND 4.0)\n\n" + LINK_REPLY
   },
   {
     title: "③ 寝落ち",
     when: "3日目。夜に",
-    attach: "ラジオの画面で、焚き火と鳥の声が鳴っている動画",
+    attach: "下の画像(焚き火を選んだラジオと寝落ちの時間)",
+    img: "img/03.png",
     body: "雨、焚き火、せせらぎ。そこにときどき、鳥の声。\n15分〜90分で止まる「寝落ち」をつけてあります。\n\n今夜はどの音で眠りますか?\n\n#アプリ #Android",
     reply: LINK_REPLY
   },
   {
     title: "④ 目覚まし",
     when: "4日目。朝に",
-    attach: "目覚ましの画面と、鳴り始めの音",
+    attach: "下の画像(目覚ましの画面)",
+    img: "img/04.png",
     body: "アラームの電子音のかわりに、鳥のさえずりで起きる。\n\n聞こえるか聞こえないかの小さな音から始まって、少しずつ大きくなります。\n庭で近くで会えた鳥たちが、朝のコーラスに加わります。\n\n#アプリ #Android",
     reply: LINK_REPLY
   },
   {
     title: "⑤ 京都の庭",
     when: "5日目",
-    attach: "京都の庭にメジロやシジュウカラが来ている画面",
+    attach: "下の画像(アプリのドット絵で、京都とシャーロットの鳥を並べたもの)",
+    img: "img/05.png",
     body: "京都の庭には、メジロやシジュウカラ。\nアメリカ・シャーロットの庭には、真っ赤なショウジョウコウカンチョウ。\n\n植えた植物と、そこに来る虫で、来る鳥が変わります。\n\n#野鳥 #生物多様性",
     reply: LINK_REPLY
   },
   {
     title: "⑥ つながり",
     when: "6日目",
-    attach: "つながり画面のスクショ(和名が並んでいるもの)",
+    attach: "下の画像(つながりの画面)",
+    img: "img/06.png",
     body: "どの鳥が、どの虫を食べて、その虫はどの植物に来るのか。\n実際の観察記録(GloBI)をもとに、つながりを描いています。\n\n庭に植えるものを変えると、この網が変わります🌿\n\n#生物多様性 #個人開発",
     reply: LINK_REPLY
   },
   {
     title: "⑦ 開発ログ",
     when: "7日目",
-    attach: "直す前(2〜3羽が一緒にずれる)と、直したあと(1羽ずつ)を並べた動画",
+    attach: "下の画像(実機の4コマ。1羽ずつ別の時刻に動く)",
+    img: "img/07.png",
     body: "「鳥たちが全部同じタイミングで動いてる気がする」と言われて調べたら、1羽が枝を移るたびに、同じ枝の鳥まで横にずれていました。\n\n直して、テンポも1羽ずつ変えました(2秒/2.75秒/3.25秒)。\n本業は会計士、アプリは個人で作っています。\n\n#個人開発 #アプリ開発 #会計士",
     reply: LINK_REPLY
   },
   {
     title: "⑧ 日本語に対応",
     when: "8日目",
-    attach: "右上の切替ボタンで英語と日本語が切り替わる動画",
+    attach: "下の画像(同じ庭の英語と日本語)",
+    img: "img/08.png",
     body: "日本語に対応しました🇯🇵\n\n鳥・虫・植物の名前も、ぜんぶ和名で出ます。\n(ルリツグミ、ズアカアメリカコゲラ、オオカバマダラ…)\n右上のボタンで、いつでも英語と切り替えられます。\n\n#個人開発 #Android",
     reply: LINK_REPLY
   }
@@ -219,6 +231,19 @@ function sheet(label, text) {
   return el;
 }
 
+// 画像。右クリック(スマホは長押し)で保存して、X に添付する。
+function shot(src, label) {
+  const el = document.createElement("figure");
+  el.className = "shot";
+  el.style.margin = "0";
+  const img = document.createElement("img");
+  img.src = src; img.alt = label; img.loading = "lazy";
+  const cap = document.createElement("small");
+  cap.textContent = label + "(右クリック/長押しで保存)";
+  el.append(img, cap);
+  return el;
+}
+
 const root = document.getElementById("posts");
 for (const p of POSTS) {
   const card = document.createElement("article");
@@ -227,7 +252,10 @@ for (const p of POSTS) {
   card.querySelector("h2").textContent = p.title;
   card.querySelector(".when").textContent = p.when;
   card.querySelector(".attach b").textContent = p.attach;
-  card.append(sheet("本文", p.body), sheet("リプ欄(自分のポストに返信)", p.reply));
+  if (p.img) card.append(shot(p.img, "本文に添付"));
+  card.append(sheet("本文", p.body));
+  if (p.replyImg) card.append(shot(p.replyImg, "リプ欄に添付(答え合わせ)"));
+  card.append(sheet("リプ欄(自分のポストに返信)", p.reply));
   root.append(card);
 }
 

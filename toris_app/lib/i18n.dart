@@ -376,6 +376,21 @@ String radioEmptyJa(String biomeId) =>
 /// おやすみタイマーの終わり。英語は「Until 23:30」。
 String untilJa(String time) => '$time まで';
 
+/// 留守のあいだに去った鳥。英語は「names set off on their way」。
+/// 文は `i18n.py` の出荷済みの日本語原文(「{names} は旅立っていきました」)。
+String departuresJa(List<String> names) =>
+    '🕊 ${names.join('、')} は旅立っていきました';
+
+/// 撹乱の一文。`toris_core` の `disturbanceStory` と**同じ分岐**。
+/// 文は `i18n.py` の日本語原文。呼び名も `DISTURBANCES` の原文(嵐・落雷・伐採)。
+String disturbanceStoryJa(String type, String icon, List<String> lost) {
+  final label =
+      const {'storm': '嵐', 'lightning': '落雷', 'logging': '伐採'}[type] ?? '嵐';
+  return lost.isEmpty
+      ? '$icon $labelが庭を通り過ぎたが、植物は持ちこたえた。'
+      : '$icon $labelが庭を通り過ぎ、${lost.join('、')}が倒れた。';
+}
+
 /// 「◯日ぶりですね」。時間は画面側が持っているので、文だけを組む。
 String awayLeadJa(double hoursAway) => hoursAway >= 48
     ? '${(hoursAway / 24).floor()}日ぶりですね。留守のあいだに —'

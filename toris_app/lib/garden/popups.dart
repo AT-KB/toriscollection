@@ -205,7 +205,9 @@ Future<void> showWelcomeBackPopup(
               Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
-                    '🕊 ${r.departures.take(5).join(', ')} set off on their way',
+                    L10n.lang.value == Lang.ja
+                        ? departuresJa(r.departures.take(5).toList())
+                        : '🕊 ${r.departures.take(5).join(', ')} set off on their way',
                     style: const TextStyle(fontSize: 13, color: kSub)),
               ),
             // 撹乱は**一文で語る**。倒れなかった回も語る — 黙ると、
