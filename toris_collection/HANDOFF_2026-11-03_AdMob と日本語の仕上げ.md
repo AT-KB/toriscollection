@@ -156,4 +156,7 @@ CEO「リワードの説明を拡充してほしい」。
 - **言語の切替を全タブの右上に置いた**(`ui/lang_button.dart`。押すともう一方の言語。CEO「目立つ場所にしていいよ」)
 - 試験 96 件全 pass(和名の欠けを assets から直接見る試験を追加)/ 監査 exit 0
 - ⚠️ `dart format` を lib 全体にかけると無関係なファイルまで大きく書き換わる。**このリポジトリでは format をかけない**
-- 実機の目視は、端末の USB 許可が外れていて**未了**
+- ✅ 実機(Pixel 6a)で全5タブを日英両方で目視。ラジオの土地の選択(Charlotte/Kyoto)も辞書に足した
+- 🔴 **切替ボタンが `const` の罠を踏んだ**:英語にしてもボタンが「English」のまま。
+  AppBar の `actions: const [LangButton()]` は親が建て直しても飛ばされる。
+  → **ボタン自身が `ValueListenableBuilder` で `L10n.lang` を聞く**ようにした(使う側の const に左右されない)

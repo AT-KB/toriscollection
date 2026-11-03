@@ -13,17 +13,23 @@ import 'theme.dart';
 class LangButton extends StatelessWidget {
   const LangButton({super.key});
 
+  // ⚠️ **言語を自分で聞く。** AppBar の actions は `const [LangButton()]` で
+  // 置かれるので、親が建て直してもこの widget は飛ばされる(const の罠)。
+  // 実機で「英語にしてもボタンが English のまま」になった(2026-11-03)。
   @override
-  Widget build(BuildContext context) {
-    final toJa = L10n.lang.value == Lang.en;
-    return Padding(
-      padding: const EdgeInsets.only(right: 4),
-      child: TextButton.icon(
-        style: TextButton.styleFrom(foregroundColor: kInk),
-        icon: const Icon(Icons.translate_rounded, size: 18),
-        label: Text(toJa ? '日本語' : 'English'),
-        onPressed: () => L10n.set(toJa ? Lang.ja : Lang.en),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => ValueListenableBuilder<Lang>(
+        valueListenable: L10n.lang,
+        builder: (context, lang, _) {
+          final toJa = lang == Lang.en;
+          return Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: kInk),
+              icon: const Icon(Icons.translate_rounded, size: 18),
+              label: Text(toJa ? '日本語' : 'English'),
+              onPressed: () => L10n.set(toJa ? Lang.ja : Lang.en),
+            ),
+          );
+        },
+      );
 }

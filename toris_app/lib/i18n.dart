@@ -240,6 +240,10 @@ class L10n {
     'Open feeder': '開いた餌台',
     'Caged feeder': 'かご型の餌台',
 
+    // ── 土地名(ラジオの選択。庭と図鑑は biomes.json の和名を引く) ──
+    'Charlotte': 'シャーロット',
+    'Kyoto': '京都',
+
     // ── 図鑑の「こわいもの」(`toris_core` の kPredatorLabels。core は触らず表示側で包む) ──
     'Hawks': 'タカ',
     'Owls': 'フクロウ',

@@ -96,9 +96,10 @@ class _RadioPageState extends State<RadioPage>
           // 現行にもある(`radio.py` は選んだ土地の鳥だけを鳴らす)。
           // 既定は自分の庭の土地。別の土地の声も聴ける。
           SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'charlotte', label: Text('Charlotte')),
-              ButtonSegment(value: 'kyoto', label: Text('Kyoto')),
+            // ⚠️ const を外してある — 土地名が言語で変わるため。
+            segments: [
+              ButtonSegment(value: 'charlotte', label: Text(t('Charlotte'))),
+              ButtonSegment(value: 'kyoto', label: Text(t('Kyoto'))),
             ],
             selected: {e.biomeId},
             onSelectionChanged: (v) async {
