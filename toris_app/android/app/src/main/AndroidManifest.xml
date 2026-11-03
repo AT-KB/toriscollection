@@ -8,7 +8,11 @@
          POST_NOTIFICATIONS: Android 13+ で通知を出すのに必要(実行時に要求する)。
          FOREGROUND_SERVICE_MEDIA_PLAYBACK: 画面が消えていても鳴らし続けるため。
          WAKE_LOCK: 鳴らし切るまで CPU を眠らせないため。 -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- ⚠️ USE_EXACT_ALARM は外した(2026-11-03)。Play では**制限付きの権限**で、
+         「目覚まし・カレンダーが中心機能のアプリ」しか宣言できない。この製品の
+         中心は庭で、目覚ましは機能の1つなので、審査で落ちる要因になる。
+         SCHEDULE_EXACT_ALARM だけで足りる(未許可なら AlarmChannel が false を返し、
+         画面から設定へ案内する作りが既にある)。 -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
