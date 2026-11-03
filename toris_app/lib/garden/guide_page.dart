@@ -21,6 +21,7 @@ import 'package:toris_core/toris_core.dart' as core;
 import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'garden_state.dart';
 
 /// 図鑑の版面の色。紙・図版の枠・罫線。
@@ -63,8 +64,8 @@ class _GuidePageState extends State<GuidePage> {
             ((g.data.birds[b]?['biome_pref'] as List?) ?? const []).join(',');
         final c = ba.compareTo(bb);
         if (c != 0) return c;
-        final na = '${g.data.birds[a]?['english']}';
-        final nb = '${g.data.birds[b]?['english']}';
+        final na = nameOf(g.data.birds[a], a);
+        final nb = nameOf(g.data.birds[b], b);
         return na.compareTo(nb);
       });
     }
@@ -74,7 +75,9 @@ class _GuidePageState extends State<GuidePage> {
         .length;
 
     return Scaffold(
-      appBar: AppBar(title: Text('${t('Guide')}  $found/${ids.length}')),
+      appBar: AppBar(
+          title: Text('${t('Guide')}  $found/${ids.length}'),
+          actions: const [LangButton()]),
       body: Column(children: [
         // ── 言語の切り替え ──
         // 設定画面が無く、図鑑は**文字を読む画面**なので、言語の切替はここが
@@ -125,8 +128,7 @@ class _Entry extends StatelessWidget {
   final String id;
   const _Entry(this.g, this.id);
 
-  String _name(Map<String, dynamic> m, String key) =>
-      (m[key]?['english'] as String?) ?? key;
+  String _name(Map<String, dynamic> m, String key) => nameOf(m[key], key);
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +141,7 @@ class _Entry extends StatelessWidget {
     final days = g.birdDays[id] ?? 0;
 
     final icon = observed ? '🪶' : (discovered ? '🐦' : '❓');
-    final title = discovered ? ((b['english'] as String?) ?? id) : '???';
+    final title = discovered ? nameOf(b, id) : '???';
 
     // **表を自分で書かない。** `toris_core` の移植をそのまま使う。
     // 以前は Dart 側に7分類を手で書いていて、実データが使う
@@ -160,9 +162,9 @@ class _Entry extends StatelessWidget {
           '🐛 ${_name(g.data.insects, l.id)}',
     ];
     final home = <String>[
-      for (final x in prof.home) '${g.data.biomes[x]?['name_en'] ?? x}',
+      for (final x in prof.home) nameOf(g.data.biomes[x], x, enKey: 'name_en'),
     ];
-    final fears = core.predatorLabels(id, g.data.predators);
+    final fears = [for (final f in core.predatorLabels(id, g.data.predators)) t(f)];
     // 属レベル(同属の近縁種の記録から採ったもの)は、**黙って種の事実にしない**。
     // Python 側は同じ場所で「(from records of close relatives)」と断っていたのに、
     // 移植で落ちていた(2026-08-18 の監査で発覚)。原則4「生態に誠実」。
@@ -248,7 +250,7 @@ class _Entry extends StatelessWidget {
   Widget _heading(Map b, String stars, int days, bool observed) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text((b['english'] as String?) ?? id,
+          Text(nameOf(b, id),
               style: const TextStyle(
                   fontSize: 19,
                   height: 1.2,
@@ -433,15 +435,23 @@ class _OutLinks extends StatelessWidget {
     if (en.isEmpty && sci.isEmpty) return const SizedBox.shrink();
     final photoQ = Uri.encodeComponent('$en $sci'.trim());
     final wikiQ = Uri.encodeComponent(sci.isNotEmpty ? sci : en);
+    // 日本語の人には日本語版を和名で開く。和名が無ければ英語版のまま。
+    final jaName = '${bird['name'] ?? ''}'.trim();
+    final jaWiki = L10n.lang.value == Lang.ja && jaName.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Wrap(spacing: 8, runSpacing: 8, children: [
         _Chip(t('🖼️ See a real photo'),
             () => _open('https://www.google.com/search?tbm=isch&q=$photoQ')),
-        _Chip(
-            t('📖 Wikipedia (EN)'),
-            () => _open('https://en.wikipedia.org/wiki/Special:Search'
-                '?search=$wikiQ')),
+        jaWiki
+            ? _Chip(
+                t('📖 Wikipedia (JA)'),
+                () => _open('https://ja.wikipedia.org/wiki/Special:Search'
+                    '?search=${Uri.encodeComponent(jaName)}'))
+            : _Chip(
+                t('📖 Wikipedia (EN)'),
+                () => _open('https://en.wikipedia.org/wiki/Special:Search'
+                    '?search=$wikiQ')),
       ]),
     );
   }

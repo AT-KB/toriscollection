@@ -240,6 +240,21 @@ class L10n {
     'Open feeder': '開いた餌台',
     'Caged feeder': 'かご型の餌台',
 
+    // ── 図鑑の「こわいもの」(`toris_core` の kPredatorLabels。core は触らず表示側で包む) ──
+    'Hawks': 'タカ',
+    'Owls': 'フクロウ',
+    'Falcons': 'ハヤブサ',
+    'Snakes': 'ヘビ',
+    'Crows and jays': 'カラスとカケス',
+    'Shrikes': 'モズ',
+    'Cats': 'ネコ',
+    'Raccoons': 'アライグマ',
+    'Weasels': 'イタチ',
+    'Foxes': 'キツネ',
+    'Squirrels': 'リス',
+    'Mice and rats': 'ネズミ',
+    '📖 Wikipedia (JA)': '📖 Wikipedia',
+
     // ── きょうの道具(広告リワード。garden_page.dart / ads.dart) ──
     "Today's tool is used up. Another one tomorrow.":
         'きょうの道具は使いました。あすまた届きます。',
@@ -271,6 +286,38 @@ class L10n {
     '日本語': '日本語',
   };
 }
+
+/// ── 種と土地の名前 ─────────────────────────────────────────
+///
+/// 和名は `data.py` の `name` を `tools/export_data.py` が運んだもの
+/// (CEO 2026-11-03「全部実装するまで変更申請はしない」)。**こちらで訳を起こさない。**
+/// 和名が無ければ英名のまま出る(落ちない)。
+
+/// 種・土地の表示名。日本語なら `name`、それ以外は [enKey](土地は `name_en`)。
+String nameOf(Object? entry, String id, {String enKey = 'english'}) {
+  final m = entry is Map ? entry : const {};
+  if (L10n.lang.value == Lang.ja) {
+    final ja = m['name'];
+    if (ja is String && ja.isNotEmpty) return ja;
+  }
+  final en = m[enKey];
+  return en is String && en.isNotEmpty ? en : id;
+}
+
+/// 庭のデータを持たない画面(目覚まし)のための、鳥ID → 和名の控え。
+/// 起動時に `registerSpeciesNames` で birds.json から入れる。
+final Map<String, String> _speciesJa = {};
+
+void registerSpeciesNames(Map<String, dynamic> birds) {
+  birds.forEach((id, b) {
+    final ja = b is Map ? b['name'] : null;
+    if (ja is String && ja.isNotEmpty) _speciesJa[id] = ja;
+  });
+}
+
+/// 鳥ID と英名から表示名を引く。日本語で和名が無ければ英名。
+String speciesName(String id, String english) =>
+    L10n.lang.value == Lang.ja ? (_speciesJa[id] ?? english) : english;
 
 /// ── 可変文(辞書で引けないもの)────────────────────────────────
 ///

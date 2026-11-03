@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'alarm.dart';
 
 class AlarmPage extends StatefulWidget {
@@ -144,7 +145,9 @@ class _AlarmPageState extends State<AlarmPage> {
   Widget build(BuildContext context) {
     final s = _current;
     return Scaffold(
-      appBar: AppBar(title: Text(t('Wake with the birds'))),
+      appBar: AppBar(
+          title: Text(t('Wake with the birds')),
+          actions: const [LangButton()]),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -262,7 +265,7 @@ class _AlarmPageState extends State<AlarmPage> {
                         _BirdIcon(b.key),
                         const SizedBox(width: 12),
                         Flexible(
-                            child: Text(b.name,
+                            child: Text(speciesName(b.key, b.name),
                                 overflow: TextOverflow.ellipsis)),
                       ]),
                     ),

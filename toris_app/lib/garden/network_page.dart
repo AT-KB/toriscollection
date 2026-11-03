@@ -14,6 +14,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'garden_state.dart';
 
 class NetworkPage extends StatelessWidget {
@@ -53,7 +54,8 @@ class NetworkPage extends StatelessWidget {
       ..sort();
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('Network'))),
+      appBar: AppBar(
+          title: Text(t('Network')), actions: const [LangButton()]),
       body: Column(children: [
         Expanded(
           child: InteractiveViewer(
@@ -82,11 +84,9 @@ class NetworkPage extends StatelessWidget {
                         .where(web.plants.containsKey)
                         .toList()
                 },
-                label: (id) =>
-                    (g.data.plants[id]?['english'] ??
-                            g.data.insects[id]?['english'] ??
-                            g.data.birds[id]?['english'] ??
-                            id) as String,
+                label: (id) => nameOf(
+                    g.data.plants[id] ?? g.data.insects[id] ?? g.data.birds[id],
+                    id),
                 residents: g.visiting.toSet(),
               ),
             ),

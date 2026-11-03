@@ -11,6 +11,7 @@
 /// ソースを読んで突き合わせる。
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -85,6 +86,38 @@ void main() {
       expect(L10n.dictionary, contains(core.kItemNames[id]), reason: id);
       expect(ads.kItemEffects, contains(id), reason: '$id の効き目の説明が無い');
       expect(L10n.dictionary, contains(ads.kItemEffects[id]), reason: id);
+    }
+  });
+
+  test('種と土地の名前は、日本語なら和名、英語なら英名', () {
+    const bird = {'name': 'オウゴンヒワ', 'english': 'American Goldfinch'};
+    const land = {'name': '京都', 'name_en': 'Kyoto'};
+    expect(nameOf(bird, 'american_goldfinch'), 'American Goldfinch');
+    expect(nameOf(land, 'kyoto', enKey: 'name_en'), 'Kyoto');
+    L10n.lang.value = Lang.ja;
+    expect(nameOf(bird, 'american_goldfinch'), 'オウゴンヒワ');
+    expect(nameOf(land, 'kyoto', enKey: 'name_en'), '京都');
+    // 和名が無ければ英名、何も無ければ ID(落ちない)
+    expect(nameOf({'english': 'X'}, 'x'), 'X');
+    expect(nameOf(null, 'x'), 'x');
+  });
+
+  test('出荷するデータには、全種・全土地に和名がある', () {
+    for (final f in ['birds', 'plants', 'insects', 'biomes']) {
+      final d = jsonDecode(File('assets/data/$f.json').readAsStringSync())
+          as Map<String, dynamic>;
+      final missing = [
+        for (final e in d.entries)
+          if ('${(e.value as Map)['name'] ?? ''}'.isEmpty) e.key
+      ];
+      expect(missing, isEmpty,
+          reason: '$f.json に和名が無い。tools/export_data.py を回し直す');
+    }
+  });
+
+  test('こわいもの(天敵の分類名)は、全部日本語になる', () {
+    for (final label in core.kPredatorLabels.values) {
+      expect(L10n.dictionary, contains(label), reason: label);
     }
   });
 

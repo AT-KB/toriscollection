@@ -12,6 +12,7 @@
    "redbud"
   ],
   "english": "American Goldfinch",
+  "name": "オウゴンヒワ",
   "rarity": 0.5,
   "scientific": "Spinus tristis",
   "temp_fit": [
@@ -37,6 +38,7 @@
    "redbud"
   ],
   "english": "American Robin",
+  "name": "コマツグミ",
   "rarity": 0.3,
   "scientific": "Turdus migratorius",
   "temp_fit": [
@@ -59,6 +61,7 @@
    "noibara"
   ],
   "english": "Black-faced Bunting",
+  "name": "アオジ",
   "rarity": 0.5,
   "scientific": "Emberiza spodocephala",
   "temp_fit": [
@@ -84,6 +87,7 @@
    "magnolia"
   ],
   "english": "Blue Jay",
+  "name": "アオカケス",
   "rarity": 0.35,
   "scientific": "Cyanocitta cristata",
   "temp_fit": [
@@ -109,6 +113,7 @@
    "service_berry"
   ],
   "english": "Brown Thrasher",
+  "name": "チャイロツグミモドキ",
   "rarity": 0.55,
   "scientific": "Toxostoma rufum",
   "temp_fit": [
@@ -132,6 +137,7 @@
    "sunflower"
   ],
   "english": "Carolina Chickadee",
+  "name": "カロライナコガラ",
   "rarity": 0.3,
   "scientific": "Poecile carolinensis",
   "temp_fit": [
@@ -153,6 +159,7 @@
   ],
   "eats_plants": [],
   "english": "Carolina Wren",
+  "name": "カロライナミソサザイ",
   "rarity": 0.45,
   "scientific": "Thryothorus ludovicianus",
   "temp_fit": [
@@ -176,6 +183,7 @@
    "beautyberry"
   ],
   "english": "Cedar Waxwing",
+  "name": "ヒメレンジャク",
   "rarity": 0.6,
   "scientific": "Bombycilla cedrorum",
   "temp_fit": [
@@ -198,6 +206,7 @@
   ],
   "eats_plants": [],
   "english": "Downy Woodpecker",
+  "name": "セジロコゲラ",
   "rarity": 0.45,
   "scientific": "Dryobates pubescens",
   "temp_fit": [
@@ -222,6 +231,7 @@
    "redbud"
   ],
   "english": "Eastern Bluebird",
+  "name": "ルリツグミ",
   "rarity": 0.5,
   "scientific": "Sialia sialis",
   "temp_fit": [
@@ -243,6 +253,7 @@
   ],
   "eats_plants": [],
   "english": "Long-tailed Tit",
+  "name": "エナガ",
   "rarity": 0.55,
   "scientific": "Aegithalos caudatus",
   "temp_fit": [
@@ -266,6 +277,7 @@
    "susuki"
   ],
   "english": "Eurasian Skylark",
+  "name": "ヒバリ",
   "rarity": 0.45,
   "scientific": "Alauda arvensis",
   "temp_fit": [
@@ -290,6 +302,7 @@
    "kaki"
   ],
   "english": "Brown-eared Bulbul",
+  "name": "ヒヨドリ",
   "rarity": 0.3,
   "scientific": "Hypsipetes amaurotis",
   "temp_fit": [
@@ -312,6 +325,7 @@
    "beautyberry"
   ],
   "english": "House Finch",
+  "name": "メキシコマシコ",
   "rarity": 0.3,
   "scientific": "Haemorhous mexicanus",
   "temp_fit": [
@@ -333,6 +347,7 @@
    "pine"
   ],
   "english": "Japanese Grosbeak",
+  "name": "イカル",
   "rarity": 0.65,
   "scientific": "Eophona personata",
   "temp_fit": [
@@ -357,6 +372,7 @@
    "noibara"
   ],
   "english": "Daurian Redstart",
+  "name": "ジョウビタキ",
   "rarity": 0.45,
   "scientific": "Phoenicurus auroreus",
   "temp_fit": [
@@ -381,6 +397,7 @@
    "kaki"
   ],
   "english": "Eurasian Jay",
+  "name": "カケス",
   "rarity": 0.55,
   "scientific": "Garrulus glandarius",
   "temp_fit": [
@@ -403,6 +420,7 @@
    "pine"
   ],
   "english": "Oriental Greenfinch",
+  "name": "カワラヒワ",
   "rarity": 0.4,
   "scientific": "Chloris sinica",
   "temp_fit": [
@@ -424,6 +442,7 @@
   ],
   "eats_plants": [],
   "english": "Common Kingfisher",
+  "name": "カワセミ",
   "rarity": 0.65,
   "scientific": "Alcedo atthis",
   "temp_fit": [
@@ -445,6 +464,7 @@
   ],
   "eats_plants": [],
   "english": "Narcissus Flycatcher",
+  "name": "キビタキ",
   "rarity": 0.75,
   "scientific": "Ficedula narcissina",
   "temp_fit": [
@@ -467,6 +487,7 @@
    "egonoki"
   ],
   "english": "Oriental Turtle Dove",
+  "name": "キジバト",
   "rarity": 0.3,
   "scientific": "Streptopelia orientalis",
   "temp_fit": [
@@ -489,6 +510,7 @@
   ],
   "eats_plants": [],
   "english": "Japanese Pygmy Woodpecker",
+  "name": "コゲラ",
   "rarity": 0.5,
   "scientific": "Dendrocopos kizuki",
   "temp_fit": [
@@ -513,6 +535,7 @@
    "kaki"
   ],
   "english": "Japanese White-eye",
+  "name": "メジロ",
   "rarity": 0.35,
   "scientific": "Zosterops japonicus",
   "temp_fit": [
@@ -534,6 +557,7 @@
    "red_maple"
   ],
   "english": "Mourning Dove",
+  "name": "ナゲキバト",
   "rarity": 0.35,
   "scientific": "Zenaida macroura",
   "temp_fit": [
@@ -556,6 +580,7 @@
   ],
   "eats_plants": [],
   "english": "Bull-headed Shrike",
+  "name": "モズ",
   "rarity": 0.5,
   "scientific": "Lanius bucephalus",
   "temp_fit": [
@@ -580,6 +605,7 @@
    "tulip_tree"
   ],
   "english": "Northern Cardinal",
+  "name": "ショウジョウコウカンチョウ",
   "rarity": 0.3,
   "scientific": "Cardinalis cardinalis",
   "temp_fit": [
@@ -601,6 +627,7 @@
   ],
   "eats_plants": [],
   "english": "Pileated Woodpecker",
+  "name": "エボシクマゲラ",
   "rarity": 0.7,
   "scientific": "Dryocopus pileatus",
   "temp_fit": [
@@ -626,6 +653,7 @@
    "sunflower"
   ],
   "english": "Red-bellied Woodpecker",
+  "name": "ズアカアメリカコゲラ",
   "rarity": 0.45,
   "scientific": "Melanerpes carolinus",
   "temp_fit": [
@@ -647,6 +675,7 @@
    "magnolia"
   ],
   "english": "Ruby-throated Hummingbird",
+  "name": "ルビーノドハチドリ",
   "rarity": 0.7,
   "scientific": "Archilochus colubris",
   "temp_fit": [
@@ -671,6 +700,7 @@
    "pine"
   ],
   "english": "Japanese Tit",
+  "name": "シジュウカラ",
   "rarity": 0.3,
   "scientific": "Parus minor",
   "temp_fit": [
@@ -696,6 +726,7 @@
    "kaki"
   ],
   "english": "Pale Thrush",
+  "name": "シロハラ",
   "rarity": 0.5,
   "scientific": "Turdus pallidus",
   "temp_fit": [
@@ -719,6 +750,7 @@
    "pokeweed"
   ],
   "english": "Song Sparrow",
+  "name": "ウタスズメ",
   "rarity": 0.35,
   "scientific": "Melospiza melodia",
   "temp_fit": [
@@ -742,6 +774,7 @@
    "rice"
   ],
   "english": "Eurasian Tree Sparrow",
+  "name": "スズメ",
   "rarity": 0.2,
   "scientific": "Passer montanus",
   "temp_fit": [
@@ -763,6 +796,7 @@
   ],
   "eats_plants": [],
   "english": "Barn Swallow",
+  "name": "ツバメ",
   "rarity": 0.45,
   "scientific": "Hirundo rustica",
   "temp_fit": [
@@ -787,6 +821,7 @@
    "tulip_tree"
   ],
   "english": "Tufted Titmouse",
+  "name": "エボシガラ",
   "rarity": 0.4,
   "scientific": "Baeolophus bicolor",
   "temp_fit": [
@@ -808,6 +843,7 @@
   ],
   "eats_plants": [],
   "english": "Japanese Bush Warbler",
+  "name": "ウグイス",
   "rarity": 0.5,
   "scientific": "Horornis diphone",
   "temp_fit": [
@@ -832,6 +868,7 @@
    "egonoki"
   ],
   "english": "Varied Tit",
+  "name": "ヤマガラ",
   "rarity": 0.4,
   "scientific": "Sittiparus varius",
   "temp_fit": [

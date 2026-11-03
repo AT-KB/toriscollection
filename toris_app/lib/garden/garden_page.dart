@@ -20,6 +20,7 @@ import '../ads/ads.dart' as ads;
 import '../radio/radio_engine.dart' show radioIsPlaying;
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'garden_state.dart';
 import 'popups.dart';
 import 'ritual.dart';
@@ -193,8 +194,7 @@ class _GardenPageState extends State<GardenPage>
     widget.onChanged?.call(g);
   }
 
-  String _name(Map<String, dynamic> m, String id) =>
-      (m[id]?['english'] as String?) ?? id;
+  String _name(Map<String, dynamic> m, String id) => nameOf(m[id], id);
 
   /// チップに載せる鳥の絵。ドット絵が無い種は、その鳥の色の小鳥で代える
   /// (虫の 🐛 と同じ役回り。ここでも枠組みの既定は使わない)。
@@ -392,6 +392,7 @@ class _GardenPageState extends State<GardenPage>
       appBar: AppBar(
         title: Text(t('Garden')),
         actions: [
+          const LangButton(),
           // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。
           IconButton(
             tooltip: t('Move your garden'),
@@ -503,7 +504,7 @@ class _GardenPageState extends State<GardenPage>
                   for (final id in g.data.biomes.keys)
                     ChoiceChip(
                       label: Text(
-                        (g.data.biomes[id]?['name_en'] as String?) ?? id,
+                        nameOf(g.data.biomes[id], id, enKey: 'name_en'),
                       ),
                       selected: g.biomeId == id,
                       onSelected: (_) async {

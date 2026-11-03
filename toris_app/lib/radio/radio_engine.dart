@@ -23,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
 import 'sleep_mode.dart';
 
 /// 現行版 radio.py の定数(BGMモードでない方)。数字は勝手に変えないこと。
@@ -469,8 +470,7 @@ class RadioEngine {
   String lineupStory = '';
 
   /// 鳥ID → 英名(ギルドのまとまりを描くのに使う)。
-  String englishOf(String id) =>
-      (_birdsData[id]?['english'] as String?) ?? id;
+  String englishOf(String id) => nameOf(_birdsData[id], id);
 
   /// どの土地のラジオを聴くか。**現行にも土地の選択がある**
   /// (`radio.py` は `biome_pref` で顔ぶれを絞る)。移植で落ちていた。

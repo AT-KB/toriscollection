@@ -7,7 +7,8 @@
 ///
 /// ## 守ること
 /// - **既定は英語。日本語に切り替えられる**(CEO 2026-10-19「日本語に切り替えって
-///   できない?」→「やれ」)。辞書と切替は `i18n.dart`、切替の置き場所は図鑑の先頭。
+///   できない?」→「やれ」)。辞書と切替は `i18n.dart`。切替は**全タブの右上**
+///   (`ui/lang_button.dart`。CEO 2026-11-03「目立つ場所にしていいよ」)と図鑑の先頭。
 ///   **画面にある英語そのものが辞書の鍵**で、辞書に無い文言は英語のまま出る。
 /// - **文字は少なく、ボタンは大きく**(CEO 2026-08-14)。決めごとは `ui/theme.dart`。
 /// - **セーブコードの互換。** 進行データはサーバーに無く、あの文字列としてのみ
@@ -33,6 +34,7 @@ import 'garden/garden_state.dart';
 import 'garden/guide_page.dart';
 import 'garden/network_page.dart';
 import 'i18n.dart';
+import 'radio/radio_engine.dart' show loadBirdsData;
 import 'radio/radio_page.dart';
 import 'ui/theme.dart';
 
@@ -43,6 +45,12 @@ void main() async {
   // 覚えていた言語を戻す。**画面を建てる前**に読む(英語で一瞬出てから
   // 日本語に化けるのを避ける)。読めなければ既定の英語のまま。
   await L10n.restore();
+  // 目覚ましなど、庭のデータを持たない画面でも和名が引けるように。
+  try {
+    registerSpeciesNames(await loadBirdsData());
+  } catch (_) {
+    // 読めなければ英名のまま出る(落ちない)。
+  }
   runApp(const TorisApp());
 }
 

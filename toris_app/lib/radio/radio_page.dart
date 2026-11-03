@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'radio_engine.dart';
 import 'sleep_mode.dart';
 
@@ -85,7 +86,9 @@ class _RadioPageState extends State<RadioPage>
     super.build(context);
     final e = _engine;
     return Scaffold(
-      appBar: AppBar(title: Text(t('Garden radio'))),
+      appBar: AppBar(
+          title: Text(t('Garden radio')),
+          actions: const [LangButton()]),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
@@ -308,7 +311,7 @@ class _BirdRow extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: Text(v.bird.english,
+          child: Text(speciesName(v.bird.id, v.bird.english),
               style: const TextStyle(fontSize: 17, color: kInk)),
         ),
         // 群れが育っている鳥だけ羽数を出す(1羽のときは何も出さない)

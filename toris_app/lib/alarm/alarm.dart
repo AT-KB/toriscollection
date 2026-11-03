@@ -8,6 +8,8 @@ library;
 
 import 'package:flutter/services.dart';
 
+import '../i18n.dart';
+
 /// 目覚ましに鳴らせる鳥。**アルファベット順**(CEO 2026-08-19)。
 ///
 /// ⚠️ これは「鳴らせる全部」であって、**選べるものではない**。
@@ -73,10 +75,10 @@ List<({String key, String name})> selectableAlarmBirds(Iterable<String> met) {
 /// 画面の名前は `alarmBirds` を使う。並びの一致は試験で見ている。
 const List<({String key, String name})> dawnChorus = alarmBirds;
 
-/// 鍵から表示名を引く。知らない鍵はそのまま返す。
+/// 鍵から表示名を引く(日本語なら和名)。知らない鍵はそのまま返す。
 String alarmBirdName(String key) {
   for (final b in alarmBirds) {
-    if (b.key == key) return b.name;
+    if (b.key == key) return speciesName(b.key, b.name);
   }
   return key;
 }
