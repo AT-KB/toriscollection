@@ -97,7 +97,11 @@ class _HomeShellState extends State<HomeShell> {
         observed: _garden?.observed ?? const {},
         biomeId: _garden?.biomeId ?? 'charlotte',
       ),
-      GardenPage(onChanged: (g) => setState(() => _garden = g)),
+      GardenPage(
+        onChanged: (g) => setState(() => _garden = g),
+        // チュートリアルの最後で「目覚ましをセット」を選んだら、目覚ましへ。
+        onOpenAlarm: () => setState(() => _index = 4),
+      ),
       GuidePage(garden: _garden),
       NetworkPage(garden: _garden),
       // 2羽目・3羽目は**近くで出会った鳥**から選ばれるので、観察の記録を渡す

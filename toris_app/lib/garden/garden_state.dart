@@ -92,6 +92,15 @@ class Garden {
   /// そのぶん、**引っ越しコードでは名前は移らない**(端末ローカル)。
   final Map<String, List<String>> nicknames = {};
 
+  /// **一度きりの一言**を出したかどうか(説明戦略 2026-11-08)。出したら二度と出さない。
+  final Set<String> shownHints = {};
+
+  /// 鳥が来たのに**新しい種がいない**回が何回続いたか。5回で「植えるものを変えると…」。
+  int staleVisits = 0;
+
+  /// 一言をまだ出していなければ、出したことにして true を返す。
+  bool takeHint(String key) => shownHints.add(key);
+
   /// いま庭に来ているのが**どの子か**(種 → 名前)。名前のない子なら入らない。
   /// 来たときに決め、帰るまで変えない。
   final Map<String, String> visitingName = {};
@@ -342,6 +351,9 @@ class Garden {
       lastFirstTimers
         ..clear()
         ..addAll(r.arrivals.where((b) => !discovered.contains(b)));
+      if (r.arrivals.isNotEmpty) {
+        staleVisits = lastFirstTimers.isEmpty ? staleVisits + 1 : 0;
+      }
       discovered.addAll(r.arrivals);
     }
     // 会った日数は**鳥ごとに**1日1カウント。いま庭にいる鳥ぶんだけ増える。
@@ -445,6 +457,8 @@ class Garden {
   static const _openDayKey = 'toris_last_open_day';
   static const _nicknamesKey = 'toris_nicknames';
   static const _visitingNameKey = 'toris_visiting_name';
+  static const _hintsKey = 'toris_hints';
+  static const _staleKey = 'toris_stale_visits';
 
   /// その種に、あといくつ名前をつけられるか。
   int freeNameSlots(String birdId) =>
@@ -517,6 +531,8 @@ class Garden {
     if (od != null) await p.setString(_openDayKey, od);
     await p.setString(_nicknamesKey, jsonEncode(nicknames));
     await p.setString(_visitingNameKey, jsonEncode(visitingName));
+    await p.setStringList(_hintsKey, shownHints.toList());
+    await p.setInt(_staleKey, staleVisits);
   }
 
   Future<void> restore() async {
@@ -524,6 +540,10 @@ class Garden {
     tutorialStep = p.getInt(_tutorialKey) ?? 0;
     lastItemClaimDay = p.getString(_claimKey);
     openDays = p.getInt(_openDaysKey) ?? 0;
+    shownHints
+      ..clear()
+      ..addAll(p.getStringList(_hintsKey) ?? const []);
+    staleVisits = p.getInt(_staleKey) ?? 0;
     lastOpenDay = p.getString(_openDayKey);
     try {
       final raw = p.getString(_nicknamesKey);

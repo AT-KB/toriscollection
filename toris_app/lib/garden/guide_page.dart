@@ -23,6 +23,7 @@ import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import '../ui/lang_button.dart';
 import 'garden_state.dart';
+import 'popups.dart';
 
 /// 図鑑の版面の色。紙・図版の枠・罫線。
 const Color kPage = Color(0xFFFBFAF3);
@@ -345,39 +346,7 @@ class _Entry extends StatelessWidget {
   }
 
   Future<void> _askName(BuildContext context, {String? rename}) async {
-    final c = TextEditingController(text: rename ?? '');
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t("It's used to you now")),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(t('Give it a name. It will show up in your garden and guide.'),
-              style: const TextStyle(fontSize: 14, height: 1.5, color: kSub)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: c,
-            autofocus: true,
-            maxLength: 12,
-            decoration: InputDecoration(hintText: t('Name')),
-          ),
-        ]),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(t('Cancel'))),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, c.text),
-              child: Text(t('Save'))),
-        ],
-      ),
-    );
-    if (name == null) return;
-    if (rename != null) {
-      g.renameNickname(id, rename, name);
-    } else {
-      g.addNickname(id, name);
-    }
-    await onChanged();
+    if (await showNameDialog(context, g, id, rename: rename)) await onChanged();
   }
 
   /// 図版。**近くで会う前はアイコン、会ったら詳細画に入れ替わる。**

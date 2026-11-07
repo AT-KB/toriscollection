@@ -285,6 +285,12 @@ void main() {
     expect(g.nicknames.containsKey('blue_jay'), isFalse);
     expect(g.visitingName.containsKey('blue_jay'), isFalse);
   });
+
+  test('一度きりの一言は、二度目は出ない', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    expect(g.takeHint('first_arrival'), isTrue);
+    expect(g.takeHint('first_arrival'), isFalse);
+  });
 }
 
 /// 乱数は使わせない(この試験は時間の判定だけを見る)。

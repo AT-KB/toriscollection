@@ -248,6 +248,29 @@ class L10n {
     'Charlotte': 'シャーロット',
     'Kyoto': '京都',
 
+    // ── 説明戦略の一言(garden_page.dart。一度だけ出す)──
+    'Birds come slowly': '鳥は、ゆっくり来ます',
+    'Every few hours, someone stops by. '
+            'Want to wake up to birdsong tomorrow morning?':
+        '数時間ごとに、だれかが立ち寄ります。明日の朝、鳥の声で起きてみませんか?',
+    'Set a birdsong alarm': '鳥の声の目覚ましをセット',
+    'Later': 'あとで',
+    '👂 Listen closely, and they may come right up to you.':
+        '👂 耳を澄ますと、近くまで来てくれます。',
+    '🌿 Your garden is settling in. Rare birds come a little more often now.':
+        '🌿 庭がなじんできました。珍しい鳥が、少し来やすくなります。',
+    '🌱 Plant something different, and different birds will come. '
+            'The Network tab shows who eats what.':
+        '🌱 植えるものを変えると、来る鳥が変わります。だれが何を食べるかは「つながり」で見られます。',
+    '🎙 Birds you meet up close sing on your radio.':
+        '🎙 近くで会えた鳥は、ラジオで歌います。',
+    '🎙 Birds you meet up close sing on your radio. '
+            'You can also wake up to them.':
+        '🎙 近くで会えた鳥は、ラジオで歌います。朝、その声で起きることもできます。',
+    '🪶 The more you meet, the more they get used to you. '
+            'Once they trust you, you can name them.':
+        '🪶 会うほど、慣れてくれます。すっかり慣れたら、名前をつけられます。',
+
     // ── 慣れと名前(guide_page.dart。`core.pacing`) ──
     'Rename': '名前を変える',
     "It's used to you now": 'すっかり慣れてくれました',

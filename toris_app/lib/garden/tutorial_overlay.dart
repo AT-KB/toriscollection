@@ -37,6 +37,10 @@ class TutorialOverlay extends StatefulWidget {
   final String? nextLabel;
   final VoidCallback? onNext;
 
+  /// 2つ目のボタン(「あとで」など)。null なら出さない。
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
+
   const TutorialOverlay({
     super.key,
     required this.title,
@@ -44,6 +48,8 @@ class TutorialOverlay extends StatefulWidget {
     this.targetKey,
     this.nextLabel,
     this.onNext,
+    this.secondaryLabel,
+    this.onSecondary,
   });
 
   @override
@@ -144,6 +150,8 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
             body: widget.body,
             nextLabel: widget.nextLabel,
             onNext: widget.onNext,
+            secondaryLabel: widget.secondaryLabel,
+            onSecondary: widget.onSecondary,
           ),
         ),
       ],
@@ -214,11 +222,15 @@ class _Card extends StatelessWidget {
   final String body;
   final String? nextLabel;
   final VoidCallback? onNext;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
   const _Card({
     required this.title,
     required this.body,
     this.nextLabel,
     this.onNext,
+    this.secondaryLabel,
+    this.onSecondary,
   });
 
   @override
@@ -255,6 +267,12 @@ class _Card extends StatelessWidget {
               child: FilledButton(onPressed: onNext, child: Text(t(nextLabel!))),
             ),
           ],
+          if (secondaryLabel != null)
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                  onPressed: onSecondary, child: Text(t(secondaryLabel!))),
+            ),
         ],
       ),
     ),

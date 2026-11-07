@@ -81,8 +81,66 @@ Widget _plate(Garden g, String birdId, double size) {
 String _name(Garden g, String birdId) => g.labelFor(birdId);
 
 /// 🪶 出会えた。儀式のあと。
+/// 一度きりの一言の札。お知らせの下に、静かに1つだけ出す。
+Widget _hintCard(String text) => Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F1DE),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(text,
+          style: const TextStyle(fontSize: 13, height: 1.45, color: kInk)),
+    );
+
+/// 名前をつける / 変える。[rename] があれば変える(空にすると外れる)。
+/// 図鑑と、6回目に近くで会えたその場の両方から呼ぶ。
+Future<bool> showNameDialog(BuildContext context, Garden g, String id,
+    {String? rename}) async {
+  final c = TextEditingController(text: rename ?? '');
+  final name = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(t("It's used to you now")),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Row(children: [
+          _plate(g, id, 48),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Text(nameOf(g.data.birds[id], id),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700, color: kInk))),
+        ]),
+        const SizedBox(height: 12),
+        Text(t('Give it a name. It will show up in your garden and guide.'),
+            style: const TextStyle(fontSize: 14, height: 1.5, color: kSub)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: c,
+          autofocus: true,
+          maxLength: 12,
+          decoration: InputDecoration(hintText: t('Name')),
+        ),
+      ]),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx), child: Text(t('Later'))),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, c.text), child: Text(t('Save'))),
+      ],
+    ),
+  );
+  if (name == null) return false;
+  if (rename != null) {
+    g.renameNickname(id, rename, name);
+  } else {
+    g.addNickname(id, name);
+  }
+  return true;
+}
+
 Future<void> showMetBirdPopup(
-    BuildContext context, Garden g, List<MetBird> met) {
+    BuildContext context, Garden g, List<MetBird> met, {String? hint}) {
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -122,6 +180,7 @@ Future<void> showMetBirdPopup(
                 ],
               ),
             ),
+          if (hint != null) _hintCard(hint),
         ],
       ),
       actions: [
@@ -138,7 +197,7 @@ Future<void> showMetBirdPopup(
 /// とかはポップにだけあればいい」)。庭の画面に常設すると、痩せたことを
 /// ずっと突きつけることになる。
 Future<void> showWelcomeBackPopup(
-    BuildContext context, Garden g, AwayReport r) {
+    BuildContext context, Garden g, AwayReport r, {String? hint}) {
   final h = r.hoursAway;
   final ja = L10n.lang.value == Lang.ja;
   final lead = h >= 48
@@ -220,20 +279,13 @@ Future<void> showWelcomeBackPopup(
                     style: const TextStyle(
                         fontSize: 13, height: 1.45, color: kSub)),
               ),
-            // 来た鳥がいれば、ラジオへ誘う(会う→聴くの輪を閉じる)。
-            if (r.arrivals.isNotEmpty) ...[
+            // ⚠️ 前はここで、鳥が来るたびに「ラジオに新しい声が加わりました」と
+            // 出していた。**ラジオで鳴くのは近くで会えた鳥だけ**なので、来ただけの
+            // 鳥では嘘になる(2026-11-08 に気づいた)。代わりに、その時いちばん
+            // 役に立つ一言を**一度だけ**出す(説明戦略。`garden_page` が選ぶ)。
+            if (hint != null) ...[
               const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F1DE),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                    t("🎙 A new voice has joined the radio's cast. "
-                        'Come have a listen.'),
-                    style: TextStyle(fontSize: 13, height: 1.4, color: kInk)),
-              ),
+              _hintCard(hint),
             ],
           ],
         ),

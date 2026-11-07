@@ -30,7 +30,10 @@ import 'tutorial_overlay.dart';
 
 class GardenPage extends StatefulWidget {
   final void Function(Garden garden)? onChanged;
-  const GardenPage({super.key, this.onChanged});
+
+  /// 目覚ましのタブへ移る(チュートリアルの最後の段から)。
+  final VoidCallback? onOpenAlarm;
+  const GardenPage({super.key, this.onChanged, this.onOpenAlarm});
 
   @override
   State<GardenPage> createState() => _GardenPageState();
@@ -177,8 +180,64 @@ class _GardenPageState extends State<GardenPage>
               (b) => g.labelFor(b),
             ),
     );
+    final hint = _welcomeHint(g, report);
     if (report.worthShowing && mounted) {
-      await showWelcomeBackPopup(context, g, report);
+      await showWelcomeBackPopup(context, g, report, hint: hint);
+    } else if (hint != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(hint)));
+    }
+    if (hint != null) await _save();
+  }
+
+  // ── 説明戦略(2026-11-08)──────────────────────────────────────────
+  // 最初に全部は説明しない。**その機能が意味を持つ瞬間に、1つだけ、一度だけ**。
+  // 文書: docs/team/proposals/2026-11-08_説明戦略_最初の4分と最初の30日.md
+
+  /// おかえりのときの一言。優先順に1つだけ。
+  String? _welcomeHint(Garden g, AwayReport r) {
+    if (r.arrivals.isNotEmpty && g.takeHint('first_arrival')) {
+      return t('👂 Listen closely, and they may come right up to you.');
+    }
+    if (core.gardenFamiliarityLevel(g.openDays) >= 1 &&
+        g.takeHint('familiar_lv1')) {
+      return t('🌿 Your garden is settling in. Rare birds come a little more often now.');
+    }
+    if (g.staleVisits >= 5 && g.takeHint('plant_variety')) {
+      return t('🌱 Plant something different, and different birds will come. '
+          'The Network tab shows who eats what.');
+    }
+    return null;
+  }
+
+  /// 近くで会えたときの一言。優先順に1つだけ。
+  String? _metHint(Garden g, List<MetBird> met) {
+    if (g.takeHint('first_meet')) {
+      // 最初の段で目覚ましを断った人にだけ、**もう1回だけ**添える。
+      final nudge = g.shownHints.contains('alarm_declined') &&
+          g.takeHint('alarm_nudge');
+      return nudge
+          ? t('🎙 Birds you meet up close sing on your radio. '
+              'You can also wake up to them.')
+          : t('🎙 Birds you meet up close sing on your radio.');
+    }
+    if (met.any((m) => (g.observed[m.id] ?? 0) >= 2) &&
+        g.takeHint('second_meet')) {
+      return t('🪶 The more you meet, the more they get used to you. '
+          'Once they trust you, you can name them.');
+    }
+    return null;
+  }
+
+  /// 名前の枠がちょうど開いた鳥(6・12・18回目)には、**その場で**聞く。
+  Future<void> _offerNames(Garden g, List<MetBird> met) async {
+    for (final m in met) {
+      final n = g.observed[m.id] ?? 0;
+      if (n > 0 && n % core.kNicknameMeets == 0 && g.canNickname(m.id) &&
+          mounted) {
+        if (await showNameDialog(context, g, m.id)) await _save();
+        if (mounted) setState(() {});
+      }
     }
   }
 
@@ -324,7 +383,9 @@ class _GardenPageState extends State<GardenPage>
       while (_metThisRitual.isNotEmpty && mounted) {
         final batch = List<MetBird>.from(_metThisRitual);
         _metThisRitual.clear();
-        await showMetBirdPopup(context, g, batch);
+        if (!mounted) break;
+        await showMetBirdPopup(context, g, batch, hint: _metHint(g, batch));
+        await _offerNames(g, batch);
       }
     } finally {
       _showingMet = false;
@@ -353,7 +414,9 @@ class _GardenPageState extends State<GardenPage>
     if (mounted) setState(() => _ritual = null);
     if (g != null && met.isNotEmpty && mounted) {
       // 会えた瞬間に出し切れなかったぶん(板を出している最中に終わった等)。
-      await showMetBirdPopup(context, g, met);
+      await showMetBirdPopup(context, g, met, hint: _metHint(g, met));
+      await _offerNames(g, met);
+      await _save();
     } else if (flewOff.isNotEmpty && mounted) {
       // 会えないまま終わった回。**責めない言い方にする**(原則2)。
       // 失ったものは無く、もう一度押せばやり直せる。
@@ -793,17 +856,40 @@ class _GardenPageState extends State<GardenPage>
       _ => null,
     };
 
+    Future<void> advance() async {
+      setState(() => g.tutorialStep = core.advanceTutorialStep(step));
+      await _save();
+    }
+
+    // ── 最後の段は差し替える(説明戦略 2026-11-08)──
+    // 前は「Now close the app」で終わっていた。体験が尻切れになるうえ、
+    // **次に戻ってくる理由を何も渡していなかった**。目覚ましを1回だけ勧める。
+    // 断っても何も失わない(原則1・2)。
+    if (step == core.kTutorialSteps - 1) {
+      return TutorialOverlay(
+        title: 'Birds come slowly',
+        body: 'Every few hours, someone stops by. '
+            'Want to wake up to birdsong tomorrow morning?',
+        nextLabel: 'Set a birdsong alarm',
+        onNext: () async {
+          g.takeHint('alarm_accepted');
+          await advance();
+          widget.onOpenAlarm?.call();
+        },
+        secondaryLabel: 'Later',
+        onSecondary: () async {
+          g.takeHint('alarm_declined');
+          await advance();
+        },
+      );
+    }
+
     return TutorialOverlay(
       targetKey: target,
       title: content.title,
       body: content.body,
       nextLabel: content.nextLabel,
-      onNext: content.nextLabel == null
-          ? null
-          : () async {
-              setState(() => g.tutorialStep = core.advanceTutorialStep(step));
-              await _save();
-            },
+      onNext: content.nextLabel == null ? null : advance,
     );
   }
 }
