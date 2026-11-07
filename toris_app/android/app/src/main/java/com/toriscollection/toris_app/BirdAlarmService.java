@@ -52,13 +52,79 @@ public class BirdAlarmService extends Service {
     private static final long JOIN3_MS = RAMP_MS * 2 / 3;
     /** 開始音量。覚醒閾値の下から始める。 */
     private static final float START_VOL = 0.08f;
-    /** 鳴らしっぱなしで電池を焼かないための上限。 */
-    private static final long AUTO_STOP_MS = 15 * 60_000L;
+
+    // -- 夜明け前の庭(前置きの環境音) --------------------------------
+    // CEO 実機 2026-09-22「目覚ましは鳥の前に何か置いたほうがいい」。
+    // 企画『2026-09-22_実機4件_仕様』B。
+    //
+    // T(設定時刻)から環境音だけが鳴り、T+60秒で鳥が入る。設定した時刻に
+    // **何かが始まる**ことは保たれる(現行の設計は T = 起床時刻ではなく
+    // 「そっと起こし始める時刻」)。
+
+    /** 鳴らすのは**1層だけ**。**重ねない** — 層を重ねるほど広帯域になり、
+     *  さえずり(2〜8kHz)をマスクする。起こす仕事をするのはメロディの側
+     *  (McFarlane ら 2020)なので、さえずりの通り道を空けておく。
+     *
+     *  ⚠️ **実機で CEO が選び直した音**(2026-09-22)。
+     *  企画の指示書は wind を採り、lake は「中高域の水音でさえずりを
+     *  マスクする」として外していた。ところが実機で鳴らすと
+     *  **「風は苦しかった。砂嵐みたいで」** — wind はピンクノイズ寄りの
+     *  素材(`_credits.json`: "Wind in pine trees, slow light, forest,
+     *  pink noise")なので、目覚ましの音量帯では砂嵐に聞こえた。
+     *  CEO の指示は「ラジオの Lake とかにしよう。ただ、Lake でいいよ」。
+     *  マスクの懸念は AMB_BED 0.09(鳥より 24.9dB 下)で吸収する見込みで、
+     *  **次の実機で確かめる**。
+     *
+     *  lake.mp3 は Freesound #326097(kvgarlic)/ **CC0** = 商用可
+     *  (`assets/ambience/_credits.json`)。
+     *
+     *  ⚠️ **選べるようにはしていない。** CEO は「これも選べたらいいんだけど
+     *  ね、ラジオみたいに。ただ、Lake でいいよ」と言っており、今回は固定。
+     *  やり残しとして HANDOFF_00 §7 に記録してある。 */
+    private static final String AMB_ASSET =
+            "flutter_assets/assets/ambience/lake.mp3";
+    /** 鳥が入るまでの前置き。フェードイン40秒 + 保持20秒 = 60秒。
+     *  「鳴り出したことが分かる」には、上がり切ってから保持する時間が要る。 */
+    private static final long AMB_PRE_MS = 60_000L;
+    /** 0.00 から AMB_PEAK までの直線。 */
+    private static final long AMB_FADE_MS = 40_000L;
+    /** 前置きのあいだの環境音。素材 -23 LUFS x 0.20 = -37.0 LUFS。
+     *
+     *  ⚠️ **実機で鳴らして下げた値**(2026-09-22 19:00、CEO が耳で確認)。
+     *  机上の計算では 0.35(-32.1 LUFS)だったが、実機では
+     *  「雑音、つまり BGM が大きい気がするな音量」だった。
+     *  前置きは**音楽ではなく気配**。無音から立ち上がるので 0.20 でも
+     *  十分に聞こえる。 */
+    private static final float AMB_PEAK = 0.20f;
+    /** 鳥が入ったあと、環境音が退いて落ち着く高さ。素材 -23 LUFS x 0.09
+     *  = -43.9 LUFS。最大時の鳥(-19.0 LUFS)より **24.9dB 下**。
+     *
+     *  ⚠️ **この差がこの設計でいちばん大事な数字。** 起床の瞬間に
+     *  さえずりがマスクされていたら研究1を裏切る。
+     *  同じく実機で 0.18(18.9dB 差)から下げた。 */
+    private static final float AMB_BED = 0.09f;
+    /** AMB_PEAK から AMB_BED への直線。**鳥が入った瞬間**が起点。 */
+    private static final long AMB_DUCK_MS = 120_000L;
+
+    /** 鳴らしっぱなしで電池を焼かないための上限。
+     *
+     *  ⚠️ **最大音量で鳴り続ける時間 = 10分を1秒も削らない。**
+     *  競合(Dawn Chorus)は「1分で勝手にスヌーズする」で評価を落としている。
+     *  鳥が AMB_PRE_MS ぶん後ろにずれるので、自動停止も同じだけ後ろにずらす。
+     *  **前置きを延ばしても、ここは定数のまま自動で追従する。** */
+    private static final long AUTO_STOP_MS = 15 * 60_000L + AMB_PRE_MS;
 
     private final List<MediaPlayer> players = new ArrayList<>();
+    /** 前置きの風。**players には入れない**(音量のカーブが別だから)。 */
+    private MediaPlayer ambience;
     private PowerManager.WakeLock wakeLock;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    /** 鳥が入ってからの経過(ms)。ランプ(RAMP_MS)はこれで測る。 */
     private long elapsed = 0L;
+    /** T からの経過(ms)。前置きも含む全体の時計。 */
+    private long clock = 0L;
+    /** 鳥が入った時刻(clock 基準)。**-1 ならまだ入っていない。** */
+    private long birdsAt = -1L;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -113,40 +179,102 @@ public class BirdAlarmService extends Service {
         final String[] chorus =
                 BirdAlarmSounds.chorusFor(firstKey, met, new java.util.Random());
 
-        // 1羽目。ここから夜明けが始まる。
-        MediaPlayer first = makePlayer(chorus[0]);
-        if (first != null) {
-            players.add(first);
+        // -- 夜明け前の庭 ---------------------------------------------
+        // 環境音だけを先に鳴らし、AMB_PRE_MS 後に鳥が入る。
+        //
+        // ⚠️ **環境音が読めなかったら、鳥を待たせない。**(仕様 B-6-1)
+        // 前置きのせいで目覚ましが60秒遅れる、は絶対に作らない。
+        // `fromAsset` は例外を握って null を返すので、その null で分岐する。
+        ambience = fromAsset(AMB_ASSET);
+        long birdDelay = 0L;
+        if (ambience != null) {
+            ambience.setLooping(true);
+            ambience.setVolume(0f, 0f);
+            ambience.start();
+            birdDelay = AMB_PRE_MS;
         }
-        SINGING = first == null
-                ? java.util.Collections.emptyList()
-                : java.util.Collections.singletonList(chorus[0]);
-        // 2羽目・3羽目は後から加わる。
-        handler.postDelayed(() -> join(chorus[1]), JOIN2_MS);
-        handler.postDelayed(() -> join(chorus[2]), JOIN3_MS);
+
+        // ⚠️ **SINGING は、鳥が実際に鳴り出すまで空のまま。**
+        // 風は鳥ではないので、ここには入れない。画面が「まだ鳴いていない鳥」を
+        // 光らせない(原則4「生態に誠実」)。
+        SINGING = java.util.Collections.emptyList();
+        handler.postDelayed(() -> startBirds(chorus), birdDelay);
 
         tick();
         handler.postDelayed(this::stopSelf, AUTO_STOP_MS);
         return START_NOT_STICKY;
     }
 
-    /** 音量カーブ: START_VOL から 1.0 へ。上げ切ったらそのまま鳴らし続ける。 */
+    /**
+     * 鳥の入場。**ここがランプ(RAMP_MS)と JOIN2 / JOIN3 の起点。**
+     *
+     * ⚠️ 起点を T のままにすると、鳥が入った時点でランプが60秒ぶん進んでいて、
+     * 1羽目が 0.08 ではなく **0.26 で唐突に鳴き出す**(仕様 B-5)。
+     */
+    private void startBirds(String[] chorus) {
+        birdsAt = clock;
+        elapsed = 0L;
+        MediaPlayer first = makePlayer(chorus[0]);
+        if (first != null) {
+            players.add(first);
+            SINGING = java.util.Collections.singletonList(chorus[0]);
+        }
+        handler.postDelayed(() -> join(chorus[1]), JOIN2_MS);
+        handler.postDelayed(() -> join(chorus[2]), JOIN3_MS);
+    }
+
+    /**
+     * 1秒ごとの音量。**新しいタイマーは足さない** — 風も鳥もここに相乗りする。
+     *
+     * 鳥: START_VOL から 1.0 へ(鳥の入場から RAMP_MS)。上げ切ったらそのまま。
+     * 風: 0.00 から AMB_FADE_MS かけて AMB_PEAK、そこで保持。
+     *     鳥の入場から AMB_DUCK_MS かけて AMB_BED へ。以後固定。
+     */
     private void tick() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                elapsed += STEP_MS;
-                float p = Math.min(1f, (float) elapsed / (float) RAMP_MS);
-                float v = START_VOL + (1f - START_VOL) * p;
-                for (MediaPlayer mp : players) {
-                    try {
-                        mp.setVolume(v, v);
-                    } catch (Exception ignored) {
+                clock += STEP_MS;
+                applyAmbienceVolume();
+                if (birdsAt >= 0) {
+                    elapsed = clock - birdsAt;
+                    float v = birdVolume();
+                    for (MediaPlayer mp : players) {
+                        try {
+                            mp.setVolume(v, v);
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
                 handler.postDelayed(this, STEP_MS);
             }
         }, STEP_MS);
+    }
+
+    /** 風の音量。鳥が入る前は立ち上がり、入ったあとは退いて地になる。 */
+    private void applyAmbienceVolume() {
+        MediaPlayer mp = ambience;
+        if (mp == null) {
+            return;
+        }
+        float v;
+        if (birdsAt < 0) {
+            v = AMB_PEAK * Math.min(1f, (float) clock / (float) AMB_FADE_MS);
+        } else {
+            float q = Math.min(1f,
+                    (float) (clock - birdsAt) / (float) AMB_DUCK_MS);
+            v = AMB_PEAK + (AMB_BED - AMB_PEAK) * q;
+        }
+        try {
+            mp.setVolume(v, v);
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** 鳥の音量。鳥が入ってからの経過で決まる。 */
+    private float birdVolume() {
+        float p = Math.min(1f, (float) elapsed / (float) RAMP_MS);
+        return START_VOL + (1f - START_VOL) * p;
     }
 
     private void join(String key) {
@@ -189,8 +317,7 @@ public class BirdAlarmService extends Service {
         }
         mp.setLooping(true);
         // 後から加わる層も、いまのカーブの音量で始める(唐突に大きく出さない)。
-        float p = Math.min(1f, (float) elapsed / (float) RAMP_MS);
-        float v = START_VOL + (1f - START_VOL) * p;
+        float v = birdVolume();
         mp.setVolume(v, v);
         mp.start();
         return mp;
@@ -303,6 +430,15 @@ public class BirdAlarmService extends Service {
             }
         }
         players.clear();
+        // 前置きの環境音も必ず止めて解放する(players に入っていないので別に書く)。
+        if (ambience != null) {
+            try {
+                ambience.stop();
+                ambience.release();
+            } catch (Exception ignored) {
+            }
+            ambience = null;
+        }
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }

@@ -16,6 +16,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
+
 class GardenData {
   final Map<String, dynamic> birds;
   final Map<String, dynamic> plants;
@@ -74,6 +76,38 @@ class Garden {
   ///  同じ日に後から来た鳥が数えられない)。
   final Map<String, String> lastMetDay = {};
 
+  /// **アプリを開いた日数の合計**(庭のなじみ。`core.pacing`)。
+  /// 連続ではなく合計 — 休んでも減らない(原則2「罰しない」)。
+  int openDays = 0;
+
+  /// 最後に数えた日(yyyy-MM-dd)。1日1カウントのため。
+  String? lastOpenDay;
+
+  /// **鳥につけた名前**。種ごとに最大3羽(`core.nicknameSlots`)。
+  ///
+  /// CEO 2026-11-08「1羽あたり3名まで。名前がある鳥と無い鳥で表示を変える。
+  /// 『ルリツグミが来ました』と『ルリツグミのピョンタが来ました』」。
+  ///
+  /// セーブコードには入れない — Python 側の SAVE_KEYS を変えずに済ませるため。
+  /// そのぶん、**引っ越しコードでは名前は移らない**(端末ローカル)。
+  final Map<String, List<String>> nicknames = {};
+
+  /// **一度きりの一言**を出したかどうか(説明戦略 2026-11-08)。出したら二度と出さない。
+  final Set<String> shownHints = {};
+
+  /// 鳥が来たのに**新しい種がいない**回が何回続いたか。5回で「植えるものを変えると…」。
+  int staleVisits = 0;
+
+  /// 一言をまだ出していなければ、出したことにして true を返す。
+  bool takeHint(String key) => shownHints.add(key);
+
+  /// いま庭に来ているのが**どの子か**(種 → 名前)。名前のない子なら入らない。
+  /// 来たときに決め、帰るまで変えない。
+  final Map<String, String> visitingName = {};
+
+  /// 直前の留守のあいだに帰った子の名前(「旅立っていきました」に出すため)。
+  final Map<String, String> lastDepartedName = {};
+
   /// いま庭に来ている鳥。
   final List<String> visiting = [];
 
@@ -116,19 +150,12 @@ class Garden {
   /// 観察回数ではなく discovered で見る(現行と同じ判定軸)。
   final Set<String> lastFirstTimers = {};
 
-  /// **「なぜ来たか」の記録。** あなたが組んだ関係が鳥を呼んだ証拠。
-  /// 撹乱で植物が失われても消さない(原則2「罰しない」)。
-  List<core.EcoEntry> ecoLog = [];
-
   /// 留守のあいだに来た鳥・去った鳥(画面に出すため)。
   List<String> lastArrivals = [];
 
   /// 直近の `catchUp` で**何コマ進んだか**。0 なら何も起きていない。
   int lastTicks = 0;
   List<String> lastDepartures = [];
-
-  /// 留守のあいだの到来と、その理由(庭の画面にそのまま出す)。
-  List<core.ArrivalEvent> lastReasons = [];
 
   /// 留守のあいだに撹乱で倒れた植物と、その出来事。
   /// 倒れたぶんは**純減**で、自動では植え直さない(現行と同じ)。
@@ -258,10 +285,16 @@ class Garden {
   void catchUp(Random rng) {
     final now = DateTime.now();
     final last = lastSeenAt;
+    // 庭のなじみ。**この回の到来にも効く**ように、進める前に数える。
+    final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    if (lastOpenDay != todayKey) {
+      lastOpenDay = todayKey;
+      openDays += 1;
+    }
     lastTicks = 0;
     lastArrivals = [];
     lastDepartures = [];
-    lastReasons = [];
     if (last != null && planted.isNotEmpty) {
       final r = core.evolveWhileAway(
         plantedPlants: planted,
@@ -283,11 +316,28 @@ class Garden {
             itemPlacement, biomeId, data.birds),
         departureBonus: core.itemDepartureBonus(itemPlacement),
         baffled: core.isBaffleActive(itemPlacement),
+        // ── ペース(CEO 2026-11-07。`core.pacing`)──
+        // 3時間で1コマ・実時間に比例。全体と珍しさ・庭のなじみ・鳥の慣れ。
+        tickCountFn: core.pacedTickCount,
+        arrivalScaleFn: core.makeArrivalScaleFn(data.birds,
+            openDays: openDays, meets: observed),
       );
       lastTicks = r.ticks;
+      // 帰った子の名前を控えてから外す。来た鳥は、どの子が来たかを決める。
+      lastDepartedName.clear();
+      for (final b in r.departures) {
+        final n = visitingName.remove(b);
+        if (n != null) lastDepartedName[b] = n;
+      }
+      for (final b in r.arrivals) {
+        visitingName.remove(b);
+        final n = pickVisitor(b, rng);
+        if (n != null) visitingName[b] = n;
+      }
       visiting
         ..clear()
         ..addAll(r.residents);
+      visitingName.removeWhere((b, _) => !visiting.contains(b));
       lastArrivals = r.arrivals;
       lastDepartures = r.departures;
       // 撹乱で倒れた植物を反映する。庭は痩せるが、記録は減らさない。
@@ -301,10 +351,10 @@ class Garden {
       lastFirstTimers
         ..clear()
         ..addAll(r.arrivals.where((b) => !discovered.contains(b)));
+      if (r.arrivals.isNotEmpty) {
+        staleVisits = lastFirstTimers.isEmpty ? staleVisits + 1 : 0;
+      }
       discovered.addAll(r.arrivals);
-      // 「なぜ来たか」を溜める。同じ鳥の同じ理由は1件だけ。
-      ecoLog = core.appendEvents(ecoLog, r.reasons);
-      lastReasons = r.reasons;
     }
     // 会った日数は**鳥ごとに**1日1カウント。いま庭にいる鳥ぶんだけ増える。
     final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
@@ -319,7 +369,12 @@ class Garden {
     // 無条件に now を書くと、5分未満で開き直すたびに経過時間が消え、
     // 数分おきに開く人の庭には鳥が永遠に来なくなる(2026-08-18 に発覚)。
     // 初回(last == null)は基準が要るので必ず置く。
-    if (last == null || lastTicks > 0) lastSeenAt = now;
+    // 3時間で1コマなので、**端数を持ち越す**(`core.pacedLastSeen`)。
+    if (last == null) {
+      lastSeenAt = now;
+    } else if (lastTicks > 0) {
+      lastSeenAt = core.pacedLastSeen(last, now, lastTicks);
+    }
   }
 
   // ── 保存 ──
@@ -341,8 +396,6 @@ class Garden {
           for (final e in birdDays.entries)
             e.key: {'days': e.value, 'last': lastMetDay[e.key] ?? ''}
         },
-        // 「なぜ来たか」。Python 側も SAVE_KEYS に持っている。
-        'eco_log': [for (final e in ecoLog) e.toJson()],
         'saved_at': core.isoSeconds(lastSeenAt ?? DateTime.now()),
       };
 
@@ -363,10 +416,10 @@ class Garden {
     discovered
       ..clear()
       ..addAll(((s['discovered'] as Iterable?) ?? const []).map((e) => '$e'));
-    ecoLog = [
-      for (final e in ((s['eco_log'] as List?) ?? const []))
-        if (core.EcoEntry.fromJson(e) != null) core.EcoEntry.fromJson(e)!
-    ];
+    // ⚠️ **`eco_log` は読まない**(2026-09-22 に「なぜ来たか」を製品から
+    // 外した)。古いセーブコードには `eco_log` が入っているが、
+    // `save_code.dart` の `saveKeys` には残してあるので**読めて落ちない**。
+    // 単に使わないだけ。SAVE_KEYS を触ると Python 版との互換が崩れる。
     birdDays.clear();
     lastMetDay.clear();
     final days = s['bird_days'];
@@ -400,6 +453,61 @@ class Garden {
   static const _tutorialKey = 'toris_tutorial_step';
   static const _itemKey = 'toris_garden_item';
   static const _claimKey = 'toris_item_claim_day';
+  static const _openDaysKey = 'toris_open_days';
+  static const _openDayKey = 'toris_last_open_day';
+  static const _nicknamesKey = 'toris_nicknames';
+  static const _visitingNameKey = 'toris_visiting_name';
+  static const _hintsKey = 'toris_hints';
+  static const _staleKey = 'toris_stale_visits';
+
+  /// その種に、あといくつ名前をつけられるか。
+  int freeNameSlots(String birdId) =>
+      core.nicknameSlots(observed[birdId] ?? 0) -
+      (nicknames[birdId]?.length ?? 0);
+
+  /// 名前をつけられるか(枠が1つ以上空いている)。
+  bool canNickname(String birdId) => freeNameSlots(birdId) > 0;
+
+  /// 来た子を決める。名前のある子それぞれと「名前のない子」を同じ重みで引く
+  /// (名前が2つなら 1/3 ずつ)。名前のない子なら null。
+  String? pickVisitor(String birdId, Random rng) {
+    final names = nicknames[birdId] ?? const <String>[];
+    if (names.isEmpty) return null;
+    final i = rng.nextInt(names.length + 1);
+    return i < names.length ? names[i] : null;
+  }
+
+  /// 画面に出す名前。名前のある子なら「ルリツグミのピョンタ」、なければ種名。
+  String labelFor(String birdId) {
+    final species = nameOf(data.birds[birdId], birdId);
+    final n = visitingName[birdId] ?? lastDepartedName[birdId];
+    return n == null ? species : individualLabel(species, n);
+  }
+
+  /// 名前を足す。枠が無ければ何もしない。12文字まで。
+  void addNickname(String birdId, String name) {
+    final n = name.trim();
+    if (n.isEmpty || !canNickname(birdId)) return;
+    (nicknames[birdId] ??= []).add(n.length > 12 ? n.substring(0, 12) : n);
+  }
+
+  /// 名前を変える / 外す(空なら外す)。
+  void renameNickname(String birdId, String oldName, String name) {
+    final list = nicknames[birdId];
+    if (list == null) return;
+    final i = list.indexOf(oldName);
+    if (i < 0) return;
+    final n = name.trim();
+    if (n.isEmpty) {
+      list.removeAt(i);
+      if (list.isEmpty) nicknames.remove(birdId);
+      if (visitingName[birdId] == oldName) visitingName.remove(birdId);
+    } else {
+      final v = n.length > 12 ? n.substring(0, 12) : n;
+      list[i] = v;
+      if (visitingName[birdId] == oldName) visitingName[birdId] = v;
+    }
+  }
 
   Future<void> save() async {
     final p = await SharedPreferences.getInstance();
@@ -418,12 +526,44 @@ class Garden {
     } else {
       await p.setString(_claimKey, d);
     }
+    await p.setInt(_openDaysKey, openDays);
+    final od = lastOpenDay;
+    if (od != null) await p.setString(_openDayKey, od);
+    await p.setString(_nicknamesKey, jsonEncode(nicknames));
+    await p.setString(_visitingNameKey, jsonEncode(visitingName));
+    await p.setStringList(_hintsKey, shownHints.toList());
+    await p.setInt(_staleKey, staleVisits);
   }
 
   Future<void> restore() async {
     final p = await SharedPreferences.getInstance();
     tutorialStep = p.getInt(_tutorialKey) ?? 0;
     lastItemClaimDay = p.getString(_claimKey);
+    openDays = p.getInt(_openDaysKey) ?? 0;
+    shownHints
+      ..clear()
+      ..addAll(p.getStringList(_hintsKey) ?? const []);
+    staleVisits = p.getInt(_staleKey) ?? 0;
+    lastOpenDay = p.getString(_openDayKey);
+    try {
+      final raw = p.getString(_nicknamesKey);
+      if (raw != null) {
+        nicknames.clear();
+        (jsonDecode(raw) as Map).forEach((k, v) {
+          // 2.0.7 の開発中は1種1つ(文字列)だった。どちらの形も読む。
+          final list = v is List ? [for (final x in v) '$x'] : ['$v'];
+          if (list.isNotEmpty) nicknames['$k'] = list.take(core.kMaxNicknames).toList();
+        });
+      }
+      final vn = p.getString(_visitingNameKey);
+      if (vn != null) {
+        visitingName
+          ..clear()
+          ..addAll((jsonDecode(vn) as Map).map((k, v) => MapEntry('$k', '$v')));
+      }
+    } catch (_) {
+      // 読めなければ名前なしで続ける(落ちない)。
+    }
     final raw = p.getString(_itemKey);
     if (raw != null) {
       final i = raw.indexOf('|');
@@ -438,6 +578,13 @@ class Garden {
     if (code == null) return;
     final s = core.decodeSave(code);
     if (s != null) applyState(s);
+    // **前の版から使っている人の通った日数を埋める。** 数え始めたのは 2.0.7 からなので、
+    // そのままだと何週間も使ってきた人が「1日目」から始まる。会った日数(鳥ごと)の
+    // 最大は、少なくともその日数は開いていた証拠になる。増やすだけで減らさない。
+    if (birdDays.isNotEmpty) {
+      final most = birdDays.values.reduce((a, b) => a > b ? a : b);
+      if (most > openDays) openDays = most;
+    }
     // **既に庭がある人には案内しない。** セーブコードで移してきた人や、
     // 前の版から使っている人に、いまさら「土地を選びましょう」は失礼。
     if (planted.isNotEmpty || discovered.isNotEmpty) {

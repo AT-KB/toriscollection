@@ -4,11 +4,14 @@
 /// 説明を足したくなったら、まず作りを疑う。
 library;
 
+import '../i18n.dart';
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'radio_engine.dart';
 import 'sleep_mode.dart';
 
@@ -53,6 +56,24 @@ class _RadioPageState extends State<RadioPage>
     });
   }
 
+  /// ⚠️ **庭は非同期に読み込まれる。** 最初の build では `observed` が空で、
+  /// `initState` の `load` はその空を掴んだまま二度と読み直さなかった
+  /// (2026-08-25 実機で発覚。Listen が一度も出ない)。
+  /// 入ってきたら組み直す。
+  @override
+  void didUpdateWidget(RadioPage old) {
+    super.didUpdateWidget(old);
+    void done(void _) {
+      if (mounted) setState(() {});
+    }
+
+    if (widget.biomeId != old.biomeId) {
+      _engine.reload(widget.biomeId).then(done);
+    } else {
+      _engine.refreshObserved(widget.observed).then(done);
+    }
+  }
+
   @override
   void dispose() {
     _watch?.cancel();
@@ -65,7 +86,9 @@ class _RadioPageState extends State<RadioPage>
     super.build(context);
     final e = _engine;
     return Scaffold(
-      appBar: AppBar(title: const Text('Garden radio')),
+      appBar: AppBar(
+          title: Text(t('Garden radio')),
+          actions: const [LangButton()]),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
@@ -73,9 +96,10 @@ class _RadioPageState extends State<RadioPage>
           // 現行にもある(`radio.py` は選んだ土地の鳥だけを鳴らす)。
           // 既定は自分の庭の土地。別の土地の声も聴ける。
           SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'charlotte', label: Text('Charlotte')),
-              ButtonSegment(value: 'kyoto', label: Text('Kyoto')),
+            // ⚠️ const を外してある — 土地名が言語で変わるため。
+            segments: [
+              ButtonSegment(value: 'charlotte', label: Text(t('Charlotte'))),
+              ButtonSegment(value: 'kyoto', label: Text(t('Kyoto'))),
             ],
             selected: {e.biomeId},
             onSelectionChanged: (v) async {
@@ -99,9 +123,11 @@ class _RadioPageState extends State<RadioPage>
           // 環境音だけ流すでいいよ、案内建てといて」)。原則3「癒しは無料」。
           if (e.ready && e.birds.isEmpty) ...[
             Text(
-              'Once you meet birds in '
-              '${widget.biomeId == 'kyoto' ? 'Kyoto' : 'Charlotte'}, '
-              "you can hear their voices here.",
+              L10n.lang.value == Lang.ja
+                  ? radioEmptyJa(widget.biomeId)
+                  : 'Once you meet birds in '
+                      '${widget.biomeId == 'kyoto' ? 'Kyoto' : 'Charlotte'}, '
+                      "you can hear their voices here.",
               style: const TextStyle(fontSize: 15, height: 1.4, color: kSub),
             ),
             const SizedBox(height: 14),
@@ -111,12 +137,21 @@ class _RadioPageState extends State<RadioPage>
                 e.ready ? () => _engine.toggle(() => setState(() {})) : null,
             icon: Icon(e.running ? Icons.stop_rounded : Icons.play_arrow_rounded,
                 size: 30),
-            label: Text(e.running ? 'Stop' : 'Listen'),
+            label: Text(e.running ? t('Stop') : t('Listen')),
           ),
           if (e.error != null) ...[
             const SizedBox(height: 8),
             Text(e.error!,
                 style: const TextStyle(fontSize: 12, color: Colors.red)),
+          ],
+          // ── 音声の本数(デバッグ版だけ)──
+          // **鳥3 + 環境音7 = 10 で張り付くのが正しい**(`radio_engine.dart`)。
+          // 増え続けていたら、読み込みが二重に走って解放し損ねている。
+          // 2026-09-22 の直しが効いているかを実機で目で見るための窓。
+          if (kDebugMode && e.ready) ...[
+            const SizedBox(height: 4),
+            Text('voices ${e.voiceCount}',
+                style: const TextStyle(fontSize: 11, color: kSub)),
           ],
           const SizedBox(height: 22),
 
@@ -130,20 +165,53 @@ class _RadioPageState extends State<RadioPage>
           // (CEO 2026-08-16「文字多くて読みにくい。もっと少なく、大きく」)。
           if (e.birds.isNotEmpty && e.lineupStory.isNotEmpty) ...[
             const SizedBox(height: 18),
-            Text(e.lineupStory,
+            Text(t(e.lineupStory),
                 style: const TextStyle(
                     fontSize: 16, height: 1.3, color: kInk)),
           ],
           const SizedBox(height: 26),
 
-          _SectionLabel('Ambience'),
+          // ── 鳥の音量 ──
+          //
+          // ## なぜ足したか(CEO 実機 2026-09-22)
+          // 「鳥の声が全然聞こえない。音量メーターは BGM だけにかかってるよね?」
+          // → **その通りだった。** 下の Slider は `ambVol` だけを動かしていて、
+          // 鳥の音量は `kDepthGain` 固定で触る手段が無かった。
+          //
+          // **鳴っているものから並べる。** つまみは触らなくても成立する
+          // (既定 0.80 × kBirdGainMax 1.6 = 現行比 +2.1dB。原則1「受動的」)。
+          //
+          // ⚠️ 会った鳥が0なら**セクションごと出さない**。鳴りようのない
+          // ものの音量つまみを出すことになる(`showBirdVolume`)。
+          if (showBirdVolume(e.birds)) ...[
+            _SectionLabel(t('Birds')),
+            Row(children: [
+              const Icon(Icons.music_note_rounded, color: kSub),
+              const SizedBox(width: 8),
+              Text(t('Birds'), style: const TextStyle(fontSize: 14, color: kSub)),
+              Expanded(
+                child: Slider(
+                  value: e.birdVol,
+                  onChanged: (v) {
+                    setState(() => e.birdVol = v);
+                    e.applyBirdVolume();
+                  },
+                  // つまみは動かしている間ずっと呼ばれる。**離した時だけ**書く。
+                  onChangeEnd: (_) => e.savePrefs(),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 18),
+          ],
+
+          _SectionLabel(t('Ambience')),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               for (final k in kAmbienceKeys)
                 FilterChip(
-                  label: Text(kAmbienceLabel[k] ?? k),
+                  label: Text(t(kAmbienceLabel[k] ?? k)),
                   selected: e.ambOn[k] == true,
                   onSelected: (on) {
                     setState(() => e.ambOn[k] = on);
@@ -153,8 +221,12 @@ class _RadioPageState extends State<RadioPage>
                 ),
             ],
           ),
+          // ⚠️ 行にはスピーカーのアイコンしか無く、**何にかかっている
+          // メーターか画面から読めなかった**(CEO の疑問がそのまま画面の欠陥)。
           Row(children: [
             const Icon(Icons.volume_up_rounded, color: kSub),
+            const SizedBox(width: 8),
+            Text(t('Ambience'), style: const TextStyle(fontSize: 14, color: kSub)),
             Expanded(
               child: Slider(
                 value: e.ambVol,
@@ -170,14 +242,14 @@ class _RadioPageState extends State<RadioPage>
           const SizedBox(height: 18),
 
           // ── 睡眠モード ──
-          _SectionLabel('Sleep'),
+          _SectionLabel(t('Sleep')),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               for (final m in kSleepMinutes)
                 ChoiceChip(
-                  label: Text('$m min'),
+                  label: Text(L10n.lang.value == Lang.ja ? '$m 分' : '$m min'),
                   selected: false,
                   onSelected: e.ready
                       ? (_) => e.startSleep(m, () => setState(() {}))
@@ -186,8 +258,13 @@ class _RadioPageState extends State<RadioPage>
               if (e.sleepEndsAt != null)
                 ActionChip(
                   avatar: const Icon(Icons.close_rounded, size: 18),
-                  label: Text(
-                      'Until ${TimeOfDay.fromDateTime(e.sleepEndsAt!).format(context)}'),
+                  label: Text(() {
+                    final time =
+                        TimeOfDay.fromDateTime(e.sleepEndsAt!).format(context);
+                    return L10n.lang.value == Lang.ja
+                        ? untilJa(time)
+                        : 'Until $time';
+                  }()),
                   onPressed: () => setState(() => e.cancelSleep()),
                 ),
             ],
@@ -235,7 +312,7 @@ class _BirdRow extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: Text(v.bird.english,
+          child: Text(speciesName(v.bird.id, v.bird.english),
               style: const TextStyle(fontSize: 17, color: kInk)),
         ),
         // 群れが育っている鳥だけ羽数を出す(1羽のときは何も出さない)

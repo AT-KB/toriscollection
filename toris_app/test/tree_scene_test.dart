@@ -76,6 +76,37 @@ void main() {
     expect(tops['mid']! < tops['near']!, isTrue, reason: '手前ほど下にいるはず');
   });
 
+  // 2026-11-03 CEO「全部同じタイミングで動いている気がする」。
+  // 席を枝ごとに割っていたので、1羽が枝を移ると**ほかの鳥まで横にずれた**。
+  testWidgets('1羽が枝を移っても、ほかの鳥は1ピクセルも動かない', (tester) async {
+    Future<Map<String, Offset>> place(List<PerchedBird> birds) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SizedBox(width: 400, child: TreeScene(birds: birds))),
+      ));
+      await tester.pumpAndSettle();
+      return {
+        for (final b in birds)
+          b.id: tester.getTopLeft(find.byKey(ValueKey('perch_${b.id}')))
+      };
+    }
+
+    final before = await place(const [
+      PerchedBird(id: 'a', english: 'A', depth: 'b3'),
+      PerchedBird(id: 'b', english: 'B', depth: 'b3'),
+      PerchedBird(id: 'c', english: 'C', depth: 'b2'),
+    ]);
+    // a だけが奥(b3)から中(b2)へ跳ぶ。b は b3 に1羽残り、c の枝には1羽増える。
+    final after = await place(const [
+      PerchedBird(id: 'a', english: 'A', depth: 'b2'),
+      PerchedBird(id: 'b', english: 'B', depth: 'b3'),
+      PerchedBird(id: 'c', english: 'C', depth: 'b2'),
+    ]);
+    expect(after['b'], before['b'], reason: '元の枝に残った鳥がずれた');
+    expect(after['c'], before['c'], reason: '移った先の枝の鳥がずれた');
+    expect(after['a'], isNot(before['a']), reason: '跳んだ鳥が動いていない');
+  });
+
   testWidgets('誰も居なければ、木だけが立っている', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: SizedBox(width: 400, child: TreeScene(birds: []))),

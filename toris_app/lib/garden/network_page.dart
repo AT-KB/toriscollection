@@ -8,11 +8,13 @@
 /// 交渉不能の原則4「生態に誠実」— 線は食べる/食べられるの記録だけで引く。
 library;
 
+import '../i18n.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'garden_state.dart';
 
 class NetworkPage extends StatelessWidget {
@@ -24,13 +26,14 @@ class NetworkPage extends StatelessWidget {
     final g = garden;
     if (g == null || g.planted.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Network')),
-        body: const Center(
+        appBar: AppBar(title: Text(t('Network'))),
+        body: Center(
           child: Padding(
-            padding: EdgeInsets.all(32),
-            child: Text('Plant something first.\nThen you can see who it feeds.',
+            padding: const EdgeInsets.all(32),
+            child: Text(
+                t('Plant something first.\nThen you can see who it feeds.'),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: kSub, height: 1.6)),
+                style: const TextStyle(color: kSub, height: 1.6)),
           ),
         ),
       );
@@ -51,7 +54,8 @@ class NetworkPage extends StatelessWidget {
       ..sort();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Network')),
+      appBar: AppBar(
+          title: Text(t('Network')), actions: const [LangButton()]),
       body: Column(children: [
         Expanded(
           child: InteractiveViewer(
@@ -80,27 +84,26 @@ class NetworkPage extends StatelessWidget {
                         .where(web.plants.containsKey)
                         .toList()
                 },
-                label: (id) =>
-                    (g.data.plants[id]?['english'] ??
-                            g.data.insects[id]?['english'] ??
-                            g.data.birds[id]?['english'] ??
-                            id) as String,
+                label: (id) => nameOf(
+                    g.data.plants[id] ?? g.data.insects[id] ?? g.data.birds[id],
+                    id),
                 residents: g.visiting.toSet(),
               ),
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 18),
           // ⚠️ **凡例の色は、図で実際に使っている色にすること。**
           // 以前は虫が黄・鳥が青と書いてあったが、図では虫は肌色、
           // 来た鳥はその鳥自身の色で描いていた(2026-08-16 の監査で発覚)。
           child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: const [
-                _Key(color: Color(0xFF4A8A4A), text: 'Plant'),
-                _Key(color: Color(0xFFE8C0A0), text: 'Insect'),
-                _Key(color: Color(0xFFC8D4E4), text: 'Bird'),
+              // ⚠️ const を外してある — 凡例の名前が言語で変わるため。
+              children: [
+                _Key(color: const Color(0xFF4A8A4A), text: t('Plant')),
+                _Key(color: const Color(0xFFE8C0A0), text: t('Insect')),
+                _Key(color: const Color(0xFFC8D4E4), text: t('Bird')),
               ]),
         ),
       ]),

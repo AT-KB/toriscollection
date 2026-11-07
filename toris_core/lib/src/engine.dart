@@ -11,10 +11,8 @@ library;
 import 'dart:math';
 
 import 'centrality.dart';
-import 'eco_log.dart';
 import 'feeder_chain.dart';
 import 'py_coerce.dart';
-import 'save_code.dart' show isoSeconds;
 
 /// その土地・月の気温。
 /// 南半球では季節を半年ずらす(北半球の対応する月のオフセットを使う)。
@@ -277,6 +275,10 @@ TurnResult runTurn({
   Map<String, Centrality>? centralities,
   /// 「今日の庭アイテム」の到来加点。省略すると一切呼ばれない。
   double Function(String)? arrivalBonusFn,
+  /// 到来確率に**掛ける**係数(`pacing.dart`。珍しさ・庭のなじみ・鳥の慣れ)。
+  /// **Python には無い、Flutter 版だけの調整**(CEO 2026-11-07)。
+  /// 省略すると一切呼ばれず、確率は Python と1ビットも変わらない。
+  double Function(String)? arrivalScaleFn,
   /// 同・退去率の減算。0 なら一切効かない。
   double departureBonus = 0.0,
   /// リス返し(`garden_items`)が効いている間は、開放型でもリスが餌台に届かない。
@@ -337,6 +339,7 @@ TurnResult runTurn({
         .probability;
     // 餌台の加点。**到来にだけ効く**(上の退去判定は加点前の p を使う)。
     // 置いていなければ 0 なので、今までの庭は1ビットも変わらない。
+    if (arrivalScaleFn != null) p *= arrivalScaleFn(bid);
     p = min(1.0, p + feederArrivalBonus(placedFeatures, birdsData[bid]));
     if (arrivalBonusFn != null) {
       p = min(1.0, p + arrivalBonusFn(bid));
@@ -389,19 +392,18 @@ class AbsenceResult {
   /// 撹乱を反映した最終的な植生。
   final List<String> plantedFinal;
 
-  /// 到来イベント(「なぜ来たか」の一文つき)。到着した順。
-  final List<ArrivalEvent> reasons;
-
   const AbsenceResult(this.residents, this.arrivals, this.departures,
-      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal,
-      [this.reasons = const []]);
+      this.ticks, this.lostPlants, this.disturbances, this.plantedFinal);
 }
 
 /// 前回見たときから今までを進める。`absence_loop.evolve_state` に当たる。
 ///
-/// 到着した鳥には「なぜ来たか」の一文が付く(`reasons`)。理由は
-/// **そのサイクルの食物網**から組む — 撹乱で植生が変わるので、あとから
-/// まとめて組むと嘘になる。
+/// ⚠️ **意図した部分移植。** Python は到着ごとに `events`
+/// (`reason_text` / `related_plant_id` / `related_insect_id` / `memento_id` /
+/// `arrived_at`)を返すが、こちらが返すのは**誰が来て誰が去ったか**まで。
+/// 「なぜ来たか」は 2026-09-22 に製品から削除し(`885a6ee`)、落とし物は
+/// 2026-08-15 に落としている。落とした理由は
+/// `tools/migration_ledger.json` の `absence_loop.evolve_state` の `why`。
 AbsenceResult evolveWhileAway({
   required List<String> plantedPlants,
   required String biomeId,
@@ -420,22 +422,23 @@ AbsenceResult evolveWhileAway({
   double Function(String)? arrivalBonusFn,
   double departureBonus = 0.0,
   bool baffled = false,
+  /// `runTurn` の同名の引数へ渡す。省略すれば Python と同じ。
+  double Function(String)? arrivalScaleFn,
+  /// 経過時間 → コマ数。省略すれば Python と同じ `estimateTickCount`。
+  int Function(double hours)? tickCountFn,
 }) {
   final hours = now.difference(lastSeenAt).inSeconds / 3600.0;
-  final ticks = hours <= 0 ? 0 : estimateTickCount(hours);
+  final ticks =
+      hours <= 0 ? 0 : (tickCountFn ?? estimateTickCount)(hours);
   var cur = Set<String>.from(residents);
   final arrivals = <String>[];
   final departures = <String>[];
   final planted = List<String>.from(plantedPlants);
   final lost = <String>[];
   final events = <Disturbance>[];
-  final reasons = <ArrivalEvent>[];
   if (planted.isEmpty || ticks == 0) {
     return AbsenceResult(cur, arrivals, departures, 0, lost, events, planted);
   }
-  // 何コマぶんを、いつの出来事として記録するか。
-  // 均等割りにして、古い到来ほど古い時刻になるようにする。
-  final span = now.difference(lastSeenAt);
   for (var i = 0; i < ticks; i++) {
     // 現行と同じ順序: 先に撹乱、そのあとで1サイクル。植生が変わるので、
     // **確率はコマごとに計算し直される**(runTurn が毎回 buildFoodWeb する)。
@@ -460,27 +463,16 @@ AbsenceResult evolveWhileAway({
       placedFeatures: placedFeatures,
       centralities: centralities,
       arrivalBonusFn: arrivalBonusFn,
+      arrivalScaleFn: arrivalScaleFn,
       departureBonus: departureBonus,
       baffled: baffled,
     );
     cur = r.residents;
     arrivals.addAll(r.arrivals);
     departures.addAll(r.departures);
-    final at = isoSeconds(
-        lastSeenAt.add(Duration(seconds: span.inSeconds * (i + 1) ~/ ticks)));
-    for (final bid in r.arrivals) {
-      reasons.add(buildReason(
-        birdId: bid,
-        web: r.web,
-        arrivedAt: at,
-        birdsData: birdsData,
-        plantsData: plantsData,
-        insectsData: insectsData,
-      ));
-    }
   }
   return AbsenceResult(
-      cur, arrivals, departures, ticks, lost, events, planted, reasons);
+      cur, arrivals, departures, ticks, lost, events, planted);
 }
 
 /// 撹乱(嵐・落雷・伐採)。`toris_collection/disturbance.py` の移植。

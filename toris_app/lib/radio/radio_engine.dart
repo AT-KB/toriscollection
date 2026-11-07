@@ -23,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
 import 'sleep_mode.dart';
 
 /// 現行版 radio.py の定数(BGMモードでない方)。数字は勝手に変えないこと。
@@ -36,6 +37,18 @@ const double kRestMaxS = 20.0;
 /// 6種だと鳴きすぎて1羽ずつの声が聞き分けられず、庭の静けさとも合わなかった
 /// (2026-08-11 に 6 -> 3 へ)。
 const int kMaxBirds = 3;
+
+/// 鳥の音量つまみ(`RadioEngine.birdVol`)を一杯に上げたときの倍率。
+///
+/// ## なぜ足したか(CEO 実機 2026-09-22「鳥の声が全然聞こえない。
+/// 音量メーターは BGM だけにかかってるよね?」→ **その通りだった**)
+/// `radio_page.dart` の Slider は `ambVol` だけを動かしていて、鳥の音量は
+/// `kDepthGain[depth]` 固定。**ユーザーが触れる手段が存在しなかった。**
+///
+/// ⚠️ **`kDepthGain` は掛け算の内側に残す。**「よく会った鳥ほど手前で鳴く」
+/// (動画字幕 `g03_song` / 監査台帳)は 1.12 / 1.00 / 0.85 の**比**で成立して
+/// いる。外側に一律のゲインを掛けても比は変わらないので、この言い切りは壊れない。
+const double kBirdGainMax = 1.6;
 
 /// 奥行きごとの音量と残響の深さ。現行の D(gain/wet) と同じ値。
 const Map<String, double> kDepthGain = {'b1': 1.12, 'b2': 1.00, 'b3': 0.85};
@@ -136,6 +149,13 @@ class BirdVoice {
 
   double get _peak => kDepthGain[depth] ?? 1.0;
 
+  /// 鳥の音量つまみ(0.0〜1.0)。`RadioEngine.birdVol` から配られる。
+  double birdVol = kBirdVolDefault;
+
+  /// 実際に鳴らす音量。**近さ(`_peak`)は内側に残す**ので、
+  /// 「よく会った鳥ほど手前で鳴く」の比は変わらない。
+  double get _gain => _peak * _scale * birdVol * kBirdGainMax;
+
   double pan = 0.0;
 
   Future<void> load({bool reverb = true}) async {
@@ -183,7 +203,7 @@ class BirdVoice {
     }
     singing = true;
     onChange();
-    SoLoud.instance.fadeVolume(h, _peak * _scale, const Duration(milliseconds: 400));
+    SoLoud.instance.fadeVolume(h, _gain, const Duration(milliseconds: 400));
 
     // 群れは本体と同じ場所から、決めたぶんだけ遅れて鳴く
     final posMs = SoLoud.instance.getPosition(h).inMilliseconds;
@@ -194,7 +214,7 @@ class BirdVoice {
       if (back > 0) {
         SoLoud.instance.seek(fh, Duration(milliseconds: back));
       }
-      SoLoud.instance.fadeVolume(fh, _peak * _scale * _flockGain(i + 1),
+      SoLoud.instance.fadeVolume(fh, _gain * _flockGain(i + 1),
           const Duration(milliseconds: 400));
     }
   }
@@ -261,15 +281,135 @@ class BirdVoice {
     SoLoud.instance.setPause(h, true);
   }
 
+  /// **作ったものを確実に手放す。** `stop()` は一時停止するだけなので、
+  /// 読み込み直すときはこちらを使う。
+  ///
+  /// ⚠️ ここが無かったので、読み込みが途中で落ちると音声ハンドルが
+  /// 解放されずに残っていた(2026-09-22)。
+  Future<void> dispose() async {
+    _cycle?.cancel();
+    _cycle = null;
+    singing = false;
+    for (final fh in _flockHandles) {
+      try {
+        await SoLoud.instance.stop(fh);
+      } catch (_) {}
+    }
+    _flockHandles.clear();
+    _flockDelays.clear();
+    final h = _handle;
+    _handle = null;
+    if (h != null) {
+      try {
+        await SoLoud.instance.stop(h);
+      } catch (_) {}
+    }
+    final src = _source;
+    _source = null;
+    if (src != null) {
+      try {
+        await SoLoud.instance.disposeSource(src);
+      } catch (_) {}
+    }
+  }
+
   /// 眠りに落ちるときの減衰。1.0 で通常、0 で無音。
   double _scale = 1.0;
 
   void fadeScale(double k) {
     _scale = k;
+    if (!singing) return;
     final h = _handle;
-    if (h != null && singing) {
-      SoLoud.instance.setVolume(h, _peak * _scale);
+    if (h != null) {
+      SoLoud.instance.setVolume(h, _gain);
     }
+    // ⚠️ **群れが抜けていた。** ここは `_handle` にしか音量を設定しておらず、
+    // 睡眠モードで沈めても**群れだけ鳴り続けていた**(2026-09-22 に発見)。
+    // 鳥の音量つまみも同じ経路を通るので、直さないとつまみが群れに効かない。
+    for (var i = 0; i < _flockHandles.length; i++) {
+      SoLoud.instance
+          .setVolume(_flockHandles[i], _gain * _flockGain(i + 1));
+    }
+  }
+
+  /// 鳥の音量つまみを反映する。**いま鳴いている鳥だけ**に効く。
+  /// 鳴いていない鳥は、次に鳴き出すときに新しい値で立ち上がる。
+  void applyBirdVolume(double v) {
+    birdVol = v;
+    if (!singing) return;
+    const d = Duration(milliseconds: 200);
+    final h = _handle;
+    if (h != null) {
+      SoLoud.instance.fadeVolume(h, _gain, d);
+    }
+    for (var i = 0; i < _flockHandles.length; i++) {
+      SoLoud.instance.fadeVolume(_flockHandles[i], _gain * _flockGain(i + 1), d);
+    }
+  }
+}
+
+/// 鳥の音量つまみの既定値。
+///
+/// **つまみが端に寄っていると「もう上げられない」と見える**ので、上にも下にも
+/// 動かせる位置に置く。0.80 は目盛りの上寄りだが、`kBirdGainMax` = 1.6 が
+/// あるので上げしろが +2dB 残っている。そして**触らなくても現行より大きい**
+/// (0.80 × 1.6 = 1.28 = 現行 1.00 比 +2.1dB) — CEO はつまみを探さなくてよい。
+const double kBirdVolDefault = 0.80;
+
+/// 環境音の音量の既定値。
+///
+/// 2026-09-22 に 0.55 から下げた。**保存済みの人は変わらない**
+/// (`restorePrefs` が保存値を優先する)。効くのは新規インストールと、
+/// まだ一度もつまみを触っていない人だけ。
+/// `kBirdVolDefault` と合わせて 鳥 : 環境音 = +3.8dB 改善する
+/// (1.28/1.00 × 0.55/0.45 = 1.53)。
+///
+/// ⚠️ **`kAmbMax` は触っていない。** 変えたのはそれに掛ける係数の初期値だけ。
+const double kAmbVolDefault = 0.45;
+
+/// 鳥の音量つまみを画面に出すか。
+///
+/// **会った鳥が0なら出さない。** 鳴る鳥が0なら(`observedInBiome`)、
+/// 鳴りようのないものの音量つまみを出すことになる
+/// (`zero_state_test.dart`「何もしていない人に、持っている人向けのものが
+/// 見えていないか」)。
+bool showBirdVolume(List<BirdVoice> birds) => birds.isNotEmpty;
+
+/// **一度に1本だけ**走らせるための行列。
+///
+/// ## なぜ要るか(2026-09-22 実機で発覚)
+/// ラジオ画面を開くと `SoLoudNotInitializedException` が赤字で出ていた。
+/// 原因は `load()` が**2経路から並行に呼ばれていた**こと:
+///   1. `radio_page.dart` の `initState`(このとき `observed` は空)
+///   2. 庭を読み終えたあとの `didUpdateWidget` → `refreshObserved`
+///
+/// `SoLoud.init()` は、**すでに初期化済みの状態で呼ばれると deinit してから
+/// 入れ直す**(flutter_soloud 4.1.7 `soloud.dart` の `_initialize`:
+/// `nativeIsInitialized` なら `_deinitAsync` → 再 init)。
+/// つまり2本目の init が1本目の足元を外し、1本目の `loadAsset` / `play` が
+/// `SoLoudNotInitializedException` で落ちる。
+///
+/// **進行中のものを待ってから次を始める。二重に走らせない。**
+class TaskQueue {
+  Future<void> _chain = Future<void>.value();
+  bool _busy = false;
+
+  /// いま何か走っているか。
+  bool get busy => _busy;
+
+  /// 前のものが終わってから [body] を走らせる。
+  /// **前のものが失敗しても、次は止めない**(目覚ましと違い、やり直しが効く)。
+  Future<void> add(Future<void> Function() body) {
+    final next = _chain.then((_) async {
+      _busy = true;
+      try {
+        await body();
+      } finally {
+        _busy = false;
+      }
+    });
+    _chain = next.catchError((Object _) {});
+    return next;
   }
 }
 
@@ -283,7 +423,17 @@ class RadioEngine {
   final Random _rng = Random();
   final List<BirdVoice> birds = [];
   final Map<String, SoundHandle> _amb = {};
+  /// 環境音の音源。**解放するために持つ。** これが無いと、読み込み直すたびに
+  /// 古い音源が残って `voiceCount` が 10 から増えていく。
+  final Map<String, AudioSource> _ambSrc = {};
   final Map<String, Timer> _ambPause = {};
+
+  /// 読み込みを直列化する行列。`load` / `reload` / `refreshObserved` は
+  /// **必ずここを通す**(内側では `_loadInner` を直接呼ぶ。通すと自分待ちになる)。
+  final TaskQueue _queue = TaskQueue();
+
+  /// いま読み込み中か。画面が「待っている」と分かるように。
+  bool get loading => _queue.busy;
   /// 環境音の入切。**端末に覚えさせる**(下の `restorePrefs` / `savePrefs`)。
   ///
   /// ⚠️ 2026-08-18 の監査で見つけた漏れ。ここは毎回作り直されるだけで、
@@ -294,7 +444,11 @@ class RadioEngine {
 
   bool ready = false;
   bool running = false;
-  double ambVol = 0.55;
+  double ambVol = kAmbVolDefault;
+
+  /// 鳥の音量つまみ(0.0〜1.0)。実際のゲインは `birdVol * kBirdGainMax`。
+  double birdVol = kBirdVolDefault;
+
   String? error;
 
   /// 鳴らす顔ぶれを選んで読み込む。
@@ -316,25 +470,54 @@ class RadioEngine {
   String lineupStory = '';
 
   /// 鳥ID → 英名(ギルドのまとまりを描くのに使う)。
-  String englishOf(String id) =>
-      (_birdsData[id]?['english'] as String?) ?? id;
+  String englishOf(String id) => nameOf(_birdsData[id], id);
 
   /// どの土地のラジオを聴くか。**現行にも土地の選択がある**
   /// (`radio.py` は `biome_pref` で顔ぶれを絞る)。移植で落ちていた。
   String biomeId = 'charlotte';
 
   /// 土地を替える。鳴っていたら、いったん止めてから組み直す。
-  Future<void> reload(String biome) async {
-    if (biome == biomeId) return;
-    final wasRunning = running;
-    if (running) toggle(() {});
-    for (final v in birds) {
-      v.stop();
+  Future<void> reload(String biome) => _queue.add(() async {
+        if (biome == biomeId) return;
+        final wasRunning = running;
+        if (running) toggle(() {});
+        await _loadInner(observed: _lastObserved, biomeId: biome);
+        if (wasRunning && ready) toggle(() {});
+      });
+
+  /// 会った鳥が増えた(または初めて入ってきた)ときに組み直す。
+  ///
+  /// ⚠️ **これが無くて、ラジオは起動のたび空のままだった**(2026-08-25 実機で発覚)。
+  /// `RadioPage` は `initState` で1回だけ `load` する。そのとき `main.dart` の
+  /// `_garden` はまだ null で、渡ってくる `observed` は `const {}`。
+  /// 庭を読み終えて `observed` が入っても engine は読み直さないので、
+  /// 顔ぶれが空のまま = **Listen が一度も出ない**。
+  ///
+  /// ストア掲載文とLPは「会った鳥の声が聴けるラジオ」と言っている。
+  /// ここが空だと、**外に出している言い切りがそのまま成り立たない**
+  /// (2026-08-21 の "A radio made only of birds you've met" と同じ種類の事故)。
+  Future<void> refreshObserved(Map<String, int> observed) =>
+      _queue.add(() async {
+        if (_sameObserved(observed, _lastObserved)) return;
+        final wasRunning = running;
+        if (running) toggle(() {});
+        await _loadInner(observed: observed, biomeId: biomeId);
+        if (wasRunning && ready) toggle(() {});
+      });
+
+  /// 試験から中身を見るための窓。**本番のコードからは使わない。**
+  /// `refreshObserved` は音を鳴らす層(SoLoud)まで触るので、
+  /// 「読み直すと判断するか」だけを切り出して確かめられるようにしてある。
+  Map<String, int> get lastObservedForTest => _lastObserved;
+  bool observedChangedForTest(Map<String, int> o) => !_sameObserved(o, _lastObserved);
+  void rememberObservedForTest(Map<String, int> o) => _lastObserved = o;
+
+  static bool _sameObserved(Map<String, int> a, Map<String, int> b) {
+    if (a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
     }
-    birds.clear();
-    ready = false;
-    await load(observed: _lastObserved, biomeId: biome);
-    if (wasRunning && ready) toggle(() {});
+    return true;
   }
 
   Map<String, int> _lastObserved = const {};
@@ -342,6 +525,7 @@ class RadioEngine {
   /// 覚えていた環境音の設定を戻す。**読み込みの前に呼ぶ。**
   static const _kAmbOn = 'radio_amb_on';
   static const _kAmbVol = 'radio_amb_vol';
+  static const _kBirdVol = 'radio_bird_vol';
 
   Future<void> restorePrefs() async {
     final p = await SharedPreferences.getInstance();
@@ -353,6 +537,8 @@ class RadioEngine {
     }
     final v = p.getDouble(_kAmbVol);
     if (v != null) ambVol = v.clamp(0.0, 1.0);
+    final bv = p.getDouble(_kBirdVol);
+    if (bv != null) birdVol = bv.clamp(0.0, 1.0);
   }
 
   /// 触ったら覚える。
@@ -361,14 +547,28 @@ class RadioEngine {
     await p.setStringList(
         _kAmbOn, [for (final e in ambOn.entries) if (e.value) e.key]);
     await p.setDouble(_kAmbVol, ambVol);
+    await p.setDouble(_kBirdVol, birdVol);
   }
 
+  /// 読み込む。**直列化してある** — 進行中のものを待ってから始まる。
   Future<void> load(
+          {Map<String, int> observed = const {}, String? biomeId}) =>
+      _queue.add(() => _loadInner(observed: observed, biomeId: biomeId));
+
+  /// 読み込みの中身。**行列の中からしか呼ばない。**
+  Future<void> _loadInner(
       {Map<String, int> observed = const {}, String? biomeId}) async {
     if (biomeId != null) this.biomeId = biomeId;
     _lastObserved = observed;
+    // 前の読み込みの残りを必ず片付けてから始める。
+    await _releaseAll();
     try {
-      await SoLoud.instance.init();
+      // ⚠️ **すでに初期化済みなら init() を呼ばない。**
+      // flutter_soloud は init 済みで呼ばれると deinit してから入れ直すので、
+      // 読み込み中の音源を巻き込んで `SoLoudNotInitializedException` になる。
+      if (!SoLoud.instance.isInitialized) {
+        await SoLoud.instance.init();
+      }
       _birdsData = await loadBirdsData();
       final all = await loadBirdAssets();
       final lineup = _pickLineup(all, observed);
@@ -376,21 +576,68 @@ class RadioEngine {
         final b = lineup[i];
         final count = observed[b.id] ?? 0;
         final v = BirdVoice(b, obsToDepth(count), _rng,
-            flock: core.flockSize(b.id, count, _birdsData));
+            flock: core.flockSize(b.id, count, _birdsData))
+          ..birdVol = birdVol;
         // 左右に均等配置(現行の left = 20 + i/(n-1) * 60 を -1..1 に写す)
         final t = lineup.length > 1 ? i / (lineup.length - 1) : 0.5;
         v.pan = ((20 + t * 60) - 50) / 50.0;
-        await v.load();
+        // ⚠️ **読む前に登録する。** 途中で落ちても、作りかけのハンドルを
+        // `_releaseAll` が拾って解放できる。
         birds.add(v);
+        await v.load();
       }
       for (final k in kAmbienceKeys) {
         final src = await SoLoud.instance.loadAsset('assets/ambience/$k.mp3');
-        _amb[k] = SoLoud.instance.play(src, volume: 0, looping: true, paused: true);
+        _ambSrc[k] = src;
+        _amb[k] =
+            SoLoud.instance.play(src, volume: 0, looping: true, paused: true);
       }
-      ready = true;
+      recordLoadResult(null);
     } catch (e) {
-      error = '$e';
+      recordLoadResult(e);
+      // 途中で落ちたものを残さない。残すと次に読んだとき二重になる。
+      await _releaseAll();
     }
+  }
+
+  /// 読み込みの結果を記録する。
+  ///
+  /// ⚠️ **成功したら `error` を null に戻す。** 前はここで書きっぱなしだったので、
+  /// 一度出た赤字が画面に**永久に残っていた**(force-stop しても消えない、と
+  /// 見えていたのはこれ。実際は毎回1本目が落ちて、そのたび書き直されていた)。
+  void recordLoadResult(Object? failure) {
+    if (failure == null) {
+      ready = true;
+      error = null;
+    } else {
+      ready = false;
+      error = '$failure';
+    }
+  }
+
+  /// 作ったものを全部手放す。**失敗したときも必ず通る。**
+  Future<void> _releaseAll() async {
+    for (final t in _ambPause.values) {
+      t.cancel();
+    }
+    _ambPause.clear();
+    for (final v in birds) {
+      await v.dispose();
+    }
+    birds.clear();
+    for (final h in _amb.values) {
+      try {
+        await SoLoud.instance.stop(h);
+      } catch (_) {}
+    }
+    _amb.clear();
+    for (final src in _ambSrc.values) {
+      try {
+        await SoLoud.instance.disposeSource(src);
+      } catch (_) {}
+    }
+    _ambSrc.clear();
+    ready = false;
   }
 
   /// 顔ぶれを選ぶ。**共起ネットワーク**に沿って選ぶ(現行 ecology.pick_lineup)。
@@ -517,6 +764,13 @@ class RadioEngine {
     }
   }
 
+  /// 鳥の音量つまみを、いま鳴いている鳥に即反映する。
+  void applyBirdVolume() {
+    for (final v in birds) {
+      v.applyBirdVolume(birdVol);
+    }
+  }
+
   void applyAmbience() {
     for (final k in kAmbienceKeys) {
       final h = _amb[k];
@@ -538,7 +792,17 @@ class RadioEngine {
 
   /// いま鳴っている音声の本数。増え続けていたら作りを間違えている
   /// (鳥3 + 環境音7 = 10 で張り付くのが正しい)。
-  int get voiceCount => ready ? SoLoud.instance.getActiveVoiceCount() : 0;
+  ///
+  /// **デバッグ版の画面に出してある**(`radio_page.dart`)。読み込みが二重に
+  /// 走っていた 2026-09-22 の不具合は、ここが 10 を超えることで見える。
+  int get voiceCount {
+    if (!ready) return 0;
+    try {
+      return SoLoud.instance.getActiveVoiceCount();
+    } catch (_) {
+      return 0;
+    }
+  }
 
   void dispose() {
     cancelSleep();

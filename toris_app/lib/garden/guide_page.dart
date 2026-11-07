@@ -18,9 +18,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'garden_state.dart';
+import 'popups.dart';
 
 /// 図鑑の版面の色。紙・図版の枠・罫線。
 const Color kPage = Color(0xFFFBFAF3);
@@ -44,7 +47,7 @@ class _GuidePageState extends State<GuidePage> {
     final g = widget.garden;
     if (g == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Guide')),
+        appBar: AppBar(title: Text(t('Guide'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -62,8 +65,8 @@ class _GuidePageState extends State<GuidePage> {
             ((g.data.birds[b]?['biome_pref'] as List?) ?? const []).join(',');
         final c = ba.compareTo(bb);
         if (c != 0) return c;
-        final na = '${g.data.birds[a]?['english']}';
-        final nb = '${g.data.birds[b]?['english']}';
+        final na = nameOf(g.data.birds[a], a);
+        final nb = nameOf(g.data.birds[b], b);
         return na.compareTo(nb);
       });
     }
@@ -73,24 +76,59 @@ class _GuidePageState extends State<GuidePage> {
         .length;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Guide  $found/${ids.length}')),
+      appBar: AppBar(
+          title: Text('${t('Guide')}  $found/${ids.length}'),
+          actions: const [LangButton()]),
       body: Column(children: [
+        // ── 言語の切り替え ──
+        // 設定画面が無く、図鑑は**文字を読む画面**なので、言語の切替はここが
+        // いちばん自然に収まる。庭やラジオの上に出すと、静かな画面に操作子が
+        // 増えて原則5「かわいさ優先」に障る(PJ管理部長 2026-10-19)。
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(children: [
+            const Icon(Icons.translate_rounded, size: 18, color: kSub),
+            const SizedBox(width: 8),
+            SegmentedButton<Lang>(
+              segments: const [
+                ButtonSegment(value: Lang.en, label: Text('English')),
+                ButtonSegment(value: Lang.ja, label: Text('日本語')),
+              ],
+              selected: {L10n.lang.value},
+              showSelectedIcon: false,
+              onSelectionChanged: (v) => L10n.set(v.first),
+            ),
+          ]),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'region', label: Text('By region')),
-              ButtonSegment(value: 'rarity', label: Text('By rarity')),
+            segments: [
+              ButtonSegment(value: 'region', label: Text(t('By region'))),
+              ButtonSegment(value: 'rarity', label: Text(t('By rarity'))),
             ],
             selected: {_sort},
             onSelectionChanged: (s) => setState(() => _sort = s.first),
+          ),
+        ),
+        // ── 庭のなじみ(`core.pacing`。開いた日数の合計で段が上がる) ──
+        // 連続ではなく合計なので、休んでも減らない(原則2「罰しない」)。
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 20, 2),
+          child: Text(
+            familiarityLine(core.gardenFamiliarityLevel(g.openDays),
+                g.openDays, core.daysToNextFamiliarity(g.openDays)),
+            style: const TextStyle(fontSize: 12, height: 1.4, color: kSub),
           ),
         ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 32),
             itemCount: ids.length,
-            itemBuilder: (_, i) => _Entry(g, ids[i]),
+            itemBuilder: (_, i) => _Entry(g, ids[i], () async {
+              setState(() {});
+              await g.save();
+            }),
           ),
         ),
       ]),
@@ -102,10 +140,12 @@ class _GuidePageState extends State<GuidePage> {
 class _Entry extends StatelessWidget {
   final Garden g;
   final String id;
-  const _Entry(this.g, this.id);
 
-  String _name(Map<String, dynamic> m, String key) =>
-      (m[key]?['english'] as String?) ?? key;
+  /// 名前をつけたあと、図鑑を建て直して保存する。
+  final Future<void> Function() onChanged;
+  const _Entry(this.g, this.id, this.onChanged);
+
+  String _name(Map<String, dynamic> m, String key) => nameOf(m[key], key);
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +158,7 @@ class _Entry extends StatelessWidget {
     final days = g.birdDays[id] ?? 0;
 
     final icon = observed ? '🪶' : (discovered ? '🐦' : '❓');
-    final title = discovered ? ((b['english'] as String?) ?? id) : '???';
+    final title = discovered ? nameOf(b, id) : '???';
 
     // **表を自分で書かない。** `toris_core` の移植をそのまま使う。
     // 以前は Dart 側に7分類を手で書いていて、実データが使う
@@ -139,15 +179,15 @@ class _Entry extends StatelessWidget {
           '🐛 ${_name(g.data.insects, l.id)}',
     ];
     final home = <String>[
-      for (final x in prof.home) '${g.data.biomes[x]?['name_en'] ?? x}',
+      for (final x in prof.home) nameOf(g.data.biomes[x], x, enKey: 'name_en'),
     ];
-    final fears = core.predatorLabels(id, g.data.predators);
+    final fears = [for (final f in core.predatorLabels(id, g.data.predators)) t(f)];
     // 属レベル(同属の近縁種の記録から採ったもの)は、**黙って種の事実にしない**。
     // Python 側は同じ場所で「(from records of close relatives)」と断っていたのに、
     // 移植で落ちていた(2026-08-18 の監査で発覚)。原則4「生態に誠実」。
     // 文言は i18n.py の出荷済みの英語をそのまま使う。
     final fearsNote = core.predatorIsGenusLevel(id, g.data.predators)
-        ? '(from records of close relatives)'
+        ? t('(from records of close relatives)')
         : null;
 
     return Theme(
@@ -169,12 +209,12 @@ class _Entry extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
             child: !discovered
                 // まだ来ていない鳥は、何も明かさない。
-                ? const Align(
+                ? Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(4, 0, 4, 10),
-                      child: Text('Not yet in your garden.',
-                          style: TextStyle(color: kSub)),
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+                      child: Text(t('Not yet in your garden.'),
+                          style: const TextStyle(color: kSub)),
                     ),
                   )
                 // ── 図鑑の1ページ ──
@@ -194,20 +234,25 @@ class _Entry extends StatelessWidget {
                           children: [
                             _plate(observed),
                             const SizedBox(width: 14),
-                            Expanded(child: _heading(b, stars, days, observed)),
+                            Expanded(
+                                child: _heading(
+                                    context, b, stars, days, observed)),
                           ],
                         ),
                         const _Rule(),
-                        _Row('Likes', likes),
-                        _Row('Home', home),
-                        _Row('Fears', fears, note: fearsNote),
+                        _Row(t('Likes'), likes),
+                        _Row(t('Home'), home),
+                        _Row(t('Fears'), fears, note: fearsNote),
                         _OutLinks(b),
-                        // **なぜ来たか**の記録。あなたが組んだ関係が呼んだ証拠。
-                        // 庭が痩せても、ここは消えない(原則2「罰しない」)。
-                        ..._whyItCame(),
+                        // 説明文は**種データに両方入っている**(`export_data.py` の
+                        // FIELDS)。和文が欠けている種は英文に落とす。
                         if (b['description_en'] != null) ...[
                           const _Rule(),
-                          Text(b['description_en'] as String,
+                          Text(
+                              (L10n.lang.value == Lang.ja
+                                      ? (b['description'] ?? b['description_en'])
+                                      : b['description_en'])
+                                  as String,
                               style: const TextStyle(
                                   fontSize: 14, color: kInk, height: 1.7)),
                         ],
@@ -221,10 +266,12 @@ class _Entry extends StatelessWidget {
   }
 
   /// 見出し。英名 → 学名(斜体)→ レア度と会った日数。
-  Widget _heading(Map b, String stars, int days, bool observed) => Column(
+  Widget _heading(BuildContext context, Map b, String stars, int days,
+          bool observed) =>
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text((b['english'] as String?) ?? id,
+          Text(nameOf(b, id),
               style: const TextStyle(
                   fontSize: 19,
                   height: 1.2,
@@ -243,41 +290,63 @@ class _Entry extends StatelessWidget {
           Text(days > 0 ? '$stars   ${_badge(days)}' : stars,
               style: const TextStyle(fontSize: 12, color: kSub)),
           if (!observed)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Listen closely in the garden to see it up close.',
-                  style: TextStyle(fontSize: 12, height: 1.45, color: kSub)),
-            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                  t('Listen closely in the garden to see it up close.'),
+                  style: const TextStyle(
+                      fontSize: 12, height: 1.45, color: kSub)),
+            )
+          else
+            _tame(context),
         ],
       );
 
-  /// この鳥について記録された「なぜ来たか」。古い順。
-  ///
-  /// 最初の1件には印を付ける — **その関係が、この鳥と出会うきっかけだった**という
-  /// 意味。近くで出会った鳥にだけ付ける(`is_founding_record` と同じ判定)。
-  List<Widget> _whyItCame() {
-    final entries = core.entriesForBird(g.ecoLog, id);
-    if (entries.isEmpty) return const [];
-    final observedFirst = (g.observed[id] ?? 0) > 0 ? 'yes' : null;
-    return [
-      const _Rule(),
-      const Text('WHY IT CAME',
-          style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.0,
-              color: kSub)),
-      const SizedBox(height: 6),
-      for (final e in entries)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            (core.isFoundingRecord(e, entries, observedFirst) ? '🌱 ' : '·  ') +
-                e.text,
-            style: const TextStyle(fontSize: 13, color: kInk, height: 1.6),
-          ),
-        ),
-    ];
+  /// 慣れ(`core.pacing`)。近くで会うほど警戒心が下がり、慣れきると名前をつけられる。
+  Widget _tame(BuildContext context) {
+    final meets = g.observed[id] ?? 0;
+    final names = g.nicknames[id] ?? const <String>[];
+    final next = core.meetsToNextSlot(meets);
+    const sub = TextStyle(fontSize: 12, height: 1.45, color: kSub);
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // まだ1つも枠が無いあいだは、慣れのメーターを出す。
+        if (core.nicknameSlots(meets) == 0)
+          Text(
+              tameLine(
+                  '●' * meets.clamp(0, core.kNicknameMeets) +
+                      '○' * (core.kNicknameMeets - meets)
+                          .clamp(0, core.kNicknameMeets),
+                  core.kNicknameMeets - meets),
+              style: sub),
+        // 名前のある子たち。押すと名前を変えられる(空にすると外れる)。
+        if (names.isNotEmpty)
+          Wrap(spacing: 6, runSpacing: 4, children: [
+            for (final n in names)
+              ActionChip(
+                visualDensity: VisualDensity.compact,
+                avatar: const Icon(Icons.favorite_rounded, size: 14),
+                label: Text(n),
+                onPressed: () => _askName(context, rename: n),
+              ),
+          ]),
+        if (g.canNickname(id))
+          TextButton.icon(
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, foregroundColor: kInk),
+            icon: const Icon(Icons.edit_rounded, size: 16),
+            label: Text(nameSlotLabel(names.length + 1)),
+            onPressed: () => _askName(context),
+          )
+        else if (names.isNotEmpty && next != null)
+          Text(nextNameLine(next), style: sub),
+      ]),
+    );
+  }
+
+  Future<void> _askName(BuildContext context, {String? rename}) async {
+    if (await showNameDialog(context, g, id, rename: rename)) await onChanged();
   }
 
   /// 図版。**近くで会う前はアイコン、会ったら詳細画に入れ替わる。**
@@ -319,11 +388,17 @@ class _Entry extends StatelessWidget {
   }
 
   /// 会った日数の節目。`badges.py` と同じ区切り。
+  ///
+  /// ⚠️ **「1 days」と出ていた**(2026-10-20、ストア用スクショを撮って発覚)。
+  /// 英語は1日だけ単数。日本語は助数詞なので単複の区別が無い。
   String _badge(int days) {
-    if (days >= 100) return '🏅 $days days together';
-    if (days >= 30) return '🌿 $days days together';
-    if (days >= 10) return '🌱 $days days together';
-    return '$days days';
+    final ja = L10n.lang.value == Lang.ja;
+    final unit = ja ? '日' : (days == 1 ? 'day' : 'days');
+    final together = ja ? 'いっしょに$days$unit' : '$days $unit together';
+    if (days >= 100) return '🏅 $together';
+    if (days >= 30) return '🌿 $together';
+    if (days >= 10) return '🌱 $together';
+    return ja ? '$days$unit' : '$days $unit';
   }
 }
 
@@ -352,12 +427,17 @@ class _Row extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SizedBox(
-          width: 62,
-          child: Text(label.toUpperCase(),
-              style: const TextStyle(
-                  fontSize: 10,
+          // ⚠️ 幅は**言語で変える**。62 は英語の LIKES / HOME / FEARS に
+          // 合わせた値で、日本語の「好きな場所」「苦手なもの」は入らず
+          // 値とくっついて出る(2026-10-20 に実機で発覚)。
+          // 日本語は字間を詰めず、大文字化もしない(漢字かなには効かない)。
+          width: L10n.lang.value == Lang.ja ? 84 : 62,
+          child: Text(
+              L10n.lang.value == Lang.ja ? label : label.toUpperCase(),
+              style: TextStyle(
+                  fontSize: L10n.lang.value == Lang.ja ? 11 : 10,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
+                  letterSpacing: L10n.lang.value == Lang.ja ? 0 : 1.0,
                   height: 2.1,
                   color: kSub)),
         ),
@@ -425,15 +505,23 @@ class _OutLinks extends StatelessWidget {
     if (en.isEmpty && sci.isEmpty) return const SizedBox.shrink();
     final photoQ = Uri.encodeComponent('$en $sci'.trim());
     final wikiQ = Uri.encodeComponent(sci.isNotEmpty ? sci : en);
+    // 日本語の人には日本語版を和名で開く。和名が無ければ英語版のまま。
+    final jaName = '${bird['name'] ?? ''}'.trim();
+    final jaWiki = L10n.lang.value == Lang.ja && jaName.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Wrap(spacing: 8, runSpacing: 8, children: [
-        _Chip('🖼️ See a real photo',
+        _Chip(t('🖼️ See a real photo'),
             () => _open('https://www.google.com/search?tbm=isch&q=$photoQ')),
-        _Chip(
-            '📖 Wikipedia (EN)',
-            () => _open('https://en.wikipedia.org/wiki/Special:Search'
-                '?search=$wikiQ')),
+        jaWiki
+            ? _Chip(
+                t('📖 Wikipedia (JA)'),
+                () => _open('https://ja.wikipedia.org/wiki/Special:Search'
+                    '?search=${Uri.encodeComponent(jaName)}'))
+            : _Chip(
+                t('📖 Wikipedia (EN)'),
+                () => _open('https://en.wikipedia.org/wiki/Special:Search'
+                    '?search=$wikiQ')),
       ]),
     );
   }
