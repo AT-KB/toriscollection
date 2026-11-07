@@ -110,11 +110,24 @@ class _GuidePageState extends State<GuidePage> {
             onSelectionChanged: (s) => setState(() => _sort = s.first),
           ),
         ),
+        // ── 庭のなじみ(`core.pacing`。開いた日数の合計で段が上がる) ──
+        // 連続ではなく合計なので、休んでも減らない(原則2「罰しない」)。
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 20, 2),
+          child: Text(
+            familiarityLine(core.gardenFamiliarityLevel(g.openDays),
+                g.openDays, core.daysToNextFamiliarity(g.openDays)),
+            style: const TextStyle(fontSize: 12, height: 1.4, color: kSub),
+          ),
+        ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 32),
             itemCount: ids.length,
-            itemBuilder: (_, i) => _Entry(g, ids[i]),
+            itemBuilder: (_, i) => _Entry(g, ids[i], () async {
+              setState(() {});
+              await g.save();
+            }),
           ),
         ),
       ]),
@@ -126,7 +139,10 @@ class _GuidePageState extends State<GuidePage> {
 class _Entry extends StatelessWidget {
   final Garden g;
   final String id;
-  const _Entry(this.g, this.id);
+
+  /// 名前をつけたあと、図鑑を建て直して保存する。
+  final Future<void> Function() onChanged;
+  const _Entry(this.g, this.id, this.onChanged);
 
   String _name(Map<String, dynamic> m, String key) => nameOf(m[key], key);
 
@@ -217,7 +233,9 @@ class _Entry extends StatelessWidget {
                           children: [
                             _plate(observed),
                             const SizedBox(width: 14),
-                            Expanded(child: _heading(b, stars, days, observed)),
+                            Expanded(
+                                child: _heading(
+                                    context, b, stars, days, observed)),
                           ],
                         ),
                         const _Rule(),
@@ -247,7 +265,9 @@ class _Entry extends StatelessWidget {
   }
 
   /// 見出し。英名 → 学名(斜体)→ レア度と会った日数。
-  Widget _heading(Map b, String stars, int days, bool observed) => Column(
+  Widget _heading(BuildContext context, Map b, String stars, int days,
+          bool observed) =>
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(nameOf(b, id),
@@ -275,9 +295,90 @@ class _Entry extends StatelessWidget {
                   t('Listen closely in the garden to see it up close.'),
                   style: const TextStyle(
                       fontSize: 12, height: 1.45, color: kSub)),
-            ),
+            )
+          else
+            _tame(context),
         ],
       );
+
+  /// 慣れ(`core.pacing`)。近くで会うほど警戒心が下がり、慣れきると名前をつけられる。
+  Widget _tame(BuildContext context) {
+    final meets = g.observed[id] ?? 0;
+    final names = g.nicknames[id] ?? const <String>[];
+    final next = core.meetsToNextSlot(meets);
+    const sub = TextStyle(fontSize: 12, height: 1.45, color: kSub);
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // まだ1つも枠が無いあいだは、慣れのメーターを出す。
+        if (core.nicknameSlots(meets) == 0)
+          Text(
+              tameLine(
+                  '●' * meets.clamp(0, core.kNicknameMeets) +
+                      '○' * (core.kNicknameMeets - meets)
+                          .clamp(0, core.kNicknameMeets),
+                  core.kNicknameMeets - meets),
+              style: sub),
+        // 名前のある子たち。押すと名前を変えられる(空にすると外れる)。
+        if (names.isNotEmpty)
+          Wrap(spacing: 6, runSpacing: 4, children: [
+            for (final n in names)
+              ActionChip(
+                visualDensity: VisualDensity.compact,
+                avatar: const Icon(Icons.favorite_rounded, size: 14),
+                label: Text(n),
+                onPressed: () => _askName(context, rename: n),
+              ),
+          ]),
+        if (g.canNickname(id))
+          TextButton.icon(
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.zero, foregroundColor: kInk),
+            icon: const Icon(Icons.edit_rounded, size: 16),
+            label: Text(nameSlotLabel(names.length + 1)),
+            onPressed: () => _askName(context),
+          )
+        else if (names.isNotEmpty && next != null)
+          Text(nextNameLine(next), style: sub),
+      ]),
+    );
+  }
+
+  Future<void> _askName(BuildContext context, {String? rename}) async {
+    final c = TextEditingController(text: rename ?? '');
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t("It's used to you now")),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(t('Give it a name. It will show up in your garden and guide.'),
+              style: const TextStyle(fontSize: 14, height: 1.5, color: kSub)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: c,
+            autofocus: true,
+            maxLength: 12,
+            decoration: InputDecoration(hintText: t('Name')),
+          ),
+        ]),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(t('Cancel'))),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, c.text),
+              child: Text(t('Save'))),
+        ],
+      ),
+    );
+    if (name == null) return;
+    if (rename != null) {
+      g.renameNickname(id, rename, name);
+    } else {
+      g.addNickname(id, name);
+    }
+    await onChanged();
+  }
 
   /// 図版。**近くで会う前はアイコン、会ったら詳細画に入れ替わる。**
   ///

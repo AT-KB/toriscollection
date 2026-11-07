@@ -275,6 +275,10 @@ TurnResult runTurn({
   Map<String, Centrality>? centralities,
   /// 「今日の庭アイテム」の到来加点。省略すると一切呼ばれない。
   double Function(String)? arrivalBonusFn,
+  /// 到来確率に**掛ける**係数(`pacing.dart`。珍しさ・庭のなじみ・鳥の慣れ)。
+  /// **Python には無い、Flutter 版だけの調整**(CEO 2026-11-07)。
+  /// 省略すると一切呼ばれず、確率は Python と1ビットも変わらない。
+  double Function(String)? arrivalScaleFn,
   /// 同・退去率の減算。0 なら一切効かない。
   double departureBonus = 0.0,
   /// リス返し(`garden_items`)が効いている間は、開放型でもリスが餌台に届かない。
@@ -335,6 +339,7 @@ TurnResult runTurn({
         .probability;
     // 餌台の加点。**到来にだけ効く**(上の退去判定は加点前の p を使う)。
     // 置いていなければ 0 なので、今までの庭は1ビットも変わらない。
+    if (arrivalScaleFn != null) p *= arrivalScaleFn(bid);
     p = min(1.0, p + feederArrivalBonus(placedFeatures, birdsData[bid]));
     if (arrivalBonusFn != null) {
       p = min(1.0, p + arrivalBonusFn(bid));
@@ -417,9 +422,14 @@ AbsenceResult evolveWhileAway({
   double Function(String)? arrivalBonusFn,
   double departureBonus = 0.0,
   bool baffled = false,
+  /// `runTurn` の同名の引数へ渡す。省略すれば Python と同じ。
+  double Function(String)? arrivalScaleFn,
+  /// 経過時間 → コマ数。省略すれば Python と同じ `estimateTickCount`。
+  int Function(double hours)? tickCountFn,
 }) {
   final hours = now.difference(lastSeenAt).inSeconds / 3600.0;
-  final ticks = hours <= 0 ? 0 : estimateTickCount(hours);
+  final ticks =
+      hours <= 0 ? 0 : (tickCountFn ?? estimateTickCount)(hours);
   var cur = Set<String>.from(residents);
   final arrivals = <String>[];
   final departures = <String>[];
@@ -453,6 +463,7 @@ AbsenceResult evolveWhileAway({
       placedFeatures: placedFeatures,
       centralities: centralities,
       arrivalBonusFn: arrivalBonusFn,
+      arrivalScaleFn: arrivalScaleFn,
       departureBonus: departureBonus,
       baffled: baffled,
     );

@@ -248,6 +248,14 @@ class L10n {
     'Charlotte': 'シャーロット',
     'Kyoto': '京都',
 
+    // ── 慣れと名前(guide_page.dart。`core.pacing`) ──
+    'Rename': '名前を変える',
+    "It's used to you now": 'すっかり慣れてくれました',
+    'Give it a name. It will show up in your garden and guide.':
+        '名前をつけてあげてください。庭と図鑑に出ます。',
+    'Name': '名前',
+    'Save': '保存',
+
     // ── 図鑑の「こわいもの」(`toris_core` の kPredatorLabels。core は触らず表示側で包む) ──
     'Hawks': 'タカ',
     'Owls': 'フクロウ',
@@ -393,6 +401,41 @@ String disturbanceStoryJa(String type, String icon, List<String> lost) {
   return lost.isEmpty
       ? '$icon $labelが庭を通り過ぎたが、植物は持ちこたえた。'
       : '$icon $labelが庭を通り過ぎ、${lost.join('、')}が倒れた。';
+}
+
+/// 慣れの1行。[dots] は ●●○○○○、[left] はあと何回で名前をつけられるか。
+String tameLine(String dots, int left) => L10n.lang.value == Lang.ja
+    ? '慣れ $dots  あと$left回 近くで会うと、名前をつけられます'
+    : 'Trust $dots  Meet it up close $left more '
+        '${left == 1 ? 'time' : 'times'} to give it a name';
+
+/// 名前のある子の呼び方。「ルリツグミのピョンタ」/「Pyonta the Eastern Bluebird」。
+String individualLabel(String species, String name) =>
+    L10n.lang.value == Lang.ja ? '$speciesの$name' : '$name the $species';
+
+/// 名前をつけるボタン。[n] は何羽目か(1〜3)。
+String nameSlotLabel(int n) => L10n.lang.value == Lang.ja
+    ? (n == 1 ? '名前をつける' : '$n羽目に名前をつける')
+    : (n == 1 ? 'Give it a name' : 'Name bird #$n');
+
+/// 次の名前の枠まで。
+String nextNameLine(int left) => L10n.lang.value == Lang.ja
+    ? 'あと$left回 近くで会うと、もう1羽に名前をつけられます(3羽まで)'
+    : 'Meet it up close $left more ${left == 1 ? 'time' : 'times'} '
+        'to name one more (up to 3)';
+
+/// 庭のなじみの1行。[next] は次の段まであと何日(最上段なら null)。
+String familiarityLine(int level, int days, int? next) {
+  final ja = L10n.lang.value == Lang.ja;
+  if (ja) {
+    return next == null
+        ? '🌿 庭のなじみ Lv$level(通った日 $days日)· 珍しい鳥がいちばん来やすい庭です'
+        : '🌿 庭のなじみ Lv$level(通った日 $days日)· あと$next日で、珍しい鳥が少し来やすくなります';
+  }
+  return next == null
+      ? '🌿 Garden familiarity Lv$level ($days days) · rare birds come most easily now'
+      : '🌿 Garden familiarity Lv$level ($days days) · $next more '
+          '${next == 1 ? 'day' : 'days'} until rare birds come a little more often';
 }
 
 /// 「◯日ぶりですね」。時間は画面側が持っているので、文だけを組む。

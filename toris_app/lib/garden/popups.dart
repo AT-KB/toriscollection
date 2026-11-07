@@ -77,7 +77,8 @@ Widget _plate(Garden g, String birdId, double size) {
       (g.data.birds[birdId] as Map?)?.cast<String, dynamic>(), size: size);
 }
 
-String _name(Garden g, String birdId) => nameOf(g.data.birds[birdId], birdId);
+/// 名前のある子が来たら「ルリツグミのピョンタ」(`Garden.labelFor`)。
+String _name(Garden g, String birdId) => g.labelFor(birdId);
 
 /// 🪶 出会えた。儀式のあと。
 Future<void> showMetBirdPopup(

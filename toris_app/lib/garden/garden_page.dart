@@ -155,7 +155,7 @@ class _GardenPageState extends State<GardenPage>
           MetBird(b, g.lastFirstTimers.contains(b)),
       ],
       departures: <String>{
-        for (final b in g.lastDepartures) _name(g.data.birds, b),
+        for (final b in g.lastDepartures) g.labelFor(b),
       }.toList(),
       lostPlants: [for (final p in g.lastLostPlants) _name(g.data.plants, p)],
       // 撹乱は種類ごとに一文で語る。倒れた植物はその文の中に入る。
@@ -171,10 +171,10 @@ class _GardenPageState extends State<GardenPage>
       // 辞書では引けないので、日本語のときだけ**同じ材料から**組み直す。
       // core は触らない(Python との突き合わせを壊さないため)。
       summary: L10n.lang.value == Lang.ja
-          ? summaryJa(g.lastArrivals, (b) => _name(g.data.birds, b))
+          ? summaryJa(g.lastArrivals, (b) => g.labelFor(b))
           : core.summarizeEvents(
               g.lastArrivals,
-              (b) => _name(g.data.birds, b),
+              (b) => g.labelFor(b),
             ),
     );
     if (report.worthShowing && mounted) {
@@ -434,7 +434,7 @@ class _GardenPageState extends State<GardenPage>
                   for (final b in g.visiting)
                     PerchedBird(
                       id: b,
-                      english: _name(g.data.birds, b),
+                      english: g.labelFor(b),
                       // 儀式のあいだは、いま止まっている枝をそのまま出す
                       depth: _ritual != null
                           ? Ritual.depthName(_ritual!.branch[b] ?? 0)
@@ -461,7 +461,7 @@ class _GardenPageState extends State<GardenPage>
                     for (final b in g.visiting)
                       Chip(
                         avatar: _birdAvatar(g, b),
-                        label: Text(_name(g.data.birds, b)),
+                        label: Text(g.labelFor(b)),
                       ),
                   ],
                 ),

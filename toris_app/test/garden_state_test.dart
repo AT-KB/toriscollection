@@ -205,6 +205,86 @@ void main() {
         reason: '進まなかったのだから時計は据え置き。ここが now になると、'
             '短い間隔で開くたびに経過時間が消え、鳥が永遠に来なくなる');
   });
+
+  // CEO 2026-11-07「鳥の来る頻度をちょっと落として」。3時間で1コマ。
+  test('1時間で開き直しても進まず、時計も据え置き(端数は次へ持ち越す)', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.planted.add('sakura');
+    final t0 = DateTime.now().subtract(const Duration(hours: 1));
+    g.lastSeenAt = t0;
+    g.catchUp(Random(1));
+    expect(g.lastTicks, 0);
+    expect(g.lastSeenAt, t0);
+  });
+
+  test('4時間たつと1コマ進み、残りの1時間は持ち越す', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.planted.add('sakura');
+    final t0 = DateTime.now().subtract(const Duration(hours: 4));
+    g.lastSeenAt = t0;
+    g.catchUp(Random(1));
+    expect(g.lastTicks, 1);
+    expect(g.lastSeenAt, t0.add(const Duration(hours: 3)));
+  });
+
+  test('開いた日数は1日1回だけ数える(連続でなくてよい)', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.catchUp(Random(1));
+    g.catchUp(Random(1));
+    expect(g.openDays, 1, reason: '同じ日に何度開いても1日');
+  });
+
+  // CEO 2026-11-08「1羽あたり3名まで。名前がある鳥と無い鳥で表示を変える」
+  test('名前の枠は会うほど増え、1種3羽まで', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.observed['blue_jay'] = 5;
+    expect(g.canNickname('blue_jay'), isFalse);
+    g.observed['blue_jay'] = 6;
+    g.addNickname('blue_jay', ' ピョンタ ');
+    expect(g.nicknames['blue_jay'], ['ピョンタ']);
+    expect(g.canNickname('blue_jay'), isFalse, reason: '6回では1羽ぶんだけ');
+    g.observed['blue_jay'] = 99;
+    g.addNickname('blue_jay', 'ピーコ');
+    g.addNickname('blue_jay', 'チュン');
+    g.addNickname('blue_jay', '4羽目');
+    expect(g.nicknames['blue_jay'], ['ピョンタ', 'ピーコ', 'チュン'], reason: '3羽まで');
+  });
+
+  test('来たのが名前のある子なら「種名の名前」、ない子なら種名だけ', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    final species = g.labelFor('blue_jay');
+    g.visiting.add('blue_jay');
+    g.visitingName['blue_jay'] = 'ピョンタ';
+    expect(g.labelFor('blue_jay'), allOf(contains('ピョンタ'), contains(species)));
+    g.visitingName.remove('blue_jay');
+    expect(g.labelFor('blue_jay'), species);
+  });
+
+  test('来た子は、名前のある子と名前のない子から同じ重みで選ぶ', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    expect(g.pickVisitor('blue_jay', Random(1)), isNull, reason: '名前が無ければ、名前のない子');
+    g.observed['blue_jay'] = 12;
+    g.addNickname('blue_jay', 'ピョンタ');
+    g.addNickname('blue_jay', 'ピーコ');
+    final seen = <String?>{};
+    final r = Random(3);
+    for (var i = 0; i < 200; i++) {
+      seen.add(g.pickVisitor('blue_jay', r));
+    }
+    expect(seen, {'ピョンタ', 'ピーコ', null});
+  });
+
+  test('名前を空にすると外れ、来ている子の表示も種名に戻る', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.observed['blue_jay'] = 6;
+    g.addNickname('blue_jay', 'ピョンタ');
+    g.visitingName['blue_jay'] = 'ピョンタ';
+    g.renameNickname('blue_jay', 'ピョンタ', 'ピー');
+    expect(g.visitingName['blue_jay'], 'ピー');
+    g.renameNickname('blue_jay', 'ピー', '');
+    expect(g.nicknames.containsKey('blue_jay'), isFalse);
+    expect(g.visitingName.containsKey('blue_jay'), isFalse);
+  });
 }
 
 /// 乱数は使わせない(この試験は時間の判定だけを見る)。
