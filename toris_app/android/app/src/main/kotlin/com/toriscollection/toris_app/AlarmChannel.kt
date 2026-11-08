@@ -1,8 +1,6 @@
 package com.toriscollection.toris_app
 
 import android.app.Activity
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +8,6 @@ import android.os.Build
 import android.provider.Settings
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import java.util.Calendar
 
 /**
  * 目覚ましの設定を Flutter 側から呼ぶための窓口。
@@ -32,11 +29,6 @@ class AlarmChannel(private val activity: Activity) {
 
     companion object {
         const val CHANNEL = "toris/alarm"
-        private const val PREFS = "toris_alarm"
-        private const val K_ENABLED = "enabled"
-        private const val K_HOUR = "hour"
-        private const val K_MIN = "min"
-        private const val K_FIRST = "first"
         private const val REQUEST_CODE = 8101
     }
 
@@ -75,54 +67,15 @@ class AlarmChannel(private val activity: Activity) {
         }
     }
 
-    /** @return 実際に設定できたら true。正確なアラームが未許可なら false。 */
-    private fun setAlarm(hour: Int, minute: Int, first: String?, met: String?): Boolean {
-        val am = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            ?: return false
-        if (!canScheduleExact()) return false
+    /** @return 実際に設定できたら true。正確なアラームが未許可なら false。
+     *  登録の本体は `AlarmScheduler`(鳴ったあと・再起動のあとも同じ処理で登録し直す)。 */
+    private fun setAlarm(hour: Int, minute: Int, first: String?, met: String?): Boolean =
+        AlarmScheduler.set(activity, hour, minute, first, met)
 
-        val next = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            // 指定時刻が既に過ぎていれば翌日。
-            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
-        }
-
-        try {
-            am.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP, next.timeInMillis, pendingIntent(first, met)
-            )
-        } catch (e: SecurityException) {
-            return false
-        }
-
-        prefs().edit()
-            .putBoolean(K_ENABLED, true)
-            .putInt(K_HOUR, hour)
-            .putInt(K_MIN, minute)
-            .putString(K_FIRST, first)
-            .apply()
-        return true
-    }
-
-    private fun cancelAlarm() {
-        val am = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-        am?.cancel(pendingIntent(null, null))
-        prefs().edit().putBoolean(K_ENABLED, false).apply()
-    }
+    private fun cancelAlarm() = AlarmScheduler.cancel(activity)
 
     /** 現在の設定。画面に出すために返す。 */
-    private fun getAlarm(): Map<String, Any?> {
-        val p = prefs()
-        return mapOf(
-            "enabled" to p.getBoolean(K_ENABLED, false),
-            "hour" to p.getInt(K_HOUR, 7),
-            "minute" to p.getInt(K_MIN, 0),
-            "first" to p.getString(K_FIRST, null),
-        )
-    }
+    private fun getAlarm(): Map<String, Any?> = AlarmScheduler.get(activity)
 
     /**
      * 通知の許可があるか(Android 13+)。
@@ -157,11 +110,7 @@ class AlarmChannel(private val activity: Activity) {
         activity.startService(i)
     }
 
-    private fun canScheduleExact(): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
-        val am = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-        return am?.canScheduleExactAlarms() ?: false
-    }
+    private fun canScheduleExact(): Boolean = AlarmScheduler.canScheduleExact(activity)
 
     /** 「正確なアラーム」の許可設定画面を開く(Android 12+ で拒否されている場合)。 */
     private fun openExactAlarmSettings() {
@@ -176,24 +125,4 @@ class AlarmChannel(private val activity: Activity) {
         }
     }
 
-    /**
-     * 1羽目と「出会った鳥」を積んだ PendingIntent。
-     *
-     * ⚠️ extras は PendingIntent の同一判定に**入らない**ので、cancel 側は
-     * null で作っても同じものを指す。
-     */
-    private fun pendingIntent(first: String?, met: String?): PendingIntent {
-        val i = Intent(activity, BirdAlarmReceiver::class.java).apply {
-            action = BirdAlarmReceiver.ACTION_FIRE
-            putExtra(BirdAlarmReceiver.EXTRA_FIRST, first)
-            putExtra(BirdAlarmReceiver.EXTRA_MET, met)
-        }
-        var flags = PendingIntent.FLAG_UPDATE_CURRENT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            flags = flags or PendingIntent.FLAG_IMMUTABLE
-        }
-        return PendingIntent.getBroadcast(activity, REQUEST_CODE, i, flags)
-    }
-
-    private fun prefs() = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

@@ -18,7 +18,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- 端末を再起動しても目覚ましを鳴らせるようにするための下準備(受信は今後) -->
+    <!-- 端末を再起動しても目覚ましを鳴らす(AlarmRestoreReceiver が登録し直す) -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- 広告(AdMob)。**v7 まではネットワークを一切使っていなかった**ので、
@@ -70,6 +70,19 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.toriscollection.toris_app.ALARM_FIRE" />
+            </intent-filter>
+        </receiver>
+        <!-- 再起動・アプリ更新・時刻変更のあとに目覚ましを登録し直す(2026-11-08)。
+             Android は再起動で AlarmManager の登録を全部捨てるため。 -->
+        <receiver
+            android:name="com.toriscollection.toris_app.AlarmRestoreReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
         <service
