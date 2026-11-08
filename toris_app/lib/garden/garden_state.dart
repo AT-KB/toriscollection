@@ -203,17 +203,28 @@ class Garden {
     return out;
   }
 
-  /// 土地を変える。植えたものはその土地に合わないので一度手放す
-  /// (現行も土地ごとに植えられる植物が違う)。
+  /// 土地を変える。**植えたものは土地ごとに覚えておく**(2026-11-08)。
+  ///
+  /// 前は合わない植物を捨てていたので、京都に切り替えてシャーロットに戻ると
+  /// 植えたものが全部消えていた(HANDOFF_00 §7-7)。土地を見比べただけで
+  /// 庭が消えるのは、原則2「罰しない」に反する。
+  /// 戻ってきたら、前にその土地に植えていたものがそのまま戻る。
   void setBiome(String id) {
     if (biomeId == id) return;
+    plantedByLand[biomeId] = List<String>.from(planted);
     biomeId = id;
-    planted.removeWhere((p) {
-      final b = ((data.plants[p]?['biome'] as List?) ?? const [])
-          .map((e) => '$e');
-      return !b.contains(id);
-    });
+    final back = plantedByLand[id] ?? const <String>[];
+    planted
+      ..clear()
+      ..addAll(back.where((p) {
+        final b = ((data.plants[p]?['biome'] as List?) ?? const [])
+            .map((e) => '$e');
+        return b.contains(id);
+      }));
   }
+
+  /// 土地ごとに植えていたもの(切り替えて戻ったときに戻すため)。端末ローカル。
+  final Map<String, List<String>> plantedByLand = {};
 
   /// 会った回数からの「近さ」。`radio.py` の _obs_to_depth と同じ区切り。
   String depthOf(String birdId) {
@@ -458,6 +469,7 @@ class Garden {
   static const _nicknamesKey = 'toris_nicknames';
   static const _visitingNameKey = 'toris_visiting_name';
   static const _hintsKey = 'toris_hints';
+  static const _plantedByLandKey = 'toris_planted_by_land';
   static const _staleKey = 'toris_stale_visits';
 
   /// その種に、あといくつ名前をつけられるか。
@@ -533,6 +545,7 @@ class Garden {
     await p.setString(_visitingNameKey, jsonEncode(visitingName));
     await p.setStringList(_hintsKey, shownHints.toList());
     await p.setInt(_staleKey, staleVisits);
+    await p.setString(_plantedByLandKey, jsonEncode(plantedByLand));
   }
 
   Future<void> restore() async {
@@ -544,6 +557,15 @@ class Garden {
       ..clear()
       ..addAll(p.getStringList(_hintsKey) ?? const []);
     staleVisits = p.getInt(_staleKey) ?? 0;
+    try {
+      final raw = p.getString(_plantedByLandKey);
+      if (raw != null) {
+        plantedByLand.clear();
+        (jsonDecode(raw) as Map).forEach((k, v) {
+          if (v is List) plantedByLand['$k'] = [for (final x in v) '$x'];
+        });
+      }
+    } catch (_) {}
     lastOpenDay = p.getString(_openDayKey);
     try {
       final raw = p.getString(_nicknamesKey);

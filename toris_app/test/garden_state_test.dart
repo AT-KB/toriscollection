@@ -286,6 +286,19 @@ void main() {
     expect(g.visitingName.containsKey('blue_jay'), isFalse);
   });
 
+  // HANDOFF_00 §7-7: 京都に切り替えてシャーロットに戻ると、植えたものが全部消えていた。
+  test('土地を切り替えて戻ると、前に植えていたものが戻る', () {
+    final g = Garden(_data(), biomeId: 'charlotte');
+    final charlottePlant = g.data.plants.entries
+        .firstWhere((e) => ((e.value as Map)['biome'] as List).contains('charlotte'))
+        .key;
+    g.planted.add(charlottePlant);
+    g.setBiome('kyoto');
+    expect(g.planted, isNot(contains(charlottePlant)), reason: '京都には京都の植物だけ');
+    g.setBiome('charlotte');
+    expect(g.planted, contains(charlottePlant), reason: '戻ったら、前の庭が戻る');
+  });
+
   test('一度きりの一言は、二度目は出ない', () {
     final g = Garden(_data(), biomeId: 'kyoto');
     expect(g.takeHint('first_arrival'), isTrue);
