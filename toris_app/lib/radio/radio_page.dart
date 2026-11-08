@@ -133,16 +133,36 @@ class _RadioPageState extends State<RadioPage>
             const SizedBox(height: 14),
           ],
           FilledButton.icon(
-            onPressed:
-                e.ready ? () => _engine.toggle(() => setState(() {})) : null,
-            icon: Icon(e.running ? Icons.stop_rounded : Icons.play_arrow_rounded,
+            // 読み込みに失敗していたら、押すと**読み直す**(固まったままにしない)。
+            onPressed: e.ready
+                ? () => _engine.toggle(() => setState(() {}))
+                : (e.error != null
+                    ? () async {
+                        await _engine.retry();
+                        if (mounted) setState(() {});
+                      }
+                    : null),
+            icon: Icon(
+                e.running
+                    ? Icons.stop_rounded
+                    : (e.error != null && !e.ready
+                        ? Icons.refresh_rounded
+                        : Icons.play_arrow_rounded),
                 size: 30),
-            label: Text(e.running ? t('Stop') : t('Listen')),
+            label: Text(e.running
+                ? t('Stop')
+                : (e.error != null && !e.ready ? t('Try again') : t('Listen'))),
           ),
           if (e.error != null) ...[
             const SizedBox(height: 8),
-            Text(e.error!,
-                style: const TextStyle(fontSize: 12, color: Colors.red)),
+            // 例外の文字は出さない(デバッグ版だけ下に添える)。
+            Text(
+                t("The sound couldn't start. If the alarm is ringing, "
+                    'stop it and try again.'),
+                style: const TextStyle(fontSize: 13, height: 1.4, color: kSub)),
+            if (kDebugMode)
+              Text(e.error!,
+                  style: const TextStyle(fontSize: 11, color: Colors.red)),
           ],
           // ── 音声の本数(デバッグ版だけ)──
           // **鳥3 + 環境音7 = 10 で張り付くのが正しい**(`radio_engine.dart`)。

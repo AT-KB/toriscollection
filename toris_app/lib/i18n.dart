@@ -248,6 +248,11 @@ class L10n {
     'Charlotte': 'シャーロット',
     'Kyoto': '京都',
 
+    // ── ラジオが鳴らせなかったとき(radio_page.dart)──
+    'Try again': 'もう一度',
+    "The sound couldn't start. If the alarm is ringing, stop it and try again.":
+        '音を出せませんでした。目覚ましが鳴っていたら、止めてからもう一度押してください。',
+
     // ── 説明戦略の一言(garden_page.dart。一度だけ出す)──
     'Birds come slowly': '鳥は、ゆっくり来ます',
     'Every few hours, someone stops by. '

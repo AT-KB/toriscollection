@@ -550,6 +550,14 @@ class RadioEngine {
     await p.setDouble(_kBirdVol, birdVol);
   }
 
+  /// 読み込みに失敗したあと、**同じ条件でもう一度**読む(画面の「もう一度」)。
+  ///
+  /// 2026-11-08 実機: 目覚ましが鳴っている最中にアプリを開くと、目覚ましが
+  /// スピーカーを使っているので `ma_device_start failed` で初期化に失敗し、
+  /// 例外の文字がそのまま赤字で出ていた。止めたあとに押せば読み直せる。
+  Future<void> retry() => _queue
+      .add(() => _loadInner(observed: _lastObserved, biomeId: biomeId));
+
   /// 読み込む。**直列化してある** — 進行中のものを待ってから始まる。
   Future<void> load(
           {Map<String, int> observed = const {}, String? biomeId}) =>
