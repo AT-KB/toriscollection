@@ -281,6 +281,11 @@ def unverified_ports(items: dict) -> list:
     for k, v in items.items():
         if v.get("status") != "done":
             continue
+        # 画面の部品は Python の画面と突き合わせようが無い。代わりに**実機で
+        # 何を確かめたか**を台帳の `checked_on_device` に日付つきで残したものは、
+        # 突き合わせ済みとして数える(2026-11-10)。文が空なら数えない。
+        if (v.get("checked_on_device") or "").strip():
+            continue
         sym = v.get("dart") or snake_to_camel(k.split(".", 1)[1])
         if not _mentions(blob, sym):
             out.append(k)

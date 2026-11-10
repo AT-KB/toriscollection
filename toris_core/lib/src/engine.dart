@@ -505,8 +505,12 @@ const Map<String, double> kDisturbanceWeights = {
 /// 植物ごとの倒れやすさ。データに無ければ 0.5(現行の DEFAULT_SENSITIVITY)。
 const double kDefaultSensitivity = 0.5;
 
+///
+/// ⚠️ キーは **`disturbance_sensitivity`**(Python の `disturbance.plant_sensitivity`)。
+/// 2026-11-10 まで `sensitivity` を読んでいて、Python との突き合わせで見つかった。
+/// 出荷データにはまだこの欄が無い(全部 0.5)ので、挙動は変わっていない。
 double plantSensitivity(String plantId, Map<String, dynamic> plantsData) {
-  final v = pyFloat((plantsData[plantId] as Map?)?['sensitivity']);
+  final v = pyFloat((plantsData[plantId] as Map?)?['disturbance_sensitivity']);
   if (v == null) return kDefaultSensitivity;
   return v.clamp(0.0, 1.0);
 }
