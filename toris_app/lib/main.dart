@@ -26,6 +26,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'ads/ads.dart';
 import 'alarm/alarm_page.dart';
@@ -61,9 +62,15 @@ class TorisApp extends StatelessWidget {
   Widget build(BuildContext context) => ValueListenableBuilder<Lang>(
     // 言語が変わったら、画面を丸ごと建て直す。
     valueListenable: L10n.lang,
-    builder: (context, _, child) => MaterialApp(
+    builder: (context, lang, child) => MaterialApp(
       title: 'Toris Collection',
       theme: buildTheme(),
+      // Flutter が用意する画面(時刻の選択の「Cancel / OK」など)も、アプリの言語に
+      // 合わせる。入れないと、日本語を選んでいても時刻の選択が英語のままだった
+      // (2026-11-10 実機)。
+      locale: lang == Lang.ja ? const Locale('ja') : const Locale('en'),
+      supportedLocales: const [Locale('en'), Locale('ja')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       // ⚠️ **const を付けない。** const にすると同じインスタンスとみなされ、
       // 親が建て直しても**この下が丸ごと飛ばされる**。実機で「日本語を押しても
       // 画面が英語のまま」になった原因がこれ(2026-10-19)。
