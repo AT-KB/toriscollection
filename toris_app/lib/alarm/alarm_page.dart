@@ -14,6 +14,7 @@ import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
 import '../ui/lang_button.dart';
+import '../radio/radio_engine.dart' show kAmbienceKeys, kAmbienceLabel;
 import 'alarm.dart';
 
 class AlarmPage extends StatefulWidget {
@@ -42,6 +43,9 @@ class _AlarmPageState extends State<AlarmPage> {
 
   /// 選んでいる1羽目。
   late String _first = _choices.first.key;
+
+  /// 鳥の前に流れる音。既定は lake(CEO 2026-09-22 に実機で選んだ音)。
+  String _prelude = 'lake';
 
   /// 選べる鳥。**会えた鳥＋最初から居る3種**。
   List<({String key, String name})> get _choices {
@@ -78,8 +82,10 @@ class _AlarmPageState extends State<AlarmPage> {
     final s = await Alarm.get();
     final exact = await Alarm.canScheduleExact();
     final notify = await Alarm.hasNotificationPermission();
+    final prelude = await Alarm.getPrelude();
     if (!mounted) return;
     setState(() {
+      _prelude = prelude;
       _current = s;
       _exactAllowed = exact;
       _notifyAllowed = notify;
@@ -290,6 +296,36 @@ class _AlarmPageState extends State<AlarmPage> {
                         '${widget.met.length} '
                         '${widget.met.length == 1 ? "bird" : "birds"} '
                         'you have met up close.'),
+            style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
+          ),
+          const SizedBox(height: 22),
+
+          // ── 鳥の前に流れる音(2026-11-10。CEO「ラジオみたいに選べたら」)──
+          Text(t('Before the birds'),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: kSub)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final k in [...kAmbienceKeys, 'none'])
+              ChoiceChip(
+                label: Text(k == 'none'
+                    ? t('None')
+                    : t(kAmbienceLabel[k] ?? k)),
+                selected: _prelude == k,
+                onSelected: (_) async {
+                  setState(() => _prelude = k);
+                  await Alarm.setPrelude(k);
+                },
+              ),
+          ]),
+          const SizedBox(height: 8),
+          Text(
+            _prelude == 'none'
+                ? t('The birds start right at the set time.')
+                : t('Plays softly for a minute before the birds join in.'),
             style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
           ),
           const SizedBox(height: 16),

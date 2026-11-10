@@ -78,11 +78,14 @@ public class BirdAlarmService extends Service {
      *  lake.mp3 は Freesound #326097(kvgarlic)/ **CC0** = 商用可
      *  (`assets/ambience/_credits.json`)。
      *
-     *  ⚠️ **選べるようにはしていない。** CEO は「これも選べたらいいんだけど
-     *  ね、ラジオみたいに。ただ、Lake でいいよ」と言っており、今回は固定。
-     *  やり残しとして HANDOFF_00 §7 に記録してある。 */
-    private static final String AMB_ASSET =
-            "flutter_assets/assets/ambience/lake.mp3";
+     *  **2026-11-10 から選べる**(CEO「これも選べたらいいんだけどね、ラジオみたいに」)。
+     *  既定は lake のまま。目覚ましの画面で、ラジオの7つの音か「なし」を選ぶ
+     *  (`AlarmScheduler.prelude`)。「なし」なら前置きをせず、時刻ちょうどに鳥が鳴く。
+     *  ラジオ側の選択(`radio_amb_on`)は**読まない** — ラジオで全部切っている人の
+     *  朝が無音から始まらないように(仕様 B-6-7)。 */
+    private static String preludeAsset(String key) {
+        return "flutter_assets/assets/ambience/" + key + ".mp3";
+    }
     /** 鳥が入るまでの前置き。フェードイン40秒 + 保持20秒 = 60秒。
      *  「鳴り出したことが分かる」には、上がり切ってから保持する時間が要る。 */
     private static final long AMB_PRE_MS = 60_000L;
@@ -185,7 +188,9 @@ public class BirdAlarmService extends Service {
         // ⚠️ **環境音が読めなかったら、鳥を待たせない。**(仕様 B-6-1)
         // 前置きのせいで目覚ましが60秒遅れる、は絶対に作らない。
         // `fromAsset` は例外を握って null を返すので、その null で分岐する。
-        ambience = fromAsset(AMB_ASSET);
+        final String prelude = AlarmScheduler.prelude(this);
+        android.util.Log.i("TorisAlarm", "prelude=" + prelude);
+        ambience = "none".equals(prelude) ? null : fromAsset(preludeAsset(prelude));
         long birdDelay = 0L;
         if (ambience != null) {
             ambience.setLooping(true);

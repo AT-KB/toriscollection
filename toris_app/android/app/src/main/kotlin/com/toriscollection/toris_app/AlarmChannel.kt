@@ -46,6 +46,11 @@ class AlarmChannel(private val activity: Activity) {
                 result.success(true)
             }
             "get" -> result.success(getAlarm())
+            "getPrelude" -> result.success(AlarmScheduler.prelude(activity))
+            "setPrelude" -> {
+                AlarmScheduler.setPrelude(activity, call.argument<String>("key") ?: "lake")
+                result.success(true)
+            }
             "canScheduleExact" -> result.success(canScheduleExact())
             "requestNotificationPermission" -> {
                 requestNotificationPermission()

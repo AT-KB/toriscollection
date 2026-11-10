@@ -160,34 +160,40 @@ void main() {
         reason: '遅らせるのは、前置きが実際に読めたときだけであること');
   });
 
-  test('前置きに使う音は、実際に同梱されている1層', () {
-    // ⚠️ **アセット名を直書きしない。** Java の `AMB_ASSET` から取る。
-    // 直書きすると、音を差し替えたときに試験が空振りする
-    // (2026-09-22 に wind -> lake へ差し替えたときに実際そうなりかけた)。
-    final m = RegExp(r'AMB_ASSET\s*=\s*\n?\s*"([^"]+)"').firstMatch(src);
-    expect(m, isNotNull, reason: 'AMB_ASSET を読み出せていない');
-    final path = m!.group(1)!;
-
-    // Java は AssetManager 経由で読むので `flutter_assets/` の前置きが要る
-    // (`BirdAlarmSounds.assetFor` と同じ)。
-    expect(path.startsWith('flutter_assets/assets/ambience/'), isTrue,
-        reason: '前置きは同梱の環境音から1層だけ選ぶ(企画 B-2)。'
-            '前置きを間違えると、毎朝 fromAsset が null になって前置きが消える');
-    final asset = path.substring('flutter_assets/'.length);
-    expect(File(asset).existsSync(), isTrue,
-        reason: '同梱していない音を指している($asset)。'
-            '毎朝 fromAsset が null になり、前置きが丸ごと消える');
+  test('前置きに選べる音は、全部同梱されていて、鳴らすのは1層だけ', () {
+    // 2026-11-10 から選べる(`AlarmScheduler.PRELUDES`)。**キーを直書きしない**:
+    // Kotlin 側の一覧から取り、どれを選んでも同梱の音を指すことを見る。
+    // 選べるのに同梱されていない音があると、その朝だけ前置きが丸ごと消える。
+    final kt = File('android/app/src/main/kotlin/com/toriscollection/'
+            'toris_app/AlarmScheduler.kt')
+        .readAsStringSync();
+    final m = RegExp(r'PRELUDES = setOf\(([^)]*)\)').firstMatch(kt);
+    expect(m, isNotNull, reason: 'PRELUDES を読み出せていない');
+    final keys = RegExp(r'"([a-z]+)"')
+        .allMatches(m!.group(1)!)
+        .map((e) => e.group(1)!)
+        .where((k) => k != 'none')
+        .toList();
+    expect(keys, isNotEmpty);
+    // Java は AssetManager 経由で読むので `flutter_assets/` の前置きが要る。
+    expect(src.contains('return "flutter_assets/assets/ambience/" + key + ".mp3";'),
+        isTrue,
+        reason: '前置きの音のパスの組み方が変わった。同梱の場所と合っているか確かめること');
+    for (final k in keys) {
+      expect(File('assets/ambience/$k.mp3').existsSync(), isTrue,
+          reason: '選べるのに同梱していない音($k)。その朝の前置きが消える');
+    }
+    expect(RegExp(r'"lake"').hasMatch(kt), isTrue, reason: '既定は lake のまま');
 
     // **1層だけ。** 重ねるとさえずり(2〜8kHz)をマスクする。
-    expect(RegExp('AMB_ASSET').allMatches(src).length, 2,
-        reason: 'AMB_ASSET の宣言と使用で2回のはず。'
-            '増えていたら層を重ねていないか確かめること');
+    expect(RegExp(r'fromAsset\(preludeAsset\(').allMatches(src).length, 1,
+        reason: '前置きを読むのは1か所だけのはず。増えていたら層を重ねていないか確かめること');
   });
 
   test('鳴っている鳥の名簿は、前置きのあいだ空のまま', () {
     // 企画 B-6-2。画面が「まだ鳴いていない鳥」を光らせないための歯止め(原則4)。
     // 前置きの環境音は鳥ではないので名簿に入れない。
-    final from = src.indexOf('ambience = fromAsset(AMB_ASSET);');
+    final from = src.indexOf('fromAsset(preludeAsset(prelude));');
     final to = src.indexOf('handler.postDelayed(() -> startBirds(chorus)');
     expect(from, greaterThan(0));
     expect(to, greaterThan(from),

@@ -248,6 +248,13 @@ class L10n {
     'Charlotte': 'シャーロット',
     'Kyoto': '京都',
 
+    // ── 目覚ましの前置きの音(alarm_page.dart)──
+    'Before the birds': '鳥の前に流れる音',
+    'None': 'なし',
+    'The birds start right at the set time.': 'セットした時刻ちょうどに、鳥が鳴き始めます。',
+    'Plays softly for a minute before the birds join in.':
+        '鳥が入るまでの1分間、小さく流れます。',
+
     // ── ラジオが鳴らせなかったとき(radio_page.dart)──
     'Try again': 'もう一度',
     "The sound couldn't start. If the alarm is ringing, stop it and try again.":

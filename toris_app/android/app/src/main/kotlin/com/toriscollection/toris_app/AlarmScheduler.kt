@@ -28,6 +28,23 @@ object AlarmScheduler {
     const val K_MIN = "min"
     const val K_FIRST = "first"
     const val K_MET = "met"
+
+    /** 鳥の前に流れる音(ラジオの環境音のキー)。"none" なら前置きなし。既定は lake。 */
+    const val K_PRELUDE = "prelude"
+    const val PRELUDE_DEFAULT = "lake"
+    private val PRELUDES = setOf("rain", "wind", "stream", "waves", "lake", "fire", "drips", "none")
+
+    @JvmStatic
+    fun prelude(ctx: Context): String {
+        val v = prefs(ctx).getString(K_PRELUDE, PRELUDE_DEFAULT) ?: PRELUDE_DEFAULT
+        return if (v in PRELUDES) v else PRELUDE_DEFAULT
+    }
+
+    /** 前置きの音を変える。**登録し直さなくても次の朝から効く**(鳴らすときに読む)。 */
+    @JvmStatic
+    fun setPrelude(ctx: Context, key: String) {
+        if (key in PRELUDES) prefs(ctx).edit().putString(K_PRELUDE, key).apply()
+    }
     private const val REQUEST_CODE = 8101
 
     private fun prefs(ctx: Context) =

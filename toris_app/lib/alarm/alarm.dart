@@ -122,6 +122,14 @@ class Alarm {
 
   static Future<void> cancel() => _ch.invokeMethod<void>('cancel');
 
+  /// 鳥の前に流れる音(ラジオの環境音のキー、または 'none')。既定は 'lake'。
+  static Future<String> getPrelude() async =>
+      await _ch.invokeMethod<String>('getPrelude') ?? 'lake';
+
+  /// 変えると次の朝から効く(セットし直さなくてよい)。
+  static Future<void> setPrelude(String key) =>
+      _ch.invokeMethod<void>('setPrelude', {'key': key});
+
   static Future<AlarmSetting> get() async {
     final m = await _ch.invokeMapMethod<String, dynamic>('get');
     return AlarmSetting(
