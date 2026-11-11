@@ -1,0 +1,264 @@
+<title>Toris X 投稿キット</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 1列の投稿カード。各カードに「本文」と「リプ欄」の2枚の紙、それぞれにコピーと X で開く */
+:root {
+  --bg: #f3f5ee;
+  --paper: #ffffff;
+  --ink: #23331f;
+  --sub: #5d6b57;
+  --line: #d9dfd0;
+  --leaf: #3a6b3e;
+  --leaf-soft: #e1ecd9;
+  --warn: #8a5a12;
+  --warn-soft: #fbf0dc;
+  --over: #b3261e;
+  --display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Noto Sans JP", sans-serif;
+  --body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161c14; --paper: #1f271c; --ink: #e6eddf; --sub: #a6b39d; --line: #33402e;
+    --leaf: #8cc58c; --leaf-soft: #263a25; --warn: #f0c27a; --warn-soft: #3a2e17; --over: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161c14; --paper: #1f271c; --ink: #e6eddf; --sub: #a6b39d; --line: #33402e;
+  --leaf: #8cc58c; --leaf-soft: #263a25; --warn: #f0c27a; --warn-soft: #3a2e17; --over: #ff8a80;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body);
+  font-size: 15px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1.3; margin: 0; text-wrap: balance; }
+.lead { color: var(--sub); margin: 4px 0 0; }
+.note {
+  background: var(--warn-soft); color: var(--warn); border-radius: 10px;
+  padding: 12px 14px; font-size: 14px;
+}
+.note b { font-weight: 700; }
+.note ul { margin: 6px 0 0; padding-left: 1.2em; }
+.url {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+}
+.url code { font-size: 12px; word-break: break-all; color: var(--sub); flex: 1 1 260px; min-width: 0; }
+.post { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.post header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.post h2 { font-family: var(--display); font-size: 19px; margin: 0; }
+.when { font-size: 12px; color: var(--sub); letter-spacing: .02em; }
+.attach { font-size: 13px; color: var(--sub); margin: 0; }
+.shot { display: flex; flex-direction: column; gap: 6px; }
+.shot img { width: 100%; max-width: 360px; border-radius: 10px; border: 1px solid var(--line); display: block; }
+.shot small { font-size: 12px; color: var(--sub); }
+.attach b { color: var(--ink); font-weight: 500; }
+.sheet { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.sheet .label {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: var(--leaf-soft); padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: .04em;
+}
+.count { font-weight: 500; font-variant-numeric: tabular-nums; color: var(--sub); }
+.count.over { color: var(--over); }
+pre {
+  margin: 0; padding: 12px; white-space: pre-wrap; word-break: break-word;
+  font-family: var(--body); font-size: 15px; line-height: 1.75;
+}
+.actions { display: flex; gap: 8px; padding: 0 12px 12px; flex-wrap: wrap; }
+button, a.btn {
+  font: inherit; font-size: 14px; font-weight: 500; border-radius: 999px; padding: 7px 16px;
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+}
+button { background: var(--leaf); color: var(--paper); border: 1px solid var(--leaf); }
+a.btn { background: transparent; color: var(--leaf); border: 1px solid var(--leaf); }
+button:focus-visible, a.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+button.done { background: var(--paper); color: var(--leaf); }
+.foot { font-size: 13px; color: var(--sub); }
+@media (prefers-reduced-motion: no-preference) { button { transition: background .15s, color .15s; } }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>X 投稿キット</h1>
+    <p class="lead">「コピー」を押して X に貼るか、「X で開く」で投稿画面を直接開けます。本文とリプ欄は分けて投稿してください。</p>
+  </div>
+
+  <div class="note">
+    <b>出す前に確認</b>
+    <ul>
+      <li><b>2.0.5(日本語版)が Google Play で公開されてから</b>出す。いまの版は画面が英語です</li>
+      <li>Play のリンクは<b>本文ではなくリプ欄</b>に置く(本文にリンクがあると届く範囲が下がるため)</li>
+      <li>画像は各投稿の下にあります。右クリック(スマホは長押し)で保存して、X に直接アップロードする。PC なら <code>marketing/phase-1/SNS部/素材/x/</code> にも同じものがあります。1日1本、まず2週間</li>
+      <li>ハッシュタグは1本に2〜3個まで。付けすぎると宣伝っぽく見えて、かえって読まれにくくなります</li>
+    </ul>
+  </div>
+
+  <div class="url">
+    <code id="playUrl"></code>
+    <button type="button" data-copy-url>URL だけコピー</button>
+  </div>
+
+  <div id="posts" class="wrap" style="gap:16px"></div>
+
+  <p class="foot">文字数は X の数え方(日本語は1字=2、URL は1本=23)で、上限280に対する数です。リンクには X から来たと分かる目印(utm_source=x)を付けてあり、Play Console の「獲得レポート」で数えられます。</p>
+</div>
+
+<script>
+const PLAY = "https://play.google.com/store/apps/details?id=com.toriscollection.app&referrer=utm_source%3Dx%26utm_campaign%3D2026-11";
+const LINK_REPLY = "Google Play(Android・無料)はこちらです👇\n" + PLAY;
+
+const POSTS = [
+  {
+    title: "① 固定ポスト",
+    when: "1日目。投稿したらプロフィールに固定",
+    attach: "下の画像(日本語の庭。鳥が2羽来ている実機の画面)",
+    img: "img/01.png",
+    body: "庭に植物を植えると、虫が来て、その虫を食べる鳥がやってくる。\nそんな小さな生態系を育てるアプリを、個人で作りました🐦\n\n鳴き声は、世界中の録音者が残した本物の録音です。\n会えた鳥だけが、あなたのラジオで歌います。\n\nAndroid版・無料(リンクはリプ欄に)\n\n#個人開発 #アプリ開発 #Android",
+    reply: "Google Play はこちらです👇\n" + PLAY + "\n\nごめんなさい、iPhone版はまだありません。\n「iPhoneでも欲しい」と思ってもらえたら、ひとこと残してもらえるとうれしいです。"
+  },
+  {
+    title: "② 鳴き声クイズ",
+    when: "2日目。答えは翌日、同じポストのリプ欄に",
+    attach: "下の画像(シルエット)。答えのリプには2枚目の画像",
+    img: "img/02.png",
+    replyImg: "img/02b.png",
+    body: "この声、だれでしょう?🐦\n日本の庭でもよく聞く鳥です。\n\n答えは明日、リプ欄で。\n\n#野鳥 #生物多様性",
+    reply: "答えは「シジュウカラ」でした🐦\n京都の庭に来てくれます。\n\n録音: Peter Boesman / xeno-canto XC285681(CC BY-NC-ND 4.0)\n\n" + LINK_REPLY
+  },
+  {
+    title: "③ 寝落ち",
+    when: "3日目。夜に",
+    attach: "下の画像(焚き火を選んだラジオと寝落ちの時間)",
+    img: "img/03.png",
+    body: "雨、焚き火、せせらぎ。そこにときどき、鳥の声。\n15分〜90分で止まる「寝落ち」をつけてあります。\n\n今夜はどの音で眠りますか?\n\n#アプリ #Android",
+    reply: LINK_REPLY
+  },
+  {
+    title: "④ 目覚まし",
+    when: "4日目。朝に",
+    attach: "下の画像(目覚ましの画面)",
+    img: "img/04.png",
+    body: "アラームの電子音のかわりに、鳥のさえずりで起きる。\n\n聞こえるか聞こえないかの小さな音から始まって、少しずつ大きくなります。\n庭で近くで会えた鳥たちが、朝のコーラスに加わります。\n\n#アプリ #Android",
+    reply: LINK_REPLY
+  },
+  {
+    title: "⑤ 京都の庭",
+    when: "5日目",
+    attach: "下の画像(アプリのドット絵で、京都とシャーロットの鳥を並べたもの)",
+    img: "img/05.png",
+    body: "京都の庭には、メジロやシジュウカラ。\nアメリカ・シャーロットの庭には、真っ赤なショウジョウコウカンチョウ。\n\n植えた植物と、そこに来る虫で、来る鳥が変わります。\n\n#野鳥 #生物多様性",
+    reply: LINK_REPLY
+  },
+  {
+    title: "⑥ つながり",
+    when: "6日目",
+    attach: "下の画像(つながりの画面)",
+    img: "img/06.png",
+    body: "どの鳥が、どの虫を食べて、その虫はどの植物に来るのか。\n実際の観察記録(GloBI)をもとに、つながりを描いています。\n\n庭に植えるものを変えると、この網が変わります🌿\n\n#生物多様性 #個人開発",
+    reply: LINK_REPLY
+  },
+  {
+    title: "⑦ 開発ログ",
+    when: "7日目",
+    attach: "下の画像(実機の4コマ。1羽ずつ別の時刻に動く)",
+    img: "img/07.png",
+    body: "「鳥たちが全部同じタイミングで動いてる気がする」と言われて調べたら、1羽が枝を移るたびに、同じ枝の鳥まで横にずれていました。\n\n直して、テンポも1羽ずつ変えました(2秒/2.75秒/3.25秒)。\n本業は会計士、アプリは個人で作っています。\n\n#個人開発 #アプリ開発 #会計士",
+    reply: LINK_REPLY
+  },
+  {
+    title: "⑧ 日本語に対応",
+    when: "8日目",
+    attach: "下の画像(同じ庭の英語と日本語)",
+    img: "img/08.png",
+    body: "日本語に対応しました🇯🇵\n\n鳥・虫・植物の名前も、ぜんぶ和名で出ます。\n(ルリツグミ、ズアカアメリカコゲラ、オオカバマダラ…)\n右上のボタンで、いつでも英語と切り替えられます。\n\n#個人開発 #Android",
+    reply: LINK_REPLY
+  }
+];
+
+// X の文字数の数え方: 一部の範囲は1、それ以外(日本語・絵文字など)は2、URL は23。
+function xWeight(text) {
+  const urls = text.match(/https?:\/\/\S+/g) || [];
+  let rest = text;
+  for (const u of urls) rest = rest.replace(u, "");
+  let w = urls.length * 23;
+  for (const ch of rest) {
+    const c = ch.codePointAt(0);
+    const light = (c <= 4351) || (c >= 8192 && c <= 8205) || (c >= 8208 && c <= 8223) || (c >= 8242 && c <= 8247);
+    w += light ? 1 : 2;
+  }
+  return w;
+}
+
+async function copyText(text, btn) {
+  const label = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = "コピーしました";
+  } catch (e) {
+    const pre = btn.closest(".sheet")?.querySelector("pre");
+    if (pre) {
+      const r = document.createRange(); r.selectNodeContents(pre);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    }
+    btn.textContent = "選択しました(長押しでコピー)";
+  }
+  btn.classList.add("done");
+  setTimeout(() => { btn.textContent = label; btn.classList.remove("done"); }, 1800);
+}
+
+function sheet(label, text) {
+  const w = xWeight(text);
+  const el = document.createElement("div");
+  el.className = "sheet";
+  el.innerHTML = `
+    <div class="label"><span>${label}</span><span class="count${w > 280 ? " over" : ""}">${w} / 280</span></div>
+    <pre></pre>
+    <div class="actions">
+      <button type="button">コピー</button>
+      <a class="btn" target="_blank" rel="noopener">X で開く</a>
+    </div>`;
+  el.querySelector("pre").textContent = text;
+  el.querySelector("button").addEventListener("click", (ev) => copyText(text, ev.currentTarget));
+  el.querySelector("a").href = "https://x.com/intent/post?text=" + encodeURIComponent(text);
+  return el;
+}
+
+// 画像。右クリック(スマホは長押し)で保存して、X に添付する。
+function shot(src, label) {
+  const el = document.createElement("figure");
+  el.className = "shot";
+  el.style.margin = "0";
+  const img = document.createElement("img");
+  img.src = src; img.alt = label; img.loading = "lazy";
+  const cap = document.createElement("small");
+  cap.textContent = label + "(右クリック/長押しで保存)";
+  el.append(img, cap);
+  return el;
+}
+
+const root = document.getElementById("posts");
+for (const p of POSTS) {
+  const card = document.createElement("article");
+  card.className = "post";
+  card.innerHTML = `<header><h2></h2><span class="when"></span></header><p class="attach">添付: <b></b></p>`;
+  card.querySelector("h2").textContent = p.title;
+  card.querySelector(".when").textContent = p.when;
+  card.querySelector(".attach b").textContent = p.attach;
+  if (p.img) card.append(shot(p.img, "本文に添付"));
+  card.append(sheet("本文", p.body));
+  if (p.replyImg) card.append(shot(p.replyImg, "リプ欄に添付(答え合わせ)"));
+  card.append(sheet("リプ欄(自分のポストに返信)", p.reply));
+  root.append(card);
+}
+
+document.getElementById("playUrl").textContent = PLAY;
+document.querySelector("[data-copy-url]").addEventListener("click", (ev) => copyText(PLAY, ev.currentTarget));
+</script>

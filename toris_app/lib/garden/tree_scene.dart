@@ -232,19 +232,19 @@ class _TreeSceneState extends State<TreeScene> {
       // たまたま近い値を引くと2羽が重なって、どちらも読めなくなっていた
       // (実機で Blue Jay と Song Sparrow が重なった)。
       // 枝の使える幅を**ピクセルで**割って席にする。
-      final byDepth = <String, List<PerchedBird>>{};
-      for (final b in widget.birds) {
-        byDepth.putIfAbsent(b.depth, () => []).add(b);
-      }
-      for (final list in byDepth.values) {
-        list.sort((a, b) => a.id.compareTo(b.id)); // 並びを毎回同じにする
-      }
+      //
+      // ⚠️ **席は枝ごとではなく、全羽で1列に配る**(2026-11-03)。
+      // 前は「その枝に何羽いるか」で席を割っていたので、1羽が枝を移ると
+      // **移った先と元の枝の鳥まで横にずれた**。1羽が跳ぶたびに2〜3羽が
+      // 動いて見え、CEO の「全部同じタイミングで動いている」の正体だった。
+      // 全羽の並びで席を決めれば、跳んだ1羽しか動かない(席が違うので重ならない)。
+      final mates = [...widget.birds]
+        ..sort((a, b) => a.id.compareTo(b.id)); // 並びを毎回同じにする
 
       for (final b in widget.birds) {
         final spec = kTreeSpecs.firstWhere((t) => t.depth == b.depth,
             orElse: () => kTreeSpecs.first);
-        final mates = byDepth[b.depth]!;
-        final slot = mates.indexOf(b);
+        final slot = mates.indexWhere((m) => m.id == b.id);
         final size = 34.0 * (spec.opacity * 0.5 + 0.6);
 
         final seg = branchSegments(spec, w);

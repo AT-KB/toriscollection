@@ -16,6 +16,9 @@
      出ていたのを見逃した(CEO 指摘 2026-08-15)。
   6. **テストを実際に走らせる**(下の `run_tests`)。テストは書いてあっても
      回さなければ無いのと同じ。この1コマンドを唯一の入口にする。
+  7. **主張台帳と素材台帳を検める**(下の `claim_ledger_audit` /
+     `material_ledger_audit`)。公に言ったことの「検査」欄が実在するか、
+     外に出した画と動画が台帳に載っているかを見る。2026-10-15 追加。
 
 **作業を1つ終えるたびに必ず走らせること。**
 
@@ -278,6 +281,11 @@ def unverified_ports(items: dict) -> list:
     for k, v in items.items():
         if v.get("status") != "done":
             continue
+        # 画面の部品は Python の画面と突き合わせようが無い。代わりに**実機で
+        # 何を確かめたか**を台帳の `checked_on_device` に日付つきで残したものは、
+        # 突き合わせ済みとして数える(2026-11-10)。文が空なら数えない。
+        if (v.get("checked_on_device") or "").strip():
+            continue
         sym = v.get("dart") or snake_to_camel(k.split(".", 1)[1])
         if not _mentions(blob, sym):
             out.append(k)
@@ -358,9 +366,31 @@ URL_DROPPED = {
 }
 
 
-# 画面に日本語が出ていないこと。**アプリの表示は全部英語**
-# (一度これで作り直しになった)。コメントと doc は日本語なので、
-# 文字列リテラルの中だけを見る。
+# 画面の日本語。
+#
+# ⚠️ **2026-10-19 に意味が変わった。** それまでは「アプリの表示は全部英語」で、
+# 画面の文字列に日本語があること自体が問題だった(一度これで作り直しになった)。
+# CEO の判断で**日本語への切り替えを入れた**ので、いまの約束はこう変わる:
+#
+#   **英語を選んでいる人に、日本語が漏れないこと。**
+#
+# 日本語があってよいのは2つだけ:
+#   1. 辞書そのもの(`lib/i18n.dart`)
+#   2. **言語で分岐している行** — 日本語で語順が変わる文は辞書に載せられないので、
+#      `L10n.lang.value == Lang.ja ? ... : ...` の形で持っている
+#
+# それ以外の場所の日本語は、**英語の人の画面に出る**ので問題。
+JP_ALLOWED_FILES = ("i18n.dart",)
+JP_GUARDED = ("L10n.lang.value == Lang.ja", "L10n.lang.value==Lang.ja")
+
+# 分岐は**数行上**にあることがある(三項演算子が複数行に折れるため)。
+# この行数だけさかのぼって目印を探す。
+JP_GUARD_LOOKBACK = 4
+
+# 英語の画面でも日本語のままでよい文字列。
+# 言語の名前は、その言語で書くのが世界共通のやり方(英語の人が探せなくなる)。
+JP_ALLOWED_TEXT = ("日本語",)
+
 JP = r"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]"
 
 
@@ -401,12 +431,22 @@ def screen_audit() -> list:
             for pat, why in FORBIDDEN_IN_UI:
                 if re.search(pat, line):
                     problems.append(f"{rel}:{n} {why}\n        {line.strip()[:90]}")
-            # 表示文字列の中の日本語だけを見る
+            # 表示文字列の中の日本語だけを見る。
+            # 辞書そのものと、言語で分岐している行は除く(上の説明を読むこと)。
+            if any(a in rel for a in JP_ALLOWED_FILES):
+                continue
+            # 言語で分岐しているか。三項演算子が折れている場合に備えて、
+            # 数行さかのぼって目印を探す。
+            window = "".join(lines[max(0, n - 1 - JP_GUARD_LOOKBACK):n])
+            if any(g in window for g in JP_GUARDED):
+                continue
             for lit in re.findall(r"'([^'\\]*)'|\"([^\"\\]*)\"", line):
                 text = lit[0] or lit[1]
+                if text in JP_ALLOWED_TEXT:
+                    continue
                 if re.search(JP, text):
                     problems.append(
-                        f"{rel}:{n} 画面に日本語(アプリは全部英語)\n"
+                        f"{rel}:{n} 英語を選んでいる人に日本語が漏れる\n"
                         f"        {text[:60]}")
 
     # あるべきものが落ちていないか。
@@ -553,6 +593,347 @@ def screen_audit() -> list:
 
 
 # ─────────────────────────────────────────────────────────────
+# 規則A: **主張台帳の「検査」欄を、機械で突き合わせる。**
+#
+# ## なぜ足したか(2026-10-15。5回目のすり抜け)
+# 2026-09-22 に「なぜ来たか」を製品から削除したとき(`885a6ee`)、
+# `logic_test.dart` の3件を消した。ところが `06_監査.md` §3 の主張台帳は
+# **消えたテストを指す行をそのまま残していた**:
+#   ・:66「なぜ来たかは実データ(GloBI)に従う」 → 検査欄は『生態ログの突き合わせ』
+#   ・:78「植えたものが虫を養い、虫が鳥を呼ぶ」 → 検査欄は『同じ検査』
+# 主張そのものは嘘になっていなかった(到来は食物網で決まっており、別のテストが
+# 生きていた)。**嘘だったのは検査欄のほう。** しかもその言い切りは
+# 公開中の LP に載っている。台帳は人が書いた文で、**実体があるかを誰も見ていなかった。**
+#
+# ## 捕まえたい種類
+# 「検査が消えたのに、台帳の行だけ残る」。個別の grep ではなく、
+# **検査欄が名指ししたものの実在**を全行について見る。
+#
+# 書き方の決まりは `06_監査.md` §3-A。要点だけここにも:
+#   A1. 検査欄は、バッククォートのファイル名か、かぎ括弧のテスト名を**必ず1つは**持つ
+#   A2. 名指ししたファイルは**実在する**(`CLAIM_REF_GONE` に登録したものを除く)
+#   A3. かぎ括弧の中身は、**実在する Dart のテスト名に含まれる**
+# 検査がまだ無い行は `未整備` と書けば A1/A3 は免除。**A2 は免除しない。**
+# ─────────────────────────────────────────────────────────────
+CLAIM_DOC = "toris_collection/docs/team/06_監査.md"
+
+# 検査欄がわざと名指しする「もう無い実体」。**黙って素通りさせない。**
+# 理由つきでここに登録する(`URL_DROPPED` と同じ流儀)。
+CLAIM_REF_GONE = {
+    "toris_core/lib/src/eco_log.dart":
+        "2026-09-22 に CEO 判断で製品から削除(885a6ee)。"
+        "§3 の『取り下げ要』の行が、消えた実体を名指しで説明している",
+    "eco_log.dart": "同上(ファイル名だけで書いてある箇所)",
+}
+
+# 「検査がまだ無い」と正直に書いている印。この行は A1/A3 を免除する。
+NO_TEST_MARKS = ("未整備", "検査できない")
+
+# 台帳が読む拡張子。コードだけでなく**画と動画**も見る(規則B で使う)。
+LEDGER_EXTS = ("dart", "py", "json", "md", "html", "yaml", "png", "jpg", "mp4")
+
+_RE_BACKTICK = __import__("re").compile(r"`([^`]+)`")
+_RE_FILEREF = __import__("re").compile(
+    r"^[\w./\-]+\.(?:" + "|".join(LEDGER_EXTS) + r")$")
+# かぎ括弧。テスト名の中にもう一段「」が入る形
+# (「食物網の統計と「足りないもの」の提案が…」)まで通す。
+_RE_TESTNAME = __import__("re").compile(r"「((?:[^「」]|「[^「」]*」)*)」")
+_RE_MATERIAL = __import__("re").compile(r"^[fgqrs]\d{2}_[a-z0-9_]+$")
+_RE_STRIKE = __import__("re").compile(r"~~.*?~~")
+_RE_LINENO = __import__("re").compile(r":\d+(?:-\d+)?$")
+
+_FILE_INDEX = None
+_TEST_NAMES = None
+
+
+def _file_index() -> dict:
+    """ファイル名 → リポジトリ内の相対パスの集合。生成物は見ない。"""
+    global _FILE_INDEX
+    if _FILE_INDEX is not None:
+        return _FILE_INDEX
+    skip = {".git", "build", "__pycache__", ".dart_tool", "node_modules",
+            ".pytest_cache", ".gradle", ".idea", "release"}
+    idx = {}
+    for dp, dirs, fs in os.walk(ROOT):
+        dirs[:] = [d for d in dirs if d not in skip]
+        for f in fs:
+            if f.rsplit(".", 1)[-1].lower() in LEDGER_EXTS:
+                rel = os.path.relpath(os.path.join(dp, f), ROOT)
+                idx.setdefault(f, set()).add(rel.replace("\\", "/"))
+    _FILE_INDEX = idx
+    return idx
+
+
+def _ref_exists(ref: str) -> bool:
+    if "/" in ref:
+        return os.path.exists(os.path.join(ROOT, ref.replace("/", os.sep)))
+    return ref in _file_index()
+
+
+def dart_test_names() -> set:
+    """Dart のテスト名(`test('…')` / `testWidgets('…')` の第1引数)。"""
+    global _TEST_NAMES
+    if _TEST_NAMES is not None:
+        return _TEST_NAMES
+    import re
+    pat = re.compile(r"\btest(?:Widgets)?\(\s*(['\"])((?:[^'\"\\]|\\.)*?)\1",
+                     re.S)
+    names = set()
+    for base in ("toris_core/test", "toris_app/test"):
+        root = os.path.join(ROOT, base.replace("/", os.sep))
+        for dp, _d, fs in os.walk(root):
+            for f in fs:
+                if not f.endswith(".dart"):
+                    continue
+                src = open(os.path.join(dp, f), encoding="utf-8").read()
+                for m in pat.finditer(src):
+                    names.add(m.group(2))
+    _TEST_NAMES = names
+    return names
+
+
+def _claim_doc_tables():
+    """`06_監査.md` の §3(主張台帳)と §3.5(素材台帳)の行を返す。
+
+    どちらかの表が読めなくなったら **None を返して落とす** —
+    「表が消えたので検査が0件になり、黙って通る」が一番まずい。
+    """
+    import re
+    p = os.path.join(ROOT, CLAIM_DOC.replace("/", os.sep))
+    if not os.path.exists(p):
+        return None, None
+    lines = open(p, encoding="utf-8").read().splitlines()
+    i3 = i35 = i4 = None
+    for n, ln in enumerate(lines):
+        if i3 is None and ln.startswith("## 3. "):
+            i3 = n
+        elif i3 is not None and i35 is None and ln.startswith("### 3.5"):
+            i35 = n
+        elif i3 is not None and i4 is None and ln.startswith("## 4."):
+            i4 = n
+    if i3 is None or i35 is None or i4 is None or not (i3 < i35 < i4):
+        return None, None
+
+    def rows(block):
+        out = []
+        for ln in block:
+            s = ln.strip()
+            if not (s.startswith("|") and s.endswith("|")):
+                continue
+            cells = [c.strip() for c in s[1:-1].split("|")]
+            if all(re.fullmatch(r"[-: ]*", c) for c in cells):
+                continue
+            out.append(cells)
+        return out
+
+    return rows(lines[i3:i35]), rows(lines[i35:i4])
+
+
+def claim_ledger_audit() -> list:
+    """規則A。主張台帳の「検査」欄が、実在するものを指しているか。"""
+    problems = []
+    claim, _material = _claim_doc_tables()
+    if claim is None:
+        return [f"主張台帳 {CLAIM_DOC} の §3 / §3.5 / §4 の見出しが読めない"
+                + chr(10) + "        表の形を変えたら migration_audit.py も直すこと"]
+    if len(claim) < 10:
+        return [f"主張台帳の行が {len(claim)} 行しか読めない(表の形が変わった?)"]
+
+    names = dart_test_names()
+    seen = 0
+    for cells in claim:
+        if len(cells) != 3:
+            problems.append(
+                "主張台帳の行の列数が3でない(セルの中に | を書いていないか): "
+                + " | ".join(c[:24] for c in cells))
+            continue
+        what, where, check = cells
+        if what.startswith("主張"):
+            continue
+        seen += 1
+        exempt = any(m in check for m in NO_TEST_MARKS)
+
+        # A2: 名指ししたファイルは実在する(免除しない)
+        refs_check, refs_all = [], []
+        for cell, bucket in ((check, refs_check), (where, None)):
+            for tok in _RE_BACKTICK.findall(cell):
+                t = _RE_LINENO.sub("", tok.strip())
+                if _RE_FILEREF.match(t):
+                    refs_all.append(t)
+                    if bucket is not None:
+                        bucket.append(t)
+        for t in refs_all:
+            if t in CLAIM_REF_GONE:
+                continue
+            if not _ref_exists(t):
+                problems.append(
+                    f"主張台帳『{what[:26]}』が指す {t} が無い" + chr(10)
+                    + "        検査が消えたのに行だけ残っていないか。"
+                      "わざと消えた実体を指しているなら CLAIM_REF_GONE に理由つきで足す")
+
+        # A3: かぎ括弧の中身は、実在するテスト名に含まれる
+        quoted = [] if exempt else _RE_TESTNAME.findall(check)
+        for q in quoted:
+            if len(q) < 6:
+                continue
+            if not any(q in n for n in names):
+                problems.append(
+                    f"主張台帳『{what[:26]}』の検査「{q[:40]}」というテストが無い" + chr(10)
+                    + "        テスト名が変わった / 消えた。"
+                      "かぎ括弧はテスト名にだけ使う(ほかの引用は『』)")
+
+        # A1: 何かを名指ししているか
+        if not exempt and not refs_check and not quoted:
+            problems.append(
+                f"主張台帳『{what[:26]}』の検査欄が、実在するものを名指ししていない"
+                + chr(10)
+                + "        ファイル名(バッククォート)かテスト名(かぎ括弧)を書く。"
+                  "検査がまだ無いなら 未整備 と書く")
+    if seen < 10:
+        problems.append(f"主張台帳の主張が {seen} 件しか読めない(表の形が変わった?)")
+    return problems
+
+
+# ─────────────────────────────────────────────────────────────
+# 規則B: **掲載素材(スクショ・動画)を台帳に載せる。**
+#
+# ## なぜ足したか(2026-10-15。5回目のすり抜けの、重いほう)
+# 「なぜ来たか」を製品から消したあと、**文**は手当てされたのに、
+# **Play に掲載中のスクリーンショット
+# `marketing/phase-1/SNS部/素材/store/02_guide.png` には WHY IT CAME が映ったまま**
+# 配信され続けていた。台帳が**文しか持っていなかった**ので、機能を消すときに
+# 「その機能が映っている画」を探す先がどこにも無かった。
+#
+# ## 捕まえたい種類
+# 「外に出した画が、製品より古いまま残る」。そのために:
+#   B1. 台帳(`06_監査.md` §3.5)に書いた素材が**実在する**
+#   B2. 外に出している素材で、**台帳に無いものが無い**
+#   B3. 主張台帳が名指しした素材(`g03_song` 等)が、**素材台帳にある**
+#       (出すのをやめた素材は ~~ ~~ で囲む)
+#
+# ⚠️ B2 の「外に出している素材」は**人の申告では取らない**。
+#    `素材/` 直下と `素材/store/` の実ファイル、そして
+#    **`landing/page.html` が実際に使っているトークン × `landing/build.py` の
+#    差し替え表**から取る。LP に画を足せば、台帳に1行足すまで落ちる。
+# ─────────────────────────────────────────────────────────────
+MATERIAL_DIRS = [
+    ("marketing/phase-1/SNS部/素材", (".mp4", ".png", ".jpg"),
+     "SNS部が外に出す素材(直下)"),
+    ("marketing/phase-1/SNS部/素材/store", (".png",),
+     "Google Play の掲載素材"),
+]
+
+
+def _lp_materials():
+    """LP が実際に埋め込んでいる画。(パス→なぜ, 問題の一覧)"""
+    import re
+    out, problems = {}, []
+    page = os.path.join(ROOT, "landing", "page.html")
+    build = os.path.join(ROOT, "landing", "build.py")
+    if not (os.path.exists(page) and os.path.exists(build)):
+        return out, ["landing/page.html か landing/build.py が無い"]
+    psrc = open(page, encoding="utf-8").read()
+    bsrc = open(build, encoding="utf-8").read()
+    table = {}
+    for m in re.finditer(
+            r'\.replace\(\s*"(__[A-Z_]+__)"\s*,\s*data_uri\(\s*'
+            r'os\.path\.join\(\s*MEDIA\s*,\s*"([^"]+)"', bsrc):
+        table[m.group(1)] = "landing/media/" + m.group(2)
+    for m in re.finditer(r'\(\s*"(__[A-Z_]+__)"\s*,\s*"([^"]+)"\s*\)', bsrc):
+        table[m.group(1)] = "landing/media/" + m.group(2)
+    for m in re.finditer(r'^(ICON|PLATE)\s*=\s*os\.path\.join\(([^)]*)\)',
+                         bsrc, re.M):
+        parts = re.findall(r'"([^"]+)"', m.group(2))
+        if parts:
+            table["__%s__" % m.group(1)] = "/".join(parts)
+    for tok in sorted(set(re.findall(r"__[A-Z_]+__", psrc))):
+        if tok not in table:
+            problems.append(
+                f"LP に {tok} があるが landing/build.py が差し替えていない"
+                + chr(10) + "        公開すると穴が開く")
+            continue
+        out[table[tok]] = f"LP が {tok} として埋め込んでいる"
+    return out, problems
+
+
+def published_materials():
+    """外に出している素材 → なぜ外に出ているか。"""
+    out, problems = {}, []
+    for rel, exts, why in MATERIAL_DIRS:
+        d = os.path.join(ROOT, rel.replace("/", os.sep))
+        if not os.path.isdir(d):
+            problems.append(f"素材の置き場 {rel} が無い")
+            continue
+        for f in sorted(os.listdir(d)):
+            if os.path.isfile(os.path.join(d, f)) and f.lower().endswith(exts):
+                out[f"{rel}/{f}"] = why
+    lp, lp_problems = _lp_materials()
+    out.update(lp)
+    problems += lp_problems
+    return out, problems
+
+
+def material_ledger_audit() -> list:
+    """規則B。素材台帳(§3.5)と、外に出している実体が合っているか。"""
+    problems = []
+    claim, material = _claim_doc_tables()
+    if material is None:
+        return [f"素材台帳 {CLAIM_DOC} §3.5 が読めない"]
+    if len(material) < 10:
+        return [f"素材台帳の行が {len(material)} 行しか読めない(表の形が変わった?)"]
+
+    listed = {}
+    for cells in material:
+        if len(cells) != 3:
+            problems.append("素材台帳の行の列数が3でない: "
+                            + " | ".join(c[:24] for c in cells))
+            continue
+        path_cell, _where, what = cells
+        if path_cell.startswith("素材"):
+            continue
+        m = _RE_BACKTICK.search(path_cell)
+        if not m:
+            problems.append(
+                f"素材台帳の1列目がバッククォートのパスでない: {path_cell[:50]}")
+            continue
+        p = m.group(1).strip()
+        listed[p] = what
+        # B1: 書いてあるものが実在するか
+        if not os.path.exists(os.path.join(ROOT, p.replace("/", os.sep))):
+            problems.append(
+                f"素材台帳に書いてある {p} が無い" + chr(10)
+                + "        素材を消したなら台帳の行も消す(素材だけ消すと台帳が嘘になる)")
+        if len(what) < 12:
+            problems.append(
+                f"素材台帳の {p} に『何が映っているか』が書かれていない" + chr(10)
+                + "        機能を消すときに grep する先なので、映っているものを書く")
+
+    # B2: 外に出しているのに台帳に無いもの
+    pub, pub_problems = published_materials()
+    problems += pub_problems
+    for p, why in sorted(pub.items()):
+        if p not in listed:
+            problems.append(
+                f"外に出している素材 {p} が素材台帳({CLAIM_DOC} §3.5)に無い"
+                + chr(10) + f"        {why}。1行足して『何が映っているか』を書くこと")
+
+    # B3: 主張台帳が名指しした素材が、素材台帳にあるか
+    for cells in claim or []:
+        if len(cells) != 3 or cells[0].startswith("主張"):
+            continue
+        where = _RE_STRIKE.sub(" ", cells[1])   # 取り下げた素材は見ない
+        for tok in _RE_BACKTICK.findall(where):
+            t = tok.strip()
+            if _RE_MATERIAL.match(t) and not any(t in p for p in listed):
+                problems.append(
+                    f"主張台帳『{cells[0][:26]}』が名指しする素材 {t} が素材台帳に無い"
+                    + chr(10)
+                    + "        出すのをやめた素材なら ~~ ~~ で囲む。"
+                      "まだ出しているなら §3.5 に1行足す")
+    return problems
+
+
+# ─────────────────────────────────────────────────────────────
 # テストを実際に走らせる
 #
 # テストは**書いてあっても回さなければ無い**のと同じ。監査を1つの入口にする。
@@ -674,6 +1055,18 @@ def main() -> None:
     else:
         print("  問題なし")
 
+    # ── 主張と素材 ──
+    # 公に言ったことの「検査」欄が実在するか / 外に出した画が台帳にあるか。
+    print("\n── 主張と素材 ──")
+    claim_problems = claim_ledger_audit() + material_ledger_audit()
+    if claim_problems:
+        print(f"  !! {len(claim_problems)} 件")
+        for p in claim_problems:
+            print(f"     {p}")
+    else:
+        _c, _m = _claim_doc_tables()
+        print(f"  問題なし(主張 {len(_c or []) - 1} 件 / 素材 {len(_m or []) - 1} 件)")
+
     # ── テスト ──
     test_failures = []
     if "--no-test" not in sys.argv:
@@ -682,7 +1075,7 @@ def main() -> None:
         for f in test_failures:
             print(f"  !! {f}" if not f.startswith("  ") else f)
 
-    if broken or unknown or screen_problems or test_failures:
+    if broken or unknown or screen_problems or claim_problems or test_failures:
         raise SystemExit(1)
 
 

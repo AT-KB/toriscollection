@@ -6,8 +6,10 @@
 /// `toris_collection/docs/team/proposals/2026-08-11_技術方針_Flutter移行の判断.md`。
 ///
 /// ## 守ること
-/// - **表示は英語のみ。** 製品版は 2026-08-09 に日本語表示を落としている。
-///   文言は i18n.py の TRANSLATIONS にある出荷済みの英語を引き写す。
+/// - **既定は英語。日本語に切り替えられる**(CEO 2026-10-19「日本語に切り替えって
+///   できない?」→「やれ」)。辞書と切替は `i18n.dart`。切替は**全タブの右上**
+///   (`ui/lang_button.dart`。CEO 2026-11-03「目立つ場所にしていいよ」)と図鑑の先頭。
+///   **画面にある英語そのものが辞書の鍵**で、辞書に無い文言は英語のまま出る。
 /// - **文字は少なく、ボタンは大きく**(CEO 2026-08-14)。決めごとは `ui/theme.dart`。
 /// - **セーブコードの互換。** 進行データはサーバーに無く、あの文字列としてのみ
 ///   ユーザーの手元にある(`toris_core` で双方向の一致を確認済み)。
@@ -24,6 +26,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'ads/ads.dart';
 import 'alarm/alarm_page.dart';
@@ -31,6 +34,8 @@ import 'garden/garden_page.dart';
 import 'garden/garden_state.dart';
 import 'garden/guide_page.dart';
 import 'garden/network_page.dart';
+import 'i18n.dart';
+import 'radio/radio_engine.dart' show loadBirdsData;
 import 'radio/radio_page.dart';
 import 'ui/theme.dart';
 
@@ -38,6 +43,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 広告 SDK。失敗しても投げない — 広告が無くてもアプリは全部動く(原則2)。
   await initAds();
+  // 覚えていた言語を戻す。**画面を建てる前**に読む(英語で一瞬出てから
+  // 日本語に化けるのを避ける)。読めなければ既定の英語のまま。
+  await L10n.restore();
+  // 目覚ましなど、庭のデータを持たない画面でも和名が引けるように。
+  try {
+    registerSpeciesNames(await loadBirdsData());
+  } catch (_) {
+    // 読めなければ英名のまま出る(落ちない)。
+  }
   runApp(const TorisApp());
 }
 
@@ -45,10 +59,24 @@ class TorisApp extends StatelessWidget {
   const TorisApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Toris Collection',
-    theme: buildTheme(),
-    home: const HomeShell(),
+  Widget build(BuildContext context) => ValueListenableBuilder<Lang>(
+    // 言語が変わったら、画面を丸ごと建て直す。
+    valueListenable: L10n.lang,
+    builder: (context, lang, child) => MaterialApp(
+      title: 'Toris Collection',
+      theme: buildTheme(),
+      // Flutter が用意する画面(時刻の選択の「Cancel / OK」など)も、アプリの言語に
+      // 合わせる。入れないと、日本語を選んでいても時刻の選択が英語のままだった
+      // (2026-11-10 実機)。
+      locale: lang == Lang.ja ? const Locale('ja') : const Locale('en'),
+      supportedLocales: const [Locale('en'), Locale('ja')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      // ⚠️ **const を付けない。** const にすると同じインスタンスとみなされ、
+      // 親が建て直しても**この下が丸ごと飛ばされる**。実機で「日本語を押しても
+      // 画面が英語のまま」になった原因がこれ(2026-10-19)。
+      // 毎回新しい widget を作れば、State は保ったまま下まで建て直される。
+      home: HomeShell(),
+    ),
   );
 }
 
@@ -76,7 +104,11 @@ class _HomeShellState extends State<HomeShell> {
         observed: _garden?.observed ?? const {},
         biomeId: _garden?.biomeId ?? 'charlotte',
       ),
-      GardenPage(onChanged: (g) => setState(() => _garden = g)),
+      GardenPage(
+        onChanged: (g) => setState(() => _garden = g),
+        // チュートリアルの最後で「目覚ましをセット」を選んだら、目覚ましへ。
+        onOpenAlarm: () => setState(() => _index = 4),
+      ),
       GuidePage(garden: _garden),
       NetworkPage(garden: _garden),
       // 2羽目・3羽目は**近くで出会った鳥**から選ばれるので、観察の記録を渡す
@@ -98,24 +130,26 @@ class _HomeShellState extends State<HomeShell> {
           child: NavigationBar(
             selectedIndex: tutorial ? 1 : _index,
             onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
+            // ⚠️ const を外してある — 名前が言語で変わるため。
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.graphic_eq),
-                label: 'Radio',
+                icon: const Icon(Icons.graphic_eq),
+                label: t('Radio'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.park_outlined),
-                label: 'Garden',
+                icon: const Icon(Icons.park_outlined),
+                label: t('Garden'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.menu_book_outlined),
-                label: 'Guide',
+                icon: const Icon(Icons.menu_book_outlined),
+                label: t('Guide'),
               ),
               NavigationDestination(
-                icon: Icon(Icons.hub_outlined),
-                label: 'Network',
+                icon: const Icon(Icons.hub_outlined),
+                label: t('Network'),
               ),
-              NavigationDestination(icon: Icon(Icons.alarm), label: 'Wake'),
+              NavigationDestination(
+                  icon: const Icon(Icons.alarm), label: t('Wake')),
             ],
           ),
         ),

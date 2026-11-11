@@ -10,8 +10,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
+import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
+import '../radio/radio_engine.dart' show kAmbienceKeys, kAmbienceLabel;
 import 'alarm.dart';
 
 class AlarmPage extends StatefulWidget {
@@ -40,6 +43,9 @@ class _AlarmPageState extends State<AlarmPage> {
 
   /// 選んでいる1羽目。
   late String _first = _choices.first.key;
+
+  /// 鳥の前に流れる音。既定は lake(CEO 2026-09-22 に実機で選んだ音)。
+  String _prelude = 'lake';
 
   /// 選べる鳥。**会えた鳥＋最初から居る3種**。
   List<({String key, String name})> get _choices {
@@ -76,8 +82,10 @@ class _AlarmPageState extends State<AlarmPage> {
     final s = await Alarm.get();
     final exact = await Alarm.canScheduleExact();
     final notify = await Alarm.hasNotificationPermission();
+    final prelude = await Alarm.getPrelude();
     if (!mounted) return;
     setState(() {
+      _prelude = prelude;
       _current = s;
       _exactAllowed = exact;
       _notifyAllowed = notify;
@@ -105,18 +113,18 @@ class _AlarmPageState extends State<AlarmPage> {
       final go = await showDialog<bool>(
         context: context,
         builder: (c) => AlertDialog(
-          title: const Text('Permission needed for exact timing'),
-          content: const Text(
-            'Allow "Alarms & reminders" in Android settings. '
-            'Without it, the time can drift while your phone sleeps.',
+          title: Text(t('Permission needed for exact timing')),
+          content: Text(
+            t('Allow "Alarms & reminders" in Android settings. '
+                'Without it, the time can drift while your phone sleeps.'),
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(c, false),
-                child: const Text('Not now')),
+                child: Text(t('Not now'))),
             FilledButton(
                 onPressed: () => Navigator.pop(c, true),
-                child: const Text('Open settings')),
+                child: Text(t('Open settings'))),
           ],
         ),
       );
@@ -127,7 +135,7 @@ class _AlarmPageState extends State<AlarmPage> {
     await _refresh();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('⏰ Set for ${_time.format(context)}')),
+      SnackBar(content: Text('⏰ ${_time.format(context)}')),
     );
   }
 
@@ -136,14 +144,16 @@ class _AlarmPageState extends State<AlarmPage> {
     await _refresh();
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Turned off')));
+        .showSnackBar(SnackBar(content: Text(t('Turned off'))));
   }
 
   @override
   Widget build(BuildContext context) {
     final s = _current;
     return Scaffold(
-      appBar: AppBar(title: const Text('Wake with the birds')),
+      appBar: AppBar(
+          title: Text(t('Wake with the birds')),
+          actions: const [LangButton()]),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -159,7 +169,7 @@ class _AlarmPageState extends State<AlarmPage> {
                   if (mounted) setState(() => _ringing = false);
                 },
                 icon: const Icon(Icons.stop_circle, size: 28),
-                label: const Text('Stop the birds',
+                label: Text(t('Stop the birds'),
                     style: TextStyle(fontSize: 18)),
               ),
             ),
@@ -175,7 +185,7 @@ class _AlarmPageState extends State<AlarmPage> {
           // 予定を先に書くと、まだ鳴いていない鳥の名前が出る(原則4)。
           // 1羽目から始まって、5分かけて2羽目・3羽目が増えていく。
           if (_ringing && _singing.isNotEmpty) ...[
-            const Text('Your morning callers',
+            Text(t('Your morning callers'),
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -195,7 +205,7 @@ class _AlarmPageState extends State<AlarmPage> {
               ),
             const SizedBox(height: 20),
           ],
-          const PageTitle('Starts almost too quiet to hear, then grows.'),
+          PageTitle(t('Starts almost too quiet to hear, then grows.')),
 
           // ── 時刻 ──
           Card(
@@ -225,17 +235,17 @@ class _AlarmPageState extends State<AlarmPage> {
           FilledButton.icon(
             onPressed: _set,
             icon: const Icon(Icons.alarm, size: 28),
-            label: const Text('Set'),
+            label: Text(t('Set')),
           ),
           const SizedBox(height: 10),
           if (s?.enabled == true)
-            TextButton(onPressed: _cancel, child: const Text('Turn off')),
+            TextButton(onPressed: _cancel, child: Text(t('Turn off'))),
           const SizedBox(height: 12),
 
           // ── 1羽目を選ぶ ──
           // プルダウンにした(CEO 2026-08-19)。23行の一覧だと、下の設定まで
           // 遠く、選ぶだけで画面が埋まっていた。
-          const Text('First to sing',
+          Text(t('First to sing'),
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -261,7 +271,7 @@ class _AlarmPageState extends State<AlarmPage> {
                         _BirdIcon(b.key),
                         const SizedBox(width: 12),
                         Flexible(
-                            child: Text(b.name,
+                            child: Text(speciesName(b.key, b.name),
                                 overflow: TextOverflow.ellipsis)),
                       ]),
                     ),
@@ -274,10 +284,48 @@ class _AlarmPageState extends State<AlarmPage> {
           // 何が選べるのかを、事実として書く。
           Text(
             widget.met.isEmpty
-                ? 'Meet birds up close in your garden, and they join this '
-                    'list — and the chorus.'
-                : 'Two more join as it grows, drawn from the '
-                    '${widget.met.length} birds you have met up close.',
+                ? t('Meet birds up close in your garden, and they join this '
+                    'list — and the chorus.')
+                // 1羽のときに "the 1 birds" になっていた(2026-08-25 実機で発覚)。
+                // 日本語は数え方が違うので、**文ごと差し替える**(英語の語順に
+                // 寄せると不自然になる)。
+                : (L10n.lang.value == Lang.ja
+                    ? '庭で近くで出会った ${widget.met.length} 羽の中から、'
+                        'もう2羽が加わります。'
+                    : 'Two more join as it grows, drawn from the '
+                        '${widget.met.length} '
+                        '${widget.met.length == 1 ? "bird" : "birds"} '
+                        'you have met up close.'),
+            style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
+          ),
+          const SizedBox(height: 22),
+
+          // ── 鳥の前に流れる音(2026-11-10。CEO「ラジオみたいに選べたら」)──
+          Text(t('Before the birds'),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: kSub)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final k in [...kAmbienceKeys, 'none'])
+              ChoiceChip(
+                label: Text(k == 'none'
+                    ? t('None')
+                    : t(kAmbienceLabel[k] ?? k)),
+                selected: _prelude == k,
+                onSelected: (_) async {
+                  setState(() => _prelude = k);
+                  await Alarm.setPrelude(k);
+                },
+              ),
+          ]),
+          const SizedBox(height: 8),
+          Text(
+            _prelude == 'none'
+                ? t('The birds start right at the set time.')
+                : t('Plays softly for a minute before the birds join in.'),
             style: const TextStyle(fontSize: 13, height: 1.5, color: kSub),
           ),
           const SizedBox(height: 16),
@@ -288,15 +336,15 @@ class _AlarmPageState extends State<AlarmPage> {
               child: ListTile(
                 leading: const Icon(Icons.notifications_off,
                     color: Colors.orange),
-                title: const Text('Notifications are turned off'),
+                title: Text(t('Notifications are turned off')),
                 subtitle:
-                    const Text('You will not see a way to stop the alarm'),
+                    Text(t('You will not see a way to stop the alarm')),
                 trailing: TextButton(
                   onPressed: () async {
                     await Alarm.requestNotificationPermission();
                     await _refresh();
                   },
-                  child: const Text('Allow'),
+                  child: Text(t('Allow')),
                 ),
               ),
             ),
@@ -306,14 +354,14 @@ class _AlarmPageState extends State<AlarmPage> {
               color: const Color(0xFFFFF3E0),
               child: ListTile(
                 leading: const Icon(Icons.warning_amber, color: Colors.orange),
-                title: const Text('Exact timing is not allowed'),
-                subtitle: const Text('The alarm may drift from the time you set'),
+                title: Text(t('Exact timing is not allowed')),
+                subtitle: Text(t('The alarm may drift from the time you set')),
                 trailing: TextButton(
                   onPressed: () async {
                     await Alarm.openExactAlarmSettings();
                     await _refresh();
                   },
-                  child: const Text('Settings'),
+                  child: Text(t('Settings')),
                 ),
               ),
             ),
@@ -325,8 +373,8 @@ class _AlarmPageState extends State<AlarmPage> {
               s == null
                   ? '…'
                   : (s.enabled
-                      ? '⏰ Set for ${s.hhmm}'
-                      : 'Not set right now'),
+                      ? '⏰ ${s.hhmm}${L10n.lang.value == Lang.ja ? " にセット" : ""}'
+                      : t('Not set right now')),
               style: const TextStyle(color: Color(0xFF3F5C37)),
             ),
           ),

@@ -10,6 +10,7 @@
 /// 前回からの経過ぶんだけ庭が動いている。押して進める仕掛けは置かない。
 library;
 
+import '../i18n.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ import '../ads/ads.dart' as ads;
 import '../radio/radio_engine.dart' show radioIsPlaying;
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
+import '../ui/lang_button.dart';
 import 'garden_state.dart';
 import 'popups.dart';
 import 'ritual.dart';
@@ -28,7 +30,10 @@ import 'tutorial_overlay.dart';
 
 class GardenPage extends StatefulWidget {
   final void Function(Garden garden)? onChanged;
-  const GardenPage({super.key, this.onChanged});
+
+  /// 目覚ましのタブへ移る(チュートリアルの最後の段から)。
+  final VoidCallback? onOpenAlarm;
+  const GardenPage({super.key, this.onChanged, this.onOpenAlarm});
 
   @override
   State<GardenPage> createState() => _GardenPageState();
@@ -78,8 +83,26 @@ class _GardenPageState extends State<GardenPage>
   /// 儀式の最中は触らない(鳥が近づいている途中で庭を作り直さない)。
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ⚠️ **前面から外れたら、儀式を止める。**
+    //
+    // CEO 2026-08-28「アプリ切ってもずっと流れてる音が。それやめてほしい」。
+    // 儀式は鳥の声を looping で鳴らしっぱなしにするが、止めていたのは
+    // 「Enough」を押したときと `dispose` のときだけ。
+    // `wantKeepAlive` があるのでタブを移っても `dispose` は来ないし、
+    // ホームに戻しても来ない。**アプリを離れたあとも90秒鳴り続けていた。**
+    //
+    // 儀式は「見ている前で近づいてくる」ものなので、
+    // 見ていないあいだに進む意味がない(原則1「受動的」— 裏で走らせない)。
+    //
+    // ⚠️ **ラジオはここで止めない。** 画面が暗くなっても鳴り続けるのが
+    // 寝落ちの機能そのもの(`sleep_mode.dart`)。止めたら商品が壊れる。
+    if (state != AppLifecycleState.resumed) {
+      if (_ritual != null) _stopListening();
+      return;
+    }
+
     final g = _g;
-    if (state != AppLifecycleState.resumed || g == null) return;
+    if (g == null) return;
     if (_ritual != null) return;
     _advance(g);
   }
@@ -135,23 +158,86 @@ class _GardenPageState extends State<GardenPage>
           MetBird(b, g.lastFirstTimers.contains(b)),
       ],
       departures: <String>{
-        for (final b in g.lastDepartures) _name(g.data.birds, b),
+        for (final b in g.lastDepartures) g.labelFor(b),
       }.toList(),
       lostPlants: [for (final p in g.lastLostPlants) _name(g.data.plants, p)],
       // 撹乱は種類ごとに一文で語る。倒れた植物はその文の中に入る。
       disturbanceStories: [
         for (final d in g.lastDisturbances)
-          core.disturbanceStory(d.type, d.icon, [
+          // core は英語で組む可変文。日本語は同じ材料から i18n.dart で組み直す。
+          (L10n.lang.value == Lang.ja ? disturbanceStoryJa : core.disturbanceStory)(
+              d.type, d.icon, [
             for (final p in g.lastLostPlants) _name(g.data.plants, p),
           ]),
       ],
-      summary: core.summarizeEvents(
-        g.lastArrivals,
-        (b) => _name(g.data.birds, b),
-      ),
+      // ⚠️ 要約は **core が英語で組み立てる可変文**(`summarizeEvents`)。
+      // 辞書では引けないので、日本語のときだけ**同じ材料から**組み直す。
+      // core は触らない(Python との突き合わせを壊さないため)。
+      summary: L10n.lang.value == Lang.ja
+          ? summaryJa(g.lastArrivals, (b) => g.labelFor(b))
+          : core.summarizeEvents(
+              g.lastArrivals,
+              (b) => g.labelFor(b),
+            ),
     );
+    final hint = _welcomeHint(g, report);
     if (report.worthShowing && mounted) {
-      await showWelcomeBackPopup(context, g, report);
+      await showWelcomeBackPopup(context, g, report, hint: hint);
+    } else if (hint != null && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(hint)));
+    }
+    if (hint != null) await _save();
+  }
+
+  // ── 説明戦略(2026-11-08)──────────────────────────────────────────
+  // 最初に全部は説明しない。**その機能が意味を持つ瞬間に、1つだけ、一度だけ**。
+  // 文書: docs/team/proposals/2026-11-08_説明戦略_最初の4分と最初の30日.md
+
+  /// おかえりのときの一言。優先順に1つだけ。
+  String? _welcomeHint(Garden g, AwayReport r) {
+    if (r.arrivals.isNotEmpty && g.takeHint('first_arrival')) {
+      return t('👂 Listen closely, and they may come right up to you.');
+    }
+    if (core.gardenFamiliarityLevel(g.openDays) >= 1 &&
+        g.takeHint('familiar_lv1')) {
+      return t('🌿 Your garden is settling in. Rare birds come a little more often now.');
+    }
+    if (g.staleVisits >= 5 && g.takeHint('plant_variety')) {
+      return t('🌱 Plant something different, and different birds will come. '
+          'The Network tab shows who eats what.');
+    }
+    return null;
+  }
+
+  /// 近くで会えたときの一言。優先順に1つだけ。
+  String? _metHint(Garden g, List<MetBird> met) {
+    if (g.takeHint('first_meet')) {
+      // 最初の段で目覚ましを断った人にだけ、**もう1回だけ**添える。
+      final nudge = g.shownHints.contains('alarm_declined') &&
+          g.takeHint('alarm_nudge');
+      return nudge
+          ? t('🎙 Birds you meet up close sing on your radio. '
+              'You can also wake up to them.')
+          : t('🎙 Birds you meet up close sing on your radio.');
+    }
+    if (met.any((m) => (g.observed[m.id] ?? 0) >= 2) &&
+        g.takeHint('second_meet')) {
+      return t('🪶 The more you meet, the more they get used to you. '
+          'Once they trust you, you can name them.');
+    }
+    return null;
+  }
+
+  /// 名前の枠がちょうど開いた鳥(6・12・18回目)には、**その場で**聞く。
+  Future<void> _offerNames(Garden g, List<MetBird> met) async {
+    for (final m in met) {
+      final n = g.observed[m.id] ?? 0;
+      if (n > 0 && n % core.kNicknameMeets == 0 && g.canNickname(m.id) &&
+          mounted) {
+        if (await showNameDialog(context, g, m.id)) await _save();
+        if (mounted) setState(() {});
+      }
     }
   }
 
@@ -169,8 +255,7 @@ class _GardenPageState extends State<GardenPage>
     widget.onChanged?.call(g);
   }
 
-  String _name(Map<String, dynamic> m, String id) =>
-      (m[id]?['english'] as String?) ?? id;
+  String _name(Map<String, dynamic> m, String id) => nameOf(m[id], id);
 
   /// チップに載せる鳥の絵。ドット絵が無い種は、その鳥の色の小鳥で代える
   /// (虫の 🐛 と同じ役回り。ここでも枠組みの既定は使わない)。
@@ -201,7 +286,7 @@ class _GardenPageState extends State<GardenPage>
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             children: [
               Text(
-                'Plant  ${g.planted.length}/${g.maxPlants}',
+                '${t('Planted')}  ${g.planted.length}/${g.maxPlants}',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -298,7 +383,9 @@ class _GardenPageState extends State<GardenPage>
       while (_metThisRitual.isNotEmpty && mounted) {
         final batch = List<MetBird>.from(_metThisRitual);
         _metThisRitual.clear();
-        await showMetBirdPopup(context, g, batch);
+        if (!mounted) break;
+        await showMetBirdPopup(context, g, batch, hint: _metHint(g, batch));
+        await _offerNames(g, batch);
       }
     } finally {
       _showingMet = false;
@@ -327,14 +414,16 @@ class _GardenPageState extends State<GardenPage>
     if (mounted) setState(() => _ritual = null);
     if (g != null && met.isNotEmpty && mounted) {
       // 会えた瞬間に出し切れなかったぶん(板を出している最中に終わった等)。
-      await showMetBirdPopup(context, g, met);
+      await showMetBirdPopup(context, g, met, hint: _metHint(g, met));
+      await _offerNames(g, met);
+      await _save();
     } else if (flewOff.isNotEmpty && mounted) {
       // 会えないまま終わった回。**責めない言い方にする**(原則2)。
       // 失ったものは無く、もう一度押せばやり直せる。
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(flewOff.length == 1
-            ? 'It kept its distance today.'
-            : 'They kept their distance today.'),
+            ? t('It kept its distance today.')
+            : t('They kept their distance today.')),
       ));
     }
   }
@@ -345,7 +434,7 @@ class _GardenPageState extends State<GardenPage>
     final g = _g;
     if (g == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Garden')),
+        appBar: AppBar(title: Text(t('Garden'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -366,11 +455,16 @@ class _GardenPageState extends State<GardenPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Garden'),
+        title: Text(t('Garden')),
         actions: [
+          const LangButton(),
           // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。
+          // **チュートリアル中は出さない**(2026-11-03)。Play の審査担当者が
+          // 案内の途中でここを開き、コード欄をログイン画面と判定して却下した。
+          // チュートリアルは「やることを1つに保つ」ので、ここも隠すのが筋。
+          if (!g.tutorialRunning)
           IconButton(
-            tooltip: 'Move your garden',
+            tooltip: t('Move your garden'),
             icon: const Icon(Icons.ios_share_rounded),
             onPressed: () => showTransferSheet(
               context,
@@ -403,7 +497,7 @@ class _GardenPageState extends State<GardenPage>
                   for (final b in g.visiting)
                     PerchedBird(
                       id: b,
-                      english: _name(g.data.birds, b),
+                      english: g.labelFor(b),
                       // 儀式のあいだは、いま止まっている枝をそのまま出す
                       depth: _ritual != null
                           ? Ritual.depthName(_ritual!.branch[b] ?? 0)
@@ -418,8 +512,8 @@ class _GardenPageState extends State<GardenPage>
               // (CEO 2026-08-16「land の鳥も insects みたいに名前とアイコンを
               // 下に出して」)。木の上の鳥は小さいので、ここで誰か分かる。
               if (g.visiting.isEmpty)
-                const Text(
-                  'No one yet.',
+                Text(
+                  t('No one yet.'),
                   style: TextStyle(color: kSub, fontSize: 15),
                 )
               else
@@ -430,7 +524,7 @@ class _GardenPageState extends State<GardenPage>
                     for (final b in g.visiting)
                       Chip(
                         avatar: _birdAvatar(g, b),
-                        label: Text(_name(g.data.birds, b)),
+                        label: Text(g.labelFor(b)),
                       ),
                   ],
                 ),
@@ -450,15 +544,15 @@ class _GardenPageState extends State<GardenPage>
                     _ritual == null ? Icons.hearing : Icons.stop_rounded,
                     size: 26,
                   ),
-                  label: Text(_ritual == null ? 'Listen closely' : 'Enough'),
+                  label: Text(_ritual == null ? t('Listen closely') : t('Enough')),
                 ),
                 // 眺めるのはいつでもできる。**記録にならない**時だけ、静かに断る。
                 if (!g.ritualCounts)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Text(
-                      "🌙 You've listened closely enough for today. "
-                      'When a new bird comes, you can go and meet it again.',
+                      t("🌙 You've listened closely enough for today. "
+                      'When a new bird comes, you can go and meet it again.'),
                       style: TextStyle(fontSize: 12, height: 1.4, color: kSub),
                     ),
                   ),
@@ -471,7 +565,7 @@ class _GardenPageState extends State<GardenPage>
               // 庭に常設すると、痩せたことをずっと突きつけることになる。
 
               // ── ③ 土地 ──
-              const _Label('Your land'),
+              _Label(t('Your land')),
               Wrap(
                 key: _landKey,
                 spacing: 10,
@@ -479,7 +573,7 @@ class _GardenPageState extends State<GardenPage>
                   for (final id in g.data.biomes.keys)
                     ChoiceChip(
                       label: Text(
-                        (g.data.biomes[id]?['name_en'] as String?) ?? id,
+                        nameOf(g.data.biomes[id], id, enKey: 'name_en'),
                       ),
                       selected: g.biomeId == id,
                       onSelected: (_) async {
@@ -503,20 +597,20 @@ class _GardenPageState extends State<GardenPage>
               Row(
                 children: [
                   Expanded(
-                    child: _Label('Plant  ${g.planted.length}/${g.maxPlants}'),
+                    child: _Label('${t('Planted')}  ${g.planted.length}/${g.maxPlants}'),
                   ),
                   if (g.planted.length < g.maxPlants)
                     TextButton.icon(
                       key: _plantKey,
                       onPressed: () => _openPlantPicker(g),
                       icon: const Icon(Icons.add, size: 20),
-                      label: const Text('Add'),
+                      label: Text(t('Add')),
                     ),
                 ],
               ),
               if (g.planted.isEmpty)
                 Text(
-                  'Nothing planted yet.',
+                  t('Nothing planted yet.'),
                   style: TextStyle(color: kSub, fontSize: 14),
                 )
               else
@@ -542,13 +636,13 @@ class _GardenPageState extends State<GardenPage>
               // 開放型を置くとリスが届き、リスがタカを呼び、臆病な鳥が来にくくなる。
               // かご型ならリスは届かない。**これが唯一の駆け引き**で、罰ではなく選択。
               const SizedBox(height: 20),
-              const _Label('Feeder'),
+              _Label(t('Feeder')),
               Wrap(
                 spacing: 10,
                 children: [
                   for (final f in ['feeder_open', 'feeder_cage'])
                     ChoiceChip(
-                      label: Text(core.kFeeders[f]!['english'] as String),
+                      label: Text(t(core.kFeeders[f]!['english'] as String)),
                       selected: g.feeders.contains(f),
                       onSelected: (on) async {
                         setState(() => g.setFeeder(on ? f : null));
@@ -564,19 +658,19 @@ class _GardenPageState extends State<GardenPage>
               // **短く。種名は絵文字で代用**(CEO 2026-08-16)。
               // 何が起きているかは庭の絵に出ているので、文はひとことでいい。
               if (g.chain.raptors.isNotEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Text(
-                    'The squirrel drew a hawk. '
-                    'Shy birds keep their distance.',
+                    t('The squirrel drew a hawk. '
+                    'Shy birds keep their distance.'),
                     style: TextStyle(fontSize: 13, height: 1.4, color: kSub),
                   ),
                 )
               else if (g.chain.animals.isNotEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Text(
-                    'A squirrel is taking the seed.',
+                    t('A squirrel is taking the seed.'),
                     style: TextStyle(fontSize: 13, color: kSub),
                   ),
                 ),
@@ -584,7 +678,7 @@ class _GardenPageState extends State<GardenPage>
               // 湧いている虫。鳥が来る理由そのものなので、庭にも出す。
               if (web.insects.isNotEmpty) ...[
                 const SizedBox(height: 20),
-                const _Label('Insects'),
+                _Label(t('Insects')),
                 Wrap(
                   key: _insectKey,
                   spacing: 8,
@@ -632,18 +726,29 @@ class _GardenPageState extends State<GardenPage>
   ///  - 今日もう受け取った → 静かに「また明日」
   ///  - 候補が無い(餌台が無い等) → `itemUnavailableReason` の事実だけ出す
   Widget _todayTool(Garden g) {
+    final ja = L10n.lang.value == Lang.ja;
+    const sub = TextStyle(fontSize: 13, height: 1.4, color: kSub);
     final active = core.itemIsActive(g.itemPlacement);
     if (active) {
       final id = g.itemPlacement!.itemId;
       final hours = core.itemHoursRemaining(g.itemPlacement).ceil();
+      final name = t(core.kItemNames[id]!);
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(core.kGardenItems[id]!.emoji, style: const TextStyle(fontSize: 20)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              '${core.kItemNames[id]} — ${hours}h left',
-              style: const TextStyle(fontSize: 13, color: kSub),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(ja ? itemLeftJa(name, hours) : '$name — ${hours}h left',
+                    style: sub),
+                // 何が効いているのかを、効いているあいだ見えるようにする。
+                if (ads.kItemEffects[id] != null)
+                  Text(t(ads.kItemEffects[id]!),
+                      style: sub.copyWith(fontSize: 12)),
+              ],
             ),
           ),
         ],
@@ -651,26 +756,54 @@ class _GardenPageState extends State<GardenPage>
     }
 
     if (ads.hasClaimedToday(g.lastItemClaimDay)) {
-      return const Text("Today's tool is used up. Another one tomorrow.",
-          style: TextStyle(fontSize: 13, color: kSub));
+      return Text(t("Today's tool is used up. Another one tomorrow."),
+          style: sub);
     }
 
     final pool = ads.offeredItems(g.biomeId, g.data.birds, g.feeders);
     if (pool.isEmpty) {
       // 何が足りないかを事実として言う。責める言い方にしない(原則2)。
+      final it = core.kGardenItems['feeder']!;
       return Text(
-        core.itemUnavailableReason('feeder', g.biomeId, g.data.birds),
-        style: const TextStyle(fontSize: 13, color: kSub),
+        ja
+            ? itemUnavailableJa('feeder', it.emoji, t(core.kItemNames['feeder']!))
+            : core.itemUnavailableReason('feeder', g.biomeId, g.data.birds),
+        style: sub,
       );
     }
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: OutlinedButton.icon(
-        icon: const Text('🎁'),
-        label: const Text('A tool for today'),
-        onPressed: _busy ? null : () => _claimTool(g),
-      ),
+    // 押す前に「何が起きるか」と「押さなくても損しない」を言っておく(原則1)。
+    // 候補は**いまこの庭で選べるものだけ**見せる — 届かないものを並べない。
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        OutlinedButton.icon(
+          icon: const Text('🎁'),
+          label: Text(t('A tool for today')),
+          onPressed: _busy ? null : () => _claimTool(g),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          t('Watch a short ad and one tool is set out in your garden for 6 hours. '
+              'Once a day. Skipping it changes nothing — '
+              'the voices, the radio and your guide stay just the same.'),
+          style: sub.copyWith(fontSize: 12),
+        ),
+        if (pool.length > 1) ...[
+          const SizedBox(height: 6),
+          Text(t('One of these, picked at random:'),
+              style: sub.copyWith(fontSize: 12)),
+        ],
+        for (final id in pool)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '${core.kGardenItems[id]!.emoji} ${t(core.kItemNames[id]!)} — '
+              '${t(ads.kItemEffects[id] ?? '')}',
+              style: sub.copyWith(fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 
@@ -683,8 +816,8 @@ class _GardenPageState extends State<GardenPage>
     if (!mounted) return;
     setState(() => _busy = false);
     if (r != ads.AdResult.success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('No tool this time. It will be here tomorrow too.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(t('No tool this time. It will be here tomorrow too.')),
       ));
       return;
     }
@@ -697,9 +830,12 @@ class _GardenPageState extends State<GardenPage>
     });
     await _save();
     if (!mounted) return;
+    final emoji = core.kGardenItems[id]!.emoji;
+    final name = t(core.kItemNames[id]!);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('${core.kGardenItems[id]!.emoji} '
-          '${core.kItemNames[id]} — for the next 6 hours.'),
+      content: Text(L10n.lang.value == Lang.ja
+          ? itemPlacedJa(emoji, name)
+          : '$emoji $name — for the next 6 hours.'),
     ));
   }
 
@@ -720,17 +856,40 @@ class _GardenPageState extends State<GardenPage>
       _ => null,
     };
 
+    Future<void> advance() async {
+      setState(() => g.tutorialStep = core.advanceTutorialStep(step));
+      await _save();
+    }
+
+    // ── 最後の段は差し替える(説明戦略 2026-11-08)──
+    // 前は「Now close the app」で終わっていた。体験が尻切れになるうえ、
+    // **次に戻ってくる理由を何も渡していなかった**。目覚ましを1回だけ勧める。
+    // 断っても何も失わない(原則1・2)。
+    if (step == core.kTutorialSteps - 1) {
+      return TutorialOverlay(
+        title: 'Birds come slowly',
+        body: 'Every few hours, someone stops by. '
+            'Want to wake up to birdsong tomorrow morning?',
+        nextLabel: 'Set a birdsong alarm',
+        onNext: () async {
+          g.takeHint('alarm_accepted');
+          await advance();
+          widget.onOpenAlarm?.call();
+        },
+        secondaryLabel: 'Later',
+        onSecondary: () async {
+          g.takeHint('alarm_declined');
+          await advance();
+        },
+      );
+    }
+
     return TutorialOverlay(
       targetKey: target,
       title: content.title,
       body: content.body,
       nextLabel: content.nextLabel,
-      onNext: content.nextLabel == null
-          ? null
-          : () async {
-              setState(() => g.tutorialStep = core.advanceTutorialStep(step));
-              await _save();
-            },
+      onNext: content.nextLabel == null ? null : advance,
     );
   }
 }
