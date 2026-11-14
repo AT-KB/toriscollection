@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
+import '../credits.dart';
 import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
@@ -199,7 +200,15 @@ class _AlarmPageState extends State<AlarmPage> {
                   _BirdIcon(k),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _SingingName(name: alarmBirdName(k), singing: true),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SingingName(name: alarmBirdName(k), singing: true),
+                          if (creditLine(k) != null)
+                            Text(creditLine(k)!,
+                                style: const TextStyle(
+                                    fontSize: 11, color: kSub)),
+                        ]),
                   ),
                 ]),
               ),

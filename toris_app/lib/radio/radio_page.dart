@@ -4,6 +4,7 @@
 /// 説明を足したくなったら、まず作りを疑う。
 library;
 
+import '../credits.dart';
 import '../i18n.dart';
 import 'dart:async';
 
@@ -332,8 +333,14 @@ class _BirdRow extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: Text(speciesName(v.bird.id, v.bird.english),
-              style: const TextStyle(fontSize: 17, color: kInk)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(speciesName(v.bird.id, v.bird.english),
+                style: const TextStyle(fontSize: 17, color: kInk)),
+            // 誰の録音か。「本物」の証拠を、鳴っている行に(軸 2026-11-13)。
+            if (creditLine(v.bird.id) != null)
+              Text(creditLine(v.bird.id)!,
+                  style: const TextStyle(fontSize: 11, color: kSub)),
+          ]),
         ),
         // 群れが育っている鳥だけ羽数を出す(1羽のときは何も出さない)
         if (v.flock > 1)

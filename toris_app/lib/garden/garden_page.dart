@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
 import '../ads/ads.dart' as ads;
+import '../credits.dart';
 import '../radio/radio_engine.dart' show radioIsPlaying;
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
@@ -256,6 +257,19 @@ class _GardenPageState extends State<GardenPage>
   }
 
   String _name(Map<String, dynamic> m, String id) => nameOf(m[id], id);
+
+  /// 一声(2秒)+ 録音者を一言。ラジオが鳴っている間は邪魔しない。
+  Future<void> _chirp(String birdId) async {
+    if (radioIsPlaying.value) return;
+    await playPreview(birdId, seconds: 2);
+    final line = creditLine(birdId);
+    if (line != null && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+            content: Text(line), duration: const Duration(seconds: 2)));
+    }
+  }
 
   /// チップに載せる鳥の絵。ドット絵が無い種は、その鳥の色の小鳥で代える
   /// (虫の 🐛 と同じ役回り。ここでも枠組みの既定は使わない)。
@@ -522,9 +536,12 @@ class _GardenPageState extends State<GardenPage>
                   runSpacing: 8,
                   children: [
                     for (final b in g.visiting)
-                      Chip(
+                      // 押すと一声鳴く(軸 2026-11-13)。庭にいる鳥の声が庭から
+                      // 聞こえるのは自然。図鑑にも慣れにも**数えない**。
+                      ActionChip(
                         avatar: _birdAvatar(g, b),
                         label: Text(g.labelFor(b)),
+                        onPressed: () => _chirp(b),
                       ),
                   ],
                 ),
@@ -577,6 +594,7 @@ class _GardenPageState extends State<GardenPage>
                       ),
                       selected: g.biomeId == id,
                       onSelected: (_) async {
+                        final firstPick = g.tutorialStep == 0;
                         setState(() {
                           g.setBiome(id);
                           // 案内中は、土地を選んだ時点で次へ(「次へ」は出さない)。
@@ -585,6 +603,13 @@ class _GardenPageState extends State<GardenPage>
                           }
                         });
                         await _save();
+                        // **最初の60秒で軸を聴かせる**(2026-11-13)。土地を選んだ
+                        // 直後に、その土地の代表の鳥が3秒鳴く。試聴なので
+                        // 図鑑にも慣れにも数えない。
+                        if (firstPick) {
+                          final sig = kSignatureBird[id];
+                          if (sig != null) playPreview(sig, seconds: 3);
+                        }
                       },
                     ),
                 ],
@@ -884,10 +909,19 @@ class _GardenPageState extends State<GardenPage>
       );
     }
 
+    // 「何か植える」の段だけ、いま鳴っている試聴が誰の録音かを添える。
+    var body = content.body;
+    if (step == 1) {
+      final sig = kSignatureBird[g.biomeId];
+      final line = sig == null ? null : creditLine(sig);
+      if (line != null) {
+        body = '$body\n\n${t("A bird of this land, singing.")} $line';
+      }
+    }
     return TutorialOverlay(
       targetKey: target,
       title: content.title,
-      body: content.body,
+      body: body,
       nextLabel: content.nextLabel,
       onNext: content.nextLabel == null ? null : advance,
     );

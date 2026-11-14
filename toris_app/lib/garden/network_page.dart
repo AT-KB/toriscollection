@@ -26,7 +26,7 @@ class NetworkPage extends StatelessWidget {
     final g = garden;
     if (g == null || g.planted.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text(t('Network'))),
+        appBar: AppBar(title: Text(t('Who eats what'))),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -55,7 +55,7 @@ class NetworkPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(t('Network')), actions: const [LangButton()]),
+          title: Text(t('Who eats what')), actions: const [LangButton()]),
       body: Column(children: [
         Expanded(
           child: InteractiveViewer(

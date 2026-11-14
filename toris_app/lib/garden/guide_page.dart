@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../credits.dart';
 import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
@@ -77,7 +78,7 @@ class _GuidePageState extends State<GuidePage> {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text('${t('Guide')}  $found/${ids.length}'),
+          title: Text('${t('Birds that came')}  $found/${ids.length}'),
           actions: const [LangButton()]),
       body: Column(children: [
         // ── 言語の切り替え ──
@@ -285,6 +286,13 @@ class _Entry extends StatelessWidget {
                       fontSize: 13,
                       fontStyle: FontStyle.italic,
                       color: kSub)),
+            ),
+          // 誰の録音か(軸 2026-11-13。xeno-canto の表記義務でもある)。
+          if (creditLine(id) != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(creditLine(id)!,
+                  style: const TextStyle(fontSize: 11, color: kSub)),
             ),
           const SizedBox(height: 8),
           Text(days > 0 ? '$stars   ${_badge(days)}' : stars,

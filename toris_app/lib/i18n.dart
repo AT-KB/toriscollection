@@ -248,6 +248,12 @@ class L10n {
     'Charlotte': 'シャーロット',
     'Kyoto': '京都',
 
+    // ── 軸「ドット絵の鳥が、本物の声で鳴く庭」(2026-11-13)──
+    'Recording': '録音',
+    'A bird of this land, singing.': 'この土地の鳥の声です。',
+    'Birds that came': '来た鳥の図鑑',
+    'Who eats what': 'だれが何を食べるか',
+
     // ── 目覚ましの前置きの音(alarm_page.dart)──
     'Before the birds': '鳥の前に流れる音',
     'None': 'なし',

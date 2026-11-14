@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'ads/ads.dart';
+import 'credits.dart';
 import 'alarm/alarm_page.dart';
 import 'garden/garden_page.dart';
 import 'garden/garden_state.dart';
@@ -47,6 +48,7 @@ void main() async {
   // 日本語に化けるのを避ける)。読めなければ既定の英語のまま。
   await L10n.restore();
   // 目覚ましなど、庭のデータを持たない画面でも和名が引けるように。
+  await loadBirdCredits();
   try {
     registerSpeciesNames(await loadBirdsData());
   } catch (_) {
@@ -90,7 +92,9 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+  /// 最初に開くのは**庭**(2026-11-13 軸)。庭が主語で、ラジオは庭の結果。
+  /// ラジオから始めると、まだ誰にも会っていない人には何も鳴らない画面が最初になる。
+  int _index = 1;
 
   /// 庭の状態は全画面で共有する。**会った回数**がラジオ(近さ・群れ)と
   /// 図鑑に効くので、ここを唯一の持ち主にする。
