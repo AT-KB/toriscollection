@@ -13,6 +13,14 @@
 
 バージョンは `toris_app/pubspec.yaml` の `version:`(`+` の右が versionCode)。
 
+## 🔵 いま上げるもの(2026-11-16 夜)
+
+`toris-collection-2.0.9-17.aab` — versionCode **17** / versionName **2.0.9**。署名 `E2:9D:…:6C:45:F7` 一致・広告 ID は `pub-3571` のみ。
+**2.0.8 の中身 + アプリ内レビュー依頼**。2.0.8 を上げていなくても、これ1本でよい(リリースノートは 2.0.8 と同じ内容 `2.0.9-17_リリースノート.txt`)。
+
+- レビュー依頼(`lib/review.dart`、`test/review_test.dart`):一生に1回。名前をつけた直後か、7日ひらいた人のおかえりのあと。案内の途中は出さない
+- ⚠ 実機での確認は未了
+
 ## 🔵 いま上げるもの(2026-11-16)
 
 `toris-collection-2.0.8-16.aab` — versionCode **16** / versionName **2.0.8**。署名 `E2:9D:…:6C:45:F7` 一致・広告 ID は `pub-3571`(App ID + バナー + リワード、テスト ID なし)。

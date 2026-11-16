@@ -18,6 +18,7 @@ import 'package:toris_core/toris_core.dart' as core;
 
 import '../ads/ads.dart' as ads;
 import '../credits.dart';
+import '../review.dart';
 import '../radio/radio_engine.dart' show radioIsPlaying;
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
@@ -188,6 +189,14 @@ class _GardenPageState extends State<GardenPage>
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(hint)));
     }
+    if (hint == null && report.worthShowing) {
+      // 一言を出した日はお願いしない(1回に1つ)。
+      if (takeReviewChance(g, justNamed: false)) {
+        await _save();
+        await requestStoreReview();
+      }
+      return;
+    }
     if (hint != null) await _save();
   }
 
@@ -236,7 +245,10 @@ class _GardenPageState extends State<GardenPage>
       final n = g.observed[m.id] ?? 0;
       if (n > 0 && n % core.kNicknameMeets == 0 && g.canNickname(m.id) &&
           mounted) {
-        if (await showNameDialog(context, g, m.id)) await _save();
+        if (await showNameDialog(context, g, m.id)) {
+          await maybeAskReview(g, justNamed: true);
+          await _save();
+        }
         if (mounted) setState(() {});
       }
     }
