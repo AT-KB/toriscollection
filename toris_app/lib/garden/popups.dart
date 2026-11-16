@@ -20,6 +20,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../credits.dart';
 import '../i18n.dart';
 import '../ui/bird_mark.dart';
 import '../ui/theme.dart';
@@ -145,43 +146,22 @@ Future<void> showMetBirdPopup(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(t('🪶 You met a bird')),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final m in met)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _plate(g, m.id, 56),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_name(g, m.id),
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: kInk)),
-                        const SizedBox(height: 4),
-                        Text(
-                          m.first
-                              ? t('✨ Nice to meet you! Newly added to your guide')
-                              : t("Met again. Another mark in your guide's log."),
-                          style: const TextStyle(
-                              fontSize: 13, height: 1.4, color: kSub),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (hint != null) _hintCard(hint),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // **1羽なら、撮れる1枚にする**(2026-11-17 CEO「コンセプトが強く出るように、
+            // マーケ素材をとって発する」)。大きいドット絵・名前・学名・録音者が
+            // 一画面に収まり、後ろでは儀式の声が鳴り続けている。これがそのまま
+            // ストアの1枚目と動画の冒頭になる。
+            if (met.length == 1)
+              _metMoment(g, met.single)
+            else
+              for (final m in met) _metRow(g, m),
+            if (hint != null) _hintCard(hint),
+          ],
+        ),
       ),
       actions: [
         FilledButton(
@@ -190,6 +170,80 @@ Future<void> showMetBirdPopup(
     ),
   );
 }
+
+String _metLine(MetBird m) => m.first
+    ? t('✨ Nice to meet you! Newly added to your guide')
+    : t("Met again. Another mark in your guide's log.");
+
+String? _scientific(Garden g, String id) {
+  final s = '${(g.data.birds[id] as Map?)?['scientific'] ?? ''}'.trim();
+  return s.isEmpty ? null : s;
+}
+
+Widget _credit(String id, {bool center = false}) {
+  final line = creditLine(id);
+  if (line == null) return const SizedBox.shrink();
+  return Text(line,
+      textAlign: center ? TextAlign.center : TextAlign.start,
+      style: const TextStyle(fontSize: 13, height: 1.4, color: kInk));
+}
+
+Widget _metMoment(Garden g, MetBird m) {
+  final sci = _scientific(g, m.id);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: SizedBox(
+      width: double.infinity,
+      child: Column(
+        children: [
+          _plate(g, m.id, 128),
+          const SizedBox(height: 12),
+          Text(_name(g, m.id),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 22, fontWeight: FontWeight.w700, color: kInk)),
+          if (sci != null)
+            Text(sci,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 13, fontStyle: FontStyle.italic, color: kSub)),
+          const SizedBox(height: 10),
+          _credit(m.id, center: true),
+          const SizedBox(height: 8),
+          Text(_metLine(m),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, height: 1.4, color: kSub)),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _metRow(Garden g, MetBird m) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _plate(g, m.id, 56),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_name(g, m.id),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700, color: kInk)),
+                _credit(m.id),
+                const SizedBox(height: 4),
+                Text(_metLine(m),
+                    style: const TextStyle(
+                        fontSize: 13, height: 1.4, color: kSub)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
 
 /// 🌿 おかえりなさい。留守のあいだの出来事。
 ///

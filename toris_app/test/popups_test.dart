@@ -8,11 +8,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toris_app/garden/garden_state.dart';
+import 'package:toris_app/credits.dart';
 import 'package:toris_app/garden/popups.dart';
+import 'package:toris_app/i18n.dart';
 
 GardenData _data() => const GardenData(
       {
-        'blue_jay': {'english': 'Blue Jay'},
+        'blue_jay': {'english': 'Blue Jay', 'scientific': 'Cyanocitta cristata'},
         'a': {'english': 'Aaa'},
         'b': {'english': 'Bbb'},
         'c': {'english': 'Ccc'},
@@ -268,6 +270,39 @@ void main() {
         ..clear()
         ..addAll(['a', 'b']);
       expect(g.ritualCounts, isTrue);
+    });
+  });
+
+  group('出会えた(撮れる1枚)', () {
+    Future<void> open(WidgetTester tester, List<MetBird> met) async {
+      L10n.lang.value = Lang.en;
+      setCreditsForTest({
+        'blue_jay': const BirdCredit('Russ Wigh', 'https://xeno-canto.org/1', ''),
+      });
+      final g = Garden(_data());
+      await tester.pumpWidget(MaterialApp(
+        home: Builder(
+          builder: (ctx) => ElevatedButton(
+            onPressed: () => showMetBirdPopup(ctx, g, met),
+            child: const Text('open'),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('1羽なら、名前・学名・録音者が一枚に出る', (tester) async {
+      await open(tester, const [MetBird('blue_jay', true)]);
+      expect(find.text('Blue Jay'), findsOneWidget);
+      expect(find.text('Cyanocitta cristata'), findsOneWidget);
+      expect(find.text('🎙 Recording: Russ Wigh · xeno-canto'), findsOneWidget);
+    });
+
+    testWidgets('何羽でも録音者は出る。録音の無い鳥は行を出さない', (tester) async {
+      await open(tester, const [MetBird('blue_jay', false), MetBird('a', true)]);
+      expect(find.text('🎙 Recording: Russ Wigh · xeno-canto'), findsOneWidget);
+      expect(find.textContaining('Recording'), findsOneWidget);
     });
   });
 }
