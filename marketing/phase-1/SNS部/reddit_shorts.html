@@ -68,19 +68,26 @@ ol.beats { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column
 <div class="wrap">
   <header>
     <h1>Reddit・Shorts キット</h1>
-    <p class="lead">2026-11-16 戦略「柱C 届ける」。Reddit は英語でアメリカの人へ、Shorts と TikTok は 1 本 15 秒・1 羽で 60 日続ける。</p>
+    <p class="lead">2026-11-16 戦略「柱C 届ける」。フォロワーは日本の人なので、<b>X・TikTok・Shorts は日本語が主</b>。アメリカへは、フォロワーがいなくても届く Reddit で。</p>
   </header>
 
-  <div class="note stop">
-    <b>動画に使えない声があります(必ず読む)</b>
-    <ul>
-      <li>録音 36 本のうち <b>8 本は CC BY-NC-ND(改変禁止)</b>。CC のライセンスでは、<b>音を動く映像に合わせた時点で「改変」</b>にあたる。この 8 羽の声を動画に入れてはいけない(シジュウカラ・ヒヨドリ・ウグイス・コゲラ・キビタキ・キジバト・ヒバリ・Carolina Wren)。</li>
-      <li>過去の TikTok 16 本にこの 8 羽が入っていないか、CEO が確認してください。入っていたら非公開に。</li>
-      <li>安全に使えるのは下の表の <b>6 羽</b>(BY / BY-SA)。BY-SA の声を使った動画は、説明欄に「This video: CC BY-SA 4.0」と書く。</li>
-    </ul>
-  </div>
 
-  <h2 class="part">Reddit(英語)</h2>
+
+  <h2 class="part">Shorts・TikTok・X(日本語が主)</h2>
+  <div class="note warn"><b>いまは冬鳥の季節。</b>ジョウビタキ・シロハラ・アオジは、現実の日本でも今ちょうど来ている冬の鳥(Toris の京都の庭にもいる)。外で声を聞いた人に「この声だ」と思ってもらえる。アプリに季節はまだ無いので、「アプリでも冬だけ来る」とは書かない。</div>
+  <section class="post">
+    <header><h3>1 本の型(15 秒)</h3><span class="when">毎日 1 本 × 60 日。京都の 20 羽 × 型 3 つで 60 本。英語版はアメリカの鳥で週 2 本</span></header>
+    <ol class="beats">
+      <li><span class="sec">0〜1.5 秒</span> 庭の画面。鳥が枝に降りる瞬間から始める(前置きなし)</li>
+      <li><span class="sec">1.5〜10 秒</span> 本物の声をそのまま流す。字幕は 1 行だけ</li>
+      <li><span class="sec">10〜13 秒</span> 字幕「録音: 録音者の名前 · xeno-canto」(アプリと同じ表記)</li>
+      <li><span class="sec">13〜15 秒</span> 「Toris — Google Play」。説明欄に録音者</li>
+    </ol>
+    <p class="when">型 A「この声、だれ?」(答えは最後に。コメントが付きやすい) / 型 B「朝、この声で起きる」(目覚まし画面) / 型 C「これを植えたら、来た」(植える → 虫 → 鳥)</p>
+  </section>
+  <div id="shorts"></div>
+
+  <h2 class="part">Reddit(英語・アメリカ向け)</h2>
   <div class="note warn">
     <b>出す前に</b>
     <ul>
@@ -90,27 +97,6 @@ ol.beats { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column
     </ul>
   </div>
   <div id="reddit"></div>
-
-  <h2 class="part">Shorts・TikTok</h2>
-  <div class="tbl">
-    <table>
-      <thead><tr><th>鳥</th><th>録音</th><th>使えるか</th></tr></thead>
-      <tbody id="birds"></tbody>
-    </table>
-  </div>
-  <div class="note warn">NC-SA の 22 羽(メジロ・スズメ・Blue Jay など)は「非営利のみ」。広告のあるアプリの宣伝に使うのは、CEO の判断があるまで保留。</div>
-
-  <section class="post">
-    <header><h3>1 本の型(15 秒)</h3><span class="when">毎日 1 本 × 60 日。6 羽 × 型 3 つ = 18 本を、撮り方を変えて 3 周強</span></header>
-    <ol class="beats">
-      <li><span class="sec">0〜1.5 秒</span> 庭の画面。鳥が枝に降りる瞬間から始める(前置きなし)</li>
-      <li><span class="sec">1.5〜10 秒</span> 本物の声をそのまま流す。字幕は 1 行だけ</li>
-      <li><span class="sec">10〜13 秒</span> 字幕「Recording: 録音者の名前 · xeno-canto」</li>
-      <li><span class="sec">13〜15 秒</span> 「Toris — Google Play」。説明欄に録音の出典とライセンス</li>
-    </ol>
-    <p class="when">型 A「この声、だれ?」(答えは最後に) / 型 B「朝、この声で起きる」(目覚まし画面) / 型 C「これを植えたら、来た」(植える → 虫 → 鳥)</p>
-  </section>
-  <div id="shorts"></div>
 </div>
 
 <script>
@@ -170,48 +156,47 @@ If you spot a call that seems wrong for the species, please tell me. I'd rather 
   }
 ];
 
-const BIRDS = [
-  ["Northern Cardinal", "steve", "797998", "CC BY-SA 4.0", "ok"],
-  ["Eastern Bluebird", "Jonathon Jongsma", "179669", "CC BY-SA 4.0", "ok"],
-  ["American Robin", "Doug Hynes", "570791", "CC BY-SA 4.0", "ok"],
-  ["Carolina Chickadee", "steve", "870687", "CC BY-SA 4.0", "ok"],
-  ["Song Sparrow", "Doug Hynes", "570789", "CC BY-SA 4.0", "ok"],
-  ["モズ Bull-headed Shrike", "Katsuhiro Morishita", "782307", "CC BY 4.0", "ok"],
-];
 
 const CAPTIONS = [
-  ["A「この声、だれ?」Northern Cardinal", `Who's singing in the garden? 🐦
-(answer at the end)
+  ["A「この声、だれ?」ジョウビタキ(冬鳥)", `この声、だれでしょう?🐦
+冬になると、庭先でよく聞く声です。
 
-It's a Northern Cardinal.
-Real recording: steve · xeno-canto XC797998 · CC BY-SA 4.0
-This video: CC BY-SA 4.0
-
-Toris — a pixel garden where birds sing with real recordings. Free on Android.
-#birdsong #birding #cozygames #pixelart #indiegame`],
-  ["B「朝、この声で起きる」Eastern Bluebird", `What if your alarm was this? 🌅
-
-Eastern Bluebird, real recording: Jonathon Jongsma · xeno-canto XC179669 · CC BY-SA 4.0
-This video: CC BY-SA 4.0
-
-Toris — wake up to the birds that visit your garden. Free on Android.
-#birdsong #morningroutine #cozygames #pixelart`],
-  ["C「これを植えたら、来た」American Robin", `Planted a little garden. Insects came. Then this. 🐛→🐦
-
-American Robin, real recording: Doug Hynes · xeno-canto XC570791 · CC BY-SA 4.0
-This video: CC BY-SA 4.0
-Who eats what follows real observation data (GloBI).
-
-Toris — free on Android.
-#nativeplants #birding #cozygames #pixelart`],
-  ["A(日本向け・X/TikTok)モズ", `この声、だれでしょう?🐦
-秋の庭で、高いところから聞こえる声です。
-
-答え:モズ
-録音: Katsuhiro Morishita · xeno-canto XC782307 · CC BY 4.0
+答え:ジョウビタキ
+🎙 録音: Martin Sutherland · xeno-canto
 
 ドット絵の鳥が、本物の声で鳴く庭「Toris」。Android・無料。
-#野鳥 #鳥の声 #個人開発 #ドット絵`],
+#野鳥 #冬鳥 #鳥の声 #ドット絵 #個人開発`],
+  ["B「朝、この声で起きる」メジロ", `アラームの電子音のかわりに、この声で起きる朝。🌅
+
+メジロ
+🎙 録音: Richard E. Webster · xeno-canto
+
+聞こえるか聞こえないかの小さな声から始まる目覚まし。
+Toris(Android・無料)
+#鳥の声 #朝活 #目覚まし #ドット絵`],
+  ["C「これを植えたら、来た」シジュウカラ", `庭に植えた。虫が来た。そしたら、この子が来た。🌱→🐛→🐦
+
+シジュウカラ
+🎙 録音: Peter Boesman · xeno-canto
+だれが何を食べるかは、実際の観察記録(GloBI)にもとづいています。
+
+Toris(Android・無料)
+#野鳥 #ガーデニング #生きもの #ドット絵`],
+  ["A「この声、だれ?」ヤマガラ", `この声、だれでしょう?🐦
+どんぐりの林でよく聞く声です。
+
+答え:ヤマガラ
+🎙 録音: Jiahua X. · xeno-canto
+
+Toris(Android・無料)
+#野鳥 #鳥の声 #ドット絵 #個人開発`],
+  ["英語版(週 2 本)Northern Cardinal", `Who's singing in the garden? 🐦
+
+It's a Northern Cardinal.
+🎙 Recording: steve · xeno-canto
+
+Toris — a pixel garden where birds sing with real recordings. Free on Android.
+#birdsong #birding #cozygames #pixelart`],
 ];
 
 function sheet(label, text) {
@@ -241,20 +226,6 @@ function card(title, when, sheets) {
 const r = document.getElementById("reddit");
 REDDIT.forEach(p => r.appendChild(card(p.title, p.when, p.sheets)));
 
-const tb = document.getElementById("birds");
-BIRDS.forEach(([n, who, xc, lic]) => {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td></td><td></td><td><span class="chip ok">動画OK</span></td>`;
-  tr.children[0].textContent = n;
-  tr.children[1].textContent = `${who} · XC${xc} · ${lic}`;
-  tb.appendChild(tr);
-});
-const nd = document.createElement("tr");
-nd.innerHTML = `<td>ND の 8 羽(シジュウカラ・ヒヨドリ・ウグイス・コゲラ・キビタキ・キジバト・ヒバリ・Carolina Wren)</td><td>CC BY-NC-ND</td><td><span class="chip no">動画NG</span></td>`;
-tb.appendChild(nd);
-const ns = document.createElement("tr");
-ns.innerHTML = `<td>NC-SA の 22 羽</td><td>CC BY-NC-SA</td><td><span class="chip ask">CEO判断</span></td>`;
-tb.appendChild(ns);
 
 const s = document.getElementById("shorts");
 CAPTIONS.forEach(([t, text]) => s.appendChild(card(t, "説明欄にそのまま貼る", [["説明欄", text]])));
