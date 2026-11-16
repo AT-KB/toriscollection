@@ -13,6 +13,7 @@ library;
 import '../i18n.dart';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
@@ -481,7 +482,19 @@ class _GardenPageState extends State<GardenPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t('Garden')),
+        // **開発版だけ**:見出しを長押しすると、留守を18時間ぶん進める。
+        // 宣伝素材を撮るとき、鳥が来るのを実時間で待たずに済ませるため
+        // (2026-11-17)。進め方そのものは本物の `catchUp` で、結果は作らない。
+        title: GestureDetector(
+          onLongPress: kDebugMode
+              ? () {
+                  g.lastSeenAt = (g.lastSeenAt ?? DateTime.now())
+                      .subtract(const Duration(hours: 18));
+                  _advance(g);
+                }
+              : null,
+          child: Text(t('Garden')),
+        ),
         actions: [
           const LangButton(),
           // 端末を替えるときの控え。ふだんは押さないので、隅に小さく。

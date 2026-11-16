@@ -65,6 +65,8 @@ class TorisApp extends StatelessWidget {
     // 言語が変わったら、画面を丸ごと建て直す。
     valueListenable: L10n.lang,
     builder: (context, lang, child) => MaterialApp(
+      // 開発版(.dev)の画面をそのまま宣伝素材に撮れるように、右上の DEBUG 帯を出さない。
+      debugShowCheckedModeBanner: false,
       title: 'Toris Collection',
       theme: buildTheme(),
       // Flutter が用意する画面(時刻の選択の「Cancel / OK」など)も、アプリの言語に

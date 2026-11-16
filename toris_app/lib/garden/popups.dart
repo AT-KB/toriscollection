@@ -188,6 +188,22 @@ Widget _credit(String id, {bool center = false}) {
       style: const TextStyle(fontSize: 13, height: 1.4, color: kInk));
 }
 
+/// 撮れる1枚の絵。**大きい絵(`_detail.png`、1024px)があればそちら**。
+/// 64px の庭用の絵は、`fit` を付けないと拡大されない(Image の既定は縮小だけ)。
+Widget _momentPlate(Garden g, String birdId, double size) {
+  final sprite = g.detailSpriteFor(birdId) ?? g.spriteFor(birdId);
+  if (sprite == null) return _plate(g, birdId, size);
+  // 大きい絵は白地の正方形なので、角を丸めてカードになじませる。
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(16),
+    child: Image.asset(sprite,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.none),
+  );
+}
+
 Widget _metMoment(Garden g, MetBird m) {
   final sci = _scientific(g, m.id);
   return Padding(
@@ -196,7 +212,7 @@ Widget _metMoment(Garden g, MetBird m) {
       width: double.infinity,
       child: Column(
         children: [
-          _plate(g, m.id, 128),
+          _momentPlate(g, m.id, 200),
           const SizedBox(height: 12),
           Text(_name(g, m.id),
               textAlign: TextAlign.center,
