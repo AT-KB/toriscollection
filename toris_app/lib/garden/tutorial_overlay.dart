@@ -17,6 +17,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../i18n.dart';
 import '../ui/theme.dart';
 
 /// 覆いの1枚ぶん。
@@ -36,6 +37,10 @@ class TutorialOverlay extends StatefulWidget {
   final String? nextLabel;
   final VoidCallback? onNext;
 
+  /// 2つ目のボタン(「あとで」など)。null なら出さない。
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
+
   const TutorialOverlay({
     super.key,
     required this.title,
@@ -43,6 +48,8 @@ class TutorialOverlay extends StatefulWidget {
     this.targetKey,
     this.nextLabel,
     this.onNext,
+    this.secondaryLabel,
+    this.onSecondary,
   });
 
   @override
@@ -143,6 +150,8 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
             body: widget.body,
             nextLabel: widget.nextLabel,
             onNext: widget.onNext,
+            secondaryLabel: widget.secondaryLabel,
+            onSecondary: widget.onSecondary,
           ),
         ),
       ],
@@ -213,11 +222,15 @@ class _Card extends StatelessWidget {
   final String body;
   final String? nextLabel;
   final VoidCallback? onNext;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
   const _Card({
     required this.title,
     required this.body,
     this.nextLabel,
     this.onNext,
+    this.secondaryLabel,
+    this.onSecondary,
   });
 
   @override
@@ -234,7 +247,7 @@ class _Card extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            t(title),
             style: const TextStyle(
               fontSize: 20,
               height: 1.25,
@@ -244,16 +257,22 @@ class _Card extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            body,
+            t(body),
             style: const TextStyle(fontSize: 15, height: 1.5, color: kSub),
           ),
           if (nextLabel != null) ...[
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(onPressed: onNext, child: Text(nextLabel!)),
+              child: FilledButton(onPressed: onNext, child: Text(t(nextLabel!))),
             ),
           ],
+          if (secondaryLabel != null)
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                  onPressed: onSecondary, child: Text(t(secondaryLabel!))),
+            ),
         ],
       ),
     ),

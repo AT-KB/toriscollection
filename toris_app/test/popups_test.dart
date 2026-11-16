@@ -8,11 +8,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toris_app/garden/garden_state.dart';
+import 'package:toris_app/credits.dart';
 import 'package:toris_app/garden/popups.dart';
+import 'package:toris_app/i18n.dart';
 
 GardenData _data() => const GardenData(
       {
-        'blue_jay': {'english': 'Blue Jay'},
+        'blue_jay': {'english': 'Blue Jay', 'scientific': 'Cyanocitta cristata'},
         'a': {'english': 'Aaa'},
         'b': {'english': 'Bbb'},
         'c': {'english': 'Ccc'},
@@ -24,12 +26,13 @@ GardenData _data() => const GardenData(
       {}, {}, {'kyoto': {'name_en': 'Kyoto', 'max_plants': 4}}, {}, {},
     );
 
-Future<void> _openWelcome(WidgetTester tester, AwayReport r) async {
+Future<void> _openWelcome(WidgetTester tester, AwayReport r,
+    {String? hint}) async {
   final g = Garden(_data());
   await tester.pumpWidget(MaterialApp(
     home: Builder(
       builder: (ctx) => ElevatedButton(
-        onPressed: () => showWelcomeBackPopup(ctx, g, r),
+        onPressed: () => showWelcomeBackPopup(ctx, g, r, hint: hint),
         child: const Text('open'),
       ),
     ),
@@ -138,19 +141,10 @@ void main() {
       expect(find.textContaining('Bbb had come by'), findsOneWidget);
     });
 
-    testWidgets('来た鳥がいるときだけ、ラジオへ誘う', (tester) async {
-      await _openWelcome(
-          tester,
-          const AwayReport(
-              hoursAway: 10,
-              arrivals: [],
-              departures: ['Aaa'],
-              lostPlants: []));
-      expect(find.textContaining("joined the radio's cast"), findsNothing);
-
-      await tester.tap(find.text('View the garden'));
-      await tester.pumpAndSettle();
-
+    // 2026-11-08: 前は鳥が来るたびに「ラジオに新しい声が加わりました」と出していた。
+    // ラジオで鳴くのは**近くで会えた鳥だけ**なので、来ただけでは嘘になる。
+    // 代わりに、庭が選んだ一言を**渡されたときだけ**出す(説明戦略)。
+    testWidgets('来ただけの鳥で「ラジオに加わった」とは言わない', (tester) async {
       await _openWelcome(
           tester,
           const AwayReport(
@@ -158,7 +152,19 @@ void main() {
               arrivals: [MetBird('a', false)],
               departures: [],
               lostPlants: []));
-      expect(find.textContaining("joined the radio's cast"), findsOneWidget);
+      expect(find.textContaining("joined the radio's cast"), findsNothing);
+    });
+
+    testWidgets('一言は、渡されたときだけ出す', (tester) async {
+      await _openWelcome(
+          tester,
+          const AwayReport(
+              hoursAway: 10,
+              arrivals: [MetBird('a', false)],
+              departures: [],
+              lostPlants: []),
+          hint: 'HINT-TEXT');
+      expect(find.text('HINT-TEXT'), findsOneWidget);
     });
 
     testWidgets('撹乱は一文で語る。倒れなかった回も語る', (tester) async {
@@ -264,6 +270,39 @@ void main() {
         ..clear()
         ..addAll(['a', 'b']);
       expect(g.ritualCounts, isTrue);
+    });
+  });
+
+  group('出会えた(撮れる1枚)', () {
+    Future<void> open(WidgetTester tester, List<MetBird> met) async {
+      L10n.lang.value = Lang.en;
+      setCreditsForTest({
+        'blue_jay': const BirdCredit('Russ Wigh', 'https://xeno-canto.org/1', ''),
+      });
+      final g = Garden(_data());
+      await tester.pumpWidget(MaterialApp(
+        home: Builder(
+          builder: (ctx) => ElevatedButton(
+            onPressed: () => showMetBirdPopup(ctx, g, met),
+            child: const Text('open'),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('1羽なら、名前・学名・録音者が一枚に出る', (tester) async {
+      await open(tester, const [MetBird('blue_jay', true)]);
+      expect(find.text('Blue Jay'), findsOneWidget);
+      expect(find.text('Cyanocitta cristata'), findsOneWidget);
+      expect(find.text('🎙 Recording: Russ Wigh · xeno-canto'), findsOneWidget);
+    });
+
+    testWidgets('何羽でも録音者は出る。録音の無い鳥は行を出さない', (tester) async {
+      await open(tester, const [MetBird('blue_jay', false), MetBird('a', true)]);
+      expect(find.text('🎙 Recording: Russ Wigh · xeno-canto'), findsOneWidget);
+      expect(find.textContaining('Recording'), findsOneWidget);
     });
   });
 }

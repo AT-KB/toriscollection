@@ -29,3 +29,7 @@ tools/video_build/_*/
 # リリース成果物(89MB)は git に入れない。README だけ残す
 release/*.aab
 release/*.apk
+
+# Flutter/Dart のビルド生成物(2026-09-22 に誤ってコミットしたので追加)
+toris_app/build/
+toris_core/build/

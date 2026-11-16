@@ -5,6 +5,7 @@
   "lat": 35.2,
   "lon": -80.8,
   "max_plants": 4,
+  "name": "シャーロット",
   "name_en": "Charlotte",
   "temp_mean": 16
  },
@@ -14,6 +15,7 @@
   "lat": 35.0,
   "lon": 135.8,
   "max_plants": 4,
+  "name": "京都",
   "name_en": "Kyoto",
   "temp_mean": 14
  }

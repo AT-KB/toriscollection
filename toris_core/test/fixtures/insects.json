@@ -6,6 +6,7 @@
    "enoki"
   ],
   "english": "Large Brown Cicada",
+  "name": "アブラゼミ",
   "scientific": "Graptopsaltria nigrofuscata",
   "temp_fit": [
    20,
@@ -20,6 +21,7 @@
    "kobushi"
   ],
   "english": "Asian Swallowtail",
+  "name": "アゲハチョウ",
   "scientific": "Papilio xuthus",
   "temp_fit": [
    12,
@@ -31,6 +33,7 @@
    "rice"
   ],
   "english": "Japanese Tree Frog",
+  "name": "ニホンアマガエル",
   "scientific": "Hyla japonica",
   "temp_fit": [
    10,
@@ -43,6 +46,7 @@
    "enoki"
   ],
   "english": "Cabbage White Caterpillar",
+  "name": "アオムシ(モンシロチョウ幼虫)",
   "scientific": "Pieris rapae",
   "temp_fit": [
    10,
@@ -57,6 +61,7 @@
    "dogwood"
   ],
   "english": "Eastern Carpenter Bee",
+  "name": "アメリカクマバチ",
   "scientific": "Xylocopa virginica",
   "temp_fit": [
    12,
@@ -69,6 +74,7 @@
    "red_maple"
   ],
   "english": "Common Eastern Firefly",
+  "name": "アメリカホタル",
   "scientific": "Photinus pyralis",
   "temp_fit": [
    16,
@@ -83,6 +89,7 @@
    "service_berry"
   ],
   "english": "Calligrapher Fly",
+  "name": "アメリカハナアブ",
   "scientific": "Toxomerus marginatus",
   "temp_fit": [
    10,
@@ -95,6 +102,7 @@
    "tulip_tree"
   ],
   "english": "June Beetle",
+  "name": "ジューンビートル",
   "scientific": "Phyllophaga sp.",
   "temp_fit": [
    15,
@@ -106,6 +114,7 @@
    "kunugi"
   ],
   "english": "Japanese Rhinoceros Beetle",
+  "name": "カブトムシ",
   "scientific": "Trypoxylus dichotomus",
   "temp_fit": [
    18,
@@ -119,6 +128,7 @@
    "kaki"
   ],
   "english": "Inchworm",
+  "name": "シャクトリムシ類",
   "scientific": "Geometridae",
   "temp_fit": [
    8,
@@ -132,6 +142,7 @@
    "sourwood"
   ],
   "english": "Katydid",
+  "name": "アメリカキリギリス",
   "scientific": "Tettigoniidae",
   "temp_fit": [
    14,
@@ -145,6 +156,7 @@
    "momiji"
   ],
   "english": "Stag Beetle",
+  "name": "クワガタムシ",
   "scientific": "Lucanidae",
   "temp_fit": [
    15,
@@ -158,6 +170,7 @@
    "magnolia"
   ],
   "english": "Monarch Butterfly",
+  "name": "オオカバマダラ",
   "scientific": "Danaus plexippus",
   "temp_fit": [
    12,
@@ -171,6 +184,7 @@
    "kaki"
   ],
   "english": "Japanese Honeybee",
+  "name": "ニホンミツバチ",
   "scientific": "Apis cerana japonica",
   "temp_fit": [
    10,
@@ -184,6 +198,7 @@
    "sweetbay"
   ],
   "english": "Ruby Tiger Moth",
+  "name": "ルビートラガ",
   "scientific": "Phragmatobia fuliginosa",
   "temp_fit": [
    10,
@@ -195,6 +210,7 @@
    "rice"
   ],
   "english": "White-tailed Skimmer",
+  "name": "シオカラトンボ",
   "scientific": "Orthetrum albistylum",
   "temp_fit": [
    15,
@@ -208,6 +224,7 @@
    "tulip_tree"
   ],
   "english": "Eastern Tent Caterpillar",
+  "name": "アメリカマイマイガ幼虫",
   "scientific": "Malacosoma americanum",
   "temp_fit": [
    8,

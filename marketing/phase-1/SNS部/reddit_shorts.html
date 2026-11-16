@@ -1,0 +1,232 @@
+<title>Toris Reddit・Shorts キット</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: x_posts.html と同じ1列の紙。Reddit の投稿 → Shorts の決まりと台本 の順 */
+:root {
+  --bg: #f3f5ee; --paper: #ffffff; --ink: #23331f; --sub: #5d6b57; --line: #d9dfd0;
+  --leaf: #3a6b3e; --leaf-soft: #e1ecd9; --warn: #8a5a12; --warn-soft: #fbf0dc;
+  --stop: #a3291f; --stop-soft: #fbe3df;
+  --display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Noto Sans JP", sans-serif;
+  --body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161c14; --paper: #1f271c; --ink: #e6eddf; --sub: #a6b39d; --line: #33402e;
+    --leaf: #8cc58c; --leaf-soft: #263a25; --warn: #f0c27a; --warn-soft: #3a2e17;
+    --stop: #ff9b8f; --stop-soft: #3d1f1b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161c14; --paper: #1f271c; --ink: #e6eddf; --sub: #a6b39d; --line: #33402e;
+  --leaf: #8cc58c; --leaf-soft: #263a25; --warn: #f0c27a; --warn-soft: #3a2e17;
+  --stop: #ff9b8f; --stop-soft: #3d1f1b; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--display); font-size: 26px; line-height: 1.3; margin: 0; text-wrap: balance; }
+h2.part { font-family: var(--display); font-size: 21px; margin: 16px 0 0; text-wrap: balance; }
+.lead { color: var(--sub); margin: 4px 0 0; }
+.note { border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+.note.warn { background: var(--warn-soft); color: var(--warn); }
+.note.stop { background: var(--stop-soft); color: var(--stop); }
+.note b { font-weight: 700; }
+.note ul { margin: 6px 0 0; padding-left: 1.2em; }
+.post { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.post header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.post h3 { font-family: var(--display); font-size: 18px; margin: 0; }
+.when { font-size: 12px; color: var(--sub); }
+.sheet { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.sheet .label { display: flex; justify-content: space-between; gap: 8px; background: var(--leaf-soft); padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+pre { margin: 0; padding: 12px; white-space: pre-wrap; word-break: break-word; font-family: var(--body); font-size: 14.5px; line-height: 1.7; }
+.actions { display: flex; gap: 8px; padding: 0 12px 12px; flex-wrap: wrap; }
+button, a.btn { font: inherit; font-size: 14px; font-weight: 500; border-radius: 999px; padding: 7px 16px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+button { background: var(--leaf); color: var(--paper); border: 1px solid var(--leaf); }
+a.btn { background: transparent; color: var(--leaf); border: 1px solid var(--leaf); }
+button:focus-visible, a.btn:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.tbl { overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; color: var(--sub); font-weight: 700; letter-spacing: .04em; }
+tr:last-child td { border-bottom: 0; }
+.chip { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 10px; white-space: nowrap; }
+.chip.ok { background: var(--leaf-soft); color: var(--leaf); }
+.chip.ask { background: var(--warn-soft); color: var(--warn); }
+.chip.no { background: var(--stop-soft); color: var(--stop); }
+ol.beats { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 4px; }
+.sec { font-variant-numeric: tabular-nums; color: var(--sub); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Reddit・Shorts キット</h1>
+    <p class="lead">2026-11-16 戦略「柱C 届ける」。フォロワーは日本の人なので、<b>X・TikTok・Shorts は日本語が主</b>。アメリカへは、フォロワーがいなくても届く Reddit で。</p>
+  </header>
+
+
+
+  <h2 class="part">Shorts・TikTok・X(日本語が主)</h2>
+  <div class="note warn"><b>いまは冬鳥の季節。</b>ジョウビタキ・シロハラ・アオジは、現実の日本でも今ちょうど来ている冬の鳥(Toris の京都の庭にもいる)。外で声を聞いた人に「この声だ」と思ってもらえる。アプリに季節はまだ無いので、「アプリでも冬だけ来る」とは書かない。</div>
+  <section class="post">
+    <header><h3>1 本の型(15 秒)</h3><span class="when">毎日 1 本 × 60 日。京都の 20 羽 × 型 3 つで 60 本。英語版はアメリカの鳥で週 2 本</span></header>
+    <ol class="beats">
+      <li><span class="sec">0〜1.5 秒</span> 庭の画面。鳥が枝に降りる瞬間から始める(前置きなし)</li>
+      <li><span class="sec">1.5〜10 秒</span> 本物の声をそのまま流す。字幕は 1 行だけ</li>
+      <li><span class="sec">10〜13 秒</span> 字幕「録音: 録音者の名前 · xeno-canto」(アプリと同じ表記)</li>
+      <li><span class="sec">13〜15 秒</span> 「Toris — Google Play」。説明欄に録音者</li>
+    </ol>
+    <p class="when">型 A「この声、だれ?」(答えは最後に。コメントが付きやすい) / 型 B「朝、この声で起きる」(目覚まし画面) / 型 C「これを植えたら、来た」(植える → 虫 → 鳥)</p>
+  </section>
+  <div id="shorts"></div>
+
+  <h2 class="part">Reddit(英語・アメリカ向け)</h2>
+  <div class="note warn">
+    <b>出す前に</b>
+    <ul>
+      <li>各 subreddit のルールで、自分の作ったものの宣伝が許されているかを確認する。だめなら出さない。</li>
+      <li>1 日に 1 か所まで。同じ文を複数の場所に貼らない。</li>
+      <li>コメントには全部、その日のうちに返す。売り込みではなく、作った人として話す。</li>
+    </ul>
+  </div>
+  <div id="reddit"></div>
+</div>
+
+<script>
+const PLAY = "https://play.google.com/store/apps/details?id=com.toriscollection.app";
+const link = (src) => PLAY + "&referrer=utm_source%3D" + src + "%26utm_campaign%3D2026-11";
+
+const REDDIT = [
+  {
+    title: "r/androidapps(開発者向けの週のスレ)",
+    when: "1 本目。スレの決まりに合わせて [DEV] を付ける",
+    sheets: [["本文", `[DEV] Toris — a pixel-art bird garden where every bird sings with a real field recording
+
+I made a small, slow garden game. You plant things, insects come to eat them, and birds come for the insects. Who eats what follows real observation records (GloBI).
+
+Every bird call is a real recording from xeno-canto, and the app shows who recorded it.
+
+- Two lands: Charlotte, NC (US) and Kyoto (Japan)
+- Birds you meet up close sing on your own radio, with rain or campfire and a sleep timer
+- A birdsong alarm that starts very quietly
+- Birds arrive in real time. Nothing is lost if you skip a day
+
+Free, Android only for now, English and Japanese. No account or sign-in.
+${link("reddit_androidapps")}
+
+I'm a solo developer. Any feedback is welcome, especially on the first five minutes.`]]
+  },
+  {
+    title: "r/NativePlantGardening",
+    when: "2 本目。Tallamy の読者に向けて。画像 1 枚(「だれが何を食べるか」の画面)",
+    sheets: [
+      ["タイトル", "I made a tiny garden game where what you plant decides which birds come (built on real food-web data)"],
+      ["本文", `After reading Doug Tallamy, I wanted a game where the birds don't just appear. They come because the plants you chose feed the insects they eat.
+
+So in Toris, you plant a small garden. Insects come for the plants, and birds come for the insects. The links come from GloBI, a database of real observed interactions, not from rules I made up. The Charlotte, NC garden uses birds of the US Southeast.
+
+The bird calls are real field recordings from xeno-canto, credited to each recordist.
+
+It's a game, not a planting guide. I'd love to hear from people who garden for real: does the logic feel right to you?
+
+Free on Android: ${link("reddit_nativeplant")}`]
+    ]
+  },
+  {
+    title: "r/birding",
+    when: "3 本目。ルールで自作の宣伝が許されている場合だけ。だめなら週のスレか、出さない",
+    sheets: [
+      ["タイトル", "I built a small pixel-art garden where each bird sings with a real xeno-canto recording, credited to the recordist"],
+      ["本文", `I wanted the calls to be real, and I wanted the people who recorded them to be named. So every bird in Toris plays a real field recording from xeno-canto, and the recordist's name is shown next to the bird.
+
+You can't go birding in it. It's a slow garden game: plant something, insects come, and the birds that eat them come in real time. Birds you meet up close sing on a radio, and you can wake up to them.
+
+Two lands: Charlotte, NC and Kyoto. Android, free.
+${link("reddit_birding")}
+
+If you spot a call that seems wrong for the species, please tell me. I'd rather fix it than leave it.`]
+    ]
+  }
+];
+
+
+const CAPTIONS = [
+  ["A「この声、だれ?」ジョウビタキ(冬鳥)", `この声、だれでしょう?🐦
+冬になると、庭先でよく聞く声です。
+
+答え:ジョウビタキ
+🎙 録音: Martin Sutherland · xeno-canto
+
+ドット絵の鳥が、本物の声で鳴く庭「Toris」。Android・無料。
+#野鳥 #冬鳥 #鳥の声 #ドット絵 #個人開発`],
+  ["B「朝、この声で起きる」メジロ", `アラームの電子音のかわりに、この声で起きる朝。🌅
+
+メジロ
+🎙 録音: Richard E. Webster · xeno-canto
+
+聞こえるか聞こえないかの小さな声から始まる目覚まし。
+Toris(Android・無料)
+#鳥の声 #朝活 #目覚まし #ドット絵`],
+  ["C「これを植えたら、来た」シジュウカラ", `庭に植えた。虫が来た。そしたら、この子が来た。🌱→🐛→🐦
+
+シジュウカラ
+🎙 録音: Peter Boesman · xeno-canto
+だれが何を食べるかは、実際の観察記録(GloBI)にもとづいています。
+
+Toris(Android・無料)
+#野鳥 #ガーデニング #生きもの #ドット絵`],
+  ["A「この声、だれ?」ヤマガラ", `この声、だれでしょう?🐦
+どんぐりの林でよく聞く声です。
+
+答え:ヤマガラ
+🎙 録音: Jiahua X. · xeno-canto
+
+Toris(Android・無料)
+#野鳥 #鳥の声 #ドット絵 #個人開発`],
+  ["英語版(週 2 本)Northern Cardinal", `Who's singing in the garden? 🐦
+
+It's a Northern Cardinal.
+🎙 Recording: steve · xeno-canto
+
+Toris — a pixel garden where birds sing with real recordings. Free on Android.
+#birdsong #birding #cozygames #pixelart`],
+];
+
+function sheet(label, text) {
+  const s = document.createElement("div");
+  s.className = "sheet";
+  s.innerHTML = `<div class="label"><span></span></div><pre></pre><div class="actions"><button type="button">コピー</button></div>`;
+  s.querySelector(".label span").textContent = label;
+  const pre = s.querySelector("pre");
+  pre.textContent = text;
+  const b = s.querySelector("button");
+  b.addEventListener("click", () => {
+    const done = () => { b.textContent = "コピーしました"; setTimeout(() => (b.textContent = "コピー"), 1600); };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(pre); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = "選択しました。コピーしてください"; };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  });
+  return s;
+}
+function card(title, when, sheets) {
+  const c = document.createElement("section");
+  c.className = "post";
+  c.innerHTML = `<header><h3></h3><span class="when"></span></header>`;
+  c.querySelector("h3").textContent = title;
+  c.querySelector(".when").textContent = when;
+  sheets.forEach(([l, t]) => c.appendChild(sheet(l, t)));
+  return c;
+}
+const r = document.getElementById("reddit");
+REDDIT.forEach(p => r.appendChild(card(p.title, p.when, p.sheets)));
+
+
+const s = document.getElementById("shorts");
+CAPTIONS.forEach(([t, text]) => s.appendChild(card(t, "説明欄にそのまま貼る", [["説明欄", text]])));
+</script>

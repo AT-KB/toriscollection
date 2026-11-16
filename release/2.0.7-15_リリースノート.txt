@@ -1,0 +1,20 @@
+<ja-JP>
+・鳥がゆっくり来るようになりました。時間は実際の時間どおりに進みます
+・アプリを開いた日数で「庭のなじみ」が上がり、珍しい鳥が来やすくなります(休んでも減りません)
+・近くで会うほど鳥が慣れて、名前をつけられるようになります(1種3羽まで)
+・名前をつけた子が来ると「ルリツグミのピョンタが来ていました」と出ます
+・はじめての案内を見直しました。鳥の声の目覚ましも、最初にセットできます
+・目覚ましが毎朝鳴るようになりました(スマホを再起動しても消えません)
+・目覚ましで鳥の前に流れる音を選べるようにしました(雨・焚き火・波など。なしも選べます)
+・土地を切り替えて戻ると、前に植えていたものが戻るようにしました
+</ja-JP>
+<en-US>
+- Birds now arrive at a gentler pace that follows real time
+- Garden familiarity grows with the days you open the app, and rare birds come more often (it never goes down)
+- Birds get used to you as you meet them up close, and you can name them (up to 3 per species)
+- When a named bird visits, you'll see "Pyonta the Eastern Bluebird had come by"
+- A friendlier first-time guide, with the option to set a birdsong alarm right away
+- The alarm now rings every morning, and stays set after your phone restarts
+- Choose the sound that plays before the birds in your alarm (rain, campfire, waves and more, or none)
+- Switching lands and coming back now brings back what you had planted
+</en-US>

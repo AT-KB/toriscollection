@@ -5,6 +5,7 @@
   ],
   "english": "American Beautyberry",
   "icon": "🟣",
+  "name": "アメリカムラサキシキブ",
   "scientific": "Callicarpa americana",
   "temp_fit": [
    5,
@@ -17,6 +18,7 @@
   ],
   "english": "Buttonbush",
   "icon": "🌸",
+  "name": "アメリカタニワタリノキ",
   "scientific": "Cephalanthus occidentalis",
   "temp_fit": [
    8,
@@ -29,6 +31,7 @@
   ],
   "english": "Japanese Camellia",
   "icon": "🌺",
+  "name": "ヤブツバキ",
   "scientific": "Camellia japonica",
   "temp_fit": [
    10,
@@ -41,6 +44,7 @@
   ],
   "english": "Flowering Dogwood",
   "icon": "🌸",
+  "name": "アメリカハナミズキ",
   "scientific": "Cornus florida",
   "temp_fit": [
    5,
@@ -53,6 +57,7 @@
   ],
   "english": "Japanese Snowbell",
   "icon": "🤍",
+  "name": "エゴノキ",
   "scientific": "Styrax japonica",
   "temp_fit": [
    2,
@@ -65,6 +70,7 @@
   ],
   "english": "Chinese Hackberry",
   "icon": "🌳",
+  "name": "エノキ",
   "scientific": "Celtis sinensis",
   "temp_fit": [
    8,
@@ -77,6 +83,7 @@
   ],
   "english": "Japanese Persimmon",
   "icon": "🍂",
+  "name": "カキ",
   "scientific": "Diospyros kaki",
   "temp_fit": [
    8,
@@ -89,6 +96,7 @@
   ],
   "english": "Kobushi Magnolia",
   "icon": "🌼",
+  "name": "コブシ",
   "scientific": "Magnolia kobus",
   "temp_fit": [
    3,
@@ -101,6 +109,7 @@
   ],
   "english": "Sawtooth Oak",
   "icon": "🌳",
+  "name": "クヌギ",
   "scientific": "Quercus acutissima",
   "temp_fit": [
    8,
@@ -113,6 +122,7 @@
   ],
   "english": "Mulberry",
   "icon": "🌿",
+  "name": "クワ",
   "scientific": "Morus australis",
   "temp_fit": [
    6,
@@ -125,6 +135,7 @@
   ],
   "english": "Loblolly Pine",
   "icon": "🌲",
+  "name": "テーダマツ",
   "scientific": "Pinus taeda",
   "temp_fit": [
    5,
@@ -137,6 +148,7 @@
   ],
   "english": "Southern Magnolia",
   "icon": "🌼",
+  "name": "タイサンボク",
   "scientific": "Magnolia grandiflora",
   "temp_fit": [
    8,
@@ -149,6 +161,7 @@
   ],
   "english": "Japanese Maple",
   "icon": "🍁",
+  "name": "イロハモミジ",
   "scientific": "Acer palmatum",
   "temp_fit": [
    5,
@@ -161,6 +174,7 @@
   ],
   "english": "Japanese Beautyberry",
   "icon": "🟣",
+  "name": "ムラサキシキブ",
   "scientific": "Callicarpa japonica",
   "temp_fit": [
    3,
@@ -173,6 +187,7 @@
   ],
   "english": "Heavenly Bamboo",
   "icon": "🌿",
+  "name": "ナンテン",
   "scientific": "Nandina domestica",
   "temp_fit": [
    8,
@@ -185,6 +200,7 @@
   ],
   "english": "Multiflora Rose",
   "icon": "🌹",
+  "name": "ノイバラ",
   "scientific": "Rosa multiflora",
   "temp_fit": [
    -2,
@@ -197,6 +213,7 @@
   ],
   "english": "Japanese Red Pine",
   "icon": "🌲",
+  "name": "アカマツ",
   "scientific": "Pinus densiflora",
   "temp_fit": [
    3,
@@ -209,6 +226,7 @@
   ],
   "english": "American Pokeweed",
   "icon": "🍇",
+  "name": "ヨウシュヤマゴボウ",
   "scientific": "Phytolacca americana",
   "temp_fit": [
    5,
@@ -221,6 +239,7 @@
   ],
   "english": "Eastern Red Cedar",
   "icon": "🌲",
+  "name": "エンピツビャクシン",
   "scientific": "Juniperus virginiana",
   "temp_fit": [
    -10,
@@ -233,6 +252,7 @@
   ],
   "english": "Red Maple",
   "icon": "🍁",
+  "name": "アメリカハナノキ",
   "scientific": "Acer rubrum",
   "temp_fit": [
    3,
@@ -245,6 +265,7 @@
   ],
   "english": "Eastern Redbud",
   "icon": "🌸",
+  "name": "アメリカハナズオウ",
   "scientific": "Cercis canadensis",
   "temp_fit": [
    5,
@@ -257,6 +278,7 @@
   ],
   "english": "Rice",
   "icon": "🌾",
+  "name": "イネ(水田)",
   "scientific": "Oryza sativa",
   "temp_fit": [
    15,
@@ -269,6 +291,7 @@
   ],
   "english": "Japanese Cherry",
   "icon": "🌸",
+  "name": "サクラ",
   "scientific": "Prunus serrulata",
   "temp_fit": [
    5,
@@ -281,6 +304,7 @@
   ],
   "english": "Sasanqua Camellia",
   "icon": "🌺",
+  "name": "サザンカ",
   "scientific": "Camellia sasanqua",
   "temp_fit": [
    5,
@@ -293,6 +317,7 @@
   ],
   "english": "Serviceberry",
   "icon": "🍒",
+  "name": "サービスベリー",
   "scientific": "Amelanchier arborea",
   "temp_fit": [
    3,
@@ -305,6 +330,7 @@
   ],
   "english": "Sourwood",
   "icon": "🌼",
+  "name": "サワーウッド",
   "scientific": "Oxydendrum arboreum",
   "temp_fit": [
    5,
@@ -317,6 +343,7 @@
   ],
   "english": "Common Sunflower",
   "icon": "🌻",
+  "name": "ヒマワリ",
   "scientific": "Helianthus annuus",
   "temp_fit": [
    12,
@@ -329,6 +356,7 @@
   ],
   "english": "Japanese Silver Grass",
   "icon": "🌾",
+  "name": "ススキ",
   "scientific": "Miscanthus sinensis",
   "temp_fit": [
    5,
@@ -341,6 +369,7 @@
   ],
   "english": "Sweetbay Magnolia",
   "icon": "🌼",
+  "name": "ヒメタイサンボク",
   "scientific": "Magnolia virginiana",
   "temp_fit": [
    8,
@@ -353,6 +382,7 @@
   ],
   "english": "Tulip Tree",
   "icon": "🌳",
+  "name": "ユリノキ",
   "scientific": "Liriodendron tulipifera",
   "temp_fit": [
    5,
@@ -365,6 +395,7 @@
   ],
   "english": "Japanese Apricot",
   "icon": "🌸",
+  "name": "ウメ",
   "scientific": "Prunus mume",
   "temp_fit": [
    3,
@@ -377,6 +408,7 @@
   ],
   "english": "White Oak",
   "icon": "🌳",
+  "name": "アメリカホワイトオーク",
   "scientific": "Quercus alba",
   "temp_fit": [
    3,

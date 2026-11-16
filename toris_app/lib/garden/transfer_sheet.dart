@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
+import '../i18n.dart';
 import '../ui/theme.dart';
 import 'garden_state.dart';
 
@@ -52,7 +53,7 @@ class _TransferSheetState extends State<_TransferSheet> {
     await Clipboard.setData(ClipboardData(text: code));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code copied.')),
+      SnackBar(content: Text(t('Code copied.'))),
     );
   }
 
@@ -61,22 +62,22 @@ class _TransferSheetState extends State<_TransferSheet> {
     final code = _input.text.trim();
     final state = core.decodeSave(code);
     if (state == null) {
-      setState(() => _error = "That code doesn't look right.");
+      setState(() => _error = t("That code doesn't look right."));
       return;
     }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Replace this garden?'),
-        content: const Text(
-            'The garden on this phone will be replaced by the one in the code.'),
+        title: Text(t('Replace this garden?')),
+        content: Text(
+            t('The garden on this phone will be replaced by the one in the code.')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(t('Cancel'))),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Replace')),
+              child: Text(t('Replace'))),
         ],
       ),
     );
@@ -88,26 +89,37 @@ class _TransferSheetState extends State<_TransferSheet> {
     if (!mounted) return;
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Garden restored.')),
+      SnackBar(content: Text(t('Garden restored.'))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    // キーボードの高さ + 画面下のナビゲーションバー。後者が無いと、
+    // 「前の端末のコードを持っている」がバーの下に隠れていた(2026-11-03 実機)。
+    final mq = MediaQuery.of(context);
+    final bottom = mq.viewInsets.bottom + mq.viewPadding.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 0, 24, 24 + bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Move your garden',
+          Text(t('Move your garden'),
               style: TextStyle(
                   fontSize: 20, fontWeight: FontWeight.w600, color: kInk)),
           const SizedBox(height: 8),
-          const Text(
-            'Your garden is saved on this phone. '
-            'You only need a code to move it to another one.',
+          Text(
+            t('Your garden is saved on this phone. '
+            'You only need a code to move it to another one.'),
+            style: TextStyle(fontSize: 14, color: kSub, height: 1.5),
+          ),
+          // ⚠️ 2026-11-03 Play の審査で、この画面が**ログイン画面**と判定されて
+          // 却下された(LoginWall.png)。コードを貼る欄とボタンが、ID/パスワード欄に
+          // 見えたため。アカウントが無いことをここで言い切る。
+          const SizedBox(height: 6),
+          Text(
+            t('No account or sign-in. This is only for moving to a new phone.'),
             style: TextStyle(fontSize: 14, color: kSub, height: 1.5),
           ),
           const SizedBox(height: 24),
@@ -116,7 +128,7 @@ class _TransferSheetState extends State<_TransferSheet> {
           FilledButton.icon(
             onPressed: _copy,
             icon: const Icon(Icons.copy_rounded, size: 24),
-            label: const Text('Copy my code'),
+            label: Text(t('Copy my code')),
           ),
           const SizedBox(height: 28),
 
@@ -125,7 +137,7 @@ class _TransferSheetState extends State<_TransferSheet> {
           if (!_pasting)
             TextButton(
               onPressed: () => setState(() => _pasting = true),
-              child: const Text('I have a code'),
+              child: Text(t('I have a code from my old phone')),
             )
           else ...[
             TextField(
@@ -134,7 +146,7 @@ class _TransferSheetState extends State<_TransferSheet> {
               minLines: 2,
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
-                hintText: 'Paste the code here',
+                hintText: t("Paste your old phone's code here"),
                 errorText: _error,
                 border: const OutlineInputBorder(),
               ),
@@ -144,7 +156,7 @@ class _TransferSheetState extends State<_TransferSheet> {
             ),
             const SizedBox(height: 14),
             FilledButton(
-                onPressed: _restore, child: const Text('Bring it back')),
+                onPressed: _restore, child: Text(t('Restore this garden'))),
           ],
         ],
       ),

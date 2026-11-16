@@ -16,6 +16,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:toris_app/radio/radio_engine.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
 void main() {
@@ -28,6 +29,18 @@ void main() {
       expect(core.observedInBiome(pool, const {'blue_jay': 0}), isEmpty);
       // 1回でも会えば鳴く。
       expect(core.observedInBiome(pool, const {'blue_jay': 1}), ['blue_jay']);
+    });
+
+    test('ラジオ: 会った鳥が0なら、鳥の音量つまみは出ない', () {
+      // 2026-09-22 に Birds のつまみを足したので1行足す
+      // (「画面を足したらゼロ状態テストに1行」= 06_監査.md の開発部の作業規約)。
+      // 鳴る鳥が0なら(上の規則)、鳴りようのないものの音量つまみを出すことになる。
+      final e = RadioEngine();
+      expect(e.birds, isEmpty, reason: '起動直後は顔ぶれが空');
+      expect(showBirdVolume(e.birds), isFalse);
+      // ⚠️ ここで見ているのは**画面が呼ぶ条件そのもの**
+      // (`radio_page.dart` の `if (showBirdVolume(e.birds))`)。
+      // 実際に描かれないことの確認は、SoLoud を要するので実機の手作業のまま。
     });
 
     test('今日の道具: 餌台が無ければ、餌台に依る道具は出ない', () {

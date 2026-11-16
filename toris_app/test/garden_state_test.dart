@@ -15,6 +15,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:toris_app/garden/garden_state.dart';
+import 'package:toris_core/toris_core.dart' as core;
 
 /// テスト用の最小データ。実データは要らない(見るのは状態の受け渡しだけ)。
 GardenData _data() => const GardenData(
@@ -80,6 +81,84 @@ void main() {
     }
   });
 
+  group('「なぜ来たか」を外したあとの、古いセーブとの互換', () {
+    // ## なぜ要るか(2026-09-22、CEO 判断で eco_log を製品から削除)
+    // **書かなくするのはよいが、古いセーブや古い引っ越しコードに `eco_log` が
+    // 入っていても読めて落ちないこと。** ここが崩れると、既存ユーザーの
+    // 進行データが読めなくなる = 進行が消えたのと同じ。
+    //
+    // 鍵は `save_code.dart` の `saveKeys` に **`eco_log` を残したまま**に
+    // したこと。外すと Python 版(`save_code.py` の SAVE_KEYS)と食い違い、
+    // `save_code_test.dart` の往復も `tools/save_code_fixtures.py --verify`
+    // も通らなくなる。
+
+    /// 旧版が書いたセーブコードを、当時の形そのままで作る。
+    String oldCode() {
+      final g = _filled();
+      final state = Map<String, dynamic>.from(g.toState());
+      // 当時は toState() がこれを書いていた。
+      state['eco_log'] = [
+        {
+          'bird': 'blue_jay',
+          'text': 'drawn to Sakura',
+          'at': '2026-08-01T10:00:00',
+          'plant': 'sakura',
+          'insect': null,
+        },
+        {
+          'bird': 'song_sparrow',
+          'text': 'drawn to Sunflower',
+          'at': '2026-08-02T10:00:00',
+          'plant': 'sunflower',
+          'insect': null,
+        },
+      ];
+      return core.encodeSave(state);
+    }
+
+    test('eco_log の入った古いセーブコードが、そのまま読める', () {
+      final decoded = core.decodeSave(oldCode());
+      expect(decoded, isNotNull, reason: '古いコードが読めない = 進行が消える');
+      expect(decoded!['eco_log'], isNotNull,
+          reason: 'saveKeys から eco_log を外すと、ここが落ちる。'
+              'Python 版の SAVE_KEYS と食い違い、往復の突き合わせも崩れる');
+      // 庭の中身は全部そろっている。
+      expect(decoded['biome'], 'kyoto');
+      expect(decoded['discovered'], isNotNull);
+      expect(decoded['bird_days'], isNotNull);
+    });
+
+    test('eco_log の入った古いセーブを読み込んでも、例外を投げず中身が欠けない',
+        () {
+      final before = _filled();
+      final decoded = core.decodeSave(oldCode())!;
+      final after = Garden(_data())..applyState(decoded);
+
+      expect(after.biomeId, before.biomeId);
+      expect(after.planted, before.planted);
+      expect(after.discovered, before.discovered, reason: '図鑑');
+      expect(after.observed, before.observed, reason: '近くで会った回数');
+      expect(after.birdDays, before.birdDays, reason: '会った日数');
+      expect(after.lastSeenAt, before.lastSeenAt);
+    });
+
+    test('新しく書くセーブには eco_log を入れない', () {
+      final state = _filled().toState();
+      expect(state.containsKey('eco_log'), isFalse,
+          reason: '書かなくすると決めた。書いていたら削除できていない');
+    });
+
+    test('古いセーブを読んで書き直しても、庭の中身は落ちない', () {
+      // 引っ越しコードを貼って、そのまま新しいコードを書き出す道すじ。
+      final g = Garden(_data())..applyState(core.decodeSave(oldCode())!);
+      final again = Garden(_data())..applyState(
+          core.decodeSave(core.encodeSave(g.toState()))!);
+      expect(again.discovered, _filled().discovered);
+      expect(again.birdDays, _filled().birdDays);
+      expect(again.observed, _filled().observed);
+    });
+  });
+
   test('会った日数は、同じ日に開き直しても増えない', () {
     // `last` を保存していなかった頃は、閉じて開くたびに1日ぶん増えていた。
     final g = _filled();
@@ -125,6 +204,105 @@ void main() {
     expect(g.lastSeenAt, t0,
         reason: '進まなかったのだから時計は据え置き。ここが now になると、'
             '短い間隔で開くたびに経過時間が消え、鳥が永遠に来なくなる');
+  });
+
+  // CEO 2026-11-07「鳥の来る頻度をちょっと落として」。3時間で1コマ。
+  test('1時間で開き直しても進まず、時計も据え置き(端数は次へ持ち越す)', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.planted.add('sakura');
+    final t0 = DateTime.now().subtract(const Duration(hours: 1));
+    g.lastSeenAt = t0;
+    g.catchUp(Random(1));
+    expect(g.lastTicks, 0);
+    expect(g.lastSeenAt, t0);
+  });
+
+  test('4時間たつと1コマ進み、残りの1時間は持ち越す', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.planted.add('sakura');
+    final t0 = DateTime.now().subtract(const Duration(hours: 4));
+    g.lastSeenAt = t0;
+    g.catchUp(Random(1));
+    expect(g.lastTicks, 1);
+    expect(g.lastSeenAt, t0.add(const Duration(hours: 3)));
+  });
+
+  test('開いた日数は1日1回だけ数える(連続でなくてよい)', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.catchUp(Random(1));
+    g.catchUp(Random(1));
+    expect(g.openDays, 1, reason: '同じ日に何度開いても1日');
+  });
+
+  // CEO 2026-11-08「1羽あたり3名まで。名前がある鳥と無い鳥で表示を変える」
+  test('名前の枠は会うほど増え、1種3羽まで', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.observed['blue_jay'] = 5;
+    expect(g.canNickname('blue_jay'), isFalse);
+    g.observed['blue_jay'] = 6;
+    g.addNickname('blue_jay', ' ピョンタ ');
+    expect(g.nicknames['blue_jay'], ['ピョンタ']);
+    expect(g.canNickname('blue_jay'), isFalse, reason: '6回では1羽ぶんだけ');
+    g.observed['blue_jay'] = 99;
+    g.addNickname('blue_jay', 'ピーコ');
+    g.addNickname('blue_jay', 'チュン');
+    g.addNickname('blue_jay', '4羽目');
+    expect(g.nicknames['blue_jay'], ['ピョンタ', 'ピーコ', 'チュン'], reason: '3羽まで');
+  });
+
+  test('来たのが名前のある子なら「種名の名前」、ない子なら種名だけ', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    final species = g.labelFor('blue_jay');
+    g.visiting.add('blue_jay');
+    g.visitingName['blue_jay'] = 'ピョンタ';
+    expect(g.labelFor('blue_jay'), allOf(contains('ピョンタ'), contains(species)));
+    g.visitingName.remove('blue_jay');
+    expect(g.labelFor('blue_jay'), species);
+  });
+
+  test('来た子は、名前のある子と名前のない子から同じ重みで選ぶ', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    expect(g.pickVisitor('blue_jay', Random(1)), isNull, reason: '名前が無ければ、名前のない子');
+    g.observed['blue_jay'] = 12;
+    g.addNickname('blue_jay', 'ピョンタ');
+    g.addNickname('blue_jay', 'ピーコ');
+    final seen = <String?>{};
+    final r = Random(3);
+    for (var i = 0; i < 200; i++) {
+      seen.add(g.pickVisitor('blue_jay', r));
+    }
+    expect(seen, {'ピョンタ', 'ピーコ', null});
+  });
+
+  test('名前を空にすると外れ、来ている子の表示も種名に戻る', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    g.observed['blue_jay'] = 6;
+    g.addNickname('blue_jay', 'ピョンタ');
+    g.visitingName['blue_jay'] = 'ピョンタ';
+    g.renameNickname('blue_jay', 'ピョンタ', 'ピー');
+    expect(g.visitingName['blue_jay'], 'ピー');
+    g.renameNickname('blue_jay', 'ピー', '');
+    expect(g.nicknames.containsKey('blue_jay'), isFalse);
+    expect(g.visitingName.containsKey('blue_jay'), isFalse);
+  });
+
+  // HANDOFF_00 §7-7: 京都に切り替えてシャーロットに戻ると、植えたものが全部消えていた。
+  test('土地を切り替えて戻ると、前に植えていたものが戻る', () {
+    final g = Garden(_data(), biomeId: 'charlotte');
+    final charlottePlant = g.data.plants.entries
+        .firstWhere((e) => ((e.value as Map)['biome'] as List).contains('charlotte'))
+        .key;
+    g.planted.add(charlottePlant);
+    g.setBiome('kyoto');
+    expect(g.planted, isNot(contains(charlottePlant)), reason: '京都には京都の植物だけ');
+    g.setBiome('charlotte');
+    expect(g.planted, contains(charlottePlant), reason: '戻ったら、前の庭が戻る');
+  });
+
+  test('一度きりの一言は、二度目は出ない', () {
+    final g = Garden(_data(), biomeId: 'kyoto');
+    expect(g.takeHint('first_arrival'), isTrue);
+    expect(g.takeHint('first_arrival'), isFalse);
   });
 }
 

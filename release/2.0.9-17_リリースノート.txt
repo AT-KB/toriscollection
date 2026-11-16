@@ -1,0 +1,14 @@
+<ja-JP>
+・アプリを開くと、まず庭が出るようにしました
+・土地を選ぶと、その土地の鳥がひと声鳴きます
+・庭に来ている鳥の名前を押すと、その鳥が鳴きます
+・ラジオ・図鑑・目覚ましに、その声を録音した人の名前を出しました(声はすべて xeno-canto の本物の録音です)
+・画面の名前をわかりやすくしました(「来た鳥の図鑑」「だれが何を食べるか」)
+</ja-JP>
+<en-US>
+- The app now opens on your garden
+- When you pick a land, one of its birds sings for you
+- Tap a visiting bird's name in the garden to hear it sing
+- The radio, guide and alarm now show who recorded each voice (all real recordings from xeno-canto)
+- Clearer screen names ("Birds that came", "Who eats what")
+</en-US>

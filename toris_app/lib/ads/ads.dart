@@ -21,13 +21,13 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:toris_core/toris_core.dart' as core;
 
-/// AdMob の広告ユニット(CEO 提供・2026-08-21)。
+/// AdMob の広告ユニット(CEO 提供・2026-10-18。pub-3571 へ一本化)。
 ///
-/// アプリ ID `ca-app-pub-9002945296291643~1195899268` は
+/// アプリ ID `ca-app-pub-3571053447722259~2296719134` は
 /// `AndroidManifest.xml` の meta-data に書く(ここではない)。
 class AdUnits {
-  static const banner = 'ca-app-pub-9002945296291643/4334445334';
-  static const reward = 'ca-app-pub-9002945296291643/7956060372';
+  static const banner = 'ca-app-pub-3571053447722259/3300563637';
+  static const reward = 'ca-app-pub-3571053447722259/9945863035';
 
   /// Google 公式のテスト用ユニット。実機で自分の広告を叩かないため、
   /// 動作確認はこちらでやる(自分の広告をクリックすると規約違反になる)。
@@ -53,13 +53,19 @@ const bool kAdsEnabled = true;
 /// ⚠️ **自分の広告をクリックすると規約違反**になる。本番ユニットのまま実機で
 /// 触るために、下の `kTestDeviceIds` に端末を登録してある — 登録された端末は
 /// 本番ユニットでも**テスト広告**が返るので、無効なトラフィックにならない。
-const bool kUseTestAds = false;
+///
+/// 未承認のあいだ本番ユニットは no fill(エラー3)しか返さないので、
+/// 表示とクリックの確認は `--dart-define=TEST_ADS=true` で作った版でやる。
+const bool kUseTestAds = bool.fromEnvironment('TEST_ADS');
 
 /// 開発者の実機。`Ads` のログが出す ID をそのまま入れる。
 /// (Pixel 6a。logcat の "Use RequestConfiguration.Builder().setTestDeviceIds" 行)
 /// ⚠️ **ID はアプリごとに変わる。** 別の版で拾った ID を使い回して、
 /// テスト扱いにならず no-fill になった(2026-08-21)。**必ず実機のログで確認する**:
 ///   adb logcat -d | grep setTestDeviceIds
+/// ⚠️ **ファンの端末は入れない。** 2026-11-03 に確認で使った Pixel 6a
+/// (`CE2D…`)は友人の端末だった。登録するとその人の普段の利用が
+/// テスト扱いになり、リクエストにも収益にも数えられない。
 const List<String> kTestDeviceIds = ['2A01E481D0F33C1370C283B384772638'];
 
 String get bannerUnitId => kUseTestAds ? AdUnits.bannerTest : AdUnits.banner;
@@ -110,6 +116,20 @@ List<String> offeredItems(
         id
   ];
 }
+
+/// 道具ごとの効き目の説明(英語。訳は `i18n.dart`)。
+///
+/// **`toris_core/garden_items.dart` の計算にあることだけを言う**(原則4)。
+///  - 継ぎ足し: `eats_plants` を持つ鳥の到来に +1pp
+///  - 水浴び場: 全種の退去率から −5%
+///  - リスよけ: `feeder_chain` のリス→タカの鎖を断つ
+const Map<String, String> kItemEffects = {
+  'feeder': 'Seed-eating birds come a little more often.',
+  'bird_bath': 'Birds that come stay a little longer.',
+  'squirrel_baffle':
+      'Keeps squirrels off the open feeder, so the hawk that follows them '
+          'stays away and shy birds come closer.',
+};
 
 /// ランダムに1つ選ぶ。候補が無ければ null。
 String? pickItem(

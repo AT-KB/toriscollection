@@ -158,5 +158,17 @@ DateTime? parseIso(Object? s) {
   if (s is DateTime) return s;
   final t = '$s';
   if (t.isEmpty) return null;
-  return DateTime.tryParse(t);
+  final d = DateTime.tryParse(t);
+  if (d == null) return null;
+  // ⚠️ Dart は「13月」を翌年1月に繰り上げて読んでしまう。Python の
+  // `datetime.fromisoformat` は読めない(None)。日付の部分が読んだ値と
+  // 食い違えば、壊れた値として捨てる(2026-11-10 の突き合わせで発覚)。
+  final m = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(t);
+  if (m != null &&
+      (int.parse(m[1]!) != d.year ||
+          int.parse(m[2]!) != d.month ||
+          int.parse(m[3]!) != d.day)) {
+    return null;
+  }
+  return d;
 }

@@ -27,9 +27,13 @@ OUT = os.path.join(OUT_DIR, "birds.json")
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "..",
                            "toris_core", "test", "fixtures")
 
-# Flutter 版で使う項目だけ。表示は英語のみなので、日本語の名前と説明は運ばない
-# (製品版は 2026-08-09 に日本語表示を落としている)。
-FIELDS = ("scientific", "english", "description_en", "color",
+# Flutter 版で使う項目だけ。
+# ⚠️ **日本語の説明文(`description`)も運ぶ**(CEO 2026-10-19「日本語に
+# 切り替えってできない?」→「やれ」)。37種すべてに和文があるので、
+# でっち上げて訳す必要がない(原則4「生態に誠実」)。
+# 日本語の**名前**(`name`)も運ぶ(CEO 2026-11-03「全部実装するまで変更申請はしない」)。
+# 和名は data.py に全種そろっているので、こちらで訳を起こさない。
+FIELDS = ("name", "scientific", "english", "description_en", "description", "color",
           "eats_plants", "eats_insects", "temp_fit", "biome_pref",
           "rarity", "wariness")
 
@@ -69,11 +73,11 @@ def main() -> None:
     # 庭(植える→虫→鳥)に要るデータも一緒に運ぶ。
     # **判断のロジックは Dart に写すが、データは写さない**。
     _dump("plants.json", _plain(
-        data.PLANTS, ("english", "icon", "temp_fit", "biome", "scientific")))
+        data.PLANTS, ("name", "english", "icon", "temp_fit", "biome", "scientific")))
     _dump("insects.json", _plain(
-        data.INSECTS, ("english", "temp_fit", "eats_plants", "scientific")))
+        data.INSECTS, ("name", "english", "temp_fit", "eats_plants", "scientific")))
     _dump("biomes.json", _plain(
-        data.BIOMES, ("name_en", "temp_mean", "hemisphere", "max_plants",
+        data.BIOMES, ("name", "name_en", "temp_mean", "hemisphere", "max_plants",
                       "description_en", "lat", "lon")))
     _dump("season_offset.json",
           {str(k): v for k, v in data.SEASON_TEMP_OFFSET.items()})

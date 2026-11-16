@@ -35,6 +35,11 @@ public class BirdAlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        // **翌日の同じ時刻を先に登録しておく**(2026-11-08)。前は一度鳴ったら
+        // 終わりで、毎朝の目覚ましにならなかった。鳴らす前に登録するのは、
+        // 鳴らしている途中でプロセスが落ちても翌朝が消えないようにするため。
+        AlarmScheduler.scheduleNext(context);
+
         Intent svc = new Intent(context, BirdAlarmService.class);
         if (intent != null) {
             svc.putExtra(EXTRA_FIRST, intent.getStringExtra(EXTRA_FIRST));
